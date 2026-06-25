@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Commencer - SalesForge</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F6F8FC;--w:#fff;--ink:#08152A;--muted:#506070;--bd:#E2E8F2;--b:#1449D8;--b2:#0F3BAD;--bs:#ECF1FD;--d:#C0333A;--g:#0A9460}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:22px}
+body.recruteur-theme{background:linear-gradient(160deg,#0F3BAD 0%,#1449D8 48%,#ECF1FD 100%)}
+.card{width:min(440px,100%);background:var(--w);border:1px solid var(--bd);border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(8,21,42,.08)}
+body.recruteur-theme .card{background:#1449D8;border-color:rgba(255,255,255,.22);box-shadow:0 28px 80px rgba(8,21,42,.25);color:#fff}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;margin-bottom:24px}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--b);color:#fff;display:grid;place-items:center;font-family:'Sora',sans-serif;font-weight:800}
+body.recruteur-theme .mark{background:#fff;color:var(--b)}
+.logo{font-family:'Sora',sans-serif;font-weight:800;letter-spacing:-.3px}.logo b{color:var(--b)}
+body.recruteur-theme .logo b{color:#fff}
+h1{font-family:'Sora',sans-serif;font-size:25px;line-height:1.15;letter-spacing:-.7px;margin-bottom:8px}
+p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:20px}
+body.recruteur-theme p,body.recruteur-theme label{color:rgba(255,255,255,.78)}
+.role{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.role button{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:12px 10px;font:inherit;font-weight:800;cursor:pointer;color:var(--muted)}
+body.recruteur-theme .role button{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.32);color:rgba(255,255,255,.78)}
+.role button.on{border-color:var(--b);color:var(--b)}
+#role-candidat.on{background:#fff}
+#role-recruteur.on{background:var(--b);color:#fff}
+body.recruteur-theme #role-candidat.on{background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.32)}
+body.recruteur-theme #role-recruteur.on{background:#fff;color:var(--b);border-color:#fff}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.recruiter-fields{display:none}
+.recruiter-fields.on{display:block}
+label{font-size:12px;font-weight:700;color:var(--muted)}
+input{width:100%;border:1px solid var(--bd);border-radius:11px;padding:13px 14px;font:inherit;color:var(--ink);outline:none;background:#fff}
+input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
+.btn{width:100%;border:0;border-radius:11px;padding:13px 16px;font:inherit;font-weight:800;cursor:pointer;background:var(--b);color:#fff;margin-top:6px}
+.btn:hover{background:var(--b2)}
+body.recruteur-theme .btn{background:#fff;color:var(--b)}
+body.recruteur-theme .btn:hover{background:#ECF1FD}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;font-weight:800;margin:16px 0}
+.or::before,.or::after{content:'';height:1px;background:var(--bd);flex:1}
+body.recruteur-theme .or{color:rgba(255,255,255,.72)}
+body.recruteur-theme .or::before,body.recruteur-theme .or::after{background:rgba(255,255,255,.28)}
+.socials{display:grid;gap:8px}
+.social{width:100%;border:1px solid var(--bd);border-radius:11px;padding:12px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+.social svg{width:18px;height:18px;flex-shrink:0}
+.social .icon-badge{width:22px;height:22px;border-radius:6px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.social .icon-badge svg{width:16px;height:16px}
+.social:hover{background:var(--bg)}
+body.recruteur-theme .social{border-color:rgba(255,255,255,.36);background:rgba(255,255,255,.12);color:#fff}
+body.recruteur-theme .social:hover{background:rgba(255,255,255,.2)}
+.secondary{display:block;text-align:center;margin-top:14px;color:var(--b);font-weight:700;text-decoration:none;font-size:13px}
+.back{display:block;text-align:center;margin-top:14px;color:var(--muted);text-decoration:none;font-size:13px}
+body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
+.msg{display:none;border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.45;margin-bottom:14px}
+.msg.error{display:block;background:#FBEAEA;color:var(--d);border:1px solid #F2C4C7}
+.msg.ok{display:block;background:#E4F5EF;color:var(--g);border:1px solid #BFE6D4}
+</style>
+</head>
+<body>
+<main class="card">
+  <a class="brand" href="salesforge_landing.html"><span class="mark">S</span><span class="logo">Sales<b>Forge</b></span></a>
+  <h1>Commencer</h1>
+  <p>Choisis ton profil, puis cree ton compte SalesForge.</p>
+
+  <div class="role" aria-label="Choix du profil">
+    <button id="role-candidat" type="button" onclick="setRole('candidat')">Candidat</button>
+    <button id="role-recruteur" type="button" onclick="setRole('recruteur')">Recruteur</button>
+  </div>
+
+  <div id="message" class="msg"></div>
+
+  <form id="start-form">
+    <div class="field">
+      <label for="email">Mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+    </div>
+    <div class="field">
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" autocomplete="new-password" minlength="6" required>
+    </div>
+    <div id="recruiter-fields" class="recruiter-fields">
+      <div class="field">
+        <label for="entreprise">Nom de l'entreprise</label>
+        <input id="entreprise" type="text" autocomplete="organization">
+      </div>
+      <div class="field">
+        <label for="secteur">Secteur</label>
+        <input id="secteur" type="text" placeholder="Ex : SaaS, FinTech, Industrie">
+      </div>
+    </div>
+    <button class="btn" type="submit">Creer mon compte</button>
+  </form>
+
+  <div class="or">ou continuer avec</div>
+  <div class="socials">
+    <button class="social" type="button" onclick="socialLogin('google')">
+      <span class="icon-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></span>
+      Connexion Google
+    </button>
+    <button class="social" type="button" onclick="socialLogin('linkedin')">
+      <span class="icon-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></span>
+      Connexion LinkedIn
+    </button>
+  </div>
+
+  <a class="secondary" href="salesforge_app.html?login=1">J'ai déjà un compte</a>
+  <a class="back" href="salesforge_landing.html">Retour a l'accueil</a>
+</main>
+
+<script>
+const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : 'https://salesforge-backend.railway.app/api';
+
+let selectedRole = 'candidat';
+const form = document.getElementById('start-form');
+const message = document.getElementById('message');
+
+function setRole(role){
+  selectedRole = role;
+  document.body.classList.toggle('recruteur-theme', role === 'recruteur');
+  document.getElementById('role-candidat').classList.toggle('on', role === 'candidat');
+  document.getElementById('role-recruteur').classList.toggle('on', role === 'recruteur');
+  document.getElementById('recruiter-fields').classList.toggle('on', role === 'recruteur');
+  document.getElementById('entreprise').required = role === 'recruteur';
+  document.getElementById('secteur').required = role === 'recruteur';
+}
+
+function showMessage(text, type = 'error'){
+  message.className = `msg ${type}`;
+  message.textContent = text;
+}
+
+function socialLogin(provider){
+  localStorage.setItem('sf_pending_role', selectedRole);
+  window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}?role=${encodeURIComponent(selectedRole)}`;
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const entreprise = document.getElementById('entreprise').value.trim();
+  const secteur = document.getElementById('secteur').value.trim();
+
+  try {
+    const res = await fetch(`${API}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, role: selectedRole, entreprise, secteur })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const error = data.error?.message || data.error || 'Creation impossible';
+      showMessage(error);
+      return;
+    }
+    if (data.token) localStorage.setItem('sf_token', data.token);
+    localStorage.setItem('sf_onboarding_role', data.profile?.role || selectedRole);
+    window.location.href = 'salesforge_app.html';
+  } catch (error) {
+    showMessage('Creation impossible. Verifie que le serveur est lance.');
+  }
+});
+
+const requestedRole = new URLSearchParams(window.location.search).get('role');
+setRole(requestedRole === 'recruteur' ? 'recruteur' : 'candidat');
+</script>
+</body>
+</html>
+

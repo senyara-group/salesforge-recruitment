@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SalesForge Recruitment</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#08152A;--ink3:#4E6080;--bg:#F7F9FC;--w:#fff;--bd:#E3E9F2;--b:#1549D8;--b2:#0F3BAD;--bs:#EBF0FD;--bm:#C5D3F8;--g:#0A9460;--gs:#E4F5EF}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+nav{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);padding:0 5%;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit}
+.logo-m{width:32px;height:32px;background:var(--b);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:16px}
+.logo-t{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.2px}
+.logo-t b{color:var(--b)}
+.nav-cta{display:flex;gap:8px}
+.btn{font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:10px}
+.btn-ghost{padding:9px 16px;font-size:13px;background:transparent;color:var(--ink3)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-p{padding:9px 18px;font-size:13px;background:var(--b);color:#fff;box-shadow:0 2px 8px rgba(21,73,216,.2)}
+.btn-p:hover{background:var(--b2);transform:translateY(-1px)}
+.btn-o{padding:13px 26px;font-size:15px;background:transparent;color:var(--ink);border:1.5px solid var(--bd)}
+.btn-o:hover{border-color:var(--b);color:var(--b)}
+.btn-lg{padding:14px 28px;font-size:15px;background:var(--b);color:#fff;box-shadow:0 4px 14px rgba(21,73,216,.25)}
+.btn-lg:hover{background:var(--b2);transform:translateY(-1px)}
+
+.hero{padding:72px 5% 56px;background:linear-gradient(170deg,var(--bs) 0%,var(--bg) 60%)}
+.hero-in{max-width:1160px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--bd);color:var(--b);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:20px}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--g);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:'Sora',sans-serif;font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--b)}
+.hero-sub{font-size:clamp(15px,1.8vw,18px);color:var(--ink3);max-width:560px;line-height:1.75;margin:0 auto 28px}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+.hero-trust{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink3);font-weight:500;margin-bottom:52px}
+.ti{display:flex;align-items:center;gap:5px}
+.ck{width:16px;height:16px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center}
+.ck svg{width:10px;height:10px;stroke:var(--g);fill:none;stroke-width:3}
+
+.devices{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
+.device{background:#0D1B35;border-radius:22px;padding:5px;box-shadow:0 40px 80px -20px rgba(5,16,31,.3);transition:.4s;cursor:pointer}
+.device:hover{transform:translateY(-10px);box-shadow:0 60px 100px -20px rgba(5,16,31,.45)}
+.dev-screen{width:250px;height:530px;border-radius:18px;overflow:hidden;background:#fff}
+.dev-lbl{text-align:center;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-top:10px}
+@media(max-width:600px){.device:first-child{display:none}}
+
+.metrics{background:var(--ink);padding:50px 5%}
+.mg{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr);gap:24px;text-align:center}
+@media(min-width:768px){.mg{grid-template-columns:repeat(4,1fr)}}
+.mn{font-family:'Sora',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;margin-bottom:5px;letter-spacing:-1px}
+.mn b{color:#7BA8FF}
+.ml2{font-size:13px;color:rgba(255,255,255,.5);font-weight:500}
+
+.s{padding:80px 5%}
+.si{max-width:1160px;margin:0 auto}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:var(--b);background:var(--bs);padding:5px 12px;border-radius:6px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px}
+.st{font-family:'Sora',sans-serif;font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:12px;line-height:1.15}
+.ss{font-size:16px;color:var(--ink3);line-height:1.75;max-width:580px;margin-bottom:44px}
+.center{text-align:center}.ss.center{margin:0 auto 44px}
+
+.fg{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:600px){.fg{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.fg{grid-template-columns:repeat(3,1fr)}}
+.fc{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:26px;transition:.2s}
+.fc:hover{border-color:var(--bm);box-shadow:0 8px 28px rgba(21,73,216,.07);transform:translateY(-3px)}
+.fc.hl{border-color:var(--bm);background:var(--bs)}
+.fci{width:44px;height:44px;border-radius:12px;background:var(--bs);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.fc.hl .fci{background:rgba(21,73,216,.1)}
+.fci svg{width:22px;height:22px;stroke:var(--b);fill:none;stroke-width:2}
+.fc h3{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:9px}
+.fc p{font-size:14px;color:var(--ink3);line-height:1.7}
+
+.testi-g{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:640px){.testi-g{grid-template-columns:repeat(2,1fr)}}
+.testi{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:26px}
+.testi-t{font-size:15px;line-height:1.75;font-weight:500;color:var(--ink);margin-bottom:18px}
+.testi-a{display:flex;align-items:center;gap:12px}
+.testi-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;flex-shrink:0}
+.testi-n{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;letter-spacing:-.2px}
+.testi-r{font-size:12px;color:#8A9AB5;margin-top:2px}
+
+.pricing-ctrl{text-align:center;margin-bottom:28px}
+.ptabs{display:inline-flex;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:4px;gap:4px;margin-bottom:14px}
+.ptab{padding:9px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:7px;color:#8A9AB5;transition:.15s}
+.ptab.on{background:var(--ink);color:#fff}
+.bsw{display:inline-flex;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:3px;gap:2px}
+.bopt{padding:8px 16px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;color:#8A9AB5;transition:.15s}
+.bopt.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.bopt-b{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px}
+.plans{display:grid;gap:12px;grid-template-columns:1fr;max-width:1100px;margin:0 auto}
+@media(min-width:600px){.plans{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1020px){.plans{grid-template-columns:repeat(4,1fr)}}
+.plan{background:#fff;border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:flex;flex-direction:column;position:relative}
+.plan.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
+.plan.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pop-r{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--b);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:6px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.plan-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
+.plan-for{font-size:12px;color:var(--ink3);margin-bottom:14px}.plan.dk .plan-for{color:rgba(255,255,255,.55)}
+.plan-pr{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
+.plan-old{font-size:14px;color:#8A9AB5;text-decoration:line-through;margin-right:3px}
+.plan-p{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.plan-u{font-size:13px;color:var(--ink3);font-weight:500}.plan.dk .plan-u{color:rgba(255,255,255,.55)}
+.plan-h{font-size:11px;color:#8A9AB5;margin-bottom:16px;min-height:14px}.plan.dk .plan-h{color:rgba(255,255,255,.4)}
+.plan-feats{list-style:none;border-top:1px solid var(--bd);padding-top:14px;margin-bottom:16px;flex:1;display:flex;flex-direction:column;gap:7px}.plan.dk .plan-feats{border-top-color:rgba(255,255,255,.1)}
+.plan-feats li{font-size:13px;display:flex;gap:8px;align-items:flex-start;color:#2B3B52;line-height:1.5}.plan.dk .plan-feats li{color:rgba(255,255,255,.75)}
+.plan-feats li svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;stroke:var(--g);fill:none;stroke-width:2.5}.plan.dk .plan-feats li svg{stroke:#5EC99A}
+.plan-btn{padding:11px;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;border:1.5px solid var(--b);background:transparent;color:var(--b);transition:.15s;width:100%}
+.plan-btn:hover,.plan.pop .plan-btn{background:var(--b);color:#fff}
+.plan.dk .plan-btn{border-color:rgba(255,255,255,.3);color:#fff}.plan.dk .plan-btn:hover{background:#fff;color:var(--ink)}
+
+.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq-i{background:#fff;border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.faq-q{padding:16px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:14px;color:var(--ink);font-family:'Sora',sans-serif}
+.faq-q:hover{background:var(--bg)}
+.faq-q svg{width:18px;height:18px;stroke:#8A9AB5;fill:none;stroke-width:2;flex-shrink:0;transition:transform .2s}
+.faq-i.open .faq-q svg{transform:rotate(180deg);stroke:var(--b)}
+.faq-a{padding:0 20px 16px;font-size:13px;color:var(--ink3);line-height:1.75;display:none}.faq-i.open .faq-a{display:block}
+
+.cta-b{margin:0 5% 80px;border-radius:20px;background:linear-gradient(135deg,var(--ink) 0%,#1B4FE0 100%);padding:56px 5%;text-align:center;position:relative;overflow:hidden}
+.cta-b::before{content:'';position:absolute;top:-30%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(255,255,255,.07),transparent 65%);pointer-events:none}
+.cta-b h2{font-family:'Sora',sans-serif;font-size:clamp(24px,3.5vw,38px);font-weight:800;letter-spacing:-1px;color:#fff;margin-bottom:12px;position:relative}
+.cta-b p{font-size:16px;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 28px;line-height:1.7;position:relative}
+.cta-bb{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative}
+.btn-w{padding:14px 28px;font-size:15px;background:#fff;color:var(--ink);border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.15s}
+.btn-w:hover{background:var(--bg)}
+.btn-ob{padding:14px 28px;font-size:15px;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;text-decoration:none;transition:.15s}
+.btn-ob:hover{background:rgba(255,255,255,.1);border-color:#fff}
+
+footer{background:var(--ink);padding:50px 5% 24px}
+.fi{max-width:1160px;margin:0 auto}
+.ft{display:grid;grid-template-columns:1fr;gap:28px;margin-bottom:34px}
+@media(min-width:640px){.ft{grid-template-columns:2fr 1fr 1fr 1fr}}
+.fl3{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fl3 b{color:#7BA8FF}
+.flm{width:27px;height:27px;background:var(--b);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800}
+.fd{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;max-width:260px}
+.fc2 h5{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.35);margin-bottom:12px}
+.fc2 ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.fc2 li{font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:.15s}.fc2 li:hover{color:#fff}
+.fb{padding-top:22px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.fc3{font-size:12px;color:rgba(255,255,255,.3)}
+.socs{display:flex;gap:8px}
+.soc{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid rgba(255,255,255,.1)}
+.soc:hover{background:var(--b);border-color:var(--b)}
+.soc svg{width:16px;height:16px;fill:rgba(255,255,255,.6)}.soc:hover svg{fill:#fff}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="salesforge_landing.html">
+    <div class="logo-m">S</div>
+    <div class="logo-t">Sales<b>Forge</b></div>
+  </a>
+  <div class="nav-cta">
+    <a href="salesforge_app.html?login=1" class="btn btn-ghost">Connexion</a>
+    <a href="salesforge_start.html" class="btn btn-p">Commencer</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-in">
+    <div class="badge"><div class="badge-dot"></div>Plateforme spécialisée recrutement sales</div>
+    <h1>Les meilleurs closers<br>rencontrent les <em>bonnes</em><br>entreprises.</h1>
+    <p class="hero-sub">SalesForge matche commerciaux et recruteurs via un scoring comportemental IA unique. Test ADN 10 étapes, swipe Tinder, simulation de pitch en direct.</p>
+    <div class="hero-btns">
+      <a href="salesforge_start.html?role=candidat" class="btn btn-lg">Je suis commercial</a>
+      <a href="salesforge_start.html?role=recruteur" class="btn btn-o">Je recrute</a>
+    </div>
+    <div class="hero-trust">
+      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Freemium candidats à vie</span>
+      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Essai 14j recruteurs</span>
+      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Sans engagement</span>
+    </div>
+    <div class="devices">
+      <div class="device" onclick="location='salesforge_start.html?role=candidat'">
+        <div class="dev-screen"><iframe src="salesforge_start.html?role=candidat" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
+        <div class="dev-lbl">Accès candidat</div>
+      </div>
+      <div class="device" onclick="location='salesforge_start.html?role=recruteur'">
+        <div class="dev-screen"><iframe src="salesforge_start.html?role=recruteur" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
+        <div class="dev-lbl">Accès recruteur</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="metrics">
+  <div class="mg">
+    <div><div class="mn"><b>4 200+</b></div><div class="ml2">Commerciaux scorés</div></div>
+    <div><div class="mn">91%</div><div class="ml2">Pertinence des matchs</div></div>
+    <div><div class="mn">6 jours</div><div class="ml2">Délai moyen de placement</div></div>
+    <div><div class="mn"><b>3×</b></div><div class="ml2">Taux réponse vs LinkedIn</div></div>
+  </div>
+</section>
+
+<section class="s" id="features">
+  <div class="si">
+    <div class="center"><span class="tag">Fonctionnalités</span><h2 class="st">La seule plateforme pensée pour le sales</h2><p class="ss center">Six innovations qui rendent SalesForge radicalement différent des cabinets traditionnels.</p></div>
+    <div class="fg">
+      <div class="fc hl"><div class="fci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><h3>Test ADN commercial 10 étapes</h3><p>Scénarios comportementaux, sliders, QCM culture sales, 2 simulations de pitch IA scorées, narration STAR. Score sur 8 axes, benchmarké sur 4 200 profils.</p></div>
+      <div class="fc hl"><div class="fci"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><h3>Swipe Tinder natif</h3><p>Interface swipe mobile-first. Like, passe ou Super-match. Contact direct dès le match mutuel. Zéro intermédiaire humain obligatoire.</p></div>
+      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><h3>Matching IA pondérable</h3><p>Le recruteur règle l'importance de chaque critère en temps réel sur 14 variables. Recalcul instantané des profils compatibles.</p></div>
+      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div><h3>Simulation de pitch IA</h3><p>L'IA joue le prospect difficile. Votre réponse scorée sur 3 axes en direct. Performance réelle, pas déclarée.</p></div>
+      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><h3>Réputation bidirectionnelle</h3><p>Candidats notent les entreprises. Recruteurs notent les candidats. Score public pour les deux côtés dans chaque profil.</p></div>
+      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Score ADN évolutif</h3><p>Chaque mission validée, formation complétée ou recommandation reçue améliore votre score et votre visibilité.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="background:#fff;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div class="si">
+    <div class="center"><span class="tag">Témoignages</span><h2 class="st">Ils recrutent différemment</h2></div>
+    <div class="testi-g">
+      <div class="testi"><p class="testi-t">"En 10 jours, j'ai signé avec une scale-up parisienne qui correspondait exactement à mes critères. Le test ADN m'a donné une lecture précise de ce que je vaux vraiment."</p><div class="testi-a"><div class="testi-av" style="background:#1549D8">AB</div><div><div class="testi-n">Alexandre B.</div><div class="testi-r">Closer Senior B2B · Paris</div></div></div></div>
+      <div class="testi"><p class="testi-t">"Notre taux de réponse est passé de 20% sur LinkedIn à 73% sur SalesForge. Les candidats arrivent déjà qualifiés et scorés. On divise nos délais par trois."</p><div class="testi-a"><div class="testi-av" style="background:#0A9460">JM</div><div><div class="testi-n">Julie Morin</div><div class="testi-r">Head of Talent · TechCorp</div></div></div></div>
+      <div class="testi"><p class="testi-t">"Le moteur de matching pondérable change tout. Je règle mes critères selon le poste et vois en temps réel les profils compatibles. Fini le chasseur de têtes à 25%."</p><div class="testi-a"><div class="testi-av" style="background:#7C3AED">MF</div><div><div class="testi-n">Marc Fabre</div><div class="testi-r">CEO · Scale-up FinTech</div></div></div></div>
+      <div class="testi"><p class="testi-t">"La simulation de pitch est bluffante. En 5 minutes j'ai montré ce que des entretiens entiers cachaient. Les recruteurs me contactent avec des offres adaptées."</p><div class="testi-a"><div class="testi-av" style="background:#C2410C">SM</div><div><div class="testi-n">Sarah M.</div><div class="testi-r">BizDev 2.0 · Freelance</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="pricing">
+  <div class="si">
+    <div class="center"><span class="tag">Tarification</span><h2 class="st">Simple, transparent, flexible</h2><p class="ss center">Annuel moins cher. Mensuel sans engagement. Freemium candidats à vie.</p></div>
+    <div class="pricing-ctrl">
+      <div class="ptabs"><button class="ptab on" onclick="pt(this,'cand')">Candidats</button><button class="ptab" onclick="pt(this,'rec')">Recruteurs</button></div><br><br>
+      <div class="bsw"><button class="bopt" onclick="bt(this,'month')">Mensuel</button><button class="bopt on" onclick="bt(this,'year')">Annuel <span class="bopt-b">-20%</span></button></div>
+    </div>
+    <div class="plans" id="plans"></div>
+  </div>
+</section>
+
+<section class="s" id="faq" style="background:#fff;border-top:1px solid var(--bd)">
+  <div class="si">
+    <div class="center"><span class="tag">FAQ</span><h2 class="st">Questions fréquentes</h2></div>
+    <div class="faq">
+      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Comment fonctionne le test ADN commercial ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Le test se déroule en 10 étapes : 3 scénarios comportementaux (objection prix, relance prospect silencieux, gestion de crise client), 8 sliders d'auto-évaluation croisés avec vos scénarios pour détecter les biais, 5 questions de culture sales (BANT, SPIN, MQL, outils), 2 simulations de pitch IA scorées sur 3 axes, une narration libre analysée via le framework STAR, et vos préférences de mission. Durée : 15 à 20 minutes.</div></div>
+      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Le Freemium est-il vraiment gratuit à vie ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Oui, sans limite de durée ni carte bancaire. Les candidats Freemium accèdent au test ADN complet, au score IA global, à 5 swipes par mois et 2 contacts recruteurs mensuels.</div></div>
+      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Quelle différence entre mensuel et annuel ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">L'annuel vous fait Économiser exactement 20%. Candidat Premium : 15€/mois en annuel vs 19€/mois en mensuel, Économie 48€/an. Recruteur Business : 279€/mois vs 349€/mois, Économie 840€/an.</div></div>
+      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Mon profil est-il visible par mon employeur actuel ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Non. Le mode confidentiel masque votre profil aux entreprises que vous listez. Vos informations personnelles ne sont dévoilées qu'après un match mutuel et votre accord explicite.</div></div>
+      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">L'essai recruteur nécessite-il une carte bancaire ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Non. L'essai de 14 jours est accessible sans carte bancaire. Aucun prélèvement automatique ? l'issue de la période.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-b">
+  <h2>Prêt à rencontrer votre prochain match ?</h2>
+  <p>Rejoignez les 4 200 commerciaux et 340 entreprises qui recrutent différemment.</p>
+  <div class="cta-bb">
+    <a href="salesforge_start.html?role=candidat" class="btn-w">Je suis commercial</a>
+    <a href="salesforge_start.html?role=recruteur" class="btn-ob">Je recrute</a>
+  </div>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="ft">
+      <div><div class="fl3"><div class="flm">S</div>Sales<b>Forge</b></div><p class="fd">La première plateforme de recrutement sales par l'IA. Spécialisée closers, BizDev, AE et SalesTech.</p></div>
+      <div class="fc2"><h5>Produit</h5><ul><li>Fonctionnalités</li><li>Tarifs</li><li>Test ADN</li><li>API</li></ul></div>
+      <div class="fc2"><h5>Entreprise</h5><ul><li>À propos</li><li>Blog</li><li>Contact</li></ul></div>
+      <div class="fc2"><h5>Légal</h5><ul><li>CGU</li><li>CGV</li><li>RGPD</li></ul></div>
+    </div>
+    <div class="fb">
+      <div class="fc3">© 2026 SalesForge Recruitment. Tous droits réservés.</div>
+      <div class="socs">
+        <div class="soc"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></div>
+        <div class="soc"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : 'https://salesforge-backend.railway.app/api';
+
+async function loadProfile() {
+  const token = localStorage.getItem('sf_token');
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API}/candidats/profil`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    const nameEl = document.getElementById('candidate-name');
+    const emailEl = document.getElementById('candidate-email');
+    const phoneEl = document.getElementById('candidate-phone');
+    const expEl = document.getElementById('candidate-experience');
+    const skillsEl = document.getElementById('candidate-skills');
+    const avatarEl = document.getElementById('candidate-avatar');
+
+    if (nameEl) nameEl.textContent = data.name || "Nom non renseigné";
+    if (emailEl) emailEl.textContent = data.email || "Email non renseigné";
+    if (phoneEl) phoneEl.textContent = data.phone || "Non renseigné";
+    if (expEl) expEl.textContent = data.experience || "Non renseignée";
+    if (skillsEl) skillsEl.textContent = data.skills || "Non renseignées";
+    if (avatarEl && data.avatarUrl) avatarEl.src = data.avatarUrl;
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadProfile);
+
+const D={
+  cand:{
+    month:[
+      {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'/mois',h:'Gratuit à vie',feats:['Test ADN 10 étapes','Score IA global','5 swipes / candidatures / mois','2 contacts recruteurs/mois','Import CV automatique','Lettre de motivation écrite'],cta:'Commencer gratuitement'},
+      {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Priorité dans les matchs'],cta:'Essai 14j gratuit',pop:true},
+      {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Suivi candidatures temps réel','QR code sur CV'],cta:'Passer Gold'},
+      {n:'Platine',f:'Closer Elite confirmé',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA hebdomadaire','Offres exclusives Platine','Certification SalesForge','Mise en relation garantie'],cta:'Accéder au Platine',dk:true}
+    ],
+    year:[
+      {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'/mois',h:'Gratuit à vie',feats:['Test ADN 10 étapes','Score IA global','5 swipes / candidatures / mois','2 contacts recruteurs/mois','Import CV automatique','Lettre de motivation écrite'],cta:'Commencer gratuitement'},
+      {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 ?/an · Économie 48 ?',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Priorité dans les matchs'],cta:'Économiser 20%',pop:true},
+      {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · Économie 96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Suivi candidatures temps réel','QR code sur CV'],cta:'Économiser 20%'},
+      {n:'Platine',f:'Closer Elite confirmé',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA hebdomadaire','Offres exclusives Platine','Certification SalesForge','Mise en relation garantie'],cta:'Économiser 20%',dk:true}
+    ]
+  },
+  rec:{
+    month:[
+      {n:'Starter',f:'Besoins ponctuels',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Choisir Starter'},
+      {n:'Pro',f:'Recrutement continu',p:399,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Essai gratuit 7j',pop:true},
+      {n:'Enterprise',f:'Équipes & Chasseurs',p:799,u:'/mois',h:'Engagement 12 mois',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Contacter les Sales',dk:true}
+    ],
+    year:[
+      {n:'Starter',f:'Besoins ponctuels',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · Économie 360 €',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Économiser 20%'},
+      {n:'Pro',f:'Recrutement continu',p:319,old:399,u:'/mois',h:'Facturé 3 828 €/an · Économie 960 €',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Économiser 20%',pop:true},
+      {n:'Enterprise',f:'Équipes & Chasseurs',p:639,old:799,u:'/mois',h:'Facturé 7 668 €/an · Économie 1920 €',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Économiser 20%',dk:true}
+    ]
+  },
+  rec_old:{
+    month:[
+      {n:'Starter',f:'Petite équipe',p:149,u:'/mois',h:'Sans engagement',feats:['3 postes actifs','Matchs IA basiques','Filtres standards','Pipeline Kanban','Support email'],cta:'Commencer Starter'},
+      {n:'Scale',f:'Entreprise en croissance',p:399,u:'/mois',h:'Sans engagement',feats:['10 postes actifs','Accès CVthèque complet','Filtres ADN avancés','Lettres audio/vidéo','Support 24/7'],cta:'Essai 7j gratuit',pop:true},
+      {n:'Elite',f:'Chasse de tête & Grands comptes',p:899,u:'/mois',h:'Sans engagement',feats:['Postes illimités','IA prédictive sur-mesure','API + intégration ATS','CSM dédié · SLA 99,9%','Profils Platine exclusifs'],cta:"Contacter l'équipe",dk:true}
+    ],
+    year:[
+      {n:'Starter',f:'Petite équipe',p:119,old:149,u:'/mois',h:'Facturé à l\'année',feats:['3 postes actifs','Matchs IA basiques','Filtres standards','Pipeline Kanban','Support email'],cta:'Choisir Starter'},
+      {n:'Scale',f:'Entreprise en croissance',p:319,old:399,u:'/mois',h:'Facturé à l\'année',feats:['10 postes actifs','Accès CVthèque complet','Filtres ADN avancés','Lettres audio/vidéo','Support 24/7'],cta:'Économiser 20%',pop:true},
+      {n:'Elite',f:'Chasse de tête & Grands comptes',p:719,old:899,u:'/mois',h:'Facturé à l\'année',feats:['Postes illimités','IA prédictive sur-mesure','API + intégration ATS','CSM dédié · SLA 99,9%','Profils Platine exclusifs'],cta:"Contacter l'équipe"}
+    ]
+  }
+};
+let ct='cand',cb='year';
+
+function goToApp(type = ct){
+  window.location.href = type === 'rec'
+    ? 'salesforge_start.html?role=recruteur'
+    : 'salesforge_start.html?role=candidat';
+}
+
+function planSlug(name){
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace('platine', 'platine')
+    .replace(/[^a-z]/g, '');
+}
+
+function startCheckout(type, period, planName){
+  const plan = planSlug(planName);
+  window.location.href = `${API}/stripe/checkout?type=${encodeURIComponent(type)}&period=${encodeURIComponent(period)}&plan=${encodeURIComponent(plan)}`;
+}
+
+function render(){
+  const g=document.getElementById('plans');
+  if(!g)return;
+  g.innerHTML=D[ct][cb].map(p=>`<div class="plan${p.pop?' pop':''}${p.dk?' dk':''}">
+    ${p.pop?'<div class="pop-r">Le plus populaire</div>':''}
+    <div class="plan-name">${p.n}</div><div class="plan-for">${p.f}</div>
+    <div class="plan-pr">${p.old?`<span class="plan-old">${p.old}€</span>`:''}<span class="plan-p">${typeof p.p==='number'?(p.p===0?'0€':p.p+'€'):p.p}</span><span class="plan-u">${p.u}</span></div>
+    <div class="plan-h">${p.h}</div>
+    <ul class="plan-feats">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
+    <button class="plan-btn" onclick="startCheckout('${ct}','${cb}','${p.n}')">${p.cta}</button>
+  </div>`).join('');
+}
+
+function pt(b,t){
+  document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  ct=t;
+  render();
+}
+
+function bt(b,t){
+  document.querySelectorAll('.bopt').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  cb=t;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
+
