@@ -699,8 +699,10 @@ async function doOAuth(provider) {
 async function doForgot() {
   const email = document.getElementById('l-email').value.trim();
   if (!email) { showErr('auth-err', 'Entrez votre email'); return; }
-  // ------------------------------------------------------------
-  toast('Email de réinitialisation envoyé');
+  try {
+    await api('POST', '/auth/forgot-password', { email });
+    toast('Email de réinitialisation envoyé');
+  } catch(e) { showErr('auth-err', e.message); }
 }
 function goLanding() {
   window.top.location.href = new URL('../salesforge_landing.html', window.location.href).href;

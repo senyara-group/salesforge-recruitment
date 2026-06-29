@@ -503,10 +503,6 @@ button,input,textarea,select{font-family:inherit}
     <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
     Google
   </button>
-  <button class="soc-btn" onclick="doOAuth('linkedin_oidc')">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-    LinkedIn
-  </button>
 </div>
 
 <!-- HOME -->
@@ -958,7 +954,7 @@ button,input,textarea,select{font-family:inherit}
       <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div class="menu-txt">Coach IA et progression</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('test')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Refaire le test ADN</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-      <div class="menu-i" onclick="document.getElementById('cv-file-prof').click()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div class="menu-txt">Importer un nouveau CV</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="document.getElementById('cv-file-prof').click()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div class="menu-txt" id="cv-menu-label">Importer un nouveau CV</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
       <div class="menu-i" onclick="toggleAnon()"><div class="menu-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="menu-txt" id="anon-txt">Anonymat : activé</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -1042,6 +1038,7 @@ let ALL_CANDS = [], ALL_MATCHS = [];
 let THREADS = [];
 let ACTIVE_THREAD = null;
 let IS_REC = false, MR = null;
+let PENDING_CV_FILE = null;
 
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
@@ -1078,7 +1075,7 @@ async function apiUp(path, fd) {
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, { method: 'POST', headers: h, body: fd });
   const d = await r.json();
-  if (!r.ok) throw new Error(d.message || 'Erreur upload');
+  if (!r.ok) throw new Error(d.message || d.error || 'Erreur upload');
   return d;
 }
 function showErr(msg) { const e = document.getElementById('auth-err'); e.textContent = msg; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 4000); }
@@ -1102,6 +1099,22 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
+function validateCVFile(file) {
+  const okExt = /\.(pdf|doc|docx)$/i.test(file.name);
+  if (!okExt) return 'Format CV non supporte : PDF, DOC ou DOCX';
+  if (file.size > 8 * 1024 * 1024) return 'CV trop volumineux : 8 Mo maximum';
+  return '';
+}
+async function uploadCandidateCV(file) {
+  const fd = new FormData();
+  fd.append('cv', file);
+  const data = await apiUp('/candidats/cv', fd);
+  if (data.candidat) {
+    USER = { ...(USER || {}), ...data.candidat };
+    localStorage.setItem('sf_user', JSON.stringify(USER));
+  }
+  return data;
+}
 function asAxesList(axes) {
   const source = axes?.resultat?.axes || axes || {};
   return Array.isArray(source) ? source : Object.entries(source).filter(([,v]) => typeof v === 'number').map(([l,v]) => ({l,v}));
@@ -1167,7 +1180,18 @@ async function doRegister() {
     const d = await api('POST', '/auth/register', { prenom, nom, email, password, role:'candidat' });
     TOKEN = d.token; USER = d.profile || d.user;
     localStorage.setItem('sf_token', TOKEN); localStorage.setItem('sf_user', JSON.stringify(USER));
-    toast('Bienvenue ' + prenom + ' !');
+    if (PENDING_CV_FILE && TOKEN) {
+      try {
+        await uploadCandidateCV(PENDING_CV_FILE);
+        toast('Bienvenue ' + prenom + ' ! CV ajoute.');
+      } catch(e) {
+        toast('Compte cree, CV non ajoute : ' + e.message);
+      }
+    } else if (PENDING_CV_FILE) {
+      toast('Compte cree. Reconnectez-vous pour ajouter le CV.');
+    } else {
+      toast('Bienvenue ' + prenom + ' !');
+    }
     go('test');
   } catch(e) { showErr(e.message); } finally { setBtn('btn-reg', false, 'Créer mon profil commercial'); }
 }
@@ -1178,9 +1202,7 @@ async function doForgot() {
   const email = document.getElementById('l-email').value.trim();
   if (!email) { showErr('Entrez votre email'); return; }
   try {
-    // ------------------------------------------------------------
-    // await api('POST', '/auth/forgot-password', { email });
-    // ------------------------------------------------------------
+    await api('POST', '/auth/forgot-password', { email });
     toast('Email de réinitialisation envoyé');
   } catch(e) { showErr(e.message); }
 }
@@ -1196,21 +1218,21 @@ function doLogout() {
 }
 async function handleCV(input) {
   if (!input.files[0]) return;
-  const f = input.files[0]; document.getElementById('cv-fn').textContent = 'ðŸ“„ ' + f.name;
+  const f = input.files[0];
+  const error = validateCVFile(f);
+  if (error) { showErr(error); input.value = ''; return; }
+
+  PENDING_CV_FILE = f;
+  document.getElementById('cv-fn').textContent = 'CV : ' + f.name;
   const prog = document.getElementById('cv-prog'), fill = document.getElementById('cv-fill');
   prog.classList.add('on'); let w = 0;
   const iv = setInterval(() => { w += 8; fill.style.width = w + '%'; }, 150);
   try {
-    const fd = new FormData(); fd.append('cv', f);
-    // ------------------------------------------------------------
-    // const d = await apiUp('/candidats/import-cv', fd);
-    // if (d.prenom) document.getElementById('r-prenom').value = d.prenom;
-    // if (d.nom) document.getElementById('r-nom').value = d.nom;
-    // if (d.email) document.getElementById('r-email').value = d.email;
-    // ------------------------------------------------------------
+    if (TOKEN) await uploadCandidateCV(f);
     clearInterval(iv); fill.style.width = '100%';
-    setTimeout(() => { prog.classList.remove('on'); toast('CV analysé — profil pré-rempli'); }, 500);
-  } catch(e) { clearInterval(iv); prog.classList.remove('on'); toast('Erreur CV'); }
+    const msg = TOKEN ? 'CV ajoute au profil' : 'CV pret, creez votre compte pour l’ajouter';
+    setTimeout(() => { prog.classList.remove('on'); toast(msg); }, 500);
+  } catch(e) { clearInterval(iv); prog.classList.remove('on'); toast(e.message || 'Erreur CV'); }
 }
 
 // ------------------------------------------------------------
@@ -1317,7 +1339,7 @@ async function protectStreak() {
 }
 async function shareCert() {
   // ------------------------------------------------------------
-  toast('Certification partagée sur LinkedIn !');
+  toast('Certification partagee !');
 }
 async function joinCommunity() {
   // ------------------------------------------------------------
@@ -1621,6 +1643,8 @@ function renderProfile(p, a) {
   if (p.score_adn) document.getElementById('prof-cert').textContent=p.type_profil+' — Certifié SalesForge';
   if (p.motivation) document.getElementById('motiv-text').textContent=p.motivation;
   document.getElementById('anon-txt').textContent='Anonymat : '+(p.anonyme?'activé':'désactivé');
+  const cvLabel = document.getElementById('cv-menu-label');
+  if (cvLabel) cvLabel.textContent = p.axes?.meta?.cv_file_name ? 'CV : ' + p.axes.meta.cv_file_name : 'Importer un nouveau CV';
   const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
   document.getElementById('plan-n').textContent=names[a.plan]||'Freemium';
   document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
@@ -1669,9 +1693,20 @@ async function toggleAnon() {
 }
 async function updateCV(input) {
   if (!input.files[0]) return;
-  const fd=new FormData(); fd.append('cv',input.files[0]);
-  // ------------------------------------------------------------
-  toast('CV mis à jour');
+  const file = input.files[0];
+  const error = validateCVFile(file);
+  if (error) { toast(error); input.value = ''; return; }
+
+  try {
+    const data = await uploadCandidateCV(file);
+    const label = document.getElementById('cv-menu-label');
+    if (label) label.textContent = 'CV : ' + (data.cv_file_name || file.name);
+    toast('CV mis à jour');
+  } catch(e) {
+    toast(e.message || 'Erreur upload CV');
+  } finally {
+    input.value = '';
+  }
 }
 
 // ------------------------------------------------------------
