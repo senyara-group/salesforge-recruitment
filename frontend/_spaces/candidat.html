@@ -503,6 +503,10 @@ button,input,textarea,select{font-family:inherit}
     <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
     Google
   </button>
+  <button class="soc-btn" onclick="doOAuth('linkedin')">
+    <span style="font-family:'Sora',sans-serif;font-weight:900;color:#0A66C2">in</span>
+    LinkedIn
+  </button>
 </div>
 
 <!-- HOME -->
@@ -1115,6 +1119,20 @@ async function uploadCandidateCV(file) {
   }
   return data;
 }
+async function analyzeCandidateCV(file) {
+  const fd = new FormData();
+  fd.append('cv', file);
+  return apiUp('/candidats/analyse-cv', fd);
+}
+function setIfEmpty(id, value) {
+  const input = document.getElementById(id);
+  if (input && value && !input.value.trim()) input.value = value;
+}
+function applyCvAutofill(fields = {}) {
+  setIfEmpty('r-prenom', fields.prenom);
+  setIfEmpty('r-nom', fields.nom);
+  setIfEmpty('r-email', fields.email);
+}
 function asAxesList(axes) {
   const source = axes?.resultat?.axes || axes || {};
   return Array.isArray(source) ? source : Object.entries(source).filter(([,v]) => typeof v === 'number').map(([l,v]) => ({l,v}));
@@ -1228,9 +1246,11 @@ async function handleCV(input) {
   prog.classList.add('on'); let w = 0;
   const iv = setInterval(() => { w += 8; fill.style.width = w + '%'; }, 150);
   try {
+    const analysis = await analyzeCandidateCV(f);
+    applyCvAutofill(analysis.fields);
     if (TOKEN) await uploadCandidateCV(f);
     clearInterval(iv); fill.style.width = '100%';
-    const msg = TOKEN ? 'CV ajoute au profil' : 'CV pret, creez votre compte pour l’ajouter';
+    const msg = TOKEN ? 'CV ajoute au profil' : 'CV analyse, creez votre compte pour l’ajouter';
     setTimeout(() => { prog.classList.remove('on'); toast(msg); }, 500);
   } catch(e) { clearInterval(iv); prog.classList.remove('on'); toast(e.message || 'Erreur CV'); }
 }
@@ -1503,7 +1523,7 @@ async function loadMatchs() {
   try {
     ALL_MATCHS = await api('GET', '/matchs');
     renderMatchs(ALL_MATCHS);
-    renderRep([]);
+    renderRep(matchRecruiters(ALL_MATCHS));
   } catch(e) {}
 }
 function filterMatchs(f) { renderMatchs(f==='new'?ALL_MATCHS.filter(m=>m.st==='new'):f==='discussion'?ALL_MATCHS.filter(m=>m.st==='discussion'||m.st==='replied'||m.st==='pending'):ALL_MATCHS); }
@@ -1530,11 +1550,30 @@ function renderRep(reps) {
   if (!reps.length) return;
   document.getElementById('rep-sec').style.display='block';
   document.getElementById('rep-list').innerHTML=reps.map(r=>
-    `<div class="rep-item"><span style="font-size:13px;font-weight:600">${r.nom}</span><div style="display:flex;gap:2px;font-size:14px;cursor:pointer">${Array(5).fill(0).map((_,i)=>`<span onclick="rateRec('${r.nom}',${i+1})">${i<r.note?'⭐':'☆'}</span>`).join('')}</div></div>`
+    `<div class="rep-item"><span style="font-size:13px;font-weight:600">${esc(r.nom)}</span><div style="display:flex;gap:2px;font-size:14px;cursor:pointer">${Array(5).fill(0).map((_,i)=>`<span onclick='rateRec(${JSON.stringify(r.nom)},${i+1})'>${i<r.note?'⭐':'☆'}</span>`).join('')}</div></div>`
   ).join('');
 }
+function recruiterRatingsKey() { return 'sf_recruiter_ratings_' + (USER?.id || USER?.user_id || 'anon'); }
+function recruiterRatings() {
+  try { return JSON.parse(localStorage.getItem(recruiterRatingsKey()) || '{}'); }
+  catch(e) { return {}; }
+}
+function matchRecruiters(matchs) {
+  const ratings = recruiterRatings();
+  const seen = new Set();
+  return matchs.map(m => (m.s || m.t || 'Recruteur').split(' - ')[0].trim() || 'Recruteur')
+    .filter(nom => {
+      if (seen.has(nom)) return false;
+      seen.add(nom);
+      return true;
+    })
+    .map(nom => ({ nom, note: Number(ratings[nom] || 0) }));
+}
 async function rateRec(nom, note) {
-  // ------------------------------------------------------------
+  const ratings = recruiterRatings();
+  ratings[nom] = note;
+  localStorage.setItem(recruiterRatingsKey(), JSON.stringify(ratings));
+  renderRep(matchRecruiters(ALL_MATCHS));
   toast('Note enregistrée — merci !');
 }
 

@@ -8,8 +8,16 @@ function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
 }
 
+function publicError(res, error) {
+  return res.status(error.status || 400).json({ error: error.message || error });
+}
+
 function appendUnique(values = [], value) {
   return [...new Set([...values.map(String), String(value)])];
+}
+
+function removeValue(values = [], value) {
+  return values.map(String).filter((item) => item !== String(value));
 }
 
 function mergeMatching(currentMatching = {}, matching, extraMeta = {}) {
@@ -49,7 +57,7 @@ router.get('/profil', authMiddleware, async (req, res) => {
     const profil = await ensureRecruiterProfile(req.user.id);
     res.json(profil);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -78,7 +86,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -109,7 +117,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       plan_label: `Plan ${recruteur.plan || 'starter'} · ${offres.length} offres actives`,
     });
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -118,7 +126,7 @@ router.get('/questions', authMiddleware, async (req, res) => {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     res.json({ questions: recruteur.questions || [] });
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -141,7 +149,7 @@ router.post('/matching-count', authMiddleware, async (req, res) => {
 
     res.json({ count });
   } catch (error) {
-    res.status(400).json({ error: error.message || error });
+    publicError(res, error);
   }
 });
 
@@ -170,7 +178,7 @@ router.get('/pipeline', authMiddleware, async (req, res) => {
     });
     res.json(pipeline);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -187,7 +195,7 @@ router.put('/pipeline/move', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -196,11 +204,27 @@ router.post('/swipe', authMiddleware, async (req, res) => {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { candidat_id, action } = req.body;
     if (!candidat_id) return res.status(400).json({ error: 'candidat_id requis' });
+    if (!['like', 'super', 'pass'].includes(action)) {
+      return res.status(400).json({ error: 'Action de swipe invalide' });
+    }
 
-    const swipedCandidateIds = appendUnique(recruteur.matching?.meta?.swiped_candidate_ids || [], candidat_id);
+    const meta = recruteur.matching?.meta || {};
+    const swipedCandidateIds = appendUnique(meta.swiped_candidate_ids || [], candidat_id);
+    const likedCandidateIds = action === 'pass'
+      ? removeValue(meta.liked_candidate_ids || [], candidat_id)
+      : appendUnique(meta.liked_candidate_ids || [], candidat_id);
+    const passedCandidateIds = action === 'pass'
+      ? appendUnique(meta.passed_candidate_ids || [], candidat_id)
+      : removeValue(meta.passed_candidate_ids || [], candidat_id);
     const { error: seenError } = await supabase
       .from('recruteurs')
-      .update({ matching: mergeMatching(recruteur.matching, undefined, { swiped_candidate_ids: swipedCandidateIds }) })
+      .update({
+        matching: mergeMatching(recruteur.matching, undefined, {
+          swiped_candidate_ids: swipedCandidateIds,
+          liked_candidate_ids: likedCandidateIds,
+          passed_candidate_ids: passedCandidateIds,
+        }),
+      })
       .eq('id', recruteur.id);
     if (seenError) console.warn('Swipe vu non persiste:', seenError.message || seenError);
 
@@ -250,7 +274,7 @@ router.post('/swipe', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json({ match: true, ...match });
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 

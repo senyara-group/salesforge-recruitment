@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const zlib = require('zlib');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
@@ -11,6 +12,10 @@ const CV_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
 
 function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
+}
+
+function publicError(res, error) {
+  return res.status(error.status || 400).json({ error: error.message || error });
 }
 
 function sanitizeFilename(filename = 'cv.pdf') {
@@ -108,6 +113,165 @@ function validateCvFile(file) {
     error.status = 400;
     throw error;
   }
+}
+
+function cleanExtractedText(text = '') {
+  return text
+    .replace(/\u0000/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\r/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function decodeXmlEntities(text = '') {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+function extractDocxText(buffer) {
+  const eocdMin = Math.max(0, buffer.length - 65557);
+  let eocdOffset = -1;
+  for (let offset = buffer.length - 22; offset >= eocdMin; offset -= 1) {
+    if (buffer.readUInt32LE(offset) === 0x06054b50) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+  if (eocdOffset === -1) return '';
+
+  const entries = buffer.readUInt16LE(eocdOffset + 10);
+  let cursor = buffer.readUInt32LE(eocdOffset + 16);
+  const xmlTexts = [];
+
+  for (let index = 0; index < entries && cursor + 46 < buffer.length; index += 1) {
+    if (buffer.readUInt32LE(cursor) !== 0x02014b50) break;
+
+    const compression = buffer.readUInt16LE(cursor + 10);
+    const compressedSize = buffer.readUInt32LE(cursor + 20);
+    const nameLength = buffer.readUInt16LE(cursor + 28);
+    const extraLength = buffer.readUInt16LE(cursor + 30);
+    const commentLength = buffer.readUInt16LE(cursor + 32);
+    const localOffset = buffer.readUInt32LE(cursor + 42);
+    const name = buffer.slice(cursor + 46, cursor + 46 + nameLength).toString('utf8');
+
+    if (name === 'word/document.xml' || /^word\/(header|footer)\d*\.xml$/.test(name)) {
+      const localNameLength = buffer.readUInt16LE(localOffset + 26);
+      const localExtraLength = buffer.readUInt16LE(localOffset + 28);
+      const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+      const compressed = buffer.slice(dataStart, dataStart + compressedSize);
+      const raw = compression === 8
+        ? zlib.inflateRawSync(compressed)
+        : compression === 0
+          ? compressed
+          : Buffer.alloc(0);
+      const xml = raw.toString('utf8')
+        .replace(/<w:tab\/>/g, ' ')
+        .replace(/<\/w:p>/g, '\n')
+        .replace(/<[^>]+>/g, ' ');
+      xmlTexts.push(decodeXmlEntities(xml));
+    }
+
+    cursor += 46 + nameLength + extraLength + commentLength;
+  }
+
+  return cleanExtractedText(xmlTexts.join('\n'));
+}
+
+function extractPdfText(buffer) {
+  const source = buffer.toString('latin1');
+  const chunks = [];
+  const stringPattern = /\((?:\\.|[^\\)]){2,}\)/g;
+  let match;
+
+  while ((match = stringPattern.exec(source))) {
+    chunks.push(match[0]
+      .slice(1, -1)
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\n')
+      .replace(/\\t/g, ' ')
+      .replace(/\\([()\\])/g, '$1'));
+  }
+
+  const utf8Text = buffer.toString('utf8').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
+  return cleanExtractedText([...chunks, utf8Text].join('\n'));
+}
+
+function extractLegacyDocText(buffer) {
+  const latin = buffer.toString('latin1').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
+  const utf16 = buffer.toString('utf16le').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
+  return cleanExtractedText(`${latin}\n${utf16}`);
+}
+
+function extractCvText(file) {
+  const ext = path.extname(file.filename).toLowerCase();
+  try {
+    if (ext === '.docx') return extractDocxText(file.buffer);
+    if (ext === '.pdf') return extractPdfText(file.buffer);
+    if (ext === '.doc') return extractLegacyDocText(file.buffer);
+  } catch (error) {
+    console.warn('Extraction CV impossible:', error.message || error);
+  }
+  return '';
+}
+
+function titleCaseName(value = '') {
+  return value
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function guessNameFromTokens(tokens = []) {
+  const blacklist = new Set(['cv', 'resume', 'curriculum', 'vitae', 'profil', 'commercial', 'sales']);
+  const clean = tokens
+    .map((token) => token.replace(/[^a-zA-ZÀ-ÿ'-]/g, ''))
+    .filter((token) => token.length > 1 && !blacklist.has(token.toLowerCase()));
+
+  if (clean.length < 2) return {};
+  return {
+    prenom: titleCaseName(clean[0]),
+    nom: titleCaseName(clean.slice(1, 3).join(' ')),
+  };
+}
+
+function guessName(text, email, filename) {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 5 && line.length <= 70)
+    .filter((line) => !/@|https?:|www\.|\d{4,}/i.test(line));
+
+  for (const line of lines.slice(0, 12)) {
+    const words = line.split(/\s+/);
+    if (words.length >= 2 && words.length <= 4 && words.every((word) => /^[A-ZÀ-Ý][a-zA-ZÀ-ÿ'-]+$/.test(word))) {
+      return guessNameFromTokens(words);
+    }
+  }
+
+  if (email) {
+    const local = email.split('@')[0].split(/[._-]+/);
+    const fromEmail = guessNameFromTokens(local);
+    if (fromEmail.prenom && fromEmail.nom) return fromEmail;
+  }
+
+  const fromFilename = path.basename(filename, path.extname(filename)).split(/[._\-\s]+/);
+  return guessNameFromTokens(fromFilename);
+}
+
+function extractCvAutofill(file) {
+  const text = extractCvText(file);
+  const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase() || '';
+  return {
+    ...guessName(text, email, file.filename),
+    email,
+    extracted: Boolean(text),
+  };
 }
 
 async function ensureCvBucket() {
@@ -223,7 +387,17 @@ router.get('/profil', authMiddleware, async (req, res) => {
     const profil = await ensureCandidateProfile(req.user.id);
     res.json(await withFreshCvUrl(profil));
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
+  }
+});
+
+router.post('/analyse-cv', async (req, res) => {
+  try {
+    const file = await getMultipartFile(req, 'cv');
+    validateCvFile(file);
+    res.json({ fields: extractCvAutofill(file) });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
   }
 });
 
@@ -232,6 +406,7 @@ async function uploadCv(req, res) {
     const current = await ensureCandidateProfile(req.user.id);
     const file = await getMultipartFile(req, 'cv');
     validateCvFile(file);
+    const autofill = extractCvAutofill(file);
     await ensureCvBucket();
 
     const storagePath = `${req.user.id}/${Date.now()}-${file.filename}`;
@@ -259,12 +434,16 @@ async function uploadCv(req, res) {
       .from(CV_BUCKET)
       .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
 
+    const profilePatch = {
+      cv_url: signed?.signedUrl || storagePath,
+      axes: nextAxes,
+    };
+    if (autofill.prenom && !current.prenom) profilePatch.prenom = autofill.prenom;
+    if (autofill.nom && !current.nom) profilePatch.nom = autofill.nom;
+
     const { data, error } = await supabase
       .from('candidats')
-      .update({
-        cv_url: signed?.signedUrl || storagePath,
-        axes: nextAxes,
-      })
+      .update(profilePatch)
       .eq('user_id', req.user.id)
       .select('*')
       .single();
@@ -275,6 +454,7 @@ async function uploadCv(req, res) {
       message: 'CV importe',
       cv_url: signed?.signedUrl || storagePath,
       cv_file_name: file.filename,
+      cv_autofill: autofill,
       candidat: data,
     });
   } catch (error) {
@@ -315,7 +495,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -341,7 +521,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       salary: candidat.axes?.meta?.salary || '-',
     });
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -404,7 +584,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
 
     res.json(deck);
   } catch (error) {
-    res.status(400).json({ error: error.message || error });
+    publicError(res, error);
   }
 });
 

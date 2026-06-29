@@ -11,6 +11,12 @@ const authClient = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+const oauthProviders = {
+  google: 'google',
+  linkedin: process.env.LINKEDIN_OAUTH_PROVIDER || 'linkedin_oidc',
+  linkedin_oidc: 'linkedin_oidc',
+};
+
 function getSiteUrl(req) {
   return process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
 }
@@ -110,9 +116,9 @@ async function hydrateRoleProfile(profile) {
 
 router.get('/oauth/:provider', async (req, res) => {
   try {
-    const provider = req.params.provider;
+    const provider = oauthProviders[req.params.provider];
 
-    if (provider !== 'google') {
+    if (!provider) {
       return res.status(400).json({ error: 'Provider OAuth invalide' });
     }
 
