@@ -4,6 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "test": "npm run test:syntax && npm run test:static",
+    "test:syntax": "node scripts/check-syntax.js",
+    "test:static": "node scripts/check-static.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

@@ -8,6 +8,28 @@ function uniqueValues(values = []) {
   return [...new Set(values.filter(Boolean).map(String))];
 }
 
+function publicError(res, error) {
+  return res.status(error.status || 400).json({ error: error.message || error });
+}
+
+function validateOfferPayload({ titre, type, lieu }) {
+  if (!String(titre || '').trim()) {
+    const error = new Error('Titre requis');
+    error.status = 400;
+    throw error;
+  }
+  if (!String(type || '').trim()) {
+    const error = new Error('Type de contrat requis');
+    error.status = 400;
+    throw error;
+  }
+  if (!String(lieu || '').trim()) {
+    const error = new Error('Lieu requis');
+    error.status = 400;
+    throw error;
+  }
+}
+
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
@@ -62,6 +84,7 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
+    validateOfferPayload({ titre, type, lieu });
 
     const { data, error } = await supabase
       .from('offres')
@@ -81,7 +104,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -89,6 +112,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
+    validateOfferPayload({ titre, type, lieu });
 
     const { data, error } = await supabase
       .from('offres')
@@ -101,7 +125,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 
@@ -117,7 +141,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (error) return res.status(400).json({ error });
     res.json({ message: 'Offre supprimee' });
   } catch (error) {
-    res.status(400).json({ error });
+    publicError(res, error);
   }
 });
 

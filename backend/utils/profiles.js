@@ -1,5 +1,26 @@
 const supabase = require('../supabase');
 
+async function getUserRole(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.role || null;
+}
+
+async function assertRole(userId, expectedRole) {
+  const role = await getUserRole(userId);
+  if (role && role !== expectedRole) {
+    const error = new Error(`Acces reserve aux profils ${expectedRole}s`);
+    error.status = 403;
+    throw error;
+  }
+  return role;
+}
+
 async function getProfileByUser(table, userId) {
   const { data, error } = await supabase
     .from(table)
@@ -12,6 +33,8 @@ async function getProfileByUser(table, userId) {
 }
 
 async function ensureCandidateProfile(userId) {
+  await assertRole(userId, 'candidat');
+
   const existing = await getProfileByUser('candidats', userId);
   if (existing) return existing;
 
@@ -29,6 +52,8 @@ async function ensureCandidateProfile(userId) {
 }
 
 async function ensureRecruiterProfile(userId) {
+  await assertRole(userId, 'recruteur');
+
   const existing = await getProfileByUser('recruteurs', userId);
   if (existing) return existing;
 
@@ -52,6 +77,7 @@ async function ensureRoleProfile(userId, role) {
 }
 
 module.exports = {
+  getUserRole,
   ensureCandidateProfile,
   ensureRecruiterProfile,
   ensureRoleProfile,

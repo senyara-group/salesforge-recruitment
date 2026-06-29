@@ -44,4 +44,4 @@ Les valeurs Stripe sont necessaires uniquement pour les paiements et les abonnem
 
 - `salesforge_landing.html`
 - `salesforge_start.html`
-- `salesforge_login.html`
+- `salesforge_app.html`
