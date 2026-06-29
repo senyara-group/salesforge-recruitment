@@ -69,8 +69,8 @@ function createCheckoutSession({ req, priceId, checkoutPlan, userId, plan, type,
     : {
       price_data: {
         currency: 'eur',
-        recurring: { interval: 'month' },
-        unit_amount: checkoutPlan.amount,
+        recurring: { interval: period === 'year' ? 'year' : 'month' },
+        unit_amount: period === 'year' ? checkoutPlan.amount * 12 : checkoutPlan.amount,
         product_data: { name: checkoutPlan.name },
       },
       quantity: 1,
