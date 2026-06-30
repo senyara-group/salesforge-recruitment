@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.use(cors());
@@ -29,4 +29,9 @@ app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/ai', require('./routes/ai'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Serveur sur port ${PORT}`));
+
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Serveur sur port ${PORT}`));
+}
+
+module.exports = app;
