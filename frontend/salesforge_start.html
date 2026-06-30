@@ -112,7 +112,7 @@ body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
 <script>
 const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
   ? 'http://localhost:3000/api'
-  : `${location.origin}/api`;
+  : 'https://salesforge-recruitment-production.up.railway.app/api';
 
 let selectedRole = 'candidat';
 const form = document.getElementById('start-form');
