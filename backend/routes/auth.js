@@ -148,6 +148,10 @@ async function signup(req, res) {
     return res.status(400).json({ error: 'Email et mot de passe sont requis' });
   }
 
+  if (String(password).length < 8) {
+    return res.status(400).json({ error: 'Mot de passe : 8 caracteres minimum' });
+  }
+
   const { data, error } = await authClient.auth.signUp({ email, password });
   if (error) return res.status(400).json({ error });
 

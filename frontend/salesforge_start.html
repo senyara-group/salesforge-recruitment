@@ -78,7 +78,7 @@ body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
     </div>
     <div class="field">
       <label for="password">Mot de passe</label>
-      <input id="password" type="password" autocomplete="new-password" minlength="6" required>
+      <input id="password" type="password" autocomplete="new-password" minlength="8" required>
     </div>
     <div id="recruiter-fields" class="recruiter-fields">
       <div class="field">
@@ -144,6 +144,11 @@ form.addEventListener('submit', async (event) => {
   const password = document.getElementById('password').value;
   const entreprise = document.getElementById('entreprise').value.trim();
   const secteur = document.getElementById('secteur').value.trim();
+
+  if (password.length < 8) {
+    showMessage('Mot de passe : 8 caracteres minimum');
+    return;
+  }
 
   try {
     const res = await fetch(`${API}/auth/signup`, {
