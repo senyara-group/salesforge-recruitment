@@ -13,8 +13,6 @@ const authClient = createClient(
 
 const oauthProviders = {
   google: 'google',
-  linkedin: process.env.LINKEDIN_OAUTH_PROVIDER || 'linkedin_oidc',
-  linkedin_oidc: 'linkedin_oidc',
 };
 
 function getSiteUrl(req) {
