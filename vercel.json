@@ -1,33 +1,14 @@
 {
   "version": 2,
+  "functions": {
+    "index.js": {
+      "includeFiles": "frontend/**"
+    }
+  },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/frontend/salesforge_landing.html"
-    },
-    {
-      "source": "/salesforge_landing.html",
-      "destination": "/frontend/salesforge_landing.html"
-    },
-    {
-      "source": "/salesforge_start.html",
-      "destination": "/frontend/salesforge_start.html"
-    },
-    {
-      "source": "/salesforge_app.html",
-      "destination": "/frontend/salesforge_app.html"
-    },
-    {
-      "source": "/salesforge_login.html",
-      "destination": "/frontend/salesforge_login.html"
-    },
-    {
-      "source": "/salesforge_reset.html",
-      "destination": "/frontend/salesforge_reset.html"
-    },
-    {
-      "source": "/_spaces/(.*)",
-      "destination": "/frontend/_spaces/$1"
+      "source": "/(.*)",
+      "destination": "/index.js"
     }
   ]
 }
