@@ -101,18 +101,26 @@ async function getMultipartFile(req, fieldName) {
   throw error;
 }
 
-function validateCvFile(file) {
+function validateProfileDocument(file, label = 'CV') {
   const ext = path.extname(file.filename).toLowerCase();
   if (!CV_EXTENSIONS.has(ext)) {
-    const error = new Error('Format CV non supporte. Utilisez PDF, DOC ou DOCX.');
+    const error = new Error(`Format ${label} non supporte. Utilisez PDF, DOC ou DOCX.`);
     error.status = 400;
     throw error;
   }
   if (!file.buffer.length) {
-    const error = new Error('CV vide');
+    const error = new Error(`${label} vide`);
     error.status = 400;
     throw error;
   }
+}
+
+function validateCvFile(file) {
+  validateProfileDocument(file, 'CV');
+}
+
+function validateMotivationFile(file) {
+  validateProfileDocument(file, 'lettre de motivation');
 }
 
 function cleanExtractedText(text = '') {
@@ -294,14 +302,25 @@ async function ensureCvBucket() {
 async function withFreshCvUrl(profile) {
   const cvPath = profile?.axes?.meta?.cv_path;
   const cvBucket = profile?.axes?.meta?.cv_bucket || CV_BUCKET;
-  if (!cvPath) return profile;
+  const motivationPath = profile?.axes?.meta?.motivation_path;
+  const motivationBucket = profile?.axes?.meta?.motivation_bucket || CV_BUCKET;
+  let nextProfile = profile;
 
-  const { data, error } = await supabase.storage
-    .from(cvBucket)
-    .createSignedUrl(cvPath, 60 * 60 * 24 * 7);
+  if (cvPath) {
+    const { data, error } = await supabase.storage
+      .from(cvBucket)
+      .createSignedUrl(cvPath, 60 * 60 * 24 * 7);
+    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, cv_url: data.signedUrl };
+  }
 
-  if (error || !data?.signedUrl) return profile;
-  return { ...profile, cv_url: data.signedUrl };
+  if (motivationPath) {
+    const { data, error } = await supabase.storage
+      .from(motivationBucket)
+      .createSignedUrl(motivationPath, 60 * 60 * 24 * 7);
+    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, motivation_url: data.signedUrl };
+  }
+
+  return nextProfile;
 }
 
 function normalizeAxes(axes) {
@@ -462,26 +481,80 @@ async function uploadCv(req, res) {
   }
 }
 
+async function uploadMotivation(req, res) {
+  try {
+    const current = await ensureCandidateProfile(req.user.id);
+    const file = await getMultipartFile(req, 'motivation');
+    validateMotivationFile(file);
+    await ensureCvBucket();
+
+    const storagePath = `${req.user.id}/motivation-${Date.now()}-${file.filename}`;
+    const { error: uploadError } = await supabase.storage
+      .from(CV_BUCKET)
+      .upload(storagePath, file.buffer, {
+        contentType: file.contentType,
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const nextAxes = {
+      ...(current.axes || {}),
+      meta: {
+        ...(current.axes?.meta || {}),
+        motivation_bucket: CV_BUCKET,
+        motivation_path: storagePath,
+        motivation_file_name: file.filename,
+        motivation_uploaded_at: new Date().toISOString(),
+      },
+    };
+
+    const { data: signed } = await supabase.storage
+      .from(CV_BUCKET)
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
+
+    const { data, error } = await supabase
+      .from('candidats')
+      .update({ axes: nextAxes })
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      message: 'Lettre de motivation importee',
+      motivation_url: signed?.signedUrl || storagePath,
+      motivation_file_name: file.filename,
+      candidat: data,
+    });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
+  }
+}
+
 router.post('/cv', authMiddleware, uploadCv);
 router.post('/import-cv', authMiddleware, uploadCv);
+router.post('/motivation', authMiddleware, uploadMotivation);
 
 router.put('/profil', authMiddleware, async (req, res) => {
   try {
     await ensureCandidateProfile(req.user.id);
 
     const current = await ensureCandidateProfile(req.user.id);
-    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme } = req.body;
+    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label } = req.body;
     const nextAxes = axes === undefined
       ? current.axes
       : {
         ...(current.axes || {}),
         ...(axes || {}),
       };
-    if (motivation !== undefined || anonyme !== undefined) {
+    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined) {
       nextAxes.meta = {
         ...(current.axes?.meta || {}),
         ...(motivation !== undefined ? { motivation } : {}),
         ...(anonyme !== undefined ? { anonyme } : {}),
+        ...(avatar_label !== undefined ? { avatar_label } : {}),
       };
     }
 

@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#F6F8FC;--w:#fff;--ink:#08152A;--muted:#506070;--bd:#E2E8F2;--b:#1449D8;--b2:#0F3BAD;--bs:#ECF1FD;--d:#C0333A;--g:#0A9460}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:22px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;display:grid;place-items:center;padding:22px}
 body.recruteur-theme{background:linear-gradient(160deg,#0F3BAD 0%,#1449D8 48%,#ECF1FD 100%)}
 .card{width:min(440px,100%);background:var(--w);border:1px solid var(--bd);border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(8,21,42,.08)}
 body.recruteur-theme .card{background:#1449D8;border-color:rgba(255,255,255,.22);box-shadow:0 28px 80px rgba(8,21,42,.25);color:#fff}
@@ -56,10 +56,24 @@ body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
 .msg{display:none;border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.45;margin-bottom:14px}
 .msg.error{display:block;background:#FBEAEA;color:var(--d);border:1px solid #F2C4C7}
 .msg.ok{display:block;background:#E4F5EF;color:var(--g);border:1px solid #BFE6D4}
+.confirm-mail{display:none;text-align:center}
+.confirm-mail.on{display:block}
+.confirm-ico{width:58px;height:58px;border-radius:18px;background:var(--bs);color:var(--b);display:grid;place-items:center;margin:0 auto 18px;font-family:'Sora',sans-serif;font-weight:900;font-size:26px}
+.confirm-mail h2{font-family:'Sora',sans-serif;font-size:23px;letter-spacing:-.6px;margin-bottom:8px}
+.confirm-mail p{margin-bottom:18px}
+@media (max-width:380px){
+  body{padding:14px}
+  .card{padding:22px 18px;border-radius:16px}
+  h1{font-size:22px}
+  .role{grid-template-columns:1fr}
+}
+@media (max-height:720px){
+  body{place-items:start center}
+}
 </style>
 </head>
 <body>
-<main class="card">
+<main class="card" id="start-card">
   <a class="brand" href="salesforge_landing.html"><span class="mark">S</span><span class="logo">Sales<b>Forge</b></span></a>
   <h1>Commencer</h1>
   <p>Choisis ton profil, puis cree ton compte SalesForge.</p>
@@ -104,6 +118,13 @@ body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
   <a class="secondary" href="salesforge_app.html?login=1">J'ai déjà un compte</a>
   <a class="back" href="salesforge_landing.html">Retour a l'accueil</a>
 </main>
+<section class="card confirm-mail" id="confirm-mail">
+  <div class="confirm-ico">✓</div>
+  <h2>Confirmez votre email</h2>
+  <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
+  <a class="btn" href="salesforge_app.html?login=1">Se connecter</a>
+  <a class="back" href="salesforge_landing.html">Retour a l'accueil</a>
+</section>
 
 <script>
 const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -113,6 +134,8 @@ const API = location.protocol === 'file:' || location.hostname === 'localhost' |
 let selectedRole = 'candidat';
 const form = document.getElementById('start-form');
 const message = document.getElementById('message');
+const startCard = document.getElementById('start-card');
+const confirmMail = document.getElementById('confirm-mail');
 
 function setRole(role){
   selectedRole = role;
@@ -127,6 +150,11 @@ function setRole(role){
 function showMessage(text, type = 'error'){
   message.className = `msg ${type}`;
   message.textContent = text;
+}
+
+function showConfirmMail(){
+  startCard.style.display = 'none';
+  confirmMail.classList.add('on');
 }
 
 function socialLogin(provider){
@@ -158,9 +186,9 @@ form.addEventListener('submit', async (event) => {
       showMessage(error);
       return;
     }
-    if (data.token) localStorage.setItem('sf_token', data.token);
-    localStorage.setItem('sf_onboarding_role', data.profile?.role || selectedRole);
-    window.location.href = 'salesforge_app.html';
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_onboarding_role');
+    showConfirmMail();
   } catch (error) {
     showMessage('Creation impossible. Verifie que le serveur est lance.');
   }
