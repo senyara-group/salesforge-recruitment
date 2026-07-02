@@ -139,12 +139,39 @@ footer{background:var(--ink);padding:50px 5% 24px}
 .fc2 h5{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.35);margin-bottom:12px}
 .fc2 ul{list-style:none;display:flex;flex-direction:column;gap:7px}
 .fc2 li{font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:.15s}.fc2 li:hover{color:#fff}
+.fc2 a{color:inherit;text-decoration:none}
 .fb{padding-top:22px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .fc3{font-size:12px;color:rgba(255,255,255,.3)}
 .socs{display:flex;gap:8px}
 .soc{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid rgba(255,255,255,.1)}
 .soc:hover{background:var(--b);border-color:var(--b)}
 .soc svg{width:16px;height:16px;fill:rgba(255,255,255,.6)}.soc:hover svg{fill:#fff}
+@media(max-width:520px){
+  nav{height:auto;min-height:58px;padding:10px 16px;gap:12px}
+  .logo-t{font-size:15px}
+  .nav-cta{gap:6px}
+  .btn-ghost,.btn-p{padding:8px 11px;font-size:12px}
+  .hero{padding:46px 16px 40px}
+  h1{letter-spacing:-.8px}
+  .hero-sub{line-height:1.65}
+  .hero-btns .btn{width:100%}
+  .hero-trust{gap:10px;margin-bottom:32px}
+  .devices{gap:14px}
+  .device{width:min(100%,292px)}
+  .dev-screen{width:100%;height:430px}
+  .metrics,.s,footer{padding-left:16px;padding-right:16px}
+  .s{padding-top:54px;padding-bottom:54px}
+  .mg{gap:16px}
+  .fc,.testi,.plan{padding:20px}
+  .pricing-ctrl{margin-bottom:20px}
+  .ptabs,.bsw{width:100%}
+  .ptab,.bopt{flex:1;padding-left:10px;padding-right:10px}
+  .cta-b{margin:0 16px 56px;padding:40px 18px;border-radius:16px}
+  .cta-bb .btn-w,.cta-bb .btn-ob{width:100%}
+}
+@media(min-width:1180px){
+  .plan{min-height:100%}
+}
 </style>
 </head>
 <body>
@@ -261,13 +288,12 @@ footer{background:var(--ink);padding:50px 5% 24px}
       <div><div class="fl3"><div class="flm">S</div>Sales<b>Forge</b></div><p class="fd">La première plateforme de recrutement sales par l'IA. Spécialisée closers, BizDev, AE et SalesTech.</p></div>
       <div class="fc2"><h5>Produit</h5><ul><li>Fonctionnalités</li><li>Tarifs</li><li>Test ADN</li><li>API</li></ul></div>
       <div class="fc2"><h5>Entreprise</h5><ul><li>À propos</li><li>Blog</li><li>Contact</li></ul></div>
-      <div class="fc2"><h5>Légal</h5><ul><li>CGU</li><li>CGV</li><li>RGPD</li></ul></div>
+      <div class="fc2"><h5>Légal</h5><ul><li><a href="salesforge_legal.html#cgu">CGU</a></li><li><a href="salesforge_legal.html#cgv">CGV</a></li><li><a href="salesforge_legal.html#rgpd">RGPD</a></li></ul></div>
     </div>
     <div class="fb">
       <div class="fc3">© 2026 SalesForge Recruitment. Tous droits réservés.</div>
       <div class="socs">
-        <div class="soc"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></div>
-        <div class="soc"><svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg></div>
+        <a class="soc" href="https://www.linkedin.com/company/salesforge-recruitment/" target="_blank" rel="noopener" aria-label="LinkedIn SalesForge Recruitment"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></a>
       </div>
     </div>
   </div>

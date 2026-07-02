@@ -58,19 +58,47 @@ function dedupeBy(items, keyGetter) {
   });
 }
 
+function latestForMatchIds(messages, matchIds = []) {
+  const ids = new Set(matchIds.map(String));
+  return messages.find((message) => ids.has(String(message.match_id)));
+}
+
 async function getMatchParticipants(matchId) {
   const { data, error } = await supabase
     .from('matchs')
-    .select('id, candidats(user_id), offres(recruteurs(user_id))')
+    .select('id, candidat_id, offre_id, candidats(user_id), offres(id, recruteur_id, recruteurs(user_id))')
     .eq('id', matchId)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
 
+  const { data: recruiterOffers, error: offersError } = await supabase
+    .from('offres')
+    .select('id')
+    .eq('recruteur_id', data.offres?.recruteur_id);
+  if (offersError) throw offersError;
+
+  const offerIds = (recruiterOffers || []).map((offre) => offre.id);
+  const { data: pairMatches, error: pairError } = offerIds.length
+    ? await supabase
+      .from('matchs')
+      .select('id, created_at')
+      .eq('candidat_id', data.candidat_id)
+      .in('offre_id', offerIds)
+      .order('created_at', { ascending: false })
+    : { data: [], error: null };
+  if (pairError) throw pairError;
+
+  const matchIds = (pairMatches || []).map((match) => match.id);
+
   return {
+    candidateId: data.candidat_id,
+    recruiterId: data.offres?.recruteur_id,
     candidateUserId: data.candidats?.user_id,
     recruiterUserId: data.offres?.recruteurs?.user_id,
+    matchIds: matchIds.length ? matchIds : [data.id],
+    canonicalMatchId: matchIds[0] || data.id,
   };
 }
 
@@ -83,7 +111,9 @@ async function ensureMatchAccess(matchId, userId) {
     throw error;
   }
 
-  const allowed = [participants.candidateUserId, participants.recruiterUserId].includes(userId);
+  const allowed = [participants.candidateUserId, participants.recruiterUserId]
+    .map(String)
+    .includes(String(userId));
   if (!allowed) {
     const error = new Error('Conversation non autorisee');
     error.status = 403;
@@ -122,12 +152,16 @@ router.get('/threads', authMiddleware, async (req, res) => {
 
       threads = dedupeBy(matchs, (match) => match.candidats?.id).map((match) => {
         const candidat = match.candidats || {};
-        const latest = byMatch[match.id];
+        const matchIds = matchs
+          .filter((item) => String(item.candidats?.id) === String(candidat.id))
+          .map((item) => item.id);
+        const latest = latestForMatchIds(messages, matchIds) || byMatch[match.id];
         const name = [candidat.prenom, candidat.nom ? `${candidat.nom.slice(0, 1)}.` : ''].filter(Boolean).join(' ') || 'Candidat';
         const mine = latest?.sender_id === req.user.id;
         return {
           id: match.id,
           match_id: match.id,
+          match_ids: matchIds,
           receiver_id: candidat.user_id,
           av: initials(name),
           bg: '#1340E0',
@@ -147,14 +181,18 @@ router.get('/threads', authMiddleware, async (req, res) => {
       if (matchsError) return res.status(400).json({ error: matchsError });
       coveredMatchIds = new Set(matchs.map((match) => match.id));
 
-      threads = matchs.map((match) => {
+      threads = dedupeBy(matchs, (match) => match.offres?.recruteurs?.user_id).map((match) => {
         const recruteur = match.offres?.recruteurs || {};
-        const latest = byMatch[match.id];
+        const matchIds = matchs
+          .filter((item) => String(item.offres?.recruteurs?.user_id) === String(recruteur.user_id))
+          .map((item) => item.id);
+        const latest = latestForMatchIds(messages, matchIds) || byMatch[match.id];
         const mine = latest?.sender_id === req.user.id;
         const name = recruteur.entreprise || 'Recruteur';
         return {
           id: match.id,
           match_id: match.id,
+          match_ids: matchIds,
           receiver_id: recruteur.user_id,
           av: initials(name),
           bg: '#1340E0',
@@ -192,22 +230,25 @@ router.get('/threads', authMiddleware, async (req, res) => {
 
 router.get('/thread/:matchId', authMiddleware, async (req, res) => {
   try {
-    await ensureMatchAccess(req.params.matchId, req.user.id);
+    const participants = await ensureMatchAccess(req.params.matchId, req.user.id);
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('messages')
       .select('*')
-      .eq('match_id', req.params.matchId)
       .order('created_at', { ascending: true });
+    const { data, error } = participants.matchIds.length > 1
+      ? await query.in('match_id', participants.matchIds)
+      : await query.eq('match_id', participants.matchIds[0]);
 
     if (error) return res.status(400).json({ error });
 
-    await supabase
+    const readQuery = supabase
       .from('messages')
       .update({ lu: true })
-      .eq('match_id', req.params.matchId)
       .eq('receiver_id', req.user.id)
       .eq('lu', false);
+    if (participants.matchIds.length > 1) await readQuery.in('match_id', participants.matchIds);
+    else await readQuery.eq('match_id', participants.matchIds[0]);
 
     res.json(data || []);
   } catch (error) {
@@ -225,14 +266,16 @@ router.post('/send', authMiddleware, async (req, res) => {
     if (!body || !body.trim()) return res.status(400).json({ error: 'Message vide' });
 
     const participants = await ensureMatchAccess(match_id, req.user.id);
+    let storedMatchId = match_id;
     if (participants) {
-      const expectedReceiver = participants.candidateUserId === req.user.id
+      const expectedReceiver = String(participants.candidateUserId) === String(req.user.id)
         ? participants.recruiterUserId
         : participants.candidateUserId;
 
       if (String(receiverId) !== String(expectedReceiver)) {
         return res.status(403).json({ error: 'Destinataire invalide pour ce match' });
       }
+      storedMatchId = participants.canonicalMatchId;
     }
 
     const { data, error } = await supabase
@@ -240,7 +283,7 @@ router.post('/send', authMiddleware, async (req, res) => {
       .insert({
         sender_id: req.user.id,
         receiver_id: receiverId,
-        match_id,
+        match_id: storedMatchId,
         contenu: body.trim(),
         lu: false,
       })
