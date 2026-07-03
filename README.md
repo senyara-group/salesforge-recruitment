@@ -40,6 +40,19 @@ Les valeurs obligatoires pour l'authentification et les donnees sont:
 
 Les valeurs Stripe sont necessaires uniquement pour les paiements et les abonnements.
 
+## Deploiement Vercel
+
+Le projet peut etre deploye directement sur Vercel depuis la racine du repo.
+Vercel sert les pages du dossier `frontend` et expose le backend Express via `/api`.
+
+Dans Vercel, verifier:
+
+- Root Directory: racine du repo, pas seulement `frontend`
+- Environment Variables: recopier les valeurs de `backend/.env.example`
+- `FRONTEND_URL=https://www.salesforgerecrutement.fr`
+- `OAUTH_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_app.html`
+- `PASSWORD_RESET_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_reset.html`
+
 ## Pages principales
 
 - `salesforge_landing.html`

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SalesForge — Commercial</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -65,6 +65,11 @@ button,input,textarea,select{font-family:inherit}
 .or-div::before,.or-div::after{content:'';flex:1;height:1px;background:var(--bd)}
 .soc-btn{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--w);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:7px;transition:.15s}
 .soc-btn:hover{background:var(--bg)}
+.confirm-mail{display:none;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:22px 16px;margin-top:12px}
+.confirm-mail.on{display:block}
+.confirm-ico{width:56px;height:56px;border-radius:16px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Sora',sans-serif;font-weight:900;font-size:26px}
+.confirm-mail h2{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.6px;margin-bottom:8px}
+.confirm-mail p{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:16px}
 .cv-drop{border:2px dashed var(--bd2);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px}
 .cv-drop:hover{border-color:var(--b);background:var(--bs)}
 .cv-drop svg{width:28px;height:28px;stroke:var(--mu);fill:none;stroke-width:1.5;margin:0 auto 8px;display:block}
@@ -129,6 +134,15 @@ button,input,textarea,select{font-family:inherit}
 .skill-score{text-align:right;flex-shrink:0}
 .skill-score-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--b)}
 .skill-score-l{font-size:10px;color:var(--mu);font-weight:600}
+.doc-list{display:flex;flex-direction:column;gap:9px}
+.doc-item{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit;transition:.15s}
+.doc-item:hover{border-color:var(--bm);background:var(--bs)}
+.doc-num{width:34px;height:34px;border-radius:10px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:900;flex-shrink:0}
+.doc-info{flex:1;min-width:0}
+.doc-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;line-height:1.3}
+.doc-meta{font-size:11px;color:var(--ink3);margin-top:2px}
+.doc-open{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex-shrink:0}
+.doc-open svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 .bench-card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
 .bench-wrap{position:relative;height:8px;background:var(--bd);border-radius:4px;margin:12px 0 8px}
 .bench-bar{height:100%;background:linear-gradient(90deg,var(--g),var(--b));border-radius:4px}
@@ -147,17 +161,15 @@ button,input,textarea,select{font-family:inherit}
 
 /* SWIPE */
 .swipe-hd{padding:12px 18px;background:var(--w);border-bottom:1px solid var(--bd);position:sticky;top:59px;z-index:40}
-.filter-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;margin-top:9px}
-.filter-row::-webkit-scrollbar{display:none}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .fp{flex-shrink:0;padding:5px 11px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;white-space:nowrap;transition:.15s}
 .fp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.auto-note{display:flex;align-items:center;gap:6px;background:var(--gs);border-radius:9px;padding:8px 12px;margin:9px 18px 0;font-size:12px;font-weight:600;color:var(--g)}
-.auto-note svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0}
 .deck-area{position:relative;height:calc(100dvh - 285px);min-height:440px;max-height:570px;margin:12px 18px 0}
-.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(9,20,34,.07);will-change:transform}
-.swipe-card:nth-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
-.swipe-card:nth-child(3){transform:scale(.926) translateY(20px);z-index:0;pointer-events:none;opacity:.75}
-.swipe-card:nth-child(n+4){display:none}.swipe-card:first-child{z-index:10}
+.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(9,20,34,.07);will-change:transform;z-index:0}
+.swipe-card.swiping{pointer-events:none}
+.swipe-card:nth-last-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
+.swipe-card:nth-last-child(3){transform:scale(.926) translateY(20px);z-index:0;pointer-events:none;opacity:.75}
+.swipe-card:nth-last-child(n+4){display:none}.swipe-card:last-child{z-index:10}
 .sw-lbl{position:absolute;top:20px;padding:8px 15px;border:3px solid;border-radius:12px;font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:.8px;opacity:0;pointer-events:none;z-index:20;text-transform:uppercase;transition:opacity .1s}
 .sw-lbl.like{left:18px;color:var(--g);border-color:var(--g);transform:rotate(-13deg)}
 .sw-lbl.pass{right:18px;color:var(--r);border-color:var(--r);transform:rotate(13deg)}
@@ -265,7 +277,9 @@ button,input,textarea,select{font-family:inherit}
 .p-opt{padding:10px 11px;border:1.5px solid var(--bd);background:var(--w);border-radius:10px;font-size:12px;line-height:1.5;cursor:pointer;text-align:left;transition:.15s}
 .p-opt:hover{border-color:var(--bd2)}.p-opt.sel{border-color:var(--b);background:var(--bs)}
 .p-fb{margin:0 13px 13px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:11px;display:none}
-.p-fb.on{display:block}
+.pitch-answer{display:none}
+.pitch-answer.on{display:block}
+.p-fb.on{display:none}
 .pfb-l{font-size:10px;font-weight:700;color:var(--b);text-transform:uppercase;margin-bottom:5px}
 .pfb-t{font-size:12px;color:var(--ink2);line-height:1.6;margin-bottom:9px}
 .pfb-s{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
@@ -303,6 +317,14 @@ button,input,textarea,select{font-family:inherit}
 .res-tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
 .res-tp{background:rgba(255,255,255,.1);color:#fff;padding:5px 11px;border-radius:13px;font-size:11px;font-weight:600}
 .res-cta{display:flex;flex-direction:column;gap:7px}
+.res-docs{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px;margin:16px 0;text-align:left}
+.res-docs-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:#fff;margin-bottom:4px}
+.res-docs-s{font-size:12px;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:12px}
+.res-doc-actions{display:grid;grid-template-columns:1fr;gap:8px}
+.res-doc-btn{width:100%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.1);color:#fff;padding:11px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:800;cursor:pointer}
+.res-doc-btn:hover{background:rgba(255,255,255,.16)}
+.res-doc-status{display:none;margin-top:10px;font-size:12px;color:#8DFFC4;font-weight:700;text-align:center}
+.res-doc-status.on{display:block}
 
 /* CANDS & MATCHS */
 .tab-seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;margin-bottom:13px}
@@ -358,22 +380,35 @@ button,input,textarea,select{font-family:inherit}
 /* PROFIL */
 .ph{background:var(--ink);color:#fff;padding:20px 18px}
 .ph-top{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.ph-main{flex:1;min-width:0}
+.profile-edit-btn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.profile-edit-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 .ph-av{width:60px;height:60px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:20px;font-weight:900;flex-shrink:0}
 .ph-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:900}
 .ph-title{font-size:13px;color:rgba(255,255,255,.58);margin-top:2px}
 .ph-rank{display:inline-flex;align-items:center;background:rgba(19,64,224,.25);color:#B0C8FF;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;margin-top:5px}
+.ph-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.ph-badge{display:none;align-items:center;gap:5px;background:rgba(255,255,255,.09);color:#D7E4FF;border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+.ph-badge.on{display:inline-flex}
+.ph-badge.link{cursor:pointer}
+.ph-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
 .ph-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.profile-edit-panel{display:none;background:#1B2735;border:1px solid rgba(176,196,216,.28);border-radius:12px;padding:24px;margin:18px 0 18px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 16px 34px rgba(0,0,0,.16)}
+.profile-edit-panel.on{display:block}
+.profile-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:28px}
+.profile-edit-field input{width:100%;min-height:42px;border:1px solid rgba(176,196,216,.28);background:#263240;color:#fff;text-align:center;font-size:16px;font-weight:800;outline:none;padding:10px 14px;border-radius:9px}
+.profile-edit-field input::placeholder{color:rgba(255,255,255,.75)}
+.profile-edit-field input:focus{border-color:rgba(255,255,255,.48);background:#2D3948;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.profile-edit-actions{display:flex;flex-direction:column;align-items:center;gap:12px}
+.profile-edit-actions .btn{width:min(420px,100%);min-height:44px;border:1px solid rgba(176,196,216,.32);background:#34404E;color:#fff;padding:11px 16px;font-size:15px;font-weight:900;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,.14)}
+.profile-edit-actions .upload-btn:hover{background:#3B4858;border-color:rgba(255,255,255,.32)}
+.profile-edit-actions .save-btn{margin-top:8px;background:var(--b);border-color:var(--b);box-shadow:0 10px 22px rgba(19,64,224,.28)}
 .phs-v{font-family:'Sora',sans-serif;font-size:21px;font-weight:900}
 .phs-l{font-size:10px;color:rgba(255,255,255,.48);text-transform:uppercase;margin-top:2px;font-weight:600}
 .anon-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(6,148,88,.2);color:#5EFFA5;padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:9px}
 .card-sec{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:9px}
 .card-sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .card-sec-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:800}
-.motiv-tabs{display:flex;gap:5px;margin-bottom:11px}
-.motiv-tab{padding:7px 12px;border:1.5px solid var(--bd);border-radius:8px;background:var(--w);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:.15s;color:var(--ink3)}
-.motiv-tab svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
-.motiv-tab.on{background:var(--b);color:#fff;border-color:var(--b)}
-.motiv-content{font-size:13px;color:var(--ink2);line-height:1.7;background:var(--bg);border-radius:9px;padding:12px;min-height:60px}
 .motiv-rec{text-align:center;padding:17px;background:var(--bg);border-radius:9px;display:none}
 .motiv-rec.on{display:block}
 .rec-btn{width:50px;height:50px;border-radius:50%;background:var(--r);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
@@ -400,9 +435,8 @@ button,input,textarea,select{font-family:inherit}
 .bill-opt{padding:7px 15px;font-size:13px;font-weight:700;color:var(--mu);border:none;background:none;cursor:pointer;border-radius:7px;transition:.15s}
 .bill-opt.on{background:var(--w);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .bill-save{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px}
-.plans-row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:16px 18px 4px;scroll-snap-type:x mandatory}
-.plans-row::-webkit-scrollbar{display:none}
-.plan-card{flex-shrink:0;width:calc(100vw - 76px);max-width:290px;background:var(--w);border:1.5px solid var(--bd);border-radius:16px;padding:20px 17px;scroll-snap-align:center;position:relative;display:flex;flex-direction:column}
+.plans-row{display:grid;grid-template-columns:1fr;gap:12px;padding:16px 18px 24px}
+.plan-card{width:100%;background:var(--w);border:1.5px solid var(--bd);border-radius:16px;padding:20px 17px;position:relative;display:flex;flex-direction:column}
 .plan-card.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}.plan-card.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
 .pop-ribbon{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--b);color:#fff;font-size:10px;font-weight:700;padding:3px 11px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
 .pc-n{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;margin-bottom:3px}
@@ -447,6 +481,156 @@ button,input,textarea,select{font-family:inherit}
 .sh-actions{display:flex;flex-direction:column;gap:7px}
 .toast{position:fixed;top:17px;left:50%;transform:translate(-50%,-120px);background:var(--ink);color:#fff;padding:10px 17px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .toast.on{transform:translate(-50%,0)}
+
+@media (max-width:380px){
+  body{font-size:13px}
+  .topbar{padding:10px 12px}
+  .logo-n{font-size:14px}
+  .ib{width:32px;height:32px}
+  .sec,.home-hero,.ph,.pricing-hd{padding-left:14px;padding-right:14px}
+  .hscroll{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}
+  .score-ring{width:60px;height:60px}
+  .kpi{padding:10px}
+  .kpi-v{font-size:20px}
+  .swipe-hd{top:54px;padding:10px 14px}
+  .filter-row{gap:5px}
+  .fp{padding:5px 9px;font-size:10px}
+  .deck-area{margin-left:12px;margin-right:12px;min-height:410px;height:calc(100dvh - 270px)}
+  .deck-actions{padding:10px 12px;gap:9px}
+  .card-title,.cand-name{font-size:16px}
+  .compat-axes,.card-ai-axes,.res-axes{grid-template-columns:1fr}
+  .ph-top{align-items:flex-start}
+  .ph-av{width:54px;height:54px;font-size:18px}
+  .ph-stats{gap:6px}
+  .phs-v{font-size:19px}
+  .profile-edit-panel{padding:16px 12px}
+  .profile-edit-grid{grid-template-columns:1fr;gap:10px;margin-bottom:18px}
+  .profile-edit-actions .btn{font-size:13px}
+  .plans-row{padding-left:14px;padding-right:14px}
+  .bottom-sheet{padding-left:16px;padding-right:16px}
+  .toast{width:calc(100% - 28px);text-align:center}
+}
+
+@media (min-width:720px){
+  body{background:var(--bg)}
+  .app{width:100%;max-width:none;box-shadow:none;min-height:100dvh}
+  .bnav,.overlay{max-width:none}
+  .topbar,.swipe-hd{padding-left:26px;padding-right:26px}
+  .sec,.home-hero,.ph,.pricing-hd{padding-left:28px;padding-right:28px}
+  .hscroll{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+  #p-auth{max-width:460px;margin:0 auto;background:transparent}
+  .page.on:not(#p-auth){background:var(--bg);min-height:calc(100dvh - 59px)}
+  .home-hero{padding-top:24px;background:var(--w);border:1px solid var(--bd);border-radius:16px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
+  .doc-list,.tr-list,.adn-bars,.menu-list,.plan-banner,.card-sec,.match-engine,.q-preset-card,.score-card,.chat-panel{max-width:none;margin-left:0;margin-right:0}
+  #p-home.page.on{display:grid;grid-template-columns:minmax(330px,440px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
+  #p-home .home-hero{grid-row:span 2;padding:22px}
+  #p-home>.sec{padding:0}
+  #p-home .adn-bars,#p-home .tr-list{background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:16px}
+  #p-coaching.page.on{padding:24px 28px 96px}
+  #p-coaching>.sec{padding:0}
+  #p-coaching .doc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-pricing.page.on{padding:24px 28px 96px}
+  #p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec{padding:0}
+  #p-test .test-body{max-width:none;padding-left:0;padding-right:0}
+  #p-test .test-sticky{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+  #cands-list,#matchs-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
+  #p-profile.page.on{display:grid;grid-template-columns:minmax(360px,500px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
+  #p-profile .ph{border-radius:18px;padding:28px;position:sticky;top:83px;align-self:start}
+  #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
+  #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
+  #p-swipe.page.on{display:grid;grid-template-columns:minmax(340px,1fr) minmax(440px,560px) minmax(220px,.8fr);gap:24px;padding:0 28px 96px;align-items:start}
+  #p-swipe .swipe-hd{grid-column:1/-1;margin:0 -28px}
+  #p-swipe .deck-area{grid-column:2;width:100%;height:min(660px,calc(100dvh - 220px));margin:18px 0 0}
+  #p-swipe .deck-actions{grid-column:2;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
+  .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
+}
+
+@media (min-width:1080px){
+  .app{max-width:none}
+  .bnav,.overlay{max-width:none}
+  .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
+  #p-home.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
+  #p-home .home-hero{grid-row:span 1}
+  #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #cands-list,#matchs-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #p-profile.page.on{grid-template-columns:minmax(420px,34vw) minmax(0,1fr)}
+  #p-profile>.sec{grid-template-columns:1.2fr .8fr}
+  #p-profile .card-sec{grid-row:span 2}
+  #p-profile .menu-list{align-self:start}
+  #p-swipe.page.on{grid-template-columns:minmax(260px,1fr) minmax(500px,620px) minmax(260px,1fr);padding-left:42px;padding-right:42px}
+  #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
+  #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
+  .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
+}
+
+@media (min-width:720px){
+  .page.on:not(#p-auth){display:block;padding-bottom:96px}
+  .home-hero,.ph{border-radius:0;border:none}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding:0 0 96px}
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec,#p-profile>.sec{padding:22px 42px}
+  #p-home .home-hero{padding:34px 42px}
+  .score-card,.adn-bars,.tr-list,.doc-list,.card-sec,.plan-banner,.menu-list,.chat-panel{width:100%;max-width:none}
+  .score-card{padding:22px;gap:18px}
+  .score-ring{width:86px;height:86px}
+  .score-ring svg{width:86px;height:86px}
+  .score-v{font-size:28px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{padding:18px}
+  .kpi-v{font-size:30px}
+  .sec-t{font-size:18px}
+  .adn-bars,#home-cands,#cands-list,#matchs-list,#msgs-list{display:flex;flex-direction:column;gap:12px}
+  #p-coaching .doc-list{display:flex;flex-direction:column;gap:12px}
+  .doc-item,.tr-item,.match-item,.msg-th,.menu-i{padding:17px 18px}
+  .doc-title,.tr-title,.mi-t,.msg-n,.card-sec-t{font-size:16px}
+  .doc-meta,.tr-sub,.mi-s,.msg-prev{font-size:14px}
+  #p-profile .ph{position:static;padding:38px 42px}
+  #p-profile>.sec{display:block}
+  .ph-top{gap:20px}
+  .ph-av{width:82px;height:82px;font-size:28px}
+  .ph-name{font-size:26px}
+  .ph-title{font-size:17px}
+  .ph-rank,.ph-badge{font-size:12px}
+  .ph-stats{margin-top:20px}
+  .phs-v{font-size:32px}
+  .phs-l{font-size:12px}
+  .profile-edit-panel{max-width:none;padding:28px 24px;margin-top:22px;margin-bottom:22px}
+  .profile-edit-grid{gap:28px;margin-bottom:28px}
+  .profile-edit-field input{min-height:48px;font-size:17px}
+  .profile-edit-actions .btn{width:min(420px,100%);min-height:48px;font-size:16px}
+  #p-swipe.page.on{display:block;padding:0 0 96px}
+  #p-swipe .swipe-hd{margin:0;padding:18px 42px}
+  #p-swipe .deck-area{width:min(620px,calc(100% - 84px));height:min(720px,calc(100dvh - 230px));margin:22px auto 0}
+  #p-swipe .deck-actions{width:min(620px,calc(100% - 84px));margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  .card-top{height:160px}
+  .card-title{font-size:24px}
+  .card-body{padding:18px 22px;gap:13px}
+  .plans-row{grid-template-columns:1fr;gap:16px;padding:18px 42px 28px}
+  .pricing-hd{padding:34px 42px 14px}
+  .bottom-sheet{max-width:680px}
+}
+
+@media (min-width:1180px){
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
+  #p-home .home-hero,#p-profile .ph,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(680px,calc(100% - 128px))}
+  .plans-row{padding-left:64px;padding-right:64px}
+}
+
+@media (min-width:1180px){
+  .profile-edit-panel{padding:26px 24px}
+  .profile-edit-actions .btn{width:min(460px,100%)}
+}
+
+@media (min-width:720px){
+  #p-pricing .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+}
+
+@media (min-width:1180px){
+  #p-pricing .plans-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -503,10 +687,12 @@ button,input,textarea,select{font-family:inherit}
     <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
     Google
   </button>
-  <button class="soc-btn" onclick="doOAuth('linkedin')">
-    <span style="font-family:'Sora',sans-serif;font-weight:900;color:#0A66C2">in</span>
-    LinkedIn
-  </button>
+  <div class="confirm-mail" id="confirm-mail">
+    <div class="confirm-ico">✓</div>
+    <h2>Confirmez votre email</h2>
+    <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
+    <button class="btn bp blk" onclick="showLoginAfterConfirm()">Se connecter</button>
+  </div>
 </div>
 
 <!-- HOME -->
@@ -537,23 +723,7 @@ button,input,textarea,select{font-family:inherit}
     </div>
   </div>
   <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Coach IA</div><span class="chip chip-b"><span class="chip-dot"></span>Live</span></div>
-    <div class="coach-card" onclick="go('coaching')">
-      <div class="coach-tag">Session du jour</div>
-      <div class="coach-title sf" id="coach-title-home">Chargement…</div>
-      <div class="coach-text" id="coach-text-home">Votre programme personnalisé est en cours.</div>
-      <div class="coach-btns">
-        <button class="coach-btn coach-main" onclick="event.stopPropagation();go('coaching')">Commencer</button>
-        <button class="coach-btn coach-sec" onclick="event.stopPropagation();snooze()">Plus tard</button>
-      </div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Recommandations IA</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
-    <div class="hscroll" id="insights-el"><div class="loading-state"><div class="spinner"></div></div></div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">ADN Commercial</div><button class="btn bg2 bsm" onclick="go('test')">Refaire</button></div>
+    <div class="sec-hd"><div class="sec-t sf">ADN Commercial</div></div>
     <div class="adn-bars" id="home-adn"><div class="loading-state">Passez le test ADN pour voir vos axes</div></div>
   </div>
   <div class="sec">
@@ -565,45 +735,33 @@ button,input,textarea,select{font-family:inherit}
 <!-- COACHING -->
 <div id="p-coaching" class="page">
   <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Coach IA Personnel</div><span class="chip chip-b"><span class="chip-dot"></span>Actif</span></div>
-    <div class="streak-card">
-      <div style="font-size:22px">ðŸ”¥</div>
-      <div style="flex:1"><div class="streak-v sf" id="c-streak">0 jours</div><div class="streak-l">Série en cours</div></div>
-      <button class="btn bsm" style="background:var(--golds);color:var(--gold);border:1px solid rgba(200,134,10,.2)" onclick="protectStreak()">Protéger</button>
-    </div>
-    <div class="coach-card">
-      <div class="coach-tag" id="c-mod-tag">Module du jour</div>
-      <div class="coach-title sf" id="c-mod-title">Chargement…</div>
-      <div class="coach-text" id="c-mod-text">Votre programme se prépare.</div>
-      <div class="coach-btns"><button class="coach-btn coach-main" onclick="startModule()">Commencer maintenant</button></div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Progression par compétence</div></div>
-    <div id="skills-el"><div class="loading-state"><div class="spinner"></div></div></div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Benchmark salarial</div><span class="chip chip-g">Temps réel</span></div>
-    <div class="bench-card">
-      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800" id="bench-title">Chargement…</div>
-      <div class="bench-wrap"><div class="bench-bar" id="bench-bar" style="width:0%"></div><div class="bench-marker" id="bench-mk" style="left:0"></div></div>
-      <div class="bench-labels"><span id="bench-min">—</span><span id="bench-max">—</span></div>
-      <div class="bench-you sf" id="bench-you">—</div>
-      <div class="bench-tip" id="bench-tip">—</div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Certification SalesForge</div></div>
-    <div class="cert-card">
-      <div class="cert-badge">ðŸ†</div>
-      <div class="cert-info"><div class="cert-title sf" id="cert-title">—</div><div class="cert-sub" id="cert-sub">—</div></div>
-      <button class="btn bsm" style="background:var(--golds);color:var(--gold);border:1px solid rgba(200,134,10,.2)" onclick="shareCert()">Partager</button>
-    </div>
-    <div class="community-card">
-      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px">Communauté Closers Elite</div>
-      <div class="cm-avs" id="cm-avs"></div>
-      <p style="font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:10px" id="cm-desc">Chargement…</p>
-      <button class="btn bp blk" onclick="joinCommunity()">Rejoindre la communauté</button>
+    <div class="sec-hd"><div class="sec-t sf">Document</div></div>
+    <div class="doc-list">
+      <a class="doc-item" href="../documents/1-traiter-les-objections.pdf" target="_blank" rel="noopener">
+        <div class="doc-num">1</div>
+        <div class="doc-info"><div class="doc-title">Traiter les objections</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+      </a>
+      <a class="doc-item" href="../documents/2-200-questions-qui-font-vendre.pdf" target="_blank" rel="noopener">
+        <div class="doc-num">2</div>
+        <div class="doc-info"><div class="doc-title">200 questions qui font vendre</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+      </a>
+      <a class="doc-item" href="../documents/3-neuro-vente.pdf" target="_blank" rel="noopener">
+        <div class="doc-num">3</div>
+        <div class="doc-info"><div class="doc-title">Neuro-vente</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+      </a>
+      <a class="doc-item" href="../documents/4-business-development.pdf" target="_blank" rel="noopener">
+        <div class="doc-num">4</div>
+        <div class="doc-info"><div class="doc-title">Business Development</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+      </a>
+      <a class="doc-item" href="../documents/5-account-executive.pdf" target="_blank" rel="noopener">
+        <div class="doc-num">5</div>
+        <div class="doc-info"><div class="doc-title">Account Executive</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+      </a>
     </div>
   </div>
 </div>
@@ -617,22 +775,21 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <div class="filter-row" id="filter-row">
       <button class="fp on" onclick="setFilt(this,'all')">Toutes</button>
-      <button class="fp" onclick="setFilt(this,'closer')">Closer</button>
-      <button class="fp" onclick="setFilt(this,'ae')">Account Exec.</button>
-      <button class="fp" onclick="setFilt(this,'sdr')">SDR</button>
-      <button class="fp" onclick="setFilt(this,'remote')">Remote</button>
-      <button class="fp" onclick="setFilt(this,'top')">Match +85</button>
-      <button class="fp" onclick="setFilt(this,'exclusive')">Exclusives</button>
+      <button class="fp" onclick="setFilt(this,'Closing')">Closing</button>
+      <button class="fp" onclick="setFilt(this,'Cold Calling')">Cold Calling</button>
+      <button class="fp" onclick="setFilt(this,'SaaS')">SaaS</button>
+      <button class="fp" onclick="setFilt(this,'Outbound')">Outbound</button>
+      <button class="fp" onclick="setFilt(this,'HubSpot')">HubSpot</button>
+      <button class="fp" onclick="setFilt(this,'Salesforce')">Salesforce</button>
+      <button class="fp" onclick="setFilt(this,'Négociation')">Négociation</button>
     </div>
   </div>
-  <div class="auto-note"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Swipe = candidature envoyée automatiquement avec votre lettre</div>
   <div class="deck-area" id="deck-area">
     <div id="deck-cards"></div>
     <div class="deck-empty" id="deck-empty">
       <div style="width:48px;height:48px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center;color:var(--g)"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="sf" style="font-size:16px;font-weight:800">Tout vu</div>
       <p style="font-size:13px;color:var(--ink3);max-width:220px;line-height:1.65;text-align:center">Toutes les offres compatibles ont été vues. Revenez demain.</p>
-      <button class="btn bp" onclick="reloadOffers()">Recharger</button>
     </div>
   </div>
   <div class="deck-actions">
@@ -743,7 +900,6 @@ button,input,textarea,select{font-family:inherit}
           <button class="p-opt" onclick="pp(this,'p1',1)">Si ne rien faire coûte plus cher à votre entreprise, on se reparle ?</button>
           <button class="p-opt" onclick="pp(this,'p1',2)">Qu'est-ce qui vous ferait dire dans 6 mois que c'était la bonne décision ?</button>
         </div>
-        <div class="p-fb" id="pfb1"><div class="pfb-l">Analyse IA</div><div class="pfb-t" id="pft1"></div><div class="pfb-s"><div class="pfb-sb"><div class="pfb-sv sf" id="p1a">—</div><div class="pfb-sl">Objection</div></div><div class="pfb-sb"><div class="pfb-sv sf" id="p1b">—</div><div class="pfb-sl">Intel. sit.</div></div><div class="pfb-sb"><div class="pfb-sv sf" id="p1c">—</div><div class="pfb-sl">Closing</div></div></div></div>
       </div>
       <div class="step-nav"><button class="btn bo" onclick="ns(5)">Retour</button><button class="btn bp" id="bn6" onclick="ns(7)" disabled>Continuer</button></div>
     </div>
@@ -759,7 +915,6 @@ button,input,textarea,select{font-family:inherit}
           <button class="p-opt" onclick="pp(this,'p2',1)">Parfait. Je vous montre la plateforme en live et j'adapte à votre cas.</button>
           <button class="p-opt" onclick="pp(this,'p2',2)">Qu'est-ce qui vous a poussé à chercher maintenant, et pas il y a 6 mois ?</button>
         </div>
-        <div class="p-fb" id="pfb2"><div class="pfb-l">Analyse IA</div><div class="pfb-t" id="pft2"></div><div class="pfb-s"><div class="pfb-sb"><div class="pfb-sv sf" id="p2a">—</div><div class="pfb-sl">Discovery</div></div><div class="pfb-sb"><div class="pfb-sv sf" id="p2b">—</div><div class="pfb-sl">Cadrage</div></div><div class="pfb-sb"><div class="pfb-sv sf" id="p2c">—</div><div class="pfb-sl">Posture</div></div></div></div>
       </div>
       <div class="step-nav"><button class="btn bo" onclick="ns(6)">Retour</button><button class="btn bp" id="bn7" onclick="ns(8)" disabled>Continuer</button></div>
     </div>
@@ -837,9 +992,18 @@ button,input,textarea,select{font-family:inherit}
           <p class="res-desc" id="res-desc">—</p>
           <div class="res-axes" id="res-axes"></div>
           <div class="res-tags" id="res-tags"></div>
+          <div class="res-docs">
+            <div class="res-docs-t">Complétez votre profil</div>
+            <div class="res-docs-s">Ajoutez votre CV et votre lettre de motivation pour permettre aux recruteurs de consulter directement votre profil complet.</div>
+            <div class="res-doc-actions">
+              <button class="res-doc-btn" onclick="document.getElementById('cv-file-prof').click()">Importer mon CV</button>
+              <button class="res-doc-btn" onclick="document.getElementById('motiv-file-prof').click()">Importer ma lettre de motivation</button>
+            </div>
+            <div class="res-doc-status" id="res-doc-status"></div>
+          </div>
           <div class="res-cta">
-            <button class="btn blk" style="background:#fff;color:var(--ink);padding:12px;font-family:'Sora',sans-serif;font-weight:800;border-radius:10px;cursor:pointer" onclick="go('swipe')">Découvrir mes offres sales</button>
-            <button class="btn blk" style="background:rgba(255,255,255,.1);color:#fff;padding:11px;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700" onclick="go('coaching')">Voir mon plan de progression</button>
+            <button class="btn blk" style="background:#fff;color:var(--ink);padding:12px;font-family:'Sora',sans-serif;font-weight:800;border-radius:10px;cursor:pointer" onclick="go('swipe')">Plus tard</button>
+            <button class="btn blk" style="background:rgba(255,255,255,.1);color:#fff;padding:11px;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700" onclick="go('profile')">Voir mon profil</button>
           </div>
         </div>
       </div>
@@ -905,46 +1069,38 @@ button,input,textarea,select{font-family:inherit}
   <div class="ph">
     <div class="ph-top">
       <div class="ph-av sf" id="prof-av">YS</div>
-      <div>
+      <div class="ph-main">
         <div class="ph-name sf" id="prof-name">—</div>
         <div class="ph-title" id="prof-title">—</div>
         <div class="ph-rank" id="prof-rank">—</div>
+        <div class="ph-badges">
+          <button class="ph-badge link" id="prof-cv-badge" onclick="openProfileCV()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CV intégré</button>
+          <button class="ph-badge link" id="prof-motiv-badge" onclick="openMotivationFile()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Lettre intégrée</button>
+        </div>
+      </div>
+      <button class="profile-edit-btn" onclick="toggleProfileEdit()" aria-label="Modifier le profil"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
+    </div>
+      <div class="profile-edit-panel" id="profile-edit-panel">
+      <div class="profile-edit-grid">
+        <div class="profile-edit-field"><input id="edit-nom" autocomplete="family-name" placeholder="nom"></div>
+        <div class="profile-edit-field"><input id="edit-prenom" autocomplete="given-name" placeholder="prénom"></div>
+      </div>
+      <div class="profile-edit-actions">
+        <button class="btn upload-btn" onclick="document.getElementById('cv-file-prof').click()">Importez votre cv</button>
+        <button class="btn upload-btn" onclick="document.getElementById('motiv-file-prof').click()">Importez votre lettre de motivation</button>
+        <button class="btn save-btn" onclick="saveProfileEdit()">enregistrer</button>
       </div>
     </div>
     <div class="ph-stats">
       <div><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
       <div><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
-      <div><div class="phs-v sf" id="prof-streak">—</div><div class="phs-l">Série coach</div></div>
+      <div><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
     </div>
-    <div class="anon-badge"><svg viewBox="0 0 24 24" width="12" height="12" style="stroke:currentColor;fill:none;stroke-width:2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Profil anonyme jusqu'au match</div>
   </div>
   <div class="sec">
-    <div class="cert-card" onclick="shareCert()">
-      <div class="cert-badge">ðŸ†</div>
-      <div class="cert-info"><div class="cert-title sf" id="prof-cert">—</div><div class="cert-sub">Badge officiel · 340+ recruteurs reconnus</div></div>
-      <button class="btn bsm" style="background:var(--golds);color:var(--gold);border:1px solid rgba(200,134,10,.2)">Partager</button>
-    </div>
     <div class="card-sec">
       <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
       <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
-    </div>
-    <div class="card-sec">
-      <div class="card-sec-hd"><div class="card-sec-t sf">Lettre de motivation</div><span class="chip chip-b"><span class="chip-dot"></span>ATS</span></div>
-      <div class="motiv-tabs">
-        <button class="motiv-tab on" onclick="switchMotiv(this,'text')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Écrite</button>
-        <button class="motiv-tab" onclick="switchMotiv(this,'audio')"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>Audio</button>
-        <button class="motiv-tab" onclick="switchMotiv(this,'video')"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Vidéo</button>
-      </div>
-      <div class="motiv-content" id="motiv-text" contenteditable="true" oninput="saveMotiv()">Cliquez pour éditer votre lettre de motivation…</div>
-      <div class="motiv-rec" id="motiv-rec">
-        <button class="rec-btn" id="rec-btn" onclick="toggleRec()"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></button>
-        <div style="font-size:12px;color:var(--ink3)" id="rec-tip">Appuyer pour enregistrer · 90 sec max</div>
-      </div>
-      <div class="qr-box on" id="motiv-qr">
-        <div style="width:34px;height:34px;border-radius:8px;background:var(--w);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" style="stroke:var(--b);fill:none;stroke-width:2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="10" y="10" width="4" height="4"/></svg></div>
-        <div style="flex:1"><div style="font-size:12px;font-weight:700;margin-bottom:2px">QR Code généré</div><div style="font-size:11px;color:var(--ink3)">À intégrer à votre CV ou partager</div></div>
-        <button class="btn bg2 bsm" onclick="copyQR()">Copier</button>
-      </div>
     </div>
     <div class="plan-banner" id="plan-banner">
       <div class="plan-info">
@@ -955,12 +1111,10 @@ button,input,textarea,select{font-family:inherit}
       <button onclick="go('pricing')">Upgrader</button>
     </div>
     <div class="menu-list">
-      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div class="menu-txt">Coach IA et progression</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-      <div class="menu-i" onclick="go('test')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Refaire le test ADN</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Document</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-      <div class="menu-i" onclick="document.getElementById('cv-file-prof').click()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div class="menu-txt" id="cv-menu-label">Importer un nouveau CV</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
       <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
-      <div class="menu-i" onclick="toggleAnon()"><div class="menu-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="menu-txt" id="anon-txt">Anonymat : activé</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
   </div>
@@ -985,7 +1139,7 @@ button,input,textarea,select{font-family:inherit}
 <nav class="bnav" id="bnav" style="display:none">
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
-  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span>Coach IA</span></button>
+  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Document</span></button>
   <button class="bn" id="nav-matchs" onclick="go('matchs')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span>Matchs</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
 </nav>
@@ -1030,7 +1184,7 @@ button,input,textarea,select{font-family:inherit}
 // ------------------------------------------------------------
 const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
   ? 'http://localhost:3000/api'
-  : 'https://VOTRE-BACKEND.railway.app/api';
+  : 'https://salesforge-recruitment-production.up.railway.app/api';
 
 // ------------------------------------------------------------
 // ÉTAT GLOBAL
@@ -1043,6 +1197,8 @@ let THREADS = [];
 let ACTIVE_THREAD = null;
 let IS_REC = false, MR = null;
 let PENDING_CV_FILE = null;
+let PROFILE_CV_URL = '';
+let PROFILE_MOTIVATION_URL = '';
 
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
@@ -1082,7 +1238,15 @@ async function apiUp(path, fd) {
   if (!r.ok) throw new Error(d.message || d.error || 'Erreur upload');
   return d;
 }
-function showErr(msg) { const e = document.getElementById('auth-err'); e.textContent = msg; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 4000); }
+function frError(text){
+  const msg = String(text || '').toLowerCase();
+  if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('email not confirmed')) return 'Votre email n’est pas encore confirmé.';
+  if (msg.includes('user already registered')) return 'Un compte existe déjà avec cet email.';
+  if (msg.includes('signup disabled')) return 'La création de compte est temporairement indisponible.';
+  return text || 'Une erreur est survenue.';
+}
+function showErr(msg) { const e = document.getElementById('auth-err'); e.textContent = frError(msg); e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 4000); }
 function setBtn(id, loading, txt) { const b = document.getElementById(id); if (!b) return; b.disabled = loading; b.innerHTML = loading ? '<div class="spinner"></div>' : txt; }
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2400); }
 function tabSeg(btn) { btn.parentElement.querySelectorAll('.tsb').forEach(b => b.classList.remove('on')); btn.classList.add('on'); }
@@ -1103,6 +1267,27 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
+function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
+function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
+function getLastPage() {
+  const allowed = ['home','swipe','coaching','candidatures','test','matchs','messages','profile','pricing'];
+  const page = localStorage.getItem(lastPageKey());
+  return allowed.includes(page) ? page : 'home';
+}
+function seenOffersKey() { return 'sf_seen_offer_ids_' + (USER?.id || USER?.user_id || 'anon'); }
+function localSeenOfferIds() {
+  try { return JSON.parse(localStorage.getItem(seenOffersKey()) || '[]').map(String); }
+  catch(e) { return []; }
+}
+function isOfferLocallySeen(offre) {
+  return localSeenOfferIds().includes(String(offre?.id || ''));
+}
+function markOfferLocallySeen(offre) {
+  if (!offre?.id) return;
+  const ids = new Set(localSeenOfferIds());
+  ids.add(String(offre.id));
+  localStorage.setItem(seenOffersKey(), JSON.stringify([...ids]));
+}
 function validateCVFile(file) {
   const okExt = /\.(pdf|doc|docx)$/i.test(file.name);
   if (!okExt) return 'Format CV non supporte : PDF, DOC ou DOCX';
@@ -1118,6 +1303,11 @@ async function uploadCandidateCV(file) {
     localStorage.setItem('sf_user', JSON.stringify(USER));
   }
   return data;
+}
+async function uploadMotivationFile(file) {
+  const fd = new FormData();
+  fd.append('motivation', file);
+  return apiUp('/candidats/motivation', fd);
 }
 async function analyzeCandidateCV(file) {
   const fd = new FormData();
@@ -1141,12 +1331,13 @@ function normOffre(o) {
   const co = o.co || o.recruteurs?.entreprise || 'Entreprise';
   const axes = asAxesList(o.axes);
   const score = o.m || Math.min(98, Math.max(60, Math.round((axes[0]?.v || 80) + 5)));
+  const offerTags = Array.isArray(o.tags) && o.tags.length ? o.tags : ['Closing', 'Cold Calling', 'SaaS', 'Outbound', 'HubSpot', 'Salesforce', 'Négociation'];
   return {
     id:o.id, titre:o.titre || 'Offre', co, ci:o.ci || initials(co), cc:o.cc || '#1340E0',
     sz:o.sz || o.recruteurs?.secteur || 'Recruteur SalesForge',
     lieu:o.lieu || 'A definir', type:o.type || 'CDI', g:o.g || 'g1',
     m:score, sal:o.sal || o.salaire || 'Salaire a definir', bn:o.bn || 'Donnee recruteur',
-    tags:Array.isArray(o.tags) ? o.tags : [], ai:o.ai || 'Offre synchronisee depuis Supabase.',
+    tags:offerTags, ai:o.ai || 'Offre synchronisee depuis Supabase.',
     axes: axes.length ? axes : [{l:'Fit',v:score},{l:'Drive',v:80},{l:'Closing',v:75}],
     compat:o.compat || {s:score, ax:[{l:'Culture',v:score},{l:'Rythme',v:score},{l:'Ambition',v:score},{l:'Valeurs',v:score}]},
     auto:Boolean(o.auto_candidature ?? o.auto), dur:o.dur || o.type || 'CDI', excl:Boolean(o.excl)
@@ -1158,6 +1349,7 @@ function normOffre(o) {
 // ------------------------------------------------------------
 function go(p) {
   const ui = p !== 'auth';
+  saveLastPage(p);
   document.getElementById('topbar').style.display = ui ? 'flex' : 'none';
   document.getElementById('bnav').style.display = ui ? 'flex' : 'none';
   document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
@@ -1174,8 +1366,24 @@ function go(p) {
 // ------------------------------------------------------------
 function switchTab(btn, tab) {
   document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+  const confirm = document.getElementById('confirm-mail');
+  if (confirm) confirm.classList.remove('on');
   document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'flex';
+  document.querySelector('#p-auth .soc-btn').style.display = 'flex';
+}
+function showRegisterConfirm() {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'none';
+  document.querySelector('#p-auth .soc-btn').style.display = 'none';
+  document.getElementById('confirm-mail').classList.add('on');
+}
+function showLoginAfterConfirm() {
+  const btn = document.querySelector('.auth-tab');
+  if (btn) switchTab(btn, 'login');
 }
 async function doLogin() {
   const email = document.getElementById('l-email').value.trim(), password = document.getElementById('l-pass').value;
@@ -1195,22 +1403,12 @@ async function doRegister() {
   if (password.length < 8) { showErr('Mot de passe : 8 caractères minimum'); return; }
   setBtn('btn-reg', true);
   try {
-    const d = await api('POST', '/auth/register', { prenom, nom, email, password, role:'candidat' });
-    TOKEN = d.token; USER = d.profile || d.user;
-    localStorage.setItem('sf_token', TOKEN); localStorage.setItem('sf_user', JSON.stringify(USER));
-    if (PENDING_CV_FILE && TOKEN) {
-      try {
-        await uploadCandidateCV(PENDING_CV_FILE);
-        toast('Bienvenue ' + prenom + ' ! CV ajoute.');
-      } catch(e) {
-        toast('Compte cree, CV non ajoute : ' + e.message);
-      }
-    } else if (PENDING_CV_FILE) {
-      toast('Compte cree. Reconnectez-vous pour ajouter le CV.');
-    } else {
-      toast('Bienvenue ' + prenom + ' !');
-    }
-    go('test');
+    await api('POST', '/auth/register', { prenom, nom, email, password, role:'candidat' });
+    TOKEN = null; USER = null; PENDING_CV_FILE = null;
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_user');
+    localStorage.removeItem('sf_profile');
+    showRegisterConfirm();
   } catch(e) { showErr(e.message); } finally { setBtn('btn-reg', false, 'Créer mon profil commercial'); }
 }
 async function doOAuth(provider) {
@@ -1262,17 +1460,14 @@ async function loadHome() {
   if (!USER) return;
   document.getElementById('home-name').textContent = (USER.prenom || '') + ' ' + (USER.nom || '');
   try {
-    const [profil, stats, insights, cands] = await Promise.all([
+    const [profil, stats, cands] = await Promise.all([
       api('GET', '/candidats/profil'),
       api('GET', '/candidats/stats'),
-      api('GET', '/ai/insights'),
       api('GET', '/candidatures?limit=3')
     ]);
-    renderHomeScore(profil); renderHomeKPIs(stats); renderInsights(insights);
+    renderHomeScore(profil); renderHomeKPIs(stats);
     document.getElementById('home-adn').innerHTML = adn(profil.axes);
     renderHomeCands(cands);
-    document.getElementById('coach-title-home').textContent = profil.axes?.meta?.coach_title || 'Module du jour';
-    document.getElementById('coach-text-home').textContent = profil.axes?.meta?.coach_text || '';
   } catch(e) { console.error(e); }
 }
 function renderHomeScore(p) {
@@ -1290,7 +1485,7 @@ function renderHomeKPIs(s) {
   document.getElementById('kpi-c').textContent = s.candidatures || '0';
   document.getElementById('kpi-ct').textContent = s.cands_auto ? s.cands_auto + ' auto-envoyées' : 'Aucune';
   document.getElementById('kpi-ct').className = 'kpi-t ' + (s.cands_auto > 0 ? 'tu' : 'tf');
-  document.getElementById('kpi-s').textContent = s.streak ? 'ðŸ”¥' + s.streak : '0';
+  document.getElementById('kpi-s').textContent = s.streak || '0';
   document.getElementById('kpi-sal').textContent = s.salary || '—';
 }
 function renderInsights(ins) {
@@ -1312,23 +1507,7 @@ async function snooze() {
 // COACHING
 // ------------------------------------------------------------
 async function loadCoaching() {
-  if (!USER) return;
-  try {
-    const [c, bench, comm] = await Promise.all([
-      api('GET', '/coaching/dashboard'),
-      api('GET', '/ai/benchmark-salaire'),
-      api('GET', '/community/stats')
-    ]);
-    document.getElementById('c-streak').textContent = c.streak + ' jours';
-    document.getElementById('c-mod-tag').textContent = c.module_tag;
-    document.getElementById('c-mod-title').textContent = c.module_title;
-    document.getElementById('c-mod-text').textContent = c.module_text;
-    renderSkills(c.skills.length ? c.skills : [{l:'ADN commercial',s:0,fill:'var(--bs)',ic:'var(--b)',n:0}]);
-    renderBench(bench);
-    document.getElementById('cert-title').textContent = c.cert_title;
-    document.getElementById('cert-sub').textContent = c.cert_sub;
-    renderComm(comm);
-  } catch(e) { console.error(e); }
+  return;
 }
 function renderSkills(skills) {
   document.getElementById('skills-el').innerHTML = skills.map(s =>
@@ -1373,13 +1552,13 @@ async function loadOffres() {
   DECK_IDX = 0;
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    OFFRES = (await api('GET', '/offres/deck')).map(normOffre);
+    OFFRES = (await api('GET', '/offres/deck')).map(normOffre).filter(o => !isOfferLocallySeen(o));
     applyFilter('all');
   } catch(e) { document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>'; }
 }
 function applyFilter(f) {
-  const map = { closer: o => o.titre.toLowerCase().includes('closer'), ae: o => o.titre.toLowerCase().includes('account'), sdr: o => o.titre.toLowerCase().includes('sdr'), remote: o => o.lieu.toLowerCase().includes('remote'), top: o => o.m >= 85, exclusive: o => o.excl };
-  OFFRES_F = f === 'all' ? [...OFFRES] : OFFRES.filter(map[f] || (() => true));
+  const normalized = String(f).toLowerCase();
+  OFFRES_F = f === 'all' ? [...OFFRES] : OFFRES.filter(o => o.tags.some(t => String(t).toLowerCase() === normalized));
   DECK_IDX = 0; renderDeck();
 }
 function setFilt(btn, f) { document.querySelectorAll('.fp').forEach(b => b.classList.remove('on')); btn.classList.add('on'); applyFilter(f); }
@@ -1415,19 +1594,37 @@ function buildCard(o) {
 function attachDrag(card, offre) {
   let sx=0,sy=0,cx=0,cy=0,on=false;
   const top = () => document.querySelector('#deck-cards .swipe-card:last-child');
-  const s = e => { if (card !== top()) return; on = true; const p = e.touches?e.touches[0]:e; sx=p.clientX; sy=p.clientY; card.style.transition='none'; };
-  const m = e => { if (!on) return; e.preventDefault(); const p=e.touches?e.touches[0]:e; cx=p.clientX-sx; cy=p.clientY-sy; card.style.transform=`translate(${cx}px,${cy*.35}px) rotate(${cx*.065}deg)`; const lk=card.querySelector('.sw-lbl.like'),ps=card.querySelector('.sw-lbl.pass'),su=card.querySelector('.sw-lbl.super'); if(cx>40){lk.style.opacity=Math.min((cx-40)/65,1);ps.style.opacity=0}else if(cx<-40){ps.style.opacity=Math.min((-cx-40)/65,1);lk.style.opacity=0}else{lk.style.opacity=0;ps.style.opacity=0} su.style.opacity=cy<-60?Math.min((-cy-60)/65,1):0; };
-  const e2 = e => { if (!on) return; on=false; card.style.transition='transform .35s ease,opacity .3s ease'; const pt=e.changedTouches?e.changedTouches[0]:e; const fy=(pt.clientY??sy)-sy; if(cx>88)fly(card,'r',offre);else if(cx<-88)fly(card,'l',offre);else if(fy<-88||cy<-88)fly(card,'u',offre);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
+  const point = e => e.touches?.[0] || e.changedTouches?.[0] || e;
+  const s = e => { if (card !== top()) return; if (e.cancelable) e.preventDefault(); on = true; const p = point(e); sx=p.clientX; sy=p.clientY; cx=0; cy=0; card.style.transition='none'; };
+  const m = e => {
+    if (!on) return;
+    if (e.cancelable) e.preventDefault();
+    const p=point(e); cx=p.clientX-sx; cy=p.clientY-sy;
+    const up = cy < -45 && Math.abs(cy) > Math.abs(cx) * .7;
+    card.style.transform=`translate(${cx}px,${up?cy:cy*.35}px) rotate(${cx*.065}deg)`;
+    const lk=card.querySelector('.sw-lbl.like'),ps=card.querySelector('.sw-lbl.pass'),su=card.querySelector('.sw-lbl.super');
+    if(up){su.style.opacity=Math.min((-cy-45)/75,1);lk.style.opacity=0;ps.style.opacity=0}
+    else if(cx>40){lk.style.opacity=Math.min((cx-40)/65,1);ps.style.opacity=0;su.style.opacity=0}
+    else if(cx<-40){ps.style.opacity=Math.min((-cx-40)/65,1);lk.style.opacity=0;su.style.opacity=0}
+    else{lk.style.opacity=0;ps.style.opacity=0;su.style.opacity=0}
+  };
+  const e2 = e => { if (!on) return; on=false; if (e.cancelable) e.preventDefault(); card.style.transition='transform .35s ease,opacity .3s ease'; const up = cy < -82 && Math.abs(cy) > Math.abs(cx) * .7; if(up)fly(card,'u',offre);else if(cx>82)fly(card,'r',offre);else if(cx<-82)fly(card,'l',offre);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
   card.addEventListener('mousedown',s); card.addEventListener('touchstart',s,{passive:false});
   window.addEventListener('mousemove',m); window.addEventListener('touchmove',m,{passive:false});
-  window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2);
+  window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2); window.addEventListener('touchcancel',e2);
 }
 async function fly(card, dir, offre) {
-  if (dir==='r') { card.style.transform='translateX(900px) rotate(28deg)'; await doSwipe('like',offre); }
-  else if (dir==='l') { card.style.transform='translateX(-900px) rotate(-28deg)'; await doSwipe('pass',offre); }
-  else { card.style.transform='translateY(-900px)'; await doSwipe('super',offre); }
+  card.classList.add('swiping');
+  card.style.transition=dir==='u' ? 'transform .9s cubic-bezier(.18,.82,.24,1),opacity .7s ease' : 'transform .42s cubic-bezier(.2,.8,.2,1),opacity .32s ease';
+  card.offsetHeight;
+  markOfferLocallySeen(offre);
+  const pending = dir==='r' ? doSwipe('like',offre) : dir==='l' ? doSwipe('pass',offre) : doSwipe('super',offre);
+  if (dir==='r') card.style.transform='translate3d(900px,0,0) rotate(28deg)';
+  else if (dir==='l') card.style.transform='translate3d(-900px,0,0) rotate(-28deg)';
+  else card.style.transform='translate3d(0,-115vh,0) rotate(-8deg) scale(.94)';
   card.style.opacity='0';
-  setTimeout(() => { card.remove(); DECK_IDX++; renderDeck(); }, 380);
+  try { await pending; } catch(e) { console.error(e); }
+  setTimeout(() => { card.remove(); DECK_IDX++; renderDeck(); }, dir==='u' ? 900 : 380);
 }
 async function doSwipe(action, offre) {
   try {
@@ -1472,6 +1669,8 @@ function renderCands(c) {
 // TEST ADN
 // ------------------------------------------------------------
 function ns(n) {
+  const current = getCurrentStep();
+  if (n > current && !canContinueStep(current)) return;
   for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
   const el = document.getElementById('ts'+n); if(el) el.style.display='block';
   document.getElementById('test-sl').textContent = 'Étape '+n+' sur 10';
@@ -1479,6 +1678,30 @@ function ns(n) {
   document.getElementById('test-pf').style.width = (n*10) + '%';
   if (n===10) runAnalysis();
   window.scrollTo(0,0);
+}
+function getCurrentStep() {
+  for (let i=1;i<=10;i++) {
+    const el = document.getElementById('ts'+i);
+    if (el && el.style.display !== 'none') return i;
+  }
+  return 1;
+}
+function canContinueStep(step) {
+  if ([1,2,3].includes(step) && !ADN.scenarios['s'+step]) return needAnswer();
+  if (step === 5 && ['q1','q2','q3','q4','q5'].some(q => ADN.mcq[q] === undefined)) return needAnswer();
+  if (step === 6 && ADN.pitches.p1 === undefined) return needAnswer();
+  if (step === 7 && ADN.pitches.p2 === undefined) return needAnswer();
+  if (step === 8 && !String(ADN.story || '').trim()) return needAnswer();
+  if (step === 9) {
+    const p = ADN.prefs || {};
+    const hasPrefs = ['poste','contrat','mode','secteur','taille'].some(k => Array.isArray(p[k]) && p[k].length) || Boolean(p.remun);
+    if (!hasPrefs) return needAnswer();
+  }
+  return true;
+}
+function needAnswer() {
+  toast('Répondez avant de continuer');
+  return false;
 }
 function po(btn, step, val) {
   btn.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); btn.classList.add('sel');
@@ -1488,10 +1711,12 @@ function pm(btn, key, val) { btn.closest('.mcq-os').querySelectorAll('.mcq-o').f
 function pp(btn, pid, idx) {
   btn.closest('.pitch-opts').querySelectorAll('.p-opt').forEach(o=>o.classList.remove('sel')); btn.classList.add('sel');
   ADN.pitches[pid]=idx; const data=pid==='p1'?P1[idx]:P2[idx];
-  const chat=document.getElementById('pc'+pid.slice(1)); const bub=document.createElement('div'); bub.className='bbl yo'; bub.textContent=btn.textContent.trim(); chat.appendChild(bub);
-  const fb=document.getElementById('pfb'+pid.slice(1)); fb.classList.add('on');
-  document.getElementById('pft'+pid.slice(1)).textContent=data.t;
-  document.getElementById('p'+pid.slice(1)+'a').textContent=data.a; document.getElementById('p'+pid.slice(1)+'b').textContent=data.b; document.getElementById('p'+pid.slice(1)+'c').textContent=data.c;
+  const chat=document.getElementById('pc'+pid.slice(1));
+  let bub=chat.querySelector('.bbl.yo');
+  if (!bub) { bub=document.createElement('div'); bub.className='bbl yo pitch-answer'; chat.appendChild(bub); }
+  bub.textContent=btn.textContent.trim();
+  bub.classList.add('on');
+  const fb=document.getElementById('pfb'+pid.slice(1)); if (fb) fb.classList.remove('on');
   const nb=document.getElementById('bn'+(pid==='p1'?'6':'7')); if(nb) nb.disabled=false;
 }
 function tg(btn, cat, val) { btn.classList.toggle('on'); if(!ADN.prefs[cat]) ADN.prefs[cat]=[]; if(btn.classList.contains('on')) ADN.prefs[cat].push(val); else ADN.prefs[cat]=ADN.prefs[cat].filter(v=>v!==val); }
@@ -1513,6 +1738,14 @@ function renderResult(r) {
   document.getElementById('res-type').textContent=r.type; document.getElementById('res-desc').textContent=r.desc;
   document.getElementById('res-axes').innerHTML=r.axes.map(a=>`<div class="res-ax"><div class="res-ax-v sf">${a.v}</div><div class="res-ax-l">${a.l}</div></div>`).join('');
   document.getElementById('res-tags').innerHTML=r.tags.map(t=>`<span class="res-tp">${t}</span>`).join('');
+  const st = document.getElementById('res-doc-status');
+  if (st) { st.textContent = ''; st.classList.remove('on'); }
+}
+function setResultDocStatus(text) {
+  const st = document.getElementById('res-doc-status');
+  if (!st) return;
+  st.textContent = text;
+  st.classList.add('on');
 }
 
 // ------------------------------------------------------------
@@ -1596,7 +1829,10 @@ async function openMatchThread(matchId) {
   if (!THREADS.length) {
     try { THREADS = await api('GET', '/messages/threads'); } catch(e) {}
   }
-  const thread = THREADS.find(t => String(t.match_id || t.id) === String(matchId));
+  const thread = THREADS.find(t =>
+    String(t.match_id || t.id) === String(matchId) ||
+    (Array.isArray(t.match_ids) && t.match_ids.map(String).includes(String(matchId)))
+  );
   if (thread) await openThread(thread.id, 'matchs');
   else toast('Conversation introuvable');
 }
@@ -1666,69 +1902,83 @@ async function sendThreadMessage(event) {
 async function loadProfile() {
   if (!USER) return;
   document.getElementById('prof-name').textContent=(USER.prenom||'')+' '+(USER.nom||'');
-  document.getElementById('prof-av').textContent=((USER.prenom||'?')[0]+(USER.nom||'?')[0]).toUpperCase();
   try {
     const [p, abo, stats] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/abonnements/current'), api('GET', '/candidats/stats')]);
-    renderProfile({...p, ...stats, motivation:p.axes?.meta?.motivation, anonyme:p.axes?.meta?.anonyme}, abo);
+    renderProfile({...p, ...stats}, abo);
   } catch(e) {}
 }
 function renderProfile(p, a) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
+  const avatarLabel = ((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase();
+  document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
+  document.getElementById('prof-av').textContent=avatarLabel;
   document.getElementById('prof-title').textContent=p.type_profil||'—'; document.getElementById('prof-rank').textContent=p.rank||'—';
   document.getElementById('prof-score').textContent=p.score_adn||'—'; document.getElementById('prof-matchs').textContent=p.matchs||'0';
-  document.getElementById('prof-streak').textContent=p.streak?'ðŸ”¥'+p.streak:'0';
   document.getElementById('prof-adn').innerHTML=adn(p.axes);
-  if (p.score_adn) document.getElementById('prof-cert').textContent=p.type_profil+' — Certifié SalesForge';
-  if (p.motivation) document.getElementById('motiv-text').textContent=p.motivation;
-  document.getElementById('anon-txt').textContent='Anonymat : '+(p.anonyme?'activé':'désactivé');
   const cvLabel = document.getElementById('cv-menu-label');
   if (cvLabel) cvLabel.textContent = p.axes?.meta?.cv_file_name ? 'CV : ' + p.axes.meta.cv_file_name : 'Importer un nouveau CV';
+  renderProfileCV(p);
+  renderMotivationFile(p);
   const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
   document.getElementById('plan-n').textContent=names[a.plan]||'Freemium';
   document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
+  fillProfileEdit(p, avatarLabel);
 }
-async function saveMotiv() {
-  clearTimeout(window.mt);
-  window.mt=setTimeout(async()=>{
-    const c=document.getElementById('motiv-text').textContent;
-    await api('PUT', '/candidats/profil', { motivation: c });
-  },2000);
+function fillProfileEdit(p, avatarLabel) {
+  document.getElementById('edit-prenom').value = p.prenom || '';
+  document.getElementById('edit-nom').value = p.nom || '';
+}
+function toggleProfileEdit() {
+  document.getElementById('profile-edit-panel').classList.toggle('on');
+}
+async function saveProfileEdit() {
+  const prenom = document.getElementById('edit-prenom').value.trim();
+  const nom = document.getElementById('edit-nom').value.trim();
+  try {
+    const p = await api('PUT', '/candidats/profil', { prenom, nom });
+    USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
+    localStorage.setItem('sf_user', JSON.stringify(USER));
+    document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
+    document.getElementById('prof-av').textContent=((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase();
+    document.getElementById('profile-edit-panel').classList.remove('on');
+    toast('Profil mis à jour');
+  } catch(e) {
+    toast(e.message || 'Erreur profil');
+  }
+}
+function renderProfileCV(p) {
+  const name = p.axes?.meta?.cv_file_name;
+  PROFILE_CV_URL = p.cv_url || '';
+  const badge = document.getElementById('prof-cv-badge');
+  badge.classList.toggle('on', Boolean(name || PROFILE_CV_URL));
+  badge.title = name || 'CV intégré';
+}
+function openProfileCV() {
+  if (!PROFILE_CV_URL) return toast('CV indisponible');
+  window.open(PROFILE_CV_URL, '_blank', 'noopener');
+}
+function renderMotivationFile(p) {
+  const name = p.axes?.meta?.motivation_file_name;
+  PROFILE_MOTIVATION_URL = p.motivation_url || '';
+  const badge = document.getElementById('prof-motiv-badge');
+  badge.classList.toggle('on', Boolean(name || PROFILE_MOTIVATION_URL));
+  badge.title = name || 'Lettre intégrée';
+  const label = document.getElementById('motiv-menu-label');
+  if (label) label.textContent = name ? 'Lettre : ' + name : 'Importer une lettre de motivation';
+}
+function openMotivationFile() {
+  if (!PROFILE_MOTIVATION_URL) return toast('Lettre indisponible');
+  window.open(PROFILE_MOTIVATION_URL, '_blank', 'noopener');
 }
 function switchMotiv(btn, t) {
-  document.querySelectorAll('.motiv-tab').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
-  document.getElementById('motiv-text').style.display=t==='text'?'block':'none';
-  document.getElementById('motiv-rec').classList.toggle('on',t!=='text');
-  document.getElementById('motiv-qr').classList.toggle('on',t==='text');
-  if(document.getElementById('rec-tip')) document.getElementById('rec-tip').textContent=t==='audio'?'Appuyer pour enregistrer · 90 sec max':'Appuyer pour filmer · 60 sec max';
+  return;
 }
 async function toggleRec() {
-  if (!IS_REC) {
-    try {
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      MR=new MediaRecorder(stream); const chunks=[];
-      MR.ondataavailable=e=>chunks.push(e.data);
-      MR.onstop=async()=>{
-        const blob=new Blob(chunks,{type:'audio/webm'});
-        const fd=new FormData(); fd.append('audio',blob,'motivation.webm');
-        // ------------------------------------------------------------
-        toast('Audio enregistré');
-      };
-      MR.start(); IS_REC=true; document.getElementById('rec-btn').style.background='var(--g)';
-      document.getElementById('rec-tip').textContent='Enregistrement… Appuyer pour arrêter';
-    } catch(e) { toast('Microphone non accessible'); }
-  } else { MR?.stop(); IS_REC=false; document.getElementById('rec-btn').style.background='var(--r)'; }
-}
-async function copyQR() {
-  // ------------------------------------------------------------
-  try { await navigator.clipboard.writeText(window.location.href); } catch(e) {}
-  toast('Lien QR Code copié');
+  return;
 }
 async function toggleAnon() {
-  const cur=document.getElementById('anon-txt').textContent.includes('activé');
-  await api('PUT', '/candidats/profil', { anonyme: !cur });
-  document.getElementById('anon-txt').textContent='Anonymat : '+(cur?'désactivé':'activé');
-  toast('Anonymat '+(cur?'désactivé':'activé'));
+  return;
 }
 async function updateCV(input) {
   if (!input.files[0]) return;
@@ -1740,9 +1990,34 @@ async function updateCV(input) {
     const data = await uploadCandidateCV(file);
     const label = document.getElementById('cv-menu-label');
     if (label) label.textContent = 'CV : ' + (data.cv_file_name || file.name);
+    renderProfileCV({
+      cv_url: data.cv_url,
+      axes: { meta: { cv_file_name: data.cv_file_name || file.name } },
+    });
+    setResultDocStatus('CV ajouté au profil');
     toast('CV mis à jour');
   } catch(e) {
     toast(e.message || 'Erreur upload CV');
+  } finally {
+    input.value = '';
+  }
+}
+async function updateMotivationFile(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  const error = validateCVFile(file);
+  if (error) { toast(error.replace('CV', 'Lettre')); input.value = ''; return; }
+
+  try {
+    const data = await uploadMotivationFile(file);
+    renderMotivationFile({
+      motivation_url: data.motivation_url,
+      axes: { meta: { motivation_file_name: data.motivation_file_name || file.name } },
+    });
+    setResultDocStatus('Lettre de motivation ajoutée au profil');
+    toast('Lettre de motivation intégrée');
+  } catch(e) {
+    toast(e.message || 'Erreur upload lettre');
   } finally {
     input.value = '';
   }
@@ -1754,15 +2029,15 @@ async function updateCV(input) {
 const PLANS = {
   month:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Coaching IA 3 modules/mois','Benchmark salarial précis','Préparation entretien IA'],cta:'Essai 14j gratuit',pop:true},
-    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Coaching IA illimité','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
-    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA 1:1 hebdomadaire','Score compatibilité culturelle','Simulation entretien IA live','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
+    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
+    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
   ],
   year:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Coaching IA 3 modules/mois','Benchmark salarial précis','Préparation entretien IA'],cta:'Économiser 20%',pop:true},
-    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Coaching IA illimité','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
-    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA 1:1 hebdomadaire','Score compatibilité culturelle','Simulation entretien IA live','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
+    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
+    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
+    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
   ]
 };
 async function selectPlan(plan, billing) {
@@ -1796,7 +2071,7 @@ if (TOKEN && !USER) {
 }
 if (TOKEN && USER) {
   const start = new URLSearchParams(location.search).get('start');
-  go(start === 'test' ? 'test' : 'home');
+  go(start === 'test' ? 'test' : getLastPage());
 } else {
   goLanding();
 }

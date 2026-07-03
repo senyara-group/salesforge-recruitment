@@ -13,8 +13,6 @@ const authClient = createClient(
 
 const oauthProviders = {
   google: 'google',
-  linkedin: process.env.LINKEDIN_OAUTH_PROVIDER || 'linkedin_oidc',
-  linkedin_oidc: 'linkedin_oidc',
 };
 
 function getSiteUrl(req) {
@@ -148,7 +146,17 @@ async function signup(req, res) {
     return res.status(400).json({ error: 'Email et mot de passe sont requis' });
   }
 
-  const { data, error } = await authClient.auth.signUp({ email, password });
+  if (String(password).length < 8) {
+    return res.status(400).json({ error: 'Mot de passe : 8 caracteres minimum' });
+  }
+
+  const { data, error } = await authClient.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${getSiteUrl(req)}/salesforge_app.html?login=1`,
+    },
+  });
   if (error) return res.status(400).json({ error });
 
   const { error: userProfileError } = await supabase.from('users').upsert({
