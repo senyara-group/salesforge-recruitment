@@ -15,6 +15,10 @@ const oauthProviders = {
   google: 'google',
 };
 
+function definedOnly(obj) {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
+}
+
 function getSiteUrl(req) {
   return process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
 }
@@ -54,6 +58,28 @@ async function findUserProfile(user) {
 
 function normalizeRequestedRole(role) {
   return role === 'recruteur' ? 'recruteur' : role === 'candidat' ? 'candidat' : null;
+}
+
+function cleanNamePart(value = '') {
+  return String(value).trim().replace(/\s+/g, ' ');
+}
+
+function splitFullName(value = '') {
+  const parts = cleanNamePart(value).split(' ').filter(Boolean);
+  if (!parts.length) return {};
+  return {
+    prenom: parts[0],
+    nom: parts.slice(1).join(' '),
+  };
+}
+
+function namesFromAuthUser(user = {}) {
+  const meta = user.user_metadata || {};
+  const fromFullName = splitFullName(meta.full_name || meta.name);
+  return {
+    prenom: cleanNamePart(meta.given_name || meta.first_name || fromFullName.prenom),
+    nom: cleanNamePart(meta.family_name || meta.last_name || fromFullName.nom),
+  };
 }
 
 async function ensureUserProfile(user, requestedRole = null) {
@@ -110,6 +136,31 @@ async function hydrateRoleProfile(profile) {
 
   const roleProfile = await ensureRoleProfile(profile.id, profile.role);
   return { ...profile, ...(roleProfile || {}), id: profile.id, user_id: profile.id };
+}
+
+async function applyOAuthNames(profile, user) {
+  if (!profile?.role) return profile;
+  const { prenom, nom } = namesFromAuthUser(user);
+  const patch = {};
+
+  if (prenom && !profile.prenom) patch.prenom = prenom;
+  if (nom && !profile.nom) patch.nom = nom;
+  if (!Object.keys(patch).length) return profile;
+
+  const table = profile.role === 'recruteur' ? 'recruteurs' : 'candidats';
+  const { data, error } = await supabase
+    .from(table)
+    .update(patch)
+    .eq('user_id', profile.id)
+    .select('*')
+    .maybeSingle();
+
+  if (error) {
+    if (/column|schema cache|could not find/i.test(error.message || '')) return profile;
+    throw error;
+  }
+
+  return data ? { ...profile, ...data, id: profile.id, user_id: profile.id } : { ...profile, ...patch };
 }
 
 router.get('/oauth/:provider', async (req, res) => {
@@ -170,10 +221,10 @@ async function signup(req, res) {
   try {
     roleProfile = await ensureRoleProfile(data.user.id, normalizedRole);
 
-    if (normalizedRole === 'recruteur' && (entreprise || secteur)) {
+    if (normalizedRole === 'recruteur' && (entreprise || secteur || prenom || nom)) {
       const { data: updatedProfile, error: updateError } = await supabase
         .from('recruteurs')
-        .update({ entreprise, secteur })
+        .update(definedOnly({ entreprise, secteur, prenom, nom }))
         .eq('user_id', data.user.id)
         .select('*')
         .single();
@@ -185,7 +236,7 @@ async function signup(req, res) {
     if (normalizedRole === 'candidat' && (prenom || nom)) {
       const { data: updatedProfile, error: updateError } = await supabase
         .from('candidats')
-        .update({ prenom, nom })
+        .update(definedOnly({ prenom, nom }))
         .eq('user_id', data.user.id)
         .select('*')
         .single();
@@ -276,6 +327,7 @@ router.post('/login', async (req, res) => {
   try {
     profile = await ensureUserProfile(data.user, inferRoleFromEmail(data.user.email));
     profile = await hydrateRoleProfile(profile);
+    profile = await applyOAuthNames(profile, data.user);
   } catch (error) {
     return res.status(error.status || 400).json({ error: error.message || 'Connexion impossible' });
   }
@@ -285,7 +337,8 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const data = await hydrateRoleProfile(await ensureUserProfile(req.user, req.query.role || req.headers['x-sf-role']));
+    let data = await hydrateRoleProfile(await ensureUserProfile(req.user, req.query.role || req.headers['x-sf-role']));
+    data = await applyOAuthNames(data, req.user);
     res.json(data);
   } catch (error) {
     return res.status(error.status || 400).json({ error: error.message || error });
