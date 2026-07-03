@@ -16,7 +16,7 @@ function currentMonthKey() {
 
 function swipeUsage(candidat) {
   const month = currentMonthKey();
-  const meta = candidat.axes?.meta || {};
+  const meta = candidat.swipes_meta || {};
   return meta.swipes_month === month ? Number(meta.swipes_used || 0) : 0;
 }
 
@@ -42,27 +42,23 @@ function assertSwipeAllowed(candidat, plan) {
 }
 
 async function markOfferSeenAndCount(candidat, offreId) {
-  const axes = candidat.axes || {};
-  const meta = axes.meta || {};
+  const meta = candidat.swipes_meta || {};
   const month = currentMonthKey();
   const currentUsed = meta.swipes_month === month ? Number(meta.swipes_used || 0) : 0;
-  const nextAxes = {
-    ...axes,
-    meta: {
-      ...meta,
-      swiped_offer_ids: appendUnique(meta.swiped_offer_ids || [], offreId),
-      swipes_month: month,
-      swipes_used: currentUsed + 1,
-    },
+  const nextMeta = {
+    ...meta,
+    swiped_offer_ids: appendUnique(meta.swiped_offer_ids || [], offreId),
+    swipes_month: month,
+    swipes_used: currentUsed + 1,
   };
 
   const { error } = await supabase
     .from('candidats')
-    .update({ axes: nextAxes })
+    .update({ swipes_meta: nextMeta })
     .eq('id', candidat.id);
 
   if (error) throw error;
-  return nextAxes.meta;
+  return nextMeta;
 }
 
 function includesId(values = [], ids = []) {

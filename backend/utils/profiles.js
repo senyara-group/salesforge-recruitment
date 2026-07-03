@@ -43,6 +43,7 @@ async function ensureCandidateProfile(userId) {
     .insert({
       user_id: userId,
       axes: {},
+      swipes_meta: {},  // ← ajouter ça
     })
     .select('*')
     .single();
