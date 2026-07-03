@@ -169,6 +169,9 @@ router.get('/threads', authMiddleware, async (req, res) => {
           time: formatTime(latest?.created_at || match.created_at),
           prev: latest ? `${mine ? 'Vous : ' : ''}${latest.contenu || ''}` : `Match sur ${match.offres?.titre || 'votre offre'}`,
           ur: Boolean(latest && !mine && !latest.lu),
+          mine,
+          read: latest ? Boolean(latest.lu) : null,
+          status: latest ? (mine ? (latest.lu ? 'Lu' : 'Envoye') : (!latest.lu ? 'Non lu' : 'Lu')) : '',
         };
       });
     } else {
@@ -200,6 +203,9 @@ router.get('/threads', authMiddleware, async (req, res) => {
           time: formatTime(latest?.created_at || match.created_at),
           prev: latest ? `${mine ? 'Vous : ' : ''}${latest.contenu || ''}` : `Match sur ${match.offres?.titre || 'une offre'}`,
           ur: Boolean(latest && !mine && !latest.lu),
+          mine,
+          read: latest ? Boolean(latest.lu) : null,
+          status: latest ? (mine ? (latest.lu ? 'Lu' : 'Envoye') : (!latest.lu ? 'Non lu' : 'Lu')) : '',
         };
       });
     }
@@ -219,6 +225,9 @@ router.get('/threads', authMiddleware, async (req, res) => {
           time: formatTime(message.created_at),
           prev: `${mine ? 'Vous : ' : ''}${message.contenu || ''}`,
           ur: !mine && !message.lu,
+          mine,
+          read: Boolean(message.lu),
+          status: mine ? (message.lu ? 'Lu' : 'Envoye') : (!message.lu ? 'Non lu' : 'Lu'),
         };
       });
 

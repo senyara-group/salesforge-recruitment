@@ -29,8 +29,9 @@ button,input,textarea,select{font-family:inherit}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
 .nd{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--r);border-radius:50%;border:2px solid var(--w)}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
+.nav-dot{position:absolute;top:3px;right:26%;width:8px;height:8px;background:var(--r);border-radius:50%;border:2px solid var(--w)}
 .page{display:none;padding-bottom:80px}.page.on{display:block}
 .btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
@@ -181,7 +182,9 @@ button,input,textarea,select{font-family:inherit}
 .g3{background:linear-gradient(135deg,#280D5A,#6830D0)}.g4{background:linear-gradient(135deg,#0E1525,#2D4A6E)}
 .g5{background:linear-gradient(135deg,#3A0600,#C0330A)}.g6{background:linear-gradient(135deg,#0A2E50,#0369A1)}
 .g7{background:linear-gradient(135deg,#320560,#A21CAF)}.g8{background:linear-gradient(135deg,#3B0D00,#D95F0A)}
-.card-type-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:7px;text-transform:uppercase;border:1px solid rgba(255,255,255,.12)}
+.card-badge-row{position:absolute;top:12px;left:12px;right:76px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;z-index:2}
+.card-type-badge{background:rgba(255,255,255,.2);backdrop-filter:blur(6px);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:7px;text-transform:uppercase;border:1px solid rgba(255,255,255,.14)}
+.card-top-tag{background:rgba(255,255,255,.86);color:var(--ink2);font-size:10px;font-weight:700;padding:4px 9px;border-radius:13px;border:1px solid rgba(255,255,255,.45);box-shadow:0 2px 8px rgba(9,20,34,.08)}
 .card-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
 .card-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
 .card-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
@@ -354,6 +357,9 @@ button,input,textarea,select{font-family:inherit}
 .msg-time{font-size:11px;color:var(--mu)}
 .msg-prev{font-size:12px;color:var(--ink3);line-height:1.55;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .msg-th.ur .msg-prev{color:var(--ink);font-weight:500}
+.msg-foot{display:flex;align-items:center;gap:6px;margin-top:4px}
+.msg-status{font-size:10px;font-weight:800;color:var(--mu)}
+.msg-status.unread{color:var(--b)}
 .ur-dot{width:8px;height:8px;border-radius:50%;background:var(--b);flex-shrink:0;margin-top:5px}
 .match-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .match-msg-btn{border:none;background:var(--bs);color:var(--b);border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -371,6 +377,7 @@ button,input,textarea,select{font-family:inherit}
 .bubble.mine{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:4px}
 .bubble.theirs{align-self:flex-start;background:var(--w);border:1px solid var(--bd);color:var(--ink2);border-bottom-left-radius:4px}
 .bubble-time{font-size:9px;opacity:.65;margin-top:4px;text-align:right}
+.bubble-receipt{font-size:9px;font-weight:800;opacity:.78;margin-top:2px;text-align:right}
 .chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w)}
 .chat-input{flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:10px 11px;font-size:13px;outline:none;background:var(--bg);color:var(--ink)}
 .chat-input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs);background:var(--w)}
@@ -1257,6 +1264,9 @@ function shortDate(value) {
   if (!value) return '';
   return new Date(value).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
+function messageStatusLabel(status = '') {
+  return String(status).replace('Envoye', 'Envoyé');
+}
 function adn(axes) {
   if (axes?.resultat?.axes) axes = Object.fromEntries(axes.resultat.axes.map(a => [a.l, a.v]));
   axes = Object.fromEntries(Object.entries(axes || {}).filter(([, v]) => typeof v === 'number'));
@@ -1359,6 +1369,7 @@ function go(p) {
   window.scrollTo(0, 0);
   const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, matchs:loadMatchs, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
+  if (ui && p !== 'messages') refreshMessageBadge();
 }
 
 // ------------------------------------------------------------
@@ -1575,7 +1586,7 @@ function buildCard(o) {
   d.innerHTML = `
     <div class="sw-lbl like">Match</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
     <div class="card-top"><div class="card-bg ${o.g}"></div><div class="card-fade"></div>
-      <span class="card-type-badge">${o.type}</span>
+      <div class="card-badge-row"><span class="card-type-badge">${o.type}</span>${o.tags.slice(0, 3).map(t=>`<span class="card-top-tag">${t}</span>`).join('')}</div>
       <div class="card-match-box"><div class="card-match-n sf">${o.m}</div><div class="card-match-l">Match</div></div>
       <div class="card-co"><div class="card-co-n sf">${o.co}</div><div class="card-co-s">${o.sz}</div></div>
       ${o.auto?'<div class="card-auto-badge">Auto-cand.</div>':''}
@@ -1585,7 +1596,6 @@ function buildCard(o) {
       <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${o.lieu}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${o.dur}</span></div>
       <div class="card-salary"><div class="card-sal-v sf">${o.sal}</div><div class="card-bench-note">${o.bn}</div></div>
       <div class="compat-bar"><div class="compat-row"><span class="compat-lbl sf">Compatibilité culturelle</span><span class="compat-score sf" style="color:${cc}">${o.compat.s}%</span></div><div class="compat-axes">${o.compat.ax.map(a=>`<div class="cx"><div class="cx-l">${a.l}</div><div class="cx-bar"><div class="cx-fill" style="width:${a.v}%;background:${cc}"></div></div><div class="cx-v" style="color:${cc}">${a.v}</div></div>`).join('')}</div></div>
-      <div class="card-tags">${o.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
       ${o.auto?`<div class="card-auto-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Swiper = candidature envoyée automatiquement</div>`:''}
       <div class="card-ai"><div style="margin-bottom:6px"><span class="chip chip-b"><span class="chip-dot"></span>Analyse IA</span></div><div class="card-ai-text">${o.ai}</div><div class="card-ai-axes">${o.axes.map(a=>`<div class="max"><div class="max-l">${a.l}</div><div class="max-bar"><div class="max-fill" style="width:${a.v}%"></div></div><div class="max-v sf">${a.v}</div></div>`).join('')}</div></div>
     </div>`;
@@ -1820,13 +1830,26 @@ async function rateRec(nom, note) {
 // ------------------------------------------------------------
 // MESSAGES
 // ------------------------------------------------------------
+function setMessageBadges(hasUnread) {
+  ['msg-dot', 'msg-dot-nav'].forEach(id => {
+    const dot = document.getElementById(id);
+    if (dot) dot.style.display = hasUnread ? 'block' : 'none';
+  });
+}
+async function refreshMessageBadge() {
+  if (!USER) return;
+  try {
+    const threads = await api('GET', '/messages/threads');
+    setMessageBadges(threads.some(t => t.ur));
+  } catch(e) {}
+}
 async function loadMessages() {
   if (!USER) return;
   try {
     THREADS = await api('GET', '/messages/threads');
-    document.getElementById('msg-dot').style.display = THREADS.some(t=>t.ur) ? 'block' : 'none';
+    setMessageBadges(THREADS.some(t=>t.ur));
     document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t=>
-      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div></div>${t.ur?'<div class="ur-dot"></div>':''}</div>`
+      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-dot"></div>':''}</div>`
     ).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
@@ -1877,7 +1900,8 @@ function renderThreadMessages(messages) {
   const body = document.getElementById(prefix + '-body');
   body.innerHTML = messages.length ? messages.map(m => {
     const mine = String(m.sender_id) === String(USER?.id || USER?.user_id);
-    return `<div class="bubble ${mine ? 'mine' : 'theirs'}">${esc(m.contenu || '')}<div class="bubble-time">${esc(shortDate(m.created_at))}</div></div>`;
+    const receipt = mine ? `<div class="bubble-receipt">${m.lu ? 'Lu' : 'Envoyé'}</div>` : '';
+    return `<div class="bubble ${mine ? 'mine' : 'theirs'}">${esc(m.contenu || '')}<div class="bubble-time">${esc(shortDate(m.created_at))}</div>${receipt}</div>`;
   }).join('') : '<div class="chat-empty">Aucun message pour le moment. Envoyez le premier message au recruteur.</div>';
   body.scrollTop = body.scrollHeight;
 }
