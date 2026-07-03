@@ -1630,7 +1630,14 @@ async function doSwipe(action, offre) {
   try {
     const r = await api('POST', '/swipes', { offre_id: offre.id, action });
     if (r.match) showMatch(offre, r);
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    if (e.message?.includes('Limite Freemium')) {
+      toast('Limite de 5 swipes atteinte — passez à un plan payant');
+      go('pricing');
+    } else {
+      console.error(e);
+    }
+  }
 }
 function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', OFFRES_F[DECK_IDX]); }
 async function reloadOffers() { DECK_IDX = 0; await loadOffres(); }
