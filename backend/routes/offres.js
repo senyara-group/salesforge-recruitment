@@ -69,6 +69,21 @@ router.get('/deck', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/mine', authMiddleware, async (req, res) => {
+  try {
+    const recruteur = await ensureRecruiterProfile(req.user.id);
+    const { data, error } = await supabase
+      .from('offres')
+      .select('*')
+      .eq('recruteur_id', recruteur.id);
+
+    if (error) return res.status(400).json({ error });
+    res.json(data || []);
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')

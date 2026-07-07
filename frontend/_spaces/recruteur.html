@@ -282,6 +282,17 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .form-chips{display:flex;flex-wrap:wrap;gap:6px}
 .form-chip{padding:7px 13px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;color:var(--ink2)}
 .form-chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.offers-list{display:flex;flex-direction:column;gap:10px}
+.offer-card{background:var(--w);border:1px solid var(--bd);border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.offer-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.offer-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;line-height:1.25}
+.offer-status{font-size:10px;font-weight:900;text-transform:uppercase;border-radius:999px;padding:4px 8px;background:var(--gs);color:var(--g);white-space:nowrap}
+.offer-status.paused,.offer-status.inactive{background:var(--rs);color:var(--r)}
+.offer-meta{display:flex;flex-wrap:wrap;gap:7px;color:var(--ink3);font-size:12px}
+.offer-meta span{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 8px}
+.offer-tags{display:flex;flex-wrap:wrap;gap:5px}
+.offer-tag{font-size:11px;font-weight:700;color:var(--b);background:var(--bs);border-radius:999px;padding:4px 8px}
+.offer-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* PRICING */
 .pricing-hd{padding:22px 18px 14px;text-align:center}
@@ -460,6 +471,137 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (min-width:1180px){
   #p-pricing .plans-row{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  .app{
+    width:100%;
+    max-width:none;
+    margin:0;
+    background:var(--w);
+    min-height:100dvh;
+    box-shadow:none;
+  }
+  .bnav,.overlay{
+    width:100%;
+    max-width:none;
+  }
+  .topbar{height:52px;padding:0 36px}
+  .logo-m{width:26px;height:26px;border-radius:7px;font-size:13px}
+  .logo-n{font-size:12px;letter-spacing:-.2px}
+  .logo-tag{font-size:8px;padding:2px 5px}
+  .ib{width:28px;height:28px;border-radius:8px}
+  .ib svg{width:14px;height:14px}
+
+  #p-dashboard.page.on{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap:48px;
+    row-gap:0;
+    align-items:start;
+    background:var(--bg);
+    padding:0 24px 96px;
+    min-height:calc(100dvh - 52px);
+  }
+  #p-dashboard .dash-hero{
+    order:1;
+    grid-column:1/-1;
+    margin:0 -24px;
+    padding:30px 64px 32px;
+    background:var(--w);
+    border:0;
+    border-radius:0;
+  }
+  #p-dashboard .dash-actions{
+    order:2;
+    grid-column:1;
+    width:100%;
+  }
+  #p-dashboard .dash-candidates{
+    order:3;
+    grid-column:2;
+    width:100%;
+  }
+  #p-dashboard>.sec{
+    padding:32px 0 0 !important;
+    max-width:none;
+    width:100%;
+  }
+  #p-dashboard .dash-candidates .sec-hd .btn{display:none}
+  #p-dashboard .sec-hd{margin-bottom:12px}
+  #p-dashboard .sec-t{font-size:17px}
+
+  #p-dashboard .dash-co{gap:16px;margin-bottom:14px}
+  #p-dashboard .dash-co-logo{width:54px;height:54px;border-radius:12px;font-size:18px}
+  #p-dashboard .dash-co-n{font-size:18px}
+  #p-dashboard .dash-co-s{font-size:12px}
+  #p-dashboard .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  #p-dashboard .kpi{min-height:74px;padding:12px;border-radius:7px}
+  #p-dashboard .kpi-l{font-size:8px}
+  #p-dashboard .kpi-v{font-size:20px}
+  #p-dashboard .kpi-t{font-size:9px}
+
+  #p-dashboard .dash-actions .btn{
+    min-height:26px;
+    border-radius:7px;
+    font-size:10px;
+    padding:6px 12px;
+  }
+  #p-dashboard .dash-actions .bo{
+    background:transparent;
+    border-color:#C7D2E3;
+  }
+}
+@media (min-width:720px){
+  #p-offres.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 59px);
+    padding:0 0 96px;
+  }
+  #p-offres>.sec{padding:22px 42px}
+  #p-offres .offers-list{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(280px,1fr));
+    gap:12px;
+  }
+  #p-messages>.sec{
+    display:grid;
+    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+    gap:14px;
+    align-items:start;
+  }
+  #p-messages .sec-hd{grid-column:1/-1}
+  #p-messages #msgs-list{
+    grid-column:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  #p-messages .msg-th{margin-bottom:0}
+  #p-messages #chat-panel{
+    grid-column:2;
+    margin-top:0;
+    align-self:start;
+    position:sticky;
+    top:68px;
+  }
+  #p-messages #chat-panel.on{
+    display:flex;
+    flex-direction:column;
+    min-height:520px;
+  }
+  #p-messages .chat-body{
+    flex:1;
+    min-height:420px;
+    max-height:calc(100dvh - 210px);
+  }
+}
+
+@media (min-width:1080px){
+  #p-offres>.sec{padding-left:64px;padding-right:64px}
+  #p-offres .offers-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
@@ -528,15 +670,16 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="kpi"><div class="kpi-l">Offres actives</div><div class="kpi-v sf" id="kpi-offres">—</div><div class="kpi-t tf">Publiées</div></div>
     </div>
   </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><button class="btn bg2 bsm" onclick="go('pipeline')">Pipeline</button></div>
-    <div id="cands-recues"><div class="loading-state"><div class="spinner"></div></div></div>
-  </div>
-  <div class="sec">
+  <div class="sec dash-actions">
     <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
     <button class="btn bp blk" style="margin-bottom:8px" onclick="go('post-offre')">+ Publier une offre</button>
     <button class="btn bo blk" style="margin-bottom:8px" onclick="go('swipe')">Sourcer des candidats</button>
-    <button class="btn bo blk" onclick="go('questions')">Configurer mes questions de pré-qualification</button>
+    <button class="btn bo blk" style="margin-bottom:8px" onclick="go('questions')">Configurer mes questions de pré-qualification</button>
+    <button class="btn bo blk" onclick="go('offres')">Toutes mes offres</button>
+  </div>
+  <div class="sec dash-candidates">
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><button class="btn bg2 bsm" onclick="go('pipeline')">Pipeline</button></div>
+    <div id="cands-recues"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
 </div>
 
@@ -636,6 +779,17 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
+<!-- MES OFFRES -->
+<div id="p-offres" class="page">
+  <div class="sec">
+    <div class="sec-hd">
+      <div class="sec-t sf">Mes offres</div>
+      <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
+    </div>
+    <div id="offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
   <div class="sec">
@@ -663,6 +817,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Paramètres</div></div>
     <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('offres')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Mes offres</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('post-offre')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Publier une offre</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('matching')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Moteur de matching</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('questions')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Questions de pré-qualification</div></div>
@@ -798,7 +953,7 @@ function messageStatusLabel(status = '') {
 function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
 function getLastPage() {
-  const allowed = ['dashboard','swipe','matching','questions','pipeline','post-offre','messages','settings','pricing'];
+  const allowed = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages','settings','pricing'];
   const page = localStorage.getItem(lastPageKey());
   return allowed.includes(page) ? page : 'dashboard';
 }
@@ -816,7 +971,7 @@ function go(p) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, questions:loadQuestions, pipeline:loadPipeline, messages:loadMessages, pricing:renderPlans };
+  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, questions:loadQuestions, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
 }
@@ -1245,8 +1400,66 @@ async function postOffre() {
     await api('POST', '/offres', { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut:'active' });
     toast('Offre publiée !');
     OF_TYPE = ''; OF_TAGS = [];
-    go('dashboard');
+    go('offres');
   } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, "Publier l'offre"); }
+}
+
+async function loadOffers() {
+  const list = document.getElementById('offers-list');
+  list.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    const offers = await api('GET', '/offres/mine');
+    renderOffers(offers);
+  } catch(e) {
+    list.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+  }
+}
+function offerStatusLabel(status = '') {
+  const value = String(status || 'active').toLowerCase();
+  if (value === 'active') return 'Active';
+  if (value === 'paused') return 'Pause';
+  if (value === 'inactive') return 'Inactive';
+  return status || 'Active';
+}
+function offerTags(tags) {
+  if (Array.isArray(tags)) return tags;
+  if (!tags) return [];
+  return String(tags).split(',').map(t => t.trim()).filter(Boolean);
+}
+function renderOffers(offers = []) {
+  const list = document.getElementById('offers-list');
+  if (!offers.length) {
+    list.innerHTML = `
+      <div class="loading-state">
+        Aucune offre publiée pour le moment.<br><br>
+        <button class="btn bp" onclick="go('post-offre')">Publier ma première offre</button>
+      </div>`;
+    return;
+  }
+  list.innerHTML = offers.map(o => {
+    const status = String(o.statut || 'active').toLowerCase();
+    const tags = offerTags(o.tags);
+    return `
+      <div class="offer-card">
+        <div class="offer-card-hd">
+          <div>
+            <div class="offer-title">${esc(o.titre || 'Offre sans titre')}</div>
+            <div class="offer-meta" style="margin-top:8px">
+              ${o.type ? `<span>${esc(o.type)}</span>` : ''}
+              ${o.lieu ? `<span>${esc(o.lieu)}</span>` : ''}
+              ${o.salaire ? `<span>${esc(o.salaire)}</span>` : ''}
+              ${o.created_at ? `<span>Publiée le ${esc(shortDate(o.created_at))}</span>` : ''}
+            </div>
+          </div>
+          <div class="offer-status ${esc(status)}">${esc(offerStatusLabel(status))}</div>
+        </div>
+        ${tags.length ? `<div class="offer-tags">${tags.map(t => `<span class="offer-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        <div class="offer-actions">
+          <button class="btn bg2 bsm" onclick="go('pipeline')">Voir candidatures</button>
+          <button class="btn bo bsm" onclick="go('post-offre')">Publier une autre offre</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ------------------------------------------------------------
