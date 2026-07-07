@@ -325,7 +325,7 @@ router.post('/login', async (req, res) => {
 
   let profile = null;
   try {
-    profile = await ensureUserProfile(data.user, inferRoleFromEmail(data.user.email));
+    profile = await ensureUserProfile(data.user, null);
     profile = await hydrateRoleProfile(profile);
     profile = await applyOAuthNames(profile, data.user);
   } catch (error) {
