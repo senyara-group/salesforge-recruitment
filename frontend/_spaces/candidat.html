@@ -338,10 +338,6 @@ button,input,textarea,select{font-family:inherit}
 .mi-st{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-top:4px;display:inline-block}
 .ms-n{background:var(--bs);color:var(--b)}.ms-r{background:var(--gs);color:var(--g)}.ms-p{background:var(--as);color:var(--a)}
 .mi-sc{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;flex-shrink:0}
-.rep-section{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:12px;padding:13px;margin-top:10px}
-.rep-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--pu);margin-bottom:8px}
-.rep-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(104,48,208,.1)}
-.rep-item:last-child{margin:0;padding:0;border:none}
 
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
@@ -386,7 +382,8 @@ button,input,textarea,select{font-family:inherit}
 .ph-main{flex:1;min-width:0}
 .profile-edit-btn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .profile-edit-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
-.ph-av{width:60px;height:60px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:20px;font-weight:900;flex-shrink:0}
+.ph-av{width:60px;height:60px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:20px;font-weight:900;flex-shrink:0;overflow:hidden;color:#fff}
+.ph-av img{width:100%;height:100%;object-fit:cover;display:block}
 .ph-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:900}
 .ph-title{font-size:13px;color:rgba(255,255,255,.58);margin-top:2px}
 .ph-rank{display:inline-flex;align-items:center;background:rgba(19,64,224,.25);color:#B0C8FF;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;margin-top:5px}
@@ -396,16 +393,30 @@ button,input,textarea,select{font-family:inherit}
 .ph-badge.link{cursor:pointer}
 .ph-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
 .ph-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
-.profile-edit-panel{display:none;background:#1B2735;border:1px solid rgba(176,196,216,.28);border-radius:12px;padding:24px;margin:18px 0 18px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 16px 34px rgba(0,0,0,.16)}
+.profile-edit-panel{display:none;background:#101A28;border:1px solid rgba(176,196,216,.24);border-radius:14px;padding:18px;margin:18px 0;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 16px 34px rgba(0,0,0,.16)}
 .profile-edit-panel.on{display:block}
-.profile-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:28px}
-.profile-edit-field input{width:100%;min-height:42px;border:1px solid rgba(176,196,216,.28);background:#263240;color:#fff;text-align:center;font-size:16px;font-weight:800;outline:none;padding:10px 14px;border-radius:9px}
-.profile-edit-field input::placeholder{color:rgba(255,255,255,.75)}
+.profile-edit-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.profile-edit-photo{width:58px;height:58px;border-radius:50%;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:900;overflow:hidden;flex-shrink:0}
+.profile-edit-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-edit-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:#fff}
+.profile-edit-sub{font-size:12px;color:rgba(255,255,255,.58);line-height:1.45;margin-top:2px}
+.profile-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.profile-edit-field{display:flex;flex-direction:column;gap:5px}
+.profile-edit-field label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.5);font-weight:800}
+.profile-edit-field input{width:100%;min-height:42px;border:1px solid rgba(176,196,216,.26);background:#1B2735;color:#fff;font-size:14px;font-weight:700;outline:none;padding:10px 12px;border-radius:9px}
+.profile-edit-field input::placeholder{color:rgba(255,255,255,.45)}
 .profile-edit-field input:focus{border-color:rgba(255,255,255,.48);background:#2D3948;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
-.profile-edit-actions{display:flex;flex-direction:column;align-items:center;gap:12px}
-.profile-edit-actions .btn{width:min(420px,100%);min-height:44px;border:1px solid rgba(176,196,216,.32);background:#34404E;color:#fff;padding:11px 16px;font-size:15px;font-weight:900;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,.14)}
-.profile-edit-actions .upload-btn:hover{background:#3B4858;border-color:rgba(255,255,255,.32)}
-.profile-edit-actions .save-btn{margin-top:8px;background:var(--b);border-color:var(--b);box-shadow:0 10px 22px rgba(19,64,224,.28)}
+.profile-resource-list{display:grid;gap:8px;margin:12px 0}
+.profile-resource-row{background:#1B2735;border:1px solid rgba(176,196,216,.22);border-radius:11px;padding:11px;display:grid;gap:9px}
+.profile-resource-name{font-size:12px;font-weight:800;color:#fff;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-resource-meta{font-size:11px;color:rgba(255,255,255,.54);margin-top:1px}
+.profile-resource-actions{display:flex;gap:7px;flex-wrap:wrap}
+.profile-resource-actions button,.profile-edit-actions .btn,.profile-edit-head .upload-btn{border:1px solid rgba(176,196,216,.28);background:#263240;color:#fff;padding:9px 11px;font-size:12px;font-weight:900;border-radius:9px;cursor:pointer;font-family:'Sora',sans-serif}
+.profile-resource-actions button:hover,.profile-edit-actions .upload-btn:hover{background:#34404E;border-color:rgba(255,255,255,.32)}
+.profile-resource-actions button:disabled{opacity:.42;cursor:not-allowed}
+.profile-resource-actions .danger{color:#FFD5D5;border-color:rgba(204,47,47,.35);background:rgba(204,47,47,.12)}
+.profile-edit-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.profile-edit-actions .save-btn{background:var(--b);border-color:var(--b);box-shadow:0 10px 22px rgba(19,64,224,.28)}
 .phs-v{font-family:'Sora',sans-serif;font-size:21px;font-weight:900}
 .phs-l{font-size:10px;color:rgba(255,255,255,.48);text-transform:uppercase;margin-top:2px;font-weight:600}
 .anon-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(6,148,88,.2);color:#5EFFA5;padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:9px}
@@ -533,11 +544,11 @@ button,input,textarea,select{font-family:inherit}
   #p-coaching.page.on{padding:24px 28px 96px}
   #p-coaching>.sec{padding:0}
   #p-coaching .doc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-pricing.page.on{padding:24px 28px 96px}
-  #p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec{padding:0}
+  #p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-pricing.page.on{padding:24px 28px 96px}
+  #p-candidatures>.sec,#p-messages>.sec{padding:0}
   #p-test .test-body{max-width:none;padding-left:0;padding-right:0}
   #p-test .test-sticky{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
-  #cands-list,#matchs-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
+  #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
   #p-profile.page.on{display:grid;grid-template-columns:minmax(360px,500px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
   #p-profile .ph{border-radius:18px;padding:28px;position:sticky;top:83px;align-self:start}
   #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
@@ -554,11 +565,11 @@ button,input,textarea,select{font-family:inherit}
   .app{max-width:none}
   .bnav,.overlay{max-width:none}
   .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
-  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
   #p-home.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
   #p-home .home-hero{grid-row:span 1}
   #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #cands-list,#matchs-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #cands-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
   #p-profile.page.on{grid-template-columns:minmax(420px,34vw) minmax(0,1fr)}
   #p-profile>.sec{grid-template-columns:1.2fr .8fr}
   #p-profile .card-sec{grid-row:span 2}
@@ -572,8 +583,8 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:720px){
   .page.on:not(#p-auth){display:block;padding-bottom:96px}
   .home-hero,.ph{border-radius:0;border:none}
-  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-matchs.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding:0 0 96px}
-  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec,#p-profile>.sec{padding:22px 42px}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding:0 0 96px}
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding:22px 42px}
   #p-home .home-hero{padding:34px 42px}
   .score-card,.adn-bars,.tr-list,.doc-list,.card-sec,.plan-banner,.menu-list,.chat-panel{width:100%;max-width:none}
   .score-card{padding:22px;gap:18px}
@@ -584,7 +595,7 @@ button,input,textarea,select{font-family:inherit}
   .kpi{padding:18px}
   .kpi-v{font-size:30px}
   .sec-t{font-size:18px}
-  .adn-bars,#home-cands,#cands-list,#matchs-list,#msgs-list{display:flex;flex-direction:column;gap:12px}
+  .adn-bars,#home-cands,#cands-list,#msgs-list{display:flex;flex-direction:column;gap:12px}
   #p-coaching .doc-list{display:flex;flex-direction:column;gap:12px}
   .doc-item,.tr-item,.match-item,.msg-th,.menu-i{padding:17px 18px}
   .doc-title,.tr-title,.mi-t,.msg-n,.card-sec-t{font-size:16px}
@@ -616,7 +627,7 @@ button,input,textarea,select{font-family:inherit}
 }
 
 @media (min-width:1180px){
-  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-matchs>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
   #p-home .home-hero,#p-profile .ph,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
   #p-swipe .deck-area,#p-swipe .deck-actions{width:min(680px,calc(100% - 128px))}
   .plans-row{padding-left:64px;padding-right:64px}
@@ -987,7 +998,7 @@ button,input,textarea,select{font-family:inherit}
 <!-- COACHING -->
 <div id="p-coaching" class="page">
   <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Document</div></div>
+    <div class="sec-hd"><div class="sec-t sf">Ressources</div></div>
     <div class="doc-list">
       <a class="doc-item" href="../documents/1-traiter-les-objections.pdf" target="_blank" rel="noopener">
         <div class="doc-num">1</div>
@@ -1262,37 +1273,6 @@ button,input,textarea,select{font-family:inherit}
   </div>
 </div>
 
-<!-- MATCHS -->
-<div id="p-matchs" class="page">
-  <div class="sec">
-    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Mes matchs</div></div>
-    <div class="tab-seg">
-      <button class="tsb on" onclick="tabSeg(this);filterMatchs('all')">Tous</button>
-      <button class="tsb" onclick="tabSeg(this);filterMatchs('new')">Nouveaux</button>
-      <button class="tsb" onclick="tabSeg(this);filterMatchs('discussion')">En discussion</button>
-    </div>
-    <div id="matchs-list"><div class="loading-state"><div class="spinner"></div></div></div>
-    <div id="match-chat-panel" class="chat-panel">
-      <div class="chat-head">
-        <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div style="flex:1;min-width:0">
-          <div class="chat-title" id="match-chat-title">Conversation</div>
-          <div class="chat-sub" id="match-chat-sub">Match SalesForge</div>
-        </div>
-      </div>
-      <div id="match-chat-body" class="chat-body"></div>
-      <form class="chat-compose" onsubmit="sendThreadMessage(event)">
-        <input id="match-chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
-        <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
-      </form>
-    </div>
-    <div class="rep-section" id="rep-sec" style="display:none">
-      <div class="rep-title sf">Notez vos recruteurs</div>
-      <div id="rep-list"></div>
-    </div>
-  </div>
-</div>
-
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
   <div class="sec">
@@ -1331,15 +1311,40 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <button class="profile-edit-btn" onclick="toggleProfileEdit()" aria-label="Modifier le profil"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
     </div>
-      <div class="profile-edit-panel" id="profile-edit-panel">
+    <div class="profile-edit-panel" id="profile-edit-panel">
+      <div class="profile-edit-head">
+        <div class="profile-edit-photo sf" id="edit-avatar-preview">YS</div>
+        <div style="flex:1;min-width:0">
+          <div class="profile-edit-title">Modifier mon profil</div>
+          <div class="profile-edit-sub">Photo, identité et ressources visibles par les recruteurs.</div>
+        </div>
+        <button class="btn upload-btn" type="button" onclick="document.getElementById('avatar-file-prof').click()">Photo</button>
+      </div>
       <div class="profile-edit-grid">
-        <div class="profile-edit-field"><input id="edit-nom" autocomplete="family-name" placeholder="nom"></div>
-        <div class="profile-edit-field"><input id="edit-prenom" autocomplete="given-name" placeholder="prénom"></div>
+        <div class="profile-edit-field"><label for="edit-prenom">Prénom</label><input id="edit-prenom" autocomplete="given-name" placeholder="Prénom"></div>
+        <div class="profile-edit-field"><label for="edit-nom">Nom</label><input id="edit-nom" autocomplete="family-name" placeholder="Nom"></div>
+      </div>
+      <div class="profile-resource-list">
+        <div class="profile-resource-row">
+          <div><div class="profile-resource-name" id="cv-menu-label">CV non ajouté</div><div class="profile-resource-meta">PDF, DOC ou DOCX</div></div>
+          <div class="profile-resource-actions">
+            <button type="button" onclick="document.getElementById('cv-file-prof').click()">Remplacer</button>
+            <button type="button" onclick="openProfileCV()">Ouvrir</button>
+            <button class="danger" id="delete-cv-btn" type="button" onclick="deleteCandidateDocument('cv')">Supprimer</button>
+          </div>
+        </div>
+        <div class="profile-resource-row">
+          <div><div class="profile-resource-name" id="motiv-menu-label">Lettre de motivation non ajoutée</div><div class="profile-resource-meta">PDF, DOC ou DOCX</div></div>
+          <div class="profile-resource-actions">
+            <button type="button" onclick="document.getElementById('motiv-file-prof').click()">Remplacer</button>
+            <button type="button" onclick="openMotivationFile()">Ouvrir</button>
+            <button class="danger" id="delete-motivation-btn" type="button" onclick="deleteCandidateDocument('motivation')">Supprimer</button>
+          </div>
+        </div>
       </div>
       <div class="profile-edit-actions">
-        <button class="btn upload-btn" onclick="document.getElementById('cv-file-prof').click()">Importez votre cv</button>
-        <button class="btn upload-btn" onclick="document.getElementById('motiv-file-prof').click()">Importez votre lettre de motivation</button>
-        <button class="btn save-btn" onclick="saveProfileEdit()">enregistrer</button>
+        <button class="btn upload-btn" type="button" onclick="toggleProfileEdit()">Annuler</button>
+        <button class="btn save-btn" type="button" onclick="saveProfileEdit()">Enregistrer</button>
       </div>
     </div>
     <div class="ph-stats">
@@ -1362,10 +1367,11 @@ button,input,textarea,select{font-family:inherit}
       <button onclick="go('pricing')">Upgrader</button>
     </div>
     <div class="menu-list">
-      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Document</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ressources</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
       <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
+      <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
       <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
   </div>
@@ -1390,8 +1396,8 @@ button,input,textarea,select{font-family:inherit}
 <nav class="bnav" id="bnav" style="display:none">
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
-  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Document</span></button>
-  <button class="bn" id="nav-matchs" onclick="go('matchs')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span>Matchs</span></button>
+  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
+  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none"></div></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
 </nav>
 
@@ -1446,6 +1452,7 @@ let IS_REC = false, MR = null;
 let PENDING_CV_FILE = null;
 let PROFILE_CV_URL = '';
 let PROFILE_MOTIVATION_URL = '';
+let PROFILE_AVATAR_URL = '';
 
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
@@ -1474,7 +1481,7 @@ async function api(method, path, body) {
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
   const d = await r.json();
-  if (!r.ok) throw new Error(d.message || d.error || 'Erreur serveur');
+  if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Erreur serveur');
   return d;
 }
 async function apiUp(path, fd) {
@@ -1482,7 +1489,7 @@ async function apiUp(path, fd) {
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, { method: 'POST', headers: h, body: fd });
   const d = await r.json();
-  if (!r.ok) throw new Error(d.message || d.error || 'Erreur upload');
+  if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Erreur upload');
   return d;
 }
 function frError(text){
@@ -1517,12 +1524,25 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
+const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','pricing'];
+function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
 function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
+function pageFromHash() {
+  const page = normalizePage(location.hash.replace(/^#/, ''));
+  return APP_PAGES.includes(page) ? page : '';
+}
 function getLastPage() {
-  const allowed = ['home','swipe','coaching','candidatures','test','matchs','messages','profile','pricing'];
+  const hashPage = pageFromHash();
+  if (hashPage) return hashPage;
   const page = localStorage.getItem(lastPageKey());
-  return allowed.includes(page) ? page : 'home';
+  return APP_PAGES.includes(normalizePage(page)) ? normalizePage(page) : 'home';
+}
+function syncPageHistory(page, replace = false) {
+  if (page === 'auth') return;
+  const nextHash = '#' + page;
+  if (location.hash === nextHash && !replace) return;
+  history[replace ? 'replaceState' : 'pushState']({ page }, '', location.pathname + location.search + nextHash);
 }
 function seenOffersKey() { return 'sf_seen_offer_ids_' + (USER?.id || USER?.user_id || 'anon'); }
 function localSeenOfferIds() {
@@ -1544,6 +1564,13 @@ function validateCVFile(file) {
   if (file.size > 8 * 1024 * 1024) return 'CV trop volumineux : 8 Mo maximum';
   return '';
 }
+function validateAvatarFile(file) {
+  const okExt = /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+  const okType = /^image\/(jpeg|png|webp|gif)$/i.test(file.type || '');
+  if (!okExt || !okType) return 'Format photo non supporté : JPG, PNG, WEBP ou GIF';
+  if (file.size > 3 * 1024 * 1024) return 'Photo trop volumineuse : 3 Mo maximum';
+  return '';
+}
 async function uploadCandidateCV(file) {
   const fd = new FormData();
   fd.append('cv', file);
@@ -1557,7 +1584,22 @@ async function uploadCandidateCV(file) {
 async function uploadMotivationFile(file) {
   const fd = new FormData();
   fd.append('motivation', file);
-  return apiUp('/candidats/motivation', fd);
+  const data = await apiUp('/candidats/motivation', fd);
+  if (data.candidat) {
+    USER = { ...(USER || {}), ...data.candidat };
+    localStorage.setItem('sf_user', JSON.stringify(USER));
+  }
+  return data;
+}
+async function uploadProfilePhoto(file) {
+  const fd = new FormData();
+  fd.append('avatar', file);
+  const data = await apiUp('/candidats/avatar', fd);
+  if (data.candidat) {
+    USER = { ...(USER || {}), ...data.candidat, avatar_url: data.avatar_url };
+    localStorage.setItem('sf_user', JSON.stringify(USER));
+  }
+  return data;
 }
 async function analyzeCandidateCV(file) {
   const fd = new FormData();
@@ -1597,7 +1639,8 @@ function normOffre(o) {
 // ------------------------------------------------------------
 // NAVIGATION
 // ------------------------------------------------------------
-function go(p) {
+function go(p, options = {}) {
+  p = normalizePage(p);
   const ui = p !== 'auth';
   saveLastPage(p);
   document.getElementById('topbar').style.display = ui ? 'flex' : 'none';
@@ -1607,9 +1650,10 @@ function go(p) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, matchs:loadMatchs, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
+  if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
 }
 
 // ------------------------------------------------------------
@@ -2011,123 +2055,50 @@ function setResultDocStatus(text) {
 }
 
 // ------------------------------------------------------------
-// MATCHS
-// ------------------------------------------------------------
-async function loadMatchs() {
-  if (!USER) return;
-  try {
-    ALL_MATCHS = await api('GET', '/matchs');
-    renderMatchs(ALL_MATCHS);
-    renderRep(matchRecruiters(ALL_MATCHS));
-  } catch(e) {}
-}
-function filterMatchs(f) { renderMatchs(f==='new'?ALL_MATCHS.filter(m=>m.st==='new'):f==='discussion'?ALL_MATCHS.filter(m=>m.st==='discussion'||m.st==='replied'||m.st==='pending'):ALL_MATCHS); }
-function renderMatchs(m) {
-  const sc = {new:'ms-n',replied:'ms-r',pending:'ms-p'};
-  document.getElementById('matchs-list').innerHTML = m.map(x => `
-    <div class="match-item${x.st==='new'?' new':''}" onclick="openMatchThread('${x.id}')">
-      <div class="ml" style="background:${esc(x.bg)}">${esc(x.co)}</div>
-      <div class="mi">
-        <div class="mi-t sf">${esc(x.t)}</div>
-        <div class="mi-s">${esc(x.s)}</div>
-        ${x.st?`<span class="mi-st ${sc[x.st]}">${esc(x.sl)}</span>`:''}
-      </div>
-      <div class="match-actions">
-        <button class="match-msg-btn" type="button" onclick="event.stopPropagation();openMatchThread('${x.id}')" aria-label="Message">
-          <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
-        </button>
-        <div class="mi-sc sf">${esc(x.score)}</div>
-      </div>
-    </div>
-  `).join('');
-}
-function renderRep(reps) {
-  if (!reps.length) return;
-  document.getElementById('rep-sec').style.display='block';
-  document.getElementById('rep-list').innerHTML=reps.map(r=>
-    `<div class="rep-item"><span style="font-size:13px;font-weight:600">${esc(r.nom)}</span><div style="display:flex;gap:2px;font-size:14px;cursor:pointer">${Array(5).fill(0).map((_,i)=>`<span onclick='rateRec(${JSON.stringify(r.nom)},${i+1})'>${i<r.note?'⭐':'☆'}</span>`).join('')}</div></div>`
-  ).join('');
-}
-function recruiterRatingsKey() { return 'sf_recruiter_ratings_' + (USER?.id || USER?.user_id || 'anon'); }
-function recruiterRatings() {
-  try { return JSON.parse(localStorage.getItem(recruiterRatingsKey()) || '{}'); }
-  catch(e) { return {}; }
-}
-function matchRecruiters(matchs) {
-  const ratings = recruiterRatings();
-  const seen = new Set();
-  return matchs.map(m => (m.s || m.t || 'Recruteur').split(' - ')[0].trim() || 'Recruteur')
-    .filter(nom => {
-      if (seen.has(nom)) return false;
-      seen.add(nom);
-      return true;
-    })
-    .map(nom => ({ nom, note: Number(ratings[nom] || 0) }));
-}
-async function rateRec(nom, note) {
-  const ratings = recruiterRatings();
-  ratings[nom] = note;
-  localStorage.setItem(recruiterRatingsKey(), JSON.stringify(ratings));
-  renderRep(matchRecruiters(ALL_MATCHS));
-  toast('Note enregistrée — merci !');
-}
-
 // ------------------------------------------------------------
 // MESSAGES
 // ------------------------------------------------------------
-function setMessageBadges(hasUnread) {
+function setMessageBadges(unreadCount) {
+  const hasUnread = Number(unreadCount || 0) > 0;
   ['msg-dot', 'msg-dot-nav'].forEach(id => {
     const dot = document.getElementById(id);
     if (dot) dot.style.display = hasUnread ? 'block' : 'none';
   });
+  document.title = hasUnread ? 'Nouveaux messages - SalesForge' : 'Espace candidat - SalesForge';
 }
 async function refreshMessageBadge() {
   if (!USER) return;
   try {
     const threads = await api('GET', '/messages/threads');
-    setMessageBadges(threads.some(t => t.ur));
+    setMessageBadges(threads.filter(t => t.ur).length);
   } catch(e) {}
 }
 async function loadMessages() {
   if (!USER) return;
   try {
     THREADS = await api('GET', '/messages/threads');
-    setMessageBadges(THREADS.some(t=>t.ur));
+    setMessageBadges(THREADS.filter(t=>t.ur).length);
     document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t=>
       `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-dot"></div>':''}</div>`
     ).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
-async function openMatchThread(matchId) {
-  const fromMatchs = document.getElementById('p-matchs')?.classList.contains('on');
-  if (!fromMatchs) go('matchs');
-  if (!THREADS.length) {
-    try { THREADS = await api('GET', '/messages/threads'); } catch(e) {}
-  }
-  const thread = THREADS.find(t =>
-    String(t.match_id || t.id) === String(matchId) ||
-    (Array.isArray(t.match_ids) && t.match_ids.map(String).includes(String(matchId)))
-  );
-  if (thread) await openThread(thread.id, 'matchs');
-  else toast('Conversation introuvable');
-}
 async function openThread(id, surface = 'messages') {
+  if (surface === 'matchs') surface = 'messages';
   const thread = THREADS.find(t => String(t.id) === String(id));
   if (!thread) return;
   ACTIVE_THREAD = thread;
   ACTIVE_THREAD.surface = surface;
-  const prefix = surface === 'matchs' ? 'match-chat' : 'chat';
-  const titleId = surface === 'matchs' ? 'match-chat-title' : 'chat-title';
-  const subId = surface === 'matchs' ? 'match-chat-sub' : 'chat-sub';
-  document.getElementById(titleId).textContent = thread.nom || 'Conversation';
-  document.getElementById(subId).textContent = thread.prev || 'Match SalesForge';
+  const prefix = 'chat';
+  document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
+  document.getElementById('chat-sub').textContent = thread.prev || 'Conversation SalesForge';
   document.getElementById(prefix + '-panel').classList.add('on');
   document.getElementById(prefix + '-body').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   await loadThreadMessages();
   document.getElementById(prefix + '-input').focus();
 }
 async function loadThreadMessages() {
-  const prefix = ACTIVE_THREAD?.surface === 'matchs' ? 'match-chat' : 'chat';
+  const prefix = 'chat';
   if (!ACTIVE_THREAD?.match_id) {
     document.getElementById(prefix + '-body').innerHTML = '<div class="chat-empty">Cette conversation n’est pas encore reliée à un match actif.</div>';
     return;
@@ -2141,7 +2112,7 @@ async function loadThreadMessages() {
   }
 }
 function renderThreadMessages(messages) {
-  const prefix = ACTIVE_THREAD?.surface === 'matchs' ? 'match-chat' : 'chat';
+  const prefix = 'chat';
   const body = document.getElementById(prefix + '-body');
   body.innerHTML = messages.length ? messages.map(m => {
     const mine = String(m.sender_id) === String(USER?.id || USER?.user_id);
@@ -2152,13 +2123,12 @@ function renderThreadMessages(messages) {
 }
 function closeThread() {
   ACTIVE_THREAD = null;
-  document.getElementById('chat-panel').classList.remove('on');
-  document.getElementById('match-chat-panel').classList.remove('on');
+  document.getElementById('chat-panel')?.classList.remove('on');
 }
 async function sendThreadMessage(event) {
   event.preventDefault();
   if (!ACTIVE_THREAD) return;
-  const prefix = ACTIVE_THREAD.surface === 'matchs' ? 'match-chat' : 'chat';
+  const prefix = 'chat';
   const input = document.getElementById(prefix + '-input');
   const contenu = input.value.trim();
   if (!contenu) return;
@@ -2188,7 +2158,7 @@ function renderProfile(p, a) {
   p.rank = p.rank || p.axes?.resultat?.rank;
   const avatarLabel = ((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase();
   document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
-  document.getElementById('prof-av').textContent=avatarLabel;
+  renderProfileAvatar(p, avatarLabel);
   document.getElementById('prof-title').textContent=p.type_profil||'—'; document.getElementById('prof-rank').textContent=p.rank||'—';
   document.getElementById('prof-score').textContent=p.score_adn||'—'; document.getElementById('prof-matchs').textContent=p.matchs||'0';
   document.getElementById('prof-adn').innerHTML=adn(p.axes);
@@ -2201,9 +2171,27 @@ function renderProfile(p, a) {
   document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
   fillProfileEdit(p, avatarLabel);
 }
+function renderAvatarInto(el, url, label) {
+  if (!el) return;
+  el.textContent = '';
+  if (url) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Photo de profil';
+    el.appendChild(img);
+  } else {
+    el.textContent = label || 'SF';
+  }
+}
+function renderProfileAvatar(p, avatarLabel) {
+  PROFILE_AVATAR_URL = p.avatar_url || '';
+  renderAvatarInto(document.getElementById('prof-av'), PROFILE_AVATAR_URL, avatarLabel);
+  renderAvatarInto(document.getElementById('edit-avatar-preview'), PROFILE_AVATAR_URL, avatarLabel);
+}
 function fillProfileEdit(p, avatarLabel) {
   document.getElementById('edit-prenom').value = p.prenom || '';
   document.getElementById('edit-nom').value = p.nom || '';
+  renderAvatarInto(document.getElementById('edit-avatar-preview'), p.avatar_url || PROFILE_AVATAR_URL, avatarLabel);
 }
 function toggleProfileEdit() {
   document.getElementById('profile-edit-panel').classList.toggle('on');
@@ -2216,7 +2204,7 @@ async function saveProfileEdit() {
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
     document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
-    document.getElementById('prof-av').textContent=((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase();
+    renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, ((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase());
     document.getElementById('profile-edit-panel').classList.remove('on');
     toast('Profil mis à jour');
   } catch(e) {
@@ -2229,6 +2217,10 @@ function renderProfileCV(p) {
   const badge = document.getElementById('prof-cv-badge');
   badge.classList.toggle('on', Boolean(name || PROFILE_CV_URL));
   badge.title = name || 'CV intégré';
+  const label = document.getElementById('cv-menu-label');
+  if (label) label.textContent = name ? 'CV : ' + name : 'CV non ajouté';
+  const deleteBtn = document.getElementById('delete-cv-btn');
+  if (deleteBtn) deleteBtn.disabled = !Boolean(name || PROFILE_CV_URL);
 }
 function openProfileCV() {
   if (!PROFILE_CV_URL) return toast('CV indisponible');
@@ -2241,7 +2233,9 @@ function renderMotivationFile(p) {
   badge.classList.toggle('on', Boolean(name || PROFILE_MOTIVATION_URL));
   badge.title = name || 'Lettre intégrée';
   const label = document.getElementById('motiv-menu-label');
-  if (label) label.textContent = name ? 'Lettre : ' + name : 'Importer une lettre de motivation';
+  if (label) label.textContent = name ? 'Lettre : ' + name : 'Lettre de motivation non ajoutée';
+  const deleteBtn = document.getElementById('delete-motivation-btn');
+  if (deleteBtn) deleteBtn.disabled = !Boolean(name || PROFILE_MOTIVATION_URL);
 }
 function openMotivationFile() {
   if (!PROFILE_MOTIVATION_URL) return toast('Lettre indisponible');
@@ -2298,6 +2292,46 @@ async function updateMotivationFile(input) {
     input.value = '';
   }
 }
+async function updateAvatar(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  const error = validateAvatarFile(file);
+  if (error) { toast(error); input.value = ''; return; }
+
+  try {
+    const data = await uploadProfilePhoto(file);
+    PROFILE_AVATAR_URL = data.avatar_url || '';
+    const label = ((USER?.prenom||'?')[0]+(USER?.nom||'?')[0]).toUpperCase();
+    renderProfileAvatar({ avatar_url: PROFILE_AVATAR_URL }, label);
+    toast('Photo de profil mise à jour');
+  } catch(e) {
+    toast(e.message || 'Erreur upload photo');
+  } finally {
+    input.value = '';
+  }
+}
+async function deleteCandidateDocument(kind) {
+  const isCv = kind === 'cv';
+  const label = isCv ? 'CV' : 'lettre de motivation';
+  if (!confirm('Supprimer votre ' + label + ' ?')) return;
+
+  try {
+    const data = await api('DELETE', isCv ? '/candidats/cv' : '/candidats/motivation');
+    if (data.candidat) {
+      USER = { ...(USER || {}), ...data.candidat };
+      localStorage.setItem('sf_user', JSON.stringify(USER));
+    }
+    if (isCv) {
+      renderProfileCV(data.candidat || { axes:{ meta:{} }, cv_url:'' });
+    } else {
+      renderMotivationFile(data.candidat || { axes:{ meta:{} }, motivation_url:'' });
+    }
+    setResultDocStatus(label + ' supprimé');
+    toast(label.charAt(0).toUpperCase() + label.slice(1) + ' supprimé');
+  } catch(e) {
+    toast(e.message || 'Suppression impossible');
+  }
+}
 
 // ------------------------------------------------------------
 // PRICING
@@ -2306,14 +2340,14 @@ const PLANS = {
   month:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
     {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Essai 14j gratuit',pop:true},
-    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
-    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
+    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
+    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
   ],
   year:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
     {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
-    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
-    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
+    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
+    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
   ]
 };
 async function selectPlan(plan, billing) {
@@ -2347,10 +2381,15 @@ if (TOKEN && !USER) {
 }
 if (TOKEN && USER) {
   const start = new URLSearchParams(location.search).get('start');
-  go(start === 'test' ? 'test' : getLastPage());
+  go(pageFromHash() || (start === 'test' ? 'test' : getLastPage()), { replaceHistory: true });
+  refreshMessageBadge();
+  setInterval(refreshMessageBadge, 30000);
 } else {
   goLanding();
 }
+window.addEventListener('popstate', () => {
+  if (TOKEN && USER) go(pageFromHash() || getLastPage(), { history: false });
+});
 </script>
 </body>
 </html>

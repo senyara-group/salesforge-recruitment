@@ -205,7 +205,7 @@ async function signup(req, res) {
     email,
     password,
     options: {
-      emailRedirectTo: `${getSiteUrl(req)}/salesforge_app.html?login=1`,
+      emailRedirectTo: `${getSiteUrl(req)}/salesforge_app.html?confirmed=1`,
     },
   });
   if (error) return res.status(400).json({ error });
@@ -311,6 +311,26 @@ router.post('/reset-password', async (req, res) => {
   if (error) return res.status(400).json({ error: error.message || error });
 
   res.json({ message: 'Mot de passe mis a jour' });
+});
+
+router.post('/exchange-code', async (req, res) => {
+  const code = String(req.body.code || '').trim();
+
+  if (!code) return res.status(400).json({ error: 'Code de confirmation requis' });
+
+  try {
+    const { data, error } = await authClient.auth.exchangeCodeForSession(code);
+    if (error) return res.status(400).json({ error: error.message || error });
+    if (!data.session?.access_token) return res.status(400).json({ error: 'Session Supabase introuvable' });
+
+    let profile = await ensureUserProfile(data.user, req.body.role || null);
+    profile = await hydrateRoleProfile(profile);
+    profile = await applyOAuthNames(profile, data.user);
+
+    res.json({ token: data.session.access_token, user: data.user, profile });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
+  }
 });
 
 router.post('/login', async (req, res) => {

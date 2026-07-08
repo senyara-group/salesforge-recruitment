@@ -206,11 +206,13 @@ function syncRecruiterDashboardFrame(){
   }
 }
 
-function storeOAuthTokenFromUrl(){
+async function consumeAuthCallback(){
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
   const queryParams = new URLSearchParams(window.location.search);
   const token = hashParams.get('access_token');
+  const code = queryParams.get('code');
   const role = queryParams.get('role');
+  const confirmed = queryParams.get('confirmed') === '1';
 
   if (role === 'candidat' || role === 'recruteur') {
     localStorage.setItem('sf_pending_role', role);
@@ -218,22 +220,59 @@ function storeOAuthTokenFromUrl(){
 
   if (token) {
     localStorage.setItem('sf_token', token);
-    history.replaceState(null, '', window.location.pathname);
+    localStorage.setItem('sf_just_confirmed', '1');
+    history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
+    return;
+  }
+
+  if (code) {
+    const pendingRole = localStorage.getItem('sf_pending_role');
+    const res = await fetch(`${API}/auth/exchange-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, role: pendingRole || role || undefined })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      history.replaceState({ sfAuthClean: true }, '', window.location.pathname + '?login=1');
+      showLogin();
+      showMessage(data.error?.message || data.error || 'Confirmation impossible. Reconnectez-vous.');
+      return;
+    }
+    localStorage.setItem('sf_token', data.token);
+    if (data.profile) localStorage.setItem('sf_profile', JSON.stringify(data.profile));
+    localStorage.setItem('sf_just_confirmed', '1');
+    history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
+    return;
+  }
+
+  if (confirmed) {
+    localStorage.setItem('sf_just_confirmed', '1');
   }
 }
 
 async function openRoleSpace(){
   const forceLogin = new URLSearchParams(window.location.search).get('login') === '1';
-  if (forceLogin) {
+  const hasAuthCallback = window.location.hash.includes('access_token') || new URLSearchParams(window.location.search).has('code');
+  if (forceLogin && !hasAuthCallback) {
     clearStoredSession();
     showLogin();
-    history.replaceState(null, '', window.location.pathname + '?login=1');
+    history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
+    if (localStorage.getItem('sf_just_confirmed')) {
+      showSuccess('Email confirmé. Vous pouvez maintenant vous connecter.');
+      localStorage.removeItem('sf_just_confirmed');
+    }
     return;
   }
 
   const token = localStorage.getItem('sf_token');
   if (!token) {
     showLogin();
+    if (localStorage.getItem('sf_just_confirmed')) {
+      showSuccess('Email confirmé. Vous pouvez maintenant vous connecter.');
+      localStorage.removeItem('sf_just_confirmed');
+      history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
+    }
     return;
   }
   const pendingRole = localStorage.getItem('sf_pending_role');
@@ -366,8 +405,12 @@ forgotSubmit.addEventListener('click', async () => {
   }
 });
 
-storeOAuthTokenFromUrl();
-openRoleSpace();
+consumeAuthCallback()
+  .then(openRoleSpace)
+  .catch(() => {
+    showLogin();
+    showMessage('Confirmation impossible. Reconnectez-vous.');
+  });
 </script>
 </body>
 </html>
