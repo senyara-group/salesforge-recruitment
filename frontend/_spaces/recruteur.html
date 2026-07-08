@@ -1010,6 +1010,7 @@ let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
 let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_TAGS = [];
+let HAS_PLAN = false;
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
 
 function seenCandidateStorageKey() {
@@ -1100,6 +1101,11 @@ function getLastPage() {
 // ------------------------------------------------------------
 function go(p) {
   const ui = p !== 'auth';
+  const PROTECTED_PAGES = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages'];
+  if (PROTECTED_PAGES.includes(p) && !HAS_PLAN && TOKEN) {
+    toast('Un abonnement est requis pour accéder à cette fonctionnalité');
+    p = 'pricing';
+  }
   saveLastPage(p);
   document.getElementById('topbar').style.display = ui ? 'flex' : 'none';
   document.getElementById('bnav').style.display = ui ? 'flex' : 'none';
@@ -1145,12 +1151,12 @@ async function doLogin() {
     const d = await api('POST', '/auth/login', { email, password });
     TOKEN = d.token; USER = d.profile || d.user;
     localStorage.setItem('sf_rec_token', TOKEN); localStorage.setItem('sf_rec_user', JSON.stringify(USER));
-    // Vérifier si un abonnement existe
     try {
       await api('GET', '/recruteurs/stats');
+      HAS_PLAN = true;
       go('dashboard');
     } catch(e) {
-      // PLAN_REQUIRED géré dans api() — redirection pricing automatique
+      HAS_PLAN = false;
       if (!e.message.includes('requis') && !e.message.includes('inactif')) go('dashboard');
     }
   } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
