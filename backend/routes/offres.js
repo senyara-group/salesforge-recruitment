@@ -3,6 +3,7 @@ const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
+const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 
 function uniqueValues(values = []) {
   return [...new Set(values.filter(Boolean).map(String))];
@@ -69,6 +70,21 @@ router.get('/deck', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/mine', authMiddleware, requireRecruiterPlan, async (req, res) => {
+  try {
+    const recruteur = await ensureRecruiterProfile(req.user.id);
+    const { data, error } = await supabase
+      .from('offres')
+      .select('*')
+      .eq('recruteur_id', recruteur.id);
+
+    if (error) return res.status(400).json({ error });
+    res.json(data || []);
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
@@ -80,22 +96,34 @@ router.get('/:id', async (req, res) => {
   res.json(data);
 });
 
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu });
 
+    // Vérification limite offres selon le plan
+    if (req.recruiterPlan === 'starter') {
+      const { data: offresActives, error: countError } = await supabase
+        .from('offres')
+        .select('id')
+        .eq('recruteur_id', recruteur.id)
+        .eq('statut', 'active');
+
+      if (countError) return res.status(400).json({ error: countError });
+
+      if (offresActives.length >= 3) {
+        return res.status(403).json({
+          error: 'OFFER_LIMIT_REACHED',
+          message: 'Limite de 3 offres actives atteinte — passez au plan Pro pour publier plus d\'offres'
+        });
+      }
+    }
+
     const { data, error } = await supabase
       .from('offres')
       .insert({
-        titre,
-        type,
-        lieu,
-        salaire,
-        tags,
-        statut,
-        auto_candidature,
+        titre, type, lieu, salaire, tags, statut, auto_candidature,
         recruteur_id: recruteur.id,
       })
       .select('*')
@@ -108,7 +136,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
@@ -129,7 +157,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { error } = await supabase

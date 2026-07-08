@@ -169,6 +169,9 @@ router.get('/threads', authMiddleware, async (req, res) => {
           time: formatTime(latest?.created_at || match.created_at),
           prev: latest ? `${mine ? 'Vous : ' : ''}${latest.contenu || ''}` : `Match sur ${match.offres?.titre || 'votre offre'}`,
           ur: Boolean(latest && !mine && !latest.lu),
+          mine,
+          read: latest ? Boolean(latest.lu) : null,
+          status: latest ? (mine ? (latest.lu ? 'Lu' : 'Envoye') : (!latest.lu ? 'Non lu' : 'Lu')) : '',
         };
       });
     } else {
@@ -200,29 +203,14 @@ router.get('/threads', authMiddleware, async (req, res) => {
           time: formatTime(latest?.created_at || match.created_at),
           prev: latest ? `${mine ? 'Vous : ' : ''}${latest.contenu || ''}` : `Match sur ${match.offres?.titre || 'une offre'}`,
           ur: Boolean(latest && !mine && !latest.lu),
+          mine,
+          read: latest ? Boolean(latest.lu) : null,
+          status: latest ? (mine ? (latest.lu ? 'Lu' : 'Envoye') : (!latest.lu ? 'Non lu' : 'Lu')) : '',
         };
       });
     }
 
-    const orphanThreads = messages
-      .filter((message) => !message.match_id || !coveredMatchIds.has(message.match_id))
-      .map((message) => {
-        const mine = message.sender_id === req.user.id;
-        const receiverId = mine ? message.receiver_id : message.sender_id;
-        return {
-          id: message.match_id || message.id,
-          match_id: message.match_id,
-          receiver_id: receiverId,
-          av: initials(mine ? 'Vous' : 'Conversation'),
-          bg: '#1340E0',
-          nom: mine ? 'Conversation' : 'Nouveau message',
-          time: formatTime(message.created_at),
-          prev: `${mine ? 'Vous : ' : ''}${message.contenu || ''}`,
-          ur: !mine && !message.lu,
-        };
-      });
-
-    res.json([...threads, ...orphanThreads]);
+    res.json(threads);
   } catch (error) {
     res.status(400).json({ error: error.message || error });
   }
@@ -263,6 +251,7 @@ router.post('/send', authMiddleware, async (req, res) => {
     const body = contenu || texte;
 
     if (!receiverId) return res.status(400).json({ error: 'Destinataire manquant' });
+    if (!match_id) return res.status(400).json({ error: 'Match requis pour envoyer un message' });
     if (!body || !body.trim()) return res.status(400).json({ error: 'Message vide' });
 
     const participants = await ensureMatchAccess(match_id, req.user.id);

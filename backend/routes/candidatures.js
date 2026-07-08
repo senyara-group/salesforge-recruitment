@@ -25,7 +25,7 @@ function formatCandidateRow(row) {
     title: offre.titre || 'Offre',
     sub: `${entreprise} · ${offre.type || ''} · ${offre.lieu || ''}`.replace(/\s+·\s+$/g, ''),
     statut,
-    sl: ({ envoyee: 'Envoyee', vu: 'Profil vu', repondu: 'A repondu', entretien: 'Entretien' }[statut] || statut),
+    sl: ({ envoyee: 'Envoyee', nouveau: 'En attente', vu: 'Profil vu', repondu: 'A repondu', entretien: 'Entretien' }[statut] || statut),
     auto: row.lettre_type === 'auto',
     date: row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '',
   };
@@ -61,6 +61,7 @@ router.get('/', authMiddleware, async (req, res) => {
       .from('candidatures')
       .select('id, statut, lettre_type, created_at, offres(id, titre, type, lieu, recruteurs(entreprise))')
       .eq('candidat_id', candidat.id)
+      .or('lettre_type.is.null,lettre_type.neq.recruteur_like')
       .order('created_at', { ascending: false })
       .limit(limit);
 

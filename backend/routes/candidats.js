@@ -609,51 +609,57 @@ router.get('/deck', authMiddleware, async (req, res) => {
 
     if (error) return res.status(400).json({ error });
 
-    const deck = dedupeBy(data, (candidat) => candidat.user_id || candidat.id)
+    const candidates = dedupeBy(data, (candidat) => candidat.user_id || candidat.id)
       .filter((candidat) => candidat.user_id !== req.user.id)
       .filter((candidat) => !seenCandidateIds.includes(String(candidat.id)))
-      .filter((candidat) => !seenCandidateIds.includes(String(candidat.user_id)))
-      .map((candidat) => {
-        const axes = normalizeAxes(candidat.axes);
-        const anon = candidat.axes?.meta?.anonyme === true;
-        const shortName = candidat.nom ? `${candidat.nom.slice(0, 1)}.` : '';
+      .filter((candidat) => !seenCandidateIds.includes(String(candidat.user_id)));
+
+    const deck = await Promise.all(candidates.map(async (candidat) => {
+        const profile = await withFreshCvUrl(candidat);
+        const axes = normalizeAxes(profile.axes);
+        const anon = profile.axes?.meta?.anonyme === true;
+        const shortName = profile.nom ? `${profile.nom.slice(0, 1)}.` : '';
         const name = anon
           ? 'Candidat anonyme'
-          : [candidat.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
+          : [profile.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
         const initials = anon
           ? '?'
-          : `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF';
+          : `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() || 'SF';
         const skills = Object.keys(axes).filter((key) => typeof axes[key] === 'number').slice(0, 5);
 
         return {
-          id: candidat.id,
-          user_id: candidat.user_id,
+          id: profile.id,
+          user_id: profile.user_id,
           name,
           initiales: initials,
-          role: candidat.titre || 'Commercial',
+          role: profile.titre || 'Commercial',
           anon,
           m: compatibilityScore(axes, matching),
-          adn_score: candidat.score_adn || 0,
-          adn_type: candidat.axes?.resultat?.type || candidat.axes?.resultat?.type_profil || 'Profil commercial',
-          rank: candidat.axes?.resultat?.rank || 'Profil verifie',
+          adn_score: profile.score_adn || 0,
+          adn_type: profile.axes?.resultat?.type || profile.axes?.resultat?.type_profil || 'Profil commercial',
+          rank: profile.axes?.resultat?.rank || 'Profil verifie',
           axes: Object.entries(axes)
             .filter(([, value]) => typeof value === 'number')
             .slice(0, 6)
             .map(([l, v]) => ({ l, v })),
-          pitch_score: candidat.axes?.resultat?.pitch_score || candidat.score_adn || 0,
-          pitch_text: candidat.axes?.resultat?.desc || candidat.axes?.meta?.motivation || 'Profil candidat synchronise avec la base.',
-          letter_text: candidat.axes?.meta?.motivation || candidat.titre || 'Lettre de motivation non renseignee.',
-          letter_audio: Boolean(candidat.axes?.meta?.audio_url),
-          letter_video: Boolean(candidat.axes?.meta?.video_url),
+          pitch_score: profile.axes?.resultat?.pitch_score || profile.score_adn || 0,
+          pitch_text: profile.axes?.resultat?.desc || profile.axes?.meta?.motivation || 'Profil candidat synchronise avec la base.',
+          letter_text: profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.',
+          letter_audio: Boolean(profile.axes?.meta?.audio_url),
+          letter_video: Boolean(profile.axes?.meta?.video_url),
+          cv_url: profile.cv_url || '',
+          cv_file_name: profile.axes?.meta?.cv_file_name || '',
+          motivation_url: profile.motivation_url || '',
+          motivation_file_name: profile.axes?.meta?.motivation_file_name || '',
           skills: skills.length ? skills : ['Sales', 'B2B'],
-          ai: candidat.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
+          ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
           predict: [
             { v: `${compatibilityScore(axes, matching)}%`, l: 'Fit poste' },
-            { v: candidat.score_adn || 0, l: 'ADN' },
+            { v: profile.score_adn || 0, l: 'ADN' },
             { v: 'Base', l: 'Source' },
           ],
         };
-      });
+      }));
 
     res.json(deck);
   } catch (error) {

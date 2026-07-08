@@ -7,6 +7,14 @@ const app = express();
 app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.get('/', (req, res) => {

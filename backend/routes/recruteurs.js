@@ -3,6 +3,7 @@ const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRecruiterProfile } = require('../utils/profiles');
+const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 
 function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
@@ -20,6 +21,11 @@ function removeValue(values = [], value) {
   return values.map(String).filter((item) => item !== String(value));
 }
 
+function firstIntersection(left = [], right = []) {
+  const rightSet = new Set(right.map(String));
+  return left.find((item) => rightSet.has(String(item)));
+}
+
 function mergeMatching(currentMatching = {}, matching, extraMeta = {}) {
   return {
     ...(currentMatching || {}),
@@ -29,6 +35,35 @@ function mergeMatching(currentMatching = {}, matching, extraMeta = {}) {
       ...extraMeta,
     },
   };
+}
+
+async function upsertCandidature(candidatId, offreId, action, source = 'recruteur_like') {
+  const { data: existingCandidature } = await supabase
+    .from('candidatures')
+    .select('id, statut, lettre_type')
+    .eq('candidat_id', candidatId)
+    .eq('offre_id', offreId)
+    .maybeSingle();
+
+  const payload = {
+    statut: existingCandidature?.lettre_type && existingCandidature.lettre_type !== 'recruteur_like'
+      ? existingCandidature.statut || 'envoyee'
+      : 'nouveau',
+    lettre_type: existingCandidature?.lettre_type && existingCandidature.lettre_type !== 'recruteur_like'
+      ? existingCandidature.lettre_type
+      : source,
+  };
+
+  const query = existingCandidature
+    ? supabase.from('candidatures').update(payload).eq('id', existingCandidature.id)
+    : supabase.from('candidatures').insert({
+      candidat_id: candidatId,
+      offre_id: offreId,
+      ...payload,
+    });
+
+  const { error } = await query;
+  if (error) throw error;
 }
 
 function normalizeCandidate(candidature) {
@@ -52,7 +87,7 @@ function normalizeCandidate(candidature) {
   };
 }
 
-router.get('/profil', authMiddleware, async (req, res) => {
+router.get('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const profil = await ensureRecruiterProfile(req.user.id);
     res.json(profil);
@@ -61,7 +96,7 @@ router.get('/profil', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/profil', authMiddleware, async (req, res) => {
+router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const current = await ensureRecruiterProfile(req.user.id);
 
@@ -90,7 +125,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offres, error: offresError } = await supabase
@@ -121,7 +156,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/questions', authMiddleware, async (req, res) => {
+router.get('/questions', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     res.json({ questions: recruteur.questions || [] });
@@ -130,7 +165,7 @@ router.get('/questions', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/matching-count', authMiddleware, async (req, res) => {
+router.post('/matching-count', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const { matching = {} } = req.body;
     const { data, error } = await supabase.from('candidats').select('axes');
@@ -153,7 +188,7 @@ router.post('/matching-count', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/pipeline', authMiddleware, async (req, res) => {
+router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offres, error: offresError } = await supabase
@@ -182,7 +217,7 @@ router.get('/pipeline', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/pipeline/move', authMiddleware, async (req, res) => {
+router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const { candidature_id, to } = req.body;
     const { data, error } = await supabase
@@ -199,7 +234,7 @@ router.put('/pipeline/move', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/swipe', authMiddleware, async (req, res) => {
+router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { candidat_id, action } = req.body;
@@ -230,21 +265,25 @@ router.post('/swipe', authMiddleware, async (req, res) => {
 
     if (action === 'pass') return res.json({ match: false });
 
-    const { data: offre } = await supabase
-      .from('offres')
-      .select('id')
-      .eq('recruteur_id', recruteur.id)
-      .limit(1)
-      .maybeSingle();
-
-    if (!offre) return res.status(400).json({ error: 'Publiez une offre avant de matcher un candidat' });
-
     const score = action === 'super' ? 95 : 85;
     const { data: offres } = await supabase
       .from('offres')
       .select('id')
       .eq('recruteur_id', recruteur.id);
     const offreIds = (offres || []).map((row) => row.id);
+    if (!offreIds.length) return res.status(400).json({ error: 'Publiez une offre avant de matcher un candidat' });
+
+    const { data: candidat, error: candidatError } = await supabase
+      .from('candidats')
+      .select('id, swipes_meta')
+      .eq('id', candidat_id)
+      .maybeSingle();
+    if (candidatError) return res.status(400).json({ error: candidatError });
+    if (!candidat) return res.status(404).json({ error: 'Candidat introuvable' });
+
+    const candidateLikedOfferId = firstIntersection(candidat.swipes_meta?.liked_offer_ids || [], offreIds);
+    const targetOfferId = candidateLikedOfferId || offreIds[0];
+    await upsertCandidature(candidat_id, targetOfferId, action);
 
     const { data: existingMatches, error: existingError } = offreIds.length
       ? await supabase
@@ -257,12 +296,15 @@ router.post('/swipe', authMiddleware, async (req, res) => {
     if (existingError) return res.status(400).json({ error: existingError });
 
     const existingMatch = existingMatches?.[0];
+    if (!existingMatch && !candidateLikedOfferId) {
+      return res.json({ match: false, candidature_sent: true });
+    }
 
     const matchQuery = existingMatch
       ? supabase.from('matchs').update({ score_match: score, score_compat: score }).eq('id', existingMatch.id)
       : supabase.from('matchs').insert({
         candidat_id,
-        offre_id: offre.id,
+        offre_id: candidateLikedOfferId,
         score_match: score,
         score_compat: score,
       });
