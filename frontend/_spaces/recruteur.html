@@ -1742,7 +1742,12 @@ async function selectPlan(plan, billing) {
   try {
     const mapped = {business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
     const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
-    window.location.href = url;
+    // Envoyer l'URL au parent pour éviter le problème iframe
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
+    } else {
+      window.location.href = url;
+    }
   } catch(e) { toast('Erreur paiement'); }
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
