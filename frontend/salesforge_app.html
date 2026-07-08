@@ -368,6 +368,12 @@ forgotSubmit.addEventListener('click', async () => {
 
 storeOAuthTokenFromUrl();
 openRoleSpace();
+// Intercepter les redirections Stripe depuis l'iframe
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'stripe_redirect' && event.data?.url) {
+    window.location.href = event.data.url;
+  }
+});
 </script>
 </body>
 </html>
