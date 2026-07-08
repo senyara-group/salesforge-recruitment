@@ -3,6 +3,7 @@ const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRecruiterProfile } = require('../utils/profiles');
+const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 
 function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
@@ -52,7 +53,7 @@ function normalizeCandidate(candidature) {
   };
 }
 
-router.get('/profil', authMiddleware, async (req, res) => {
+router.get('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const profil = await ensureRecruiterProfile(req.user.id);
     res.json(profil);
@@ -61,7 +62,7 @@ router.get('/profil', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/profil', authMiddleware, async (req, res) => {
+router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const current = await ensureRecruiterProfile(req.user.id);
 
@@ -90,7 +91,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offres, error: offresError } = await supabase
@@ -121,7 +122,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/questions', authMiddleware, async (req, res) => {
+router.get('/questions', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     res.json({ questions: recruteur.questions || [] });
@@ -130,7 +131,7 @@ router.get('/questions', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/matching-count', authMiddleware, async (req, res) => {
+router.post('/matching-count', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const { matching = {} } = req.body;
     const { data, error } = await supabase.from('candidats').select('axes');
@@ -153,7 +154,7 @@ router.post('/matching-count', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/pipeline', authMiddleware, async (req, res) => {
+router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offres, error: offresError } = await supabase
@@ -182,7 +183,7 @@ router.get('/pipeline', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/pipeline/move', authMiddleware, async (req, res) => {
+router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const { candidature_id, to } = req.body;
     const { data, error } = await supabase
@@ -199,7 +200,7 @@ router.put('/pipeline/move', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/swipe', authMiddleware, async (req, res) => {
+router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { candidat_id, action } = req.body;
