@@ -121,6 +121,10 @@ const frame = document.getElementById('app-frame');
 const loginSubmit = document.getElementById('login-submit');
 const forgotSubmit = document.getElementById('forgot-submit');
 
+function setPageTitle(title){
+  document.title = `${title} - SalesForge`;
+}
+
 function frError(text){
   const msg = String(text || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
@@ -151,6 +155,7 @@ function clearStoredSession(){
 }
 
 function showLogin(){
+  setPageTitle('Connexion');
   document.body.classList.add('auth');
   bootView.style.display = 'none';
   loginView.style.display = 'block';
@@ -159,6 +164,7 @@ function showLogin(){
 }
 
 function showRoleChoice(){
+  setPageTitle('Choix de l’espace');
   document.body.classList.add('auth');
   bootView.style.display = 'none';
   loginView.style.display = 'none';
@@ -259,6 +265,7 @@ async function openRoleSpace(){
     } else {
       localStorage.setItem('sf_user', JSON.stringify(profile));
     }
+    setPageTitle(profile.role === 'recruteur' ? 'Espace recruteur' : 'Espace candidat');
     const onboardingRole = localStorage.getItem('sf_onboarding_role');
     const start = onboardingRole === profile.role
       ? (profile.role === 'recruteur' ? 'questions' : 'test')

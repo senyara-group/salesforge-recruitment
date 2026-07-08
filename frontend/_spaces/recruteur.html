@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesForge — Recruteur</title>
+<title>Espace recruteur - SalesForge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;scrollbar-width:none}
@@ -862,7 +862,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <!-- PIPELINE KANBAN -->
 <div id="p-pipeline" class="page">
   <div class="sec" style="padding-bottom:9px">
-    <div class="sec-hd"><div class="sec-t sf">Pipeline de recrutement</div></div>
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><span class="chip chip-b"><span class="chip-dot"></span>Pipeline</span></div>
   </div>
   <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
 </div>
@@ -1214,8 +1214,8 @@ function renderRecues(list) {
     </div>`).join('');
 }
 function viewCandidate(id) {
-  // ------------------------------------------------------------
-  go('swipe');
+  localStorage.setItem('sf_focus_candidature', id);
+  go('pipeline');
 }
 
 // ------------------------------------------------------------
@@ -1471,6 +1471,15 @@ async function loadPipeline() {
   } catch(e) { document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Erreur</div>'; }
 }
 function renderPipeline() {
+  const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
+  if (!total) {
+    document.getElementById('pipe-cols').innerHTML = `
+      <div class="empty-state">
+        <b>Aucune candidature reçue</b>
+        Les candidats qui postulent à vos offres apparaîtront ici.
+      </div>`;
+    return;
+  }
   document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map((stage, si) => `
     <div class="pipe-col">
       <div class="pipe-col-hd">

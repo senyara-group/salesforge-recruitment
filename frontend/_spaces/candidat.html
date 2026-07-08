@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesForge — Commercial</title>
+<title>Espace candidat - SalesForge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1745,6 +1745,10 @@ function renderInsights(ins) {
   ).join('');
 }
 function renderHomeCands(c) {
+  if (!c.length) {
+    document.getElementById('home-cands').innerHTML = '<div class="loading-state">Aucune candidature envoyée pour le moment.</div>';
+    return;
+  }
   document.getElementById('home-cands').innerHTML = c.map(x =>
     `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
   ).join('');
@@ -1914,6 +1918,10 @@ async function loadCandidatures() {
 }
 function filterCands(f) { renderCands(f==='auto'?ALL_CANDS.filter(c=>c.auto):f==='reponse'?ALL_CANDS.filter(c=>c.statut==='repondu'||c.statut==='entretien'):ALL_CANDS); }
 function renderCands(c) {
+  if (!c.length) {
+    document.getElementById('cands-list').innerHTML = '<div class="loading-state">Aucune candidature à afficher.</div>';
+    return;
+  }
   document.getElementById('cands-list').innerHTML = c.map(x =>
     `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
   ).join('');
