@@ -45,11 +45,37 @@ async function markOfferSeenAndCount(candidat, offreId) {
   const meta = candidat.swipes_meta || {};
   const month = currentMonthKey();
   const currentUsed = meta.swipes_month === month ? Number(meta.swipes_used || 0) : 0;
+  const likedOfferIds = meta.liked_offer_ids || [];
+  const passedOfferIds = meta.passed_offer_ids || [];
   const nextMeta = {
     ...meta,
     swiped_offer_ids: appendUnique(meta.swiped_offer_ids || [], offreId),
+    liked_offer_ids: likedOfferIds,
+    passed_offer_ids: passedOfferIds,
     swipes_month: month,
     swipes_used: currentUsed + 1,
+  };
+
+  const { error } = await supabase
+    .from('candidats')
+    .update({ swipes_meta: nextMeta })
+    .eq('id', candidat.id);
+
+  if (error) throw error;
+  return nextMeta;
+}
+
+async function markCandidateChoice(candidat, offreId, action) {
+  const meta = candidat.swipes_meta || {};
+  const nextMeta = {
+    ...meta,
+    swiped_offer_ids: appendUnique(meta.swiped_offer_ids || [], offreId),
+    liked_offer_ids: action === 'pass'
+      ? (meta.liked_offer_ids || []).map(String).filter((item) => item !== String(offreId))
+      : appendUnique(meta.liked_offer_ids || [], offreId),
+    passed_offer_ids: action === 'pass'
+      ? appendUnique(meta.passed_offer_ids || [], offreId)
+      : (meta.passed_offer_ids || []).map(String).filter((item) => item !== String(offreId)),
   };
 
   const { error } = await supabase
@@ -76,7 +102,7 @@ async function upsertCandidature(candidatId, offreId, action) {
 
   const payload = {
     statut: 'envoyee',
-    lettre_type: action === 'super' ? 'prioritaire' : 'auto',
+    lettre_type: action === 'super' ? 'prioritaire' : 'candidate_like',
   };
 
   const candidatureQuery = existingCandidature
@@ -114,9 +140,10 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
 
     const usage = await markOfferSeenAndCount(candidat, offre_id);
+    await markCandidateChoice({ ...candidat, swipes_meta: usage }, offre_id, action);
     if (action === 'pass') return res.json({ match: false });
 
-    const candidatureSent = Boolean(offre.auto_candidature || action === 'super');
+    const candidatureSent = true;
     if (candidatureSent) await upsertCandidature(candidat.id, offre_id, action);
 
     const score = action === 'super' ? 95 : 85;

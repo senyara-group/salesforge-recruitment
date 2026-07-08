@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesForge — Recruteur</title>
+<title>Espace recruteur - SalesForge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
 :root{
   --bg:#F2F5F9;--w:#fff;--ink:#091422;--ink2:#243549;--ink3:#5A7090;--mu:#96AABB;
   --bd:#DCE4F0;--bd2:#B0C4D8;
@@ -51,6 +52,8 @@ button,input,textarea,select{font-family:inherit}
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
 .sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px}
 .loading-state{text-align:center;padding:24px;color:var(--mu);font-size:13px}
+.empty-state{min-height:138px;border:1px dashed var(--bd2);border-radius:12px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--ink3);font-size:13px;line-height:1.55;padding:20px}
+.empty-state b{font-family:'Sora',sans-serif;color:var(--ink);font-size:14px;margin-bottom:4px}
 .hscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 4px}
 .hscroll::-webkit-scrollbar{display:none}
 
@@ -105,9 +108,9 @@ button,input,textarea,select{font-family:inherit}
 .cr-score-l{font-size:9px;color:var(--mu);font-weight:600;text-transform:uppercase}
 
 /* SWIPE RECRUTEUR */
-.swipe-hd{padding:12px 18px;background:var(--w);border-bottom:1px solid var(--bd);position:sticky;top:59px;z-index:40}
+.swipe-hd{padding:12px 18px;background:var(--w);border-top:0;border-bottom:1px solid var(--bd);position:sticky;top:58px;z-index:40}
 .deck-area{position:relative;height:calc(100dvh - 240px);min-height:460px;max-height:600px;margin:12px 18px 0}
-.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(9,20,34,.07);will-change:transform;z-index:0}
+.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px 22px 0 0;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:none;will-change:transform;z-index:0}
 .swipe-card.swiping{pointer-events:none}
 .swipe-card:nth-last-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
 .swipe-card:nth-last-child(3){transform:scale(.926) translateY(20px);z-index:0;pointer-events:none;opacity:.75}
@@ -118,6 +121,7 @@ button,input,textarea,select{font-family:inherit}
 .sw-lbl.super{left:50%;transform:translateX(-50%);color:var(--a);border-color:var(--a);bottom:130px;top:auto}
 .cand-top{height:128px;position:relative;flex-shrink:0;background:linear-gradient(135deg,#091422,#1340E0);display:flex;align-items:center;justify-content:center}
 .cand-top.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
+.swipe-card .cand-top{border-radius:22px 22px 0 0}
 .cand-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:26px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
 .cand-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
 .cand-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
@@ -177,7 +181,7 @@ button,input,textarea,select{font-family:inherit}
 .db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
 .db:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
 .db-pass{width:50px;height:50px}.db-pass:hover{border-color:var(--r);color:var(--r)}
-.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 4px 16px rgba(19,64,224,.26)}
+.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:none}
 .db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
 .deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px}
@@ -220,7 +224,7 @@ button,input,textarea,select{font-family:inherit}
 .pipe-cols{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;padding:0 18px;scroll-snap-type:x mandatory}
 .pipe-cols::-webkit-scrollbar{display:none}
 .pipe-col{flex-shrink:0;width:248px;scroll-snap-align:start}
-.pipe-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;padding:0 2px}
+.pipe-col-hd{display:none}
 .pipe-col-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
 .pipe-dot{width:8px;height:8px;border-radius:50%}
 .pipe-count{font-size:11px;font-weight:700;color:var(--mu);background:var(--bg);padding:2px 8px;border-radius:10px}
@@ -261,6 +265,7 @@ button,input,textarea,select{font-family:inherit}
 .chat-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
 .chat-sub{font-size:11px;color:var(--ink3);margin-top:1px}
 .chat-body{min-height:250px;max-height:390px;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
+.chat-body.has-messages::before{content:'';margin-top:auto}
 .chat-empty{margin:auto;text-align:center;color:var(--mu);font-size:12px;line-height:1.6;max-width:230px}
 .bubble{max-width:82%;padding:9px 11px;border-radius:13px;font-size:13px;line-height:1.45;word-break:break-word}
 .bubble.mine{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:4px}
@@ -369,6 +374,55 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .toast{width:calc(100% - 28px);text-align:center}
 }
 
+@media (max-width:719px){
+  #p-swipe .cand-body{
+    overflow:hidden !important;
+    scrollbar-width:none;
+    padding:8px 14px;
+    gap:6px;
+  }
+  #p-swipe .cand-body::-webkit-scrollbar{display:none}
+  #p-swipe .cand-top{height:112px}
+  #p-swipe .cand-avatar{width:60px;height:60px;font-size:23px}
+  #p-swipe .cand-match-box{top:9px;right:9px;padding:5px 8px}
+  #p-swipe .cand-match-n{font-size:16px}
+  #p-swipe .cand-match-l{font-size:8px}
+  #p-swipe .cand-name{font-size:17px}
+  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
+  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
+  #p-swipe .cand-adn-section{padding:8px 10px;border-radius:10px}
+  #p-swipe .cand-adn-hd{margin-bottom:6px}
+  #p-swipe .cand-adn-score{font-size:24px}
+  #p-swipe .cand-adn-lbl{font-size:8px}
+  #p-swipe .cand-adn-type{font-size:11px}
+  #p-swipe .cand-adn-bars{gap:3px}
+  #p-swipe .cadn-row{gap:6px}
+  #p-swipe .cadn-l{width:64px;font-size:9px}
+  #p-swipe .cadn-tr{height:3px}
+  #p-swipe .cadn-v{font-size:10px;width:20px}
+  #p-swipe .cand-skills{gap:4px}
+  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
+  #p-swipe .cand-docs{gap:5px}
+  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
+  #p-swipe .cand-doc svg{width:11px;height:11px}
+  #p-swipe .cand-pitch,
+  #p-swipe .cand-ai{padding:7px;border-radius:9px}
+  #p-swipe .cand-pitch-hd{margin-bottom:5px}
+  #p-swipe .cand-pitch-t,
+  #p-swipe .cand-ai-t{font-size:10px}
+  #p-swipe .cand-pitch-score{font-size:13px}
+  #p-swipe .cand-pitch-text,
+  #p-swipe .cand-ai-text{font-size:10px;line-height:1.25;padding:5px 7px}
+  #p-swipe .cand-letter{border-radius:9px}
+  #p-swipe .clt{padding:6px;font-size:9px}
+  #p-swipe .cand-letter-body{padding:7px}
+  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
+  #p-swipe .cand-predict{gap:6px}
+  #p-swipe .cand-predict-box{padding:5px}
+  #p-swipe .cand-predict-v{font-size:12px}
+  #p-swipe .cand-predict-l{font-size:7px}
+}
+
 @media (min-width:720px){
   body{background:var(--bg)}
   .app{width:100%;max-width:none;box-shadow:none;min-height:100dvh}
@@ -395,7 +449,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
   #p-matching .sec-hd{grid-column:1/-1}
   #p-matching .match-engine,#p-matching .q-preset-card{margin:0}
-  #p-messages #msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
+  #p-messages #msgs-list{display:grid;grid-template-columns:1fr;gap:10px}
   .pipe-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;padding-left:0;padding-right:0}
   .pipe-col{width:auto;min-width:0}
   .plans-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
@@ -414,7 +468,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe.page.on{grid-template-columns:minmax(260px,1fr) minmax(500px,620px) minmax(260px,1fr);padding-left:42px;padding-right:42px}
   #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
   .pipe-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #p-messages #msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #p-messages #msgs-list{grid-template-columns:1fr}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
 
@@ -449,7 +503,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-matching .match-engine,#p-matching .q-preset-card{margin-bottom:14px}
   .pipe-cols{display:flex;overflow-x:auto;padding:0 42px;gap:14px;scroll-snap-type:x mandatory}
   .pipe-col{width:320px;flex-shrink:0}
-  #p-messages #msgs-list{display:block}
+  #p-messages #msgs-list{display:grid;grid-template-columns:1fr}
   .plans-row{display:grid;grid-template-columns:1fr;gap:16px;padding:18px 42px 28px}
   .plan-card{width:100%;max-width:none}
   .pricing-hd{padding:34px 42px 14px}
@@ -478,7 +532,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     width:100%;
     max-width:none;
     margin:0;
-    background:var(--w);
+    background:var(--bg);
     min-height:100dvh;
     box-shadow:none;
   }
@@ -492,38 +546,48 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .logo-tag{font-size:8px;padding:2px 5px}
   .ib{width:28px;height:28px;border-radius:8px}
   .ib svg{width:14px;height:14px}
+  #p-swipe .swipe-hd{
+    top:52px;
+    margin-top:-1px;
+  }
 
   #p-dashboard.page.on{
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    column-gap:48px;
-    row-gap:0;
+    grid-template-columns:minmax(320px,520px) minmax(360px,1fr);
+    column-gap:40px;
+    row-gap:26px;
     align-items:start;
+    align-content:start;
     background:var(--bg);
-    padding:0 24px 96px;
+    padding:24px clamp(32px,4vw,76px) 96px;
     min-height:calc(100dvh - 52px);
+    width:100%;
+    max-width:1500px;
+    margin:0 auto;
   }
   #p-dashboard .dash-hero{
     order:1;
     grid-column:1/-1;
-    margin:0 -24px;
-    padding:30px 64px 32px;
+    margin:0;
+    padding:18px 20px;
     background:var(--w);
-    border:0;
-    border-radius:0;
+    border:1px solid var(--bd);
+    border-radius:12px;
   }
   #p-dashboard .dash-actions{
     order:2;
     grid-column:1;
     width:100%;
+    max-width:480px;
   }
   #p-dashboard .dash-candidates{
     order:3;
     grid-column:2;
     width:100%;
+    min-width:0;
   }
   #p-dashboard>.sec{
-    padding:32px 0 0 !important;
+    padding:0 !important;
     max-width:none;
     width:100%;
   }
@@ -542,20 +606,37 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard .kpi-t{font-size:9px}
 
   #p-dashboard .dash-actions .btn{
-    min-height:26px;
-    border-radius:7px;
-    font-size:10px;
-    padding:6px 12px;
+    min-height:44px;
+    border-radius:10px;
+    font-size:13px;
+    line-height:1.2;
+    padding:11px 16px;
+    margin-bottom:10px !important;
+    width:100%;
+    white-space:normal;
+  }
+  #p-dashboard .dash-actions .bp{
+    box-shadow:0 8px 18px rgba(19,64,224,.16);
   }
   #p-dashboard .dash-actions .bo{
-    background:transparent;
+    background:rgba(255,255,255,.45);
     border-color:#C7D2E3;
+  }
+  #p-dashboard .dash-actions .bo:hover{
+    background:var(--w);
+    border-color:var(--b);
+    color:var(--b);
   }
 }
 @media (min-width:720px){
   #p-offres.page.on{
     background:var(--bg);
     min-height:calc(100dvh - 59px);
+    padding:0 0 96px;
+  }
+  #p-messages.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 52px);
     padding:0 0 96px;
   }
   #p-offres>.sec{padding:22px 42px}
@@ -566,42 +647,101 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   }
   #p-messages>.sec{
     display:grid;
-    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
     gap:14px;
-    align-items:start;
+    align-items:stretch;
+    min-height:calc(100dvh - 52px - 96px - 44px);
   }
   #p-messages .sec-hd{grid-column:1/-1}
   #p-messages #msgs-list{
     grid-column:1;
-    display:flex;
-    flex-direction:column;
+    grid-row:2;
+    display:grid;
+    grid-template-columns:1fr;
     gap:10px;
+    min-height:0;
+    overflow-y:auto;
   }
   #p-messages .msg-th{margin-bottom:0}
   #p-messages #chat-panel{
-    grid-column:2;
+    grid-column:1;
+    grid-row:3;
     margin-top:0;
-    align-self:start;
-    position:sticky;
-    top:68px;
+    align-self:stretch;
+    position:relative;
+    top:auto;
+    min-height:0;
   }
   #p-messages #chat-panel.on{
     display:flex;
     flex-direction:column;
-    min-height:520px;
+    height:100%;
+    min-height:0;
   }
+  #p-messages .chat-head{flex-shrink:0}
   #p-messages .chat-body{
     flex:1;
-    min-height:420px;
-    max-height:calc(100dvh - 210px);
+    min-height:0;
+    max-height:none;
   }
+  #p-messages .chat-compose{flex-shrink:0}
 }
 
 @media (min-width:1080px){
   #p-offres>.sec{padding-left:64px;padding-right:64px}
   #p-offres .offers-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
-  #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
 }
+
+@media (min-width:720px) and (max-width:1023px){
+  #p-swipe .cand-body{
+    overflow:hidden;
+    scrollbar-width:none;
+    padding:10px 16px;
+    gap:7px;
+  }
+  #p-swipe .cand-body::-webkit-scrollbar{display:none}
+  #p-swipe .cand-top{height:118px}
+  #p-swipe .cand-avatar{width:62px;height:62px;font-size:24px}
+  #p-swipe .cand-match-box{top:10px;right:10px;padding:5px 9px}
+  #p-swipe .cand-match-n{font-size:16px}
+  #p-swipe .cand-match-l{font-size:8px}
+  #p-swipe .cand-name{font-size:18px}
+  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
+  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
+  #p-swipe .cand-adn-section{padding:9px 11px;border-radius:10px}
+  #p-swipe .cand-adn-hd{margin-bottom:6px}
+  #p-swipe .cand-adn-score{font-size:24px}
+  #p-swipe .cand-adn-lbl{font-size:8px}
+  #p-swipe .cand-adn-type{font-size:11px}
+  #p-swipe .cand-adn-bars{gap:4px}
+  #p-swipe .cadn-row{gap:6px}
+  #p-swipe .cadn-l{width:64px;font-size:9px}
+  #p-swipe .cadn-tr{height:3px}
+  #p-swipe .cadn-v{font-size:10px;width:20px}
+  #p-swipe .cand-skills{gap:4px}
+  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
+  #p-swipe .cand-docs{gap:5px}
+  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
+  #p-swipe .cand-doc svg{width:11px;height:11px}
+  #p-swipe .cand-pitch,
+  #p-swipe .cand-ai{padding:8px;border-radius:9px}
+  #p-swipe .cand-pitch-hd{margin-bottom:5px}
+  #p-swipe .cand-pitch-t,
+  #p-swipe .cand-ai-t{font-size:10px}
+  #p-swipe .cand-pitch-score{font-size:13px}
+  #p-swipe .cand-pitch-text,
+  #p-swipe .cand-ai-text{font-size:10px;line-height:1.3;padding:6px 8px}
+  #p-swipe .cand-letter{border-radius:9px}
+  #p-swipe .clt{padding:6px;font-size:9px}
+  #p-swipe .cand-letter-body{padding:7px}
+  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
+  #p-swipe .cand-predict{gap:6px}
+  #p-swipe .cand-predict-box{padding:5px}
+  #p-swipe .cand-predict-v{font-size:12px}
+  #p-swipe .cand-predict-l{font-size:7px}
+}
+
 </style>
 </head>
 <body>
@@ -673,9 +813,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <div class="sec dash-actions">
     <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
     <button class="btn bp blk" style="margin-bottom:8px" onclick="go('post-offre')">+ Publier une offre</button>
-    <button class="btn bo blk" style="margin-bottom:8px" onclick="go('swipe')">Sourcer des candidats</button>
-    <button class="btn bo blk" style="margin-bottom:8px" onclick="go('questions')">Configurer mes questions de pré-qualification</button>
-    <button class="btn bo blk" onclick="go('offres')">Toutes mes offres</button>
+    <button class="btn bo blk" style="margin-bottom:8px" onclick="go('offres')">Toutes mes offres</button>
+    <button class="btn bo blk" onclick="go('swipe')">Sourcer des candidats</button>
   </div>
   <div class="sec dash-candidates">
     <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><button class="btn bg2 bsm" onclick="go('pipeline')">Pipeline</button></div>
@@ -720,27 +859,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
-<!-- QUESTIONS PRE-QUALIFICATION -->
-<div id="p-questions" class="page">
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Questions de pré-qualification</div><span class="chip chip-pu"><span class="chip-dot"></span>IA</span></div>
-    <div class="q-preset-card">
-      <p class="q-preset-intro">Sélectionnez les questions que les candidats devront répondre avant de pouvoir discuter avec vous. L'IA analyse leurs réponses et vous fait gagner du temps de tri.</p>
-      <div id="questions-list"></div>
-      <div class="q-custom-input">
-        <input class="q-custom-field" id="q-custom" type="text" placeholder="Ajouter votre propre question…">
-        <button class="q-add-btn" onclick="addCustomQuestion()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-      </div>
-      <div class="q-selected-count" id="q-count">0 question sélectionnée</div>
-    </div>
-    <button class="btn bp blk" onclick="saveQuestions()">Enregistrer mes questions</button>
-  </div>
-</div>
-
 <!-- PIPELINE KANBAN -->
 <div id="p-pipeline" class="page">
   <div class="sec" style="padding-bottom:9px">
-    <div class="sec-hd"><div class="sec-t sf">Pipeline de recrutement</div></div>
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><span class="chip chip-b"><span class="chip-dot"></span>Pipeline</span></div>
   </div>
   <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
 </div>
@@ -820,7 +942,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('offres')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Mes offres</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('post-offre')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Publier une offre</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('matching')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Moteur de matching</div></div>
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('questions')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Questions de pré-qualification</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('pricing')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Abonnement et tarifs</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer" onclick="doLogout()"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Déconnexion</div></div>
     </div>
@@ -863,10 +984,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       </div>
       <div class="match-title sf" id="ov-title">Match confirmé</div>
       <div class="match-sub" id="ov-sub">—</div>
-    </div>
-    <div class="q-ask-box" id="ov-q-box" style="display:none">
-      <div class="q-ask-t sf">Vos questions de pré-qualification seront posées :</div>
-      <div class="q-ask-list" id="ov-q-list"></div>
     </div>
     <div class="sh-actions">
       <button class="btn bp blk" onclick="closeOv({target:ov});go('messages')">Contacter le candidat</button>
@@ -973,7 +1090,7 @@ function messageStatusLabel(status = '') {
 function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
 function getLastPage() {
-  const allowed = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages','settings','pricing'];
+  const allowed = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];
   const page = localStorage.getItem(lastPageKey());
   return allowed.includes(page) ? page : 'dashboard';
 }
@@ -991,7 +1108,7 @@ function go(p) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, questions:loadQuestions, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
+  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
 }
@@ -1104,6 +1221,14 @@ function renderDashStats(s) {
   document.getElementById('kpi-offres').textContent = s.offres || '0';
 }
 function renderRecues(list) {
+  if (!list.length) {
+    document.getElementById('cands-recues').innerHTML = `
+      <div class="empty-state">
+        <b>Aucune candidature reçue</b>
+        Les nouveaux profils apparaîtront ici dès qu'ils postulent.
+      </div>`;
+    return;
+  }
   document.getElementById('cands-recues').innerHTML = list.map(c => `
     <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${c.id}')">
       <div class="cr-av" style="background:${c.bg}">${c.av}</div>
@@ -1116,8 +1241,8 @@ function renderRecues(list) {
     </div>`).join('');
 }
 function viewCandidate(id) {
-  // ------------------------------------------------------------
-  go('swipe');
+  localStorage.setItem('sf_focus_candidature', id);
+  go('pipeline');
 }
 
 // ------------------------------------------------------------
@@ -1252,12 +1377,6 @@ function showMatch(cand, r) {
   document.getElementById('ov-cand').textContent = cand.initiales === '?' ? cand.name.slice(0,2).toUpperCase() : cand.initiales;
   document.getElementById('ov-title').textContent = 'Match confirmé';
   document.getElementById('ov-sub').innerHTML = `Avec <strong>${cand.name}</strong> · Score ${cand.m}%`;
-  if (SELECTED_QUESTIONS.length) {
-    document.getElementById('ov-q-box').style.display = 'block';
-    document.getElementById('ov-q-list').innerHTML = SELECTED_QUESTIONS.map(q => `<div class="q-ask-item">"${q}"</div>`).join('');
-  } else {
-    document.getElementById('ov-q-box').style.display = 'none';
-  }
   document.getElementById('ov').classList.add('on');
 }
 function closeOv(e) { if (e.target===document.getElementById('ov')||e.target.closest('.sh-actions')) document.getElementById('ov').classList.remove('on'); }
@@ -1379,6 +1498,15 @@ async function loadPipeline() {
   } catch(e) { document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Erreur</div>'; }
 }
 function renderPipeline() {
+  const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
+  if (!total) {
+    document.getElementById('pipe-cols').innerHTML = `
+      <div class="empty-state">
+        <b>Aucune candidature reçue</b>
+        Les candidats qui postulent à vos offres apparaîtront ici.
+      </div>`;
+    return;
+  }
   document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map((stage, si) => `
     <div class="pipe-col">
       <div class="pipe-col-hd">
@@ -1453,6 +1581,17 @@ function offerTags(tags) {
   if (!tags) return [];
   return String(tags).split(',').map(t => t.trim()).filter(Boolean);
 }
+async function deleteOffer(id) {
+  if (!id) return;
+  if (!confirm('Supprimer cette offre ?')) return;
+  try {
+    await api('DELETE', '/offres/' + encodeURIComponent(id));
+    toast('Offre supprimée');
+    loadOffers();
+  } catch(e) {
+    toast(e.message || 'Suppression impossible');
+  }
+}
 function renderOffers(offers = []) {
   const list = document.getElementById('offers-list');
   if (!offers.length) {
@@ -1483,7 +1622,7 @@ function renderOffers(offers = []) {
         ${tags.length ? `<div class="offer-tags">${tags.map(t => `<span class="offer-tag">${esc(t)}</span>`).join('')}</div>` : ''}
         <div class="offer-actions">
           <button class="btn bg2 bsm" onclick="go('pipeline')">Voir candidatures</button>
-          <button class="btn bo bsm" onclick="go('post-offre')">Publier une autre offre</button>
+          <button class="btn bo bsm" onclick="deleteOffer('${esc(o.id)}')">Supprimer</button>
         </div>
       </div>`;
   }).join('');
@@ -1525,13 +1664,17 @@ async function openThread(id) {
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
   document.getElementById('chat-sub').textContent = thread.prev || 'Match SalesForge';
   document.getElementById('chat-panel').classList.add('on');
-  document.getElementById('chat-body').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  const chatBody = document.getElementById('chat-body');
+  chatBody.classList.remove('has-messages');
+  chatBody.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   await loadThreadMessages();
   document.getElementById('chat-input').focus();
 }
 async function loadThreadMessages() {
   if (!ACTIVE_THREAD?.match_id) {
-    document.getElementById('chat-body').innerHTML = '<div class="chat-empty">Cette conversation n’est pas encore reliée à un match actif.</div>';
+    const body = document.getElementById('chat-body');
+    body.classList.remove('has-messages');
+    body.innerHTML = '<div class="chat-empty">Cette conversation n’est pas encore reliée à un match actif.</div>';
     return;
   }
   try {
@@ -1539,11 +1682,14 @@ async function loadThreadMessages() {
     renderThreadMessages(messages);
     await loadMessages();
   } catch(e) {
-    document.getElementById('chat-body').innerHTML = '<div class="chat-empty">Impossible de charger la conversation.</div>';
+    const body = document.getElementById('chat-body');
+    body.classList.remove('has-messages');
+    body.innerHTML = '<div class="chat-empty">Impossible de charger la conversation.</div>';
   }
 }
 function renderThreadMessages(messages) {
   const body = document.getElementById('chat-body');
+  body.classList.toggle('has-messages', messages.length > 0);
   body.innerHTML = messages.length ? messages.map(m => {
     const mine = String(m.sender_id) === String(USER?.id || USER?.user_id);
     const receipt = mine ? `<div class="bubble-receipt">${m.lu ? 'Lu' : 'Envoyé'}</div>` : '';
@@ -1576,12 +1722,12 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
-    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Questions de pré-qualification','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:349,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Passer Enterprise'},
     {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
-    {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Questions de pré-qualification','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
+    {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:279,old:349,u:'/mois',h:'Facturé 3 348 €/an · -840 €',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Économiser 20%'},
     {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ]
@@ -1619,7 +1765,7 @@ if (TOKEN && !USER) {
 }
 if (TOKEN && USER) {
   const start = new URLSearchParams(location.search).get('start');
-  go(start === 'questions' ? 'questions' : getLastPage());
+  go(start === 'questions' ? 'dashboard' : getLastPage());
 } else {
   goLanding();
 }

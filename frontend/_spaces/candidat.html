@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesForge — Commercial</title>
+<title>Espace candidat - SalesForge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -110,7 +110,6 @@ button,input,textarea,select{font-family:inherit}
 .tr-info{flex:1;min-width:0}
 .tr-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-sub{font-size:12px;color:var(--ink3);margin-top:1px}
-.tr-auto{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--g);margin-top:3px}
 
 /* COACH */
 .coach-card{background:linear-gradient(135deg,#091422,#1340E0);color:#fff;border-radius:16px;padding:18px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
@@ -166,7 +165,7 @@ button,input,textarea,select{font-family:inherit}
 .fp{flex-shrink:0;padding:5px 11px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;white-space:nowrap;transition:.15s}
 .fp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .deck-area{position:relative;height:calc(100dvh - 285px);min-height:440px;max-height:570px;margin:12px 18px 0}
-.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(9,20,34,.07);will-change:transform;z-index:0}
+.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:none;will-change:transform;z-index:0}
 .swipe-card.swiping{pointer-events:none}
 .swipe-card:nth-last-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
 .swipe-card:nth-last-child(3){transform:scale(.926) translateY(20px);z-index:0;pointer-events:none;opacity:.75}
@@ -191,7 +190,6 @@ button,input,textarea,select{font-family:inherit}
 .card-co{position:absolute;bottom:12px;left:15px;color:#fff}
 .card-co-n{font-family:'Sora',sans-serif;font-size:14px;font-weight:900}
 .card-co-s{font-size:11px;color:rgba(255,255,255,.68);margin-top:1px}
-.card-auto-badge{position:absolute;bottom:12px;right:12px;background:var(--g);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase}
 .card-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 .card-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;line-height:1.15}
 .card-meta{display:flex;flex-wrap:wrap;gap:9px;font-size:12px;color:var(--ink3)}
@@ -220,13 +218,11 @@ button,input,textarea,select{font-family:inherit}
 .max-bar{flex:1;height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
 .max-fill{height:100%;background:var(--b);border-radius:2px}
 .max-v{font-size:11px;font-weight:700;width:21px;text-align:right;flex-shrink:0}
-.card-auto-row{display:flex;align-items:center;gap:6px;padding:8px 11px;background:var(--gs);border-radius:9px;font-size:12px;font-weight:600;color:var(--g)}
-.card-auto-row svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0}
 .deck-actions{position:sticky;bottom:70px;background:var(--w);border-top:1px solid var(--bd);padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px}
 .db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
 .db:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
 .db-pass{width:50px;height:50px}.db-pass:hover{border-color:var(--r);color:var(--r)}
-.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 4px 16px rgba(19,64,224,.26)}.db-like:hover{background:var(--b2)}
+.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:none}.db-like:hover{background:var(--b2)}
 .db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
 .deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px}
@@ -675,6 +671,218 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:1080px){
   #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
 }
+
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  .app{
+    width:100%;
+    max-width:none;
+    margin:0;
+    background:var(--bg);
+    min-height:100dvh;
+    box-shadow:none;
+  }
+  .bnav,.overlay{
+    width:100%;
+    max-width:none;
+  }
+  .topbar{height:52px;padding:0 36px}
+  .logo-m{width:26px;height:26px;border-radius:7px;font-size:13px}
+  .logo-n{font-size:12px;letter-spacing:-.2px}
+  .ib{width:28px;height:28px;border-radius:8px}
+  .ib svg{width:14px;height:14px}
+
+  #p-home.page.on{
+    display:grid !important;
+    grid-template-columns:minmax(320px,520px) minmax(360px,1fr);
+    column-gap:40px;
+    row-gap:26px;
+    align-items:start;
+    align-content:start;
+    background:var(--bg);
+    padding:24px clamp(32px,4vw,76px) 96px;
+    min-height:calc(100dvh - 52px);
+    width:100%;
+    max-width:1500px;
+    margin:0 auto;
+  }
+  #p-home .home-hero{
+    grid-column:1/-1;
+    margin:0;
+    padding:18px 20px;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+  }
+  #p-home>.sec{
+    padding:0 !important;
+    max-width:none;
+    width:100%;
+  }
+  #p-home .sec-hd{margin-bottom:12px}
+  #p-home .sec-t{font-size:17px}
+  #p-home .score-card{
+    min-height:96px;
+    padding:16px;
+    border-radius:12px;
+    box-shadow:none;
+  }
+  #p-home .score-ring{width:72px;height:72px}
+  #p-home .score-ring svg{width:72px;height:72px}
+  #p-home .score-v{font-size:23px}
+  #p-home .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  #p-home .kpi{min-height:74px;padding:12px;border-radius:7px}
+  #p-home .kpi-l{font-size:8px}
+  #p-home .kpi-v{font-size:20px}
+  #p-home .kpi-t{font-size:9px}
+  #p-home .adn-bars,
+  #p-home .tr-list{
+    background:transparent;
+    border:0;
+    border-radius:0;
+    padding:0;
+  }
+  .tr-item,.doc-item,.match-item,.msg-th,.card-sec,.bench-card,.community-card,.skill-item{
+    border-radius:12px;
+    border-color:var(--bd);
+  }
+  .tr-item,.doc-item,.match-item,.msg-th{
+    min-height:64px;
+    padding:14px 16px;
+  }
+  .tr-logo,.msg-av{width:42px;height:42px}
+  .tr-title,.doc-title,.mi-t,.msg-n{font-size:14px}
+  .tr-sub,.doc-meta,.mi-s,.msg-prev{font-size:12px}
+
+  #p-swipe.page.on{
+    display:block !important;
+    padding:0 0 96px;
+    background:var(--bg);
+  }
+  #p-swipe .swipe-hd{
+    top:52px;
+    margin:0;
+    padding:18px clamp(42px,4vw,64px);
+  }
+  #p-swipe .deck-area{
+    width:min(680px,calc(100% - 128px));
+    height:min(720px,calc(100dvh - 230px));
+    margin:22px auto 0;
+  }
+  #p-swipe .deck-actions{
+    width:min(680px,calc(100% - 128px));
+    margin:0 auto;
+    border-left:1px solid var(--bd);
+    border-right:1px solid var(--bd);
+    border-radius:0 0 18px 18px;
+  }
+  #p-swipe .swipe-card{border-radius:22px 22px 0 0}
+  #p-swipe .card-top{height:160px}
+  #p-swipe .card-title{font-size:24px}
+  #p-swipe .card-body{padding:18px 22px;gap:13px}
+
+  #p-test.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 52px);
+    padding:24px clamp(32px,4vw,76px) 96px !important;
+  }
+  #p-test .test-sticky{
+    position:relative;
+    top:auto;
+    width:min(960px,100%);
+    margin:0 auto 14px !important;
+    padding:18px 20px !important;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+  }
+  #p-test .test-body{
+    width:min(960px,100%);
+    margin:0 auto;
+    padding:0 !important;
+  }
+  #p-test .test-body>div{
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+    padding:18px 20px;
+  }
+  #p-test .step-nav{
+    display:grid;
+    grid-template-columns:160px 1fr;
+    gap:10px;
+  }
+
+  #p-profile.page.on{
+    display:flex !important;
+    flex-direction:column;
+    gap:12px;
+    width:min(960px,100%);
+    max-width:960px;
+    margin:0 auto;
+    background:var(--bg);
+    min-height:calc(100dvh - 52px);
+    padding:24px 0 96px !important;
+  }
+  #p-profile .ph{
+    position:static !important;
+    top:auto;
+    width:100%;
+    margin:0;
+    padding:24px 28px;
+    border-radius:12px;
+  }
+  #p-profile>.sec{
+    display:flex !important;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+    padding:0 !important;
+  }
+  #p-profile .card-sec,
+  #p-profile .plan-banner,
+  #p-profile .menu-list{
+    width:100%;
+    max-width:none;
+    margin:0;
+    border-radius:12px;
+  }
+}
+
+@media (min-width:720px) and (max-width:1023px){
+  #p-home.page.on{
+    display:flex !important;
+    flex-direction:column;
+    gap:14px;
+    width:min(720px,calc(100% - 56px));
+    margin:0 auto;
+    padding:24px 0 96px !important;
+    background:var(--bg);
+  }
+  #p-home .home-hero{
+    width:100%;
+    margin:0;
+    padding:18px 20px !important;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+  }
+  #p-home>.sec{
+    width:100%;
+    padding:0 !important;
+  }
+  #p-home .sec-hd{
+    margin-bottom:10px;
+  }
+  #p-home .adn-bars,
+  #p-home .tr-list{
+    width:100%;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+    padding:16px;
+  }
+}
 </style>
 </head>
 <body>
@@ -849,7 +1057,6 @@ button,input,textarea,select{font-family:inherit}
     <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Mes candidatures</div><span class="chip chip-b" id="cand-chip"><span class="chip-dot"></span>—</span></div>
     <div class="tab-seg">
       <button class="tsb on" onclick="tabSeg(this);filterCands('all')">Toutes</button>
-      <button class="tsb" onclick="tabSeg(this);filterCands('auto')">Auto-envoyées</button>
       <button class="tsb" onclick="tabSeg(this);filterCands('reponse')">Réponses</button>
     </div>
     <div class="tr-list" id="cands-list"><div class="loading-state"><div class="spinner"></div></div></div>
@@ -1201,10 +1408,6 @@ button,input,textarea,select{font-family:inherit}
       <div class="match-title sf" id="ov-title">Match confirmé</div>
       <div class="match-sub" id="ov-sub">—</div>
     </div>
-    <div class="auto-applied" id="ov-auto" style="display:none">
-      <div class="aa"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div><div class="aa-t">Candidature envoyée automatiquement</div><div class="aa-s">Lettre de motivation incluse — optimisée pour ce poste</div></div>
-    </div>
     <div class="match-stats">
       <div class="mstat"><div class="mstat-v sf" id="ov-score">—</div><div class="mstat-l">Match</div></div>
       <div class="mstat"><div class="mstat-v sf" id="ov-type">—</div><div class="mstat-l">Type</div></div>
@@ -1531,8 +1734,8 @@ function renderHomeKPIs(s) {
   document.getElementById('kpi-mt').textContent = s.matchs_new ? '+' + s.matchs_new + ' nouveaux' : 'Aucun nouveau';
   document.getElementById('kpi-mt').className = 'kpi-t ' + (s.matchs_new > 0 ? 'tu' : 'tf');
   document.getElementById('kpi-c').textContent = s.candidatures || '0';
-  document.getElementById('kpi-ct').textContent = s.cands_auto ? s.cands_auto + ' auto-envoyées' : 'Aucune';
-  document.getElementById('kpi-ct').className = 'kpi-t ' + (s.cands_auto > 0 ? 'tu' : 'tf');
+  document.getElementById('kpi-ct').textContent = s.candidatures ? 'Envoyées' : 'Aucune';
+  document.getElementById('kpi-ct').className = 'kpi-t ' + (s.candidatures > 0 ? 'tu' : 'tf');
   document.getElementById('kpi-s').textContent = s.streak || '0';
   document.getElementById('kpi-sal').textContent = s.salary || '—';
 }
@@ -1542,8 +1745,12 @@ function renderInsights(ins) {
   ).join('');
 }
 function renderHomeCands(c) {
+  if (!c.length) {
+    document.getElementById('home-cands').innerHTML = '<div class="loading-state">Aucune candidature envoyée pour le moment.</div>';
+    return;
+  }
   document.getElementById('home-cands').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div>${x.auto?'<span class="tr-auto"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Auto-envoyée</span>':''}</div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
+    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
   ).join('');
 }
 async function snooze() {
@@ -1626,14 +1833,12 @@ function buildCard(o) {
       <div class="card-badge-row"><span class="card-type-badge">${o.type}</span>${o.tags.slice(0, 3).map(t=>`<span class="card-top-tag">${t}</span>`).join('')}</div>
       <div class="card-match-box"><div class="card-match-n sf">${o.m}</div><div class="card-match-l">Match</div></div>
       <div class="card-co"><div class="card-co-n sf">${o.co}</div><div class="card-co-s">${o.sz}</div></div>
-      ${o.auto?'<div class="card-auto-badge">Auto-cand.</div>':''}
     </div>
     <div class="card-body">
       <div class="card-title sf">${o.titre}</div>
       <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${o.lieu}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${o.dur}</span></div>
       <div class="card-salary"><div class="card-sal-v sf">${o.sal}</div><div class="card-bench-note">${o.bn}</div></div>
       <div class="compat-bar"><div class="compat-row"><span class="compat-lbl sf">Compatibilité culturelle</span><span class="compat-score sf" style="color:${cc}">${o.compat.s}%</span></div><div class="compat-axes">${o.compat.ax.map(a=>`<div class="cx"><div class="cx-l">${a.l}</div><div class="cx-bar"><div class="cx-fill" style="width:${a.v}%;background:${cc}"></div></div><div class="cx-v" style="color:${cc}">${a.v}</div></div>`).join('')}</div></div>
-      ${o.auto?`<div class="card-auto-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Swiper = candidature envoyée automatiquement</div>`:''}
       <div class="card-ai"><div style="margin-bottom:6px"><span class="chip chip-b"><span class="chip-dot"></span>Analyse IA</span></div><div class="card-ai-text">${o.ai}</div><div class="card-ai-axes">${o.axes.map(a=>`<div class="max"><div class="max-l">${a.l}</div><div class="max-bar"><div class="max-fill" style="width:${a.v}%"></div></div><div class="max-v sf">${a.v}</div></div>`).join('')}</div></div>
     </div>`;
   attachDrag(d, o); return d;
@@ -1694,7 +1899,6 @@ function showMatch(o, r) {
   document.getElementById('ov-title').textContent = 'Match confirmé';
   document.getElementById('ov-sub').innerHTML = `Avec <strong>${o.co}</strong> — ${o.titre}`;
   document.getElementById('ov-score').textContent = o.m + '%'; document.getElementById('ov-type').textContent = o.type; document.getElementById('ov-lieu').textContent = o.lieu.split('·')[0].trim().split(' ')[0];
-  document.getElementById('ov-auto').style.display = o.auto ? 'flex' : 'none';
   if (r.questions) document.getElementById('ov-prep-qs').innerHTML = r.questions.map(q => `<div class="prep-q">"${q}"</div>`).join('');
   document.getElementById('ov').classList.add('on');
 }
@@ -1714,8 +1918,12 @@ async function loadCandidatures() {
 }
 function filterCands(f) { renderCands(f==='auto'?ALL_CANDS.filter(c=>c.auto):f==='reponse'?ALL_CANDS.filter(c=>c.statut==='repondu'||c.statut==='entretien'):ALL_CANDS); }
 function renderCands(c) {
+  if (!c.length) {
+    document.getElementById('cands-list').innerHTML = '<div class="loading-state">Aucune candidature à afficher.</div>';
+    return;
+  }
   document.getElementById('cands-list').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div>${x.auto?'<span class="tr-auto"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Auto-envoyée</span>':''}</div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
+    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
   ).join('');
 }
 
@@ -2097,13 +2305,13 @@ async function updateMotivationFile(input) {
 const PLANS = {
   month:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Essai 14j gratuit',pop:true},
     {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
     {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
   ],
   year:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
+    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
     {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Documents avancés','Certification SalesForge','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
     {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Documents premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
   ]

@@ -121,6 +121,10 @@ const frame = document.getElementById('app-frame');
 const loginSubmit = document.getElementById('login-submit');
 const forgotSubmit = document.getElementById('forgot-submit');
 
+function setPageTitle(title){
+  document.title = `${title} - SalesForge`;
+}
+
 function frError(text){
   const msg = String(text || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
@@ -151,6 +155,7 @@ function clearStoredSession(){
 }
 
 function showLogin(){
+  setPageTitle('Connexion');
   document.body.classList.add('auth');
   bootView.style.display = 'none';
   loginView.style.display = 'block';
@@ -159,6 +164,7 @@ function showLogin(){
 }
 
 function showRoleChoice(){
+  setPageTitle('Choix de l’espace');
   document.body.classList.add('auth');
   bootView.style.display = 'none';
   loginView.style.display = 'none';
@@ -197,54 +203,6 @@ function syncRecruiterDashboardFrame(){
 
   if (actions.nextElementSibling !== candidates) {
     dashboard.append(actions, candidates);
-  }
-
-  if (!actions.querySelector('[data-dashboard-all-offers]')) {
-    const allOffers = doc.createElement('button');
-    allOffers.className = 'btn bo blk';
-    allOffers.type = 'button';
-    allOffers.dataset.dashboardAllOffers = '1';
-    allOffers.textContent = 'Toutes mes offres';
-    allOffers.onclick = () => frame.contentWindow.go('post-offre');
-    actions.appendChild(allOffers);
-  }
-
-  if (!doc.getElementById('dashboard-desktop-fix')) {
-    const style = doc.createElement('style');
-    style.id = 'dashboard-desktop-fix';
-    style.textContent = `
-      @media (min-width:1024px){
-        #p-dashboard.page.on{
-          display:grid !important;
-          grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-          column-gap:48px !important;
-          padding:0 24px 96px !important;
-          background:var(--bg) !important;
-        }
-        #p-dashboard .dash-hero{
-          grid-column:1/-1 !important;
-          order:1 !important;
-          margin:0 -24px !important;
-        }
-        #p-dashboard .dash-actions{
-          grid-column:1 !important;
-          order:2 !important;
-          width:100% !important;
-          padding:32px 0 0 !important;
-        }
-        #p-dashboard .dash-candidates{
-          grid-column:2 !important;
-          order:3 !important;
-          width:100% !important;
-          padding:32px 0 0 !important;
-        }
-        #p-dashboard .dash-actions .btn{
-          width:100% !important;
-          margin-bottom:8px !important;
-        }
-      }
-    `;
-    doc.head.appendChild(style);
   }
 }
 
@@ -307,6 +265,7 @@ async function openRoleSpace(){
     } else {
       localStorage.setItem('sf_user', JSON.stringify(profile));
     }
+    setPageTitle(profile.role === 'recruteur' ? 'Espace recruteur' : 'Espace candidat');
     const onboardingRole = localStorage.getItem('sf_onboarding_role');
     const start = onboardingRole === profile.role
       ? (profile.role === 'recruteur' ? 'questions' : 'test')
