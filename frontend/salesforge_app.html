@@ -223,11 +223,11 @@ function storeOAuthTokenFromUrl(){
 }
 
 async function openRoleSpace(){
+  const paymentSuccess = new URLSearchParams(window.location.search).get('payment') === 'success';
+  if (paymentSuccess) {
+    history.replaceState(null, '', window.location.pathname);
+  }
   const forceLogin = new URLSearchParams(window.location.search).get('login') === '1';
-  if (forceLogin) {
-    clearStoredSession();
-    showLogin();
-    history.replaceState(null, '', window.location.pathname + '?login=1');
     return;
   }
 
@@ -277,6 +277,13 @@ async function openRoleSpace(){
     frame.src = profile.role === 'recruteur'
       ? `_spaces/recruteur.html?${recruiterParams.toString()}`
       : `_spaces/candidat.html${start ? `?start=${start}` : ''}`;
+      if (paymentSuccess) {
+      setTimeout(() => {
+        try {
+          frame.contentWindow.toast('🎉 Abonnement activé ! Bienvenue !');
+        } catch(e) {}
+      }, 2000);
+    }
     localStorage.removeItem('sf_pending_role');
     localStorage.removeItem('sf_onboarding_role');
   } catch (error) {
