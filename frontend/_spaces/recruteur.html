@@ -1777,7 +1777,7 @@ if (TOKEN && !USER) {
 if (TOKEN && USER) {
   const start = new URLSearchParams(location.search).get('start');
   // Vérifier le plan au chargement
-  api('GET', '/recruteurs/stats')
+  api('GET', '/recruteurs/stats?t=' + Date.now())
     .then(() => { HAS_PLAN = true; })
     .catch(() => { HAS_PLAN = false; })
     .finally(() => {
