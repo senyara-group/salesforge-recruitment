@@ -1,0 +1,13 @@
+[1mdiff --git a/frontend/_spaces/recruteur.html b/frontend/_spaces/recruteur.html[m
+[1mindex c95335a..c7da331 100644[m
+[1m--- a/frontend/_spaces/recruteur.html[m
+[1m+++ b/frontend/_spaces/recruteur.html[m
+[36m@@ -1089,7 +1089,7 @@[m [mfunction messageStatusLabel(status = '') {[m
+   return String(status).replace('Envoye', 'Envoyé');[m
+ }[m
+ function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }[m
+[31m-function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }[m
+[32m+[m[32mfunction saveLastPage(p) { if (p !== 'auth' && p !== 'pricing') localStorage.setItem(lastPageKey(), p); }[m
+ function getLastPage() {[m
+   const allowed = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];[m
+   const page = localStorage.getItem(lastPageKey());[m
