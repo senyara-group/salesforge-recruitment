@@ -80,7 +80,7 @@ function createCheckoutSession({ req, priceId, checkoutPlan, userId, plan, type,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [lineItem],
-    success_url: `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${frontendUrl}/salesforge_app.html?payment=success`,
     cancel_url: `${frontendUrl}/pricing`,
     metadata: {
       plan,
