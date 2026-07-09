@@ -1776,7 +1776,13 @@ if (TOKEN && !USER) {
 }
 if (TOKEN && USER) {
   const start = new URLSearchParams(location.search).get('start');
-  go(start === 'questions' ? 'dashboard' : getLastPage());
+  // Vérifier le plan au chargement
+  api('GET', '/recruteurs/stats')
+    .then(() => { HAS_PLAN = true; })
+    .catch(() => { HAS_PLAN = false; })
+    .finally(() => {
+      go(start === 'questions' ? 'questions' : getLastPage());
+    });
 } else {
   goLanding();
 }
