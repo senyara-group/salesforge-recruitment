@@ -227,7 +227,12 @@ async function openRoleSpace(){
   if (paymentSuccess) {
     history.replaceState(null, '', window.location.pathname);
   }
+
   const forceLogin = new URLSearchParams(window.location.search).get('login') === '1';
+  if (forceLogin) {
+    clearStoredSession();
+    showLogin();
+    history.replaceState(null, '', window.location.pathname + '?login=1');
     return;
   }
 
