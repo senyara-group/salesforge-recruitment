@@ -1060,7 +1060,27 @@ async function api(method, path, body) {
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
   const d = await r.json();
-  if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Erreur serveur');
+  if (!r.ok) {
+    // Pas d'abonnement recruteur
+    if (d.error === 'PLAN_REQUIRED') {
+      toast('Un abonnement est requis pour accéder à cette fonctionnalité');
+      go('pricing');
+      throw new Error(d.message || 'Abonnement requis');
+    }
+    // Abonnement inactif
+    if (d.error === 'PLAN_INACTIVE') {
+      toast('Votre abonnement est inactif ou expiré');
+      go('pricing');
+      throw new Error(d.message || 'Abonnement inactif');
+    }
+    // Limite offres atteinte
+    if (d.error === 'OFFER_LIMIT_REACHED') {
+      toast('Limite de 3 offres atteinte — passez au plan Enterprise');
+      go('pricing');
+      throw new Error(d.message || 'Limite offres atteinte');
+    }
+    throw new Error(d.message || d.error || 'Erreur serveur');
+  }
   return d;
 }
 function frError(text){
@@ -1155,7 +1175,14 @@ async function doLogin() {
     const d = await api('POST', '/auth/login', { email, password });
     TOKEN = d.token; USER = d.profile || d.user;
     localStorage.setItem('sf_rec_token', TOKEN); localStorage.setItem('sf_rec_user', JSON.stringify(USER));
-    go('dashboard');
+    // Vérifier si un abonnement existe
+    try {
+      await api('GET', '/recruteurs/stats');
+      go('dashboard');
+    } catch(e) {
+      // PLAN_REQUIRED géré dans api() — redirection pricing automatique
+      if (!e.message.includes('requis') && !e.message.includes('inactif')) go('dashboard');
+    }
   } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
 }
 async function doRegister() {
