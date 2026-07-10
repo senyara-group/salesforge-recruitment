@@ -1025,10 +1025,12 @@ let TOKEN = localStorage.getItem('sf_rec_token');
 let USER  = JSON.parse(localStorage.getItem('sf_rec_user') || 'null');
 let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
+let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_TAGS = [];
 let HAS_PLAN = false;
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function seenCandidateStorageKey() {
   return 'sf_seen_candidates_' + (USER?.id || USER?.user_id || 'anon');
@@ -1713,6 +1715,28 @@ async function openThread(id) {
   await loadThreadMessages();
   document.getElementById('chat-input').focus();
 }
+
+function subscribeToMessages(matchId) {
+  if (REALTIME_CHANNEL) {
+    REALTIME_CHANNEL.unsubscribe();
+    REALTIME_CHANNEL = null;
+  }
+
+  if (!matchId) return;
+
+  REALTIME_CHANNEL = supabaseClient
+    .channel('messages-rec-' + matchId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `match_id=eq.${matchId}`
+    }, () => {
+      loadThreadMessages();
+    })
+    .subscribe();
+}
+
 async function loadThreadMessages() {
   if (!ACTIVE_THREAD?.match_id) {
     const body = document.getElementById('chat-body');
@@ -1723,6 +1747,7 @@ async function loadThreadMessages() {
   try {
     const messages = await api('GET', '/messages/thread/' + ACTIVE_THREAD.match_id);
     renderThreadMessages(messages);
+    subscribeToMessages(ACTIVE_THREAD.match_id);
     await loadMessages();
   } catch(e) {
     const body = document.getElementById('chat-body');
