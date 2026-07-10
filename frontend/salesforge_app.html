@@ -417,8 +417,19 @@ forgotSubmit.addEventListener('click', async () => {
   }
 });
 
-storeOAuthTokenFromUrl();
-openRoleSpace();
+async function bootApp(){
+  try {
+    await consumeAuthCallback();
+    await openRoleSpace();
+  } catch (error) {
+    console.error(error);
+    clearStoredSession();
+    showLogin();
+    showMessage('Connexion impossible. Reconnectez-vous.');
+  }
+}
+
+bootApp();
 // Intercepter les redirections Stripe depuis l'iframe
 window.addEventListener('message', (event) => {
   if (event.data?.type === 'stripe_redirect' && event.data?.url) {
