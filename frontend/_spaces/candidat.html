@@ -2138,7 +2138,13 @@ async function sendThreadMessage(event) {
     await loadThreadMessages();
   } catch(e) {
     input.value = contenu;
-    toast(e.message || 'Erreur envoi message');
+    // Gérer la limite de contacts
+    if (e.message?.includes('Limite de')) {
+      toast(e.message);
+      go('pricing');
+    } else {
+      toast(e.message || 'Erreur envoi message');
+    }
   }
 }
 
@@ -2354,7 +2360,12 @@ async function selectPlan(plan, billing) {
   if (plan === 'freemium') { toast('Vous êtes déjà en Freemium'); return; }
   try {
     const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'cand' });
-    window.location.href = url;
+    // Envoyer l'URL au parent pour éviter le problème iframe
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
+    } else {
+      window.location.href = url;
+    }
   } catch(e) { toast('Erreur paiement'); }
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }

@@ -80,7 +80,7 @@ function createCheckoutSession({ req, priceId, checkoutPlan, userId, plan, type,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [lineItem],
-    success_url: `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${frontendUrl}/salesforge_app.html?payment=success`,
     cancel_url: `${frontendUrl}/pricing`,
     metadata: {
       plan,
@@ -162,24 +162,71 @@ router.post('/webhook', async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    if (event.type === 'customer.subscription.created') {
-      const sub = event.data.object;
+    // Événement le plus fiable — paiement confirmé
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const userId = session.metadata?.userId;
+      const plan = session.metadata?.plan;
+      const period = session.metadata?.period || 'month';
+
+      if (!userId || !plan) {
+        console.warn('Webhook checkout.session.completed — userId ou plan manquant', session.metadata);
+        return res.json({ received: true });
+      }
 
       await supabase.from('abonnements').upsert({
-        user_id: sub.metadata?.userId || null,
-        stripe_customer_id: sub.customer,
-        plan: sub.metadata?.plan || sub.items.data[0].price.nickname,
+        user_id: userId,
+        stripe_customer_id: session.customer,
+        plan,
         statut: 'actif',
-        periode: sub.metadata?.period || 'month',
-      });
+        periode: period,
+      }, { onConflict: 'user_id' });
     }
 
+    // Mise à jour abonnement (upgrade / downgrade / renouvellement)
+    if (event.type === 'customer.subscription.updated') {
+      const sub = event.data.object;
+      const userId = sub.metadata?.userId;
+      const plan = sub.metadata?.plan || sub.items.data[0]?.price?.nickname;
+
+      if (!userId) {
+        console.warn('Webhook subscription.updated — userId manquant');
+        return res.json({ received: true });
+      }
+
+      const statut = sub.status === 'active' ? 'actif' : 'inactif';
+
+      await supabase.from('abonnements').upsert({
+        user_id: userId,
+        stripe_customer_id: sub.customer,
+        plan,
+        statut,
+        periode: sub.metadata?.period || 'month',
+      }, { onConflict: 'user_id' });
+    }
+
+    // Annulation abonnement — repasse en freemium
     if (event.type === 'customer.subscription.deleted') {
-      // Repasser l'utilisateur en Freemium
+      const sub = event.data.object;
+      const userId = sub.metadata?.userId;
+
+      if (!userId) {
+        console.warn('Webhook subscription.deleted — userId manquant');
+        return res.json({ received: true });
+      }
+
+      await supabase.from('abonnements').upsert({
+        user_id: userId,
+        stripe_customer_id: sub.customer,
+        plan: 'freemium',
+        statut: 'actif',
+        periode: 'month',
+      }, { onConflict: 'user_id' });
     }
 
     res.json({ received: true });
   } catch (error) {
+    console.error('Webhook error:', error.message);
     res.status(400).json({ error: error.message });
   }
 });

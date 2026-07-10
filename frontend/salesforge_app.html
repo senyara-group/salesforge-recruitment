@@ -252,6 +252,11 @@ async function consumeAuthCallback(){
 }
 
 async function openRoleSpace(){
+  const paymentSuccess = new URLSearchParams(window.location.search).get('payment') === 'success';
+  if (paymentSuccess) {
+    history.replaceState(null, '', window.location.pathname);
+  }
+
   const forceLogin = new URLSearchParams(window.location.search).get('login') === '1';
   const hasAuthCallback = window.location.hash.includes('access_token') || new URLSearchParams(window.location.search).has('code');
   if (forceLogin && !hasAuthCallback) {
@@ -316,6 +321,13 @@ async function openRoleSpace(){
     frame.src = profile.role === 'recruteur'
       ? `_spaces/recruteur.html?${recruiterParams.toString()}`
       : `_spaces/candidat.html${start ? `?start=${start}` : ''}`;
+      if (paymentSuccess) {
+      setTimeout(() => {
+        try {
+          frame.contentWindow.toast('🎉 Abonnement activé ! Bienvenue !');
+        } catch(e) {}
+      }, 2000);
+    }
     localStorage.removeItem('sf_pending_role');
     localStorage.removeItem('sf_onboarding_role');
   } catch (error) {
@@ -405,12 +417,14 @@ forgotSubmit.addEventListener('click', async () => {
   }
 });
 
-consumeAuthCallback()
-  .then(openRoleSpace)
-  .catch(() => {
-    showLogin();
-    showMessage('Confirmation impossible. Reconnectez-vous.');
-  });
+storeOAuthTokenFromUrl();
+openRoleSpace();
+// Intercepter les redirections Stripe depuis l'iframe
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'stripe_redirect' && event.data?.url) {
+    window.location.href = event.data.url;
+  }
+});
 </script>
 </body>
 </html>

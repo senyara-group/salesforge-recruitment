@@ -123,6 +123,56 @@ async function ensureMatchAccess(matchId, userId) {
   return participants;
 }
 
+async function checkContactLimit(senderId, receiverId) {
+  // Récupérer le profil candidat
+  const { data: candidat } = await supabase
+    .from('candidats')
+    .select('contacts_meta, swipes_meta')
+    .eq('user_id', senderId)
+    .maybeSingle();
+
+  if (!candidat) return; // Pas un candidat, on laisse passer
+
+  // Récupérer le plan
+  const { data: abonnement } = await supabase
+    .from('abonnements')
+    .select('plan')
+    .eq('user_id', senderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const plan = abonnement?.plan || 'freemium';
+
+  // Gold et Platine = illimité
+  if (['gold', 'platine'].includes(plan)) return;
+
+  // Limite selon plan
+  const limit = plan === 'premium' ? 10 : 2;
+  const month = new Date().toISOString().slice(0, 7);
+  const meta = candidat.contacts_meta || {};
+  const contacts = Array.isArray(meta.contacts) ? meta.contacts : [];
+  const thisMonth = contacts.filter(c => c.month === month);
+
+  // Vérifier si ce recruteur a déjà été contacté
+  const alreadyContacted = thisMonth.some(c => c.receiver_id === receiverId);
+  if (alreadyContacted) return; // Déjà contacté, pas de limite
+
+  // Vérifier la limite
+  if (thisMonth.length >= limit) {
+    const error = new Error(`Limite de ${limit} contacts recruteurs/mois atteinte — passez à un plan supérieur`);
+    error.status = 402;
+    throw error;
+  }
+
+  // Enregistrer le nouveau contact
+  const nextContacts = [...contacts, { receiver_id: receiverId, month }];
+  await supabase
+    .from('candidats')
+    .update({ contacts_meta: { ...meta, contacts: nextContacts } })
+    .eq('user_id', senderId);
+}
+
 router.get('/threads', authMiddleware, async (req, res) => {
   try {
     const role = await getUserRole(req.user.id);
@@ -253,6 +303,8 @@ router.post('/send', authMiddleware, async (req, res) => {
     if (!receiverId) return res.status(400).json({ error: 'Destinataire manquant' });
     if (!match_id) return res.status(400).json({ error: 'Match requis pour envoyer un message' });
     if (!body || !body.trim()) return res.status(400).json({ error: 'Message vide' });
+
+    await checkContactLimit(req.user.id, receiverId);
 
     const participants = await ensureMatchAccess(match_id, req.user.id);
     let storedMatchId = match_id;
