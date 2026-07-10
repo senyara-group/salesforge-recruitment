@@ -123,6 +123,7 @@ button,input,textarea,select{font-family:inherit}
 .cand-top.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
 .swipe-card .cand-top{border-radius:22px 22px 0 0}
 .cand-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:26px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
+.cand-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .cand-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
 .cand-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
 .cand-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
@@ -742,6 +743,22 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .cand-predict-l{font-size:7px}
 }
 
+/* Recruiter cards sizing */
+#p-swipe .deck-area{min-height:390px;max-height:560px}
+#p-swipe .cand-top{height:112px}
+#p-swipe .cand-avatar{width:64px;height:64px;font-size:23px}
+#p-swipe .cand-body{gap:9px;padding:12px 15px}
+#p-swipe .cand-adn-section,#p-swipe .cand-pitch,#p-swipe .cand-letter,#p-swipe .cand-ai{border-radius:10px;padding:10px}
+#p-swipe .cand-name{font-size:16px}
+@media (min-width:720px){
+  #p-swipe .deck-area{height:min(600px,calc(100dvh - 210px));max-width:540px}
+  #p-swipe .cand-top{height:126px}
+}
+@media (min-width:1080px){
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(560px,calc(100% - 96px))}
+  #p-swipe .deck-area{height:min(620px,calc(100dvh - 205px))}
+}
+
 </style>
 </head>
 <body>
@@ -1088,18 +1105,26 @@ function shortDate(value) {
 function messageStatusLabel(status = '') {
   return String(status).replace('Envoye', 'Envoyé');
 }
+const APP_PAGES = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];
 function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth' && p !== 'pricing') localStorage.setItem(lastPageKey(), p); }
 function getLastPage() {
-  const allowed = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];
+  const hashPage = pageFromHash();
+  if (hashPage) return hashPage;
   const page = localStorage.getItem(lastPageKey());
-  return allowed.includes(page) ? page : 'dashboard';
+  return APP_PAGES.includes(page) ? page : 'dashboard';
+}
+function syncPageHistory(page, replace = false) {
+  if (page === 'auth') return;
+  const nextHash = '#' + page;
+  if (location.hash === nextHash && !replace) return;
+  history[replace ? 'replaceState' : 'pushState']({ page }, '', location.pathname + location.search + nextHash);
 }
 
 // ------------------------------------------------------------
 // NAVIGATION
 // ------------------------------------------------------------
-function go(p) {
+function go(p, options = {}) {
   const ui = p !== 'auth';
   const PROTECTED_PAGES = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages'];
   if (PROTECTED_PAGES.includes(p) && !HAS_PLAN && TOKEN) {
@@ -1117,6 +1142,7 @@ function go(p) {
   const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
+  if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
 }
 
 // ------------------------------------------------------------
@@ -1283,7 +1309,7 @@ function buildCandCard(c) {
   d.innerHTML = `
     <div class="sw-lbl like">Intéressé</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
     <div class="cand-top${c.anon?' anon':''}">
-      <div class="cand-avatar">${c.initiales}</div>
+      <div class="cand-avatar"></div>
       ${c.anon?'<div class="cand-anon-badge"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Anonyme</div>':''}
       <div class="cand-match-box"><div class="cand-match-n sf" style="color:${sc}">${c.m}</div><div class="cand-match-l">Match</div></div>
     </div>
@@ -1316,6 +1342,15 @@ function buildCandCard(c) {
       <div class="cand-ai"><div class="cand-ai-t sf"><span class="chip-dot" style="background:var(--b)"></span>Analyse IA</div><div class="cand-ai-text">${c.ai}</div></div>
       <div class="cand-predict">${c.predict.map(p=>`<div class="cand-predict-box"><div class="cand-predict-v sf">${p.v}</div><div class="cand-predict-l">${p.l}</div></div>`).join('')}</div>
     </div>`;
+  const avatarEl = d.querySelector('.cand-avatar');
+  if (c.avatar_url) {
+    const img = document.createElement('img');
+    img.src = c.avatar_url;
+    img.alt = c.name || 'Candidat';
+    avatarEl.appendChild(img);
+  } else {
+    avatarEl.textContent = c.initiales || 'SF';
+  }
   attachDrag(d, c); return d;
 }
 function cltSwitch(btn, id) {
@@ -1637,24 +1672,26 @@ function renderOffers(offers = []) {
 // ------------------------------------------------------------
 // MESSAGES
 // ------------------------------------------------------------
-function setMessageBadges(hasUnread) {
+function setMessageBadges(unreadCount) {
+  const hasUnread = Number(unreadCount || 0) > 0;
   ['msg-dot', 'msg-dot-nav'].forEach(id => {
     const dot = document.getElementById(id);
     if (dot) dot.style.display = hasUnread ? 'block' : 'none';
   });
+  document.title = hasUnread ? 'Nouveaux messages - SalesForge' : 'Espace recruteur - SalesForge';
 }
 async function refreshMessageBadge() {
   if (!USER) return;
   try {
     const threads = await api('GET', '/messages/threads');
-    setMessageBadges(threads.some(t => t.ur));
+    setMessageBadges(threads.filter(t => t.ur).length);
   } catch(e) {}
 }
 async function loadMessages() {
   if (!USER) return;
   try {
     THREADS = await api('GET', '/messages/threads');
-    setMessageBadges(THREADS.some(t=>t.ur));
+    setMessageBadges(THREADS.filter(t=>t.ur).length);
     document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t => `
       <div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')">
         <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
@@ -1786,6 +1823,9 @@ if (TOKEN && USER) {
 } else {
   goLanding();
 }
+window.addEventListener('popstate', () => {
+  if (TOKEN && USER) go(pageFromHash() || getLastPage(), { history: false });
+});
 </script>
 </body>
 </html>

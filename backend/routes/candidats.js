@@ -7,8 +7,12 @@ const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
 
 const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
+const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const MAX_CV_BYTES = Number(process.env.MAX_CV_UPLOAD_MB || 8) * 1024 * 1024;
+const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
 const CV_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
+const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
@@ -36,7 +40,7 @@ function parseContentDisposition(header = '') {
   }, {});
 }
 
-function readRequestBuffer(req, maxBytes) {
+function readRequestBuffer(req, maxBytes, label = 'Fichier') {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -44,7 +48,7 @@ function readRequestBuffer(req, maxBytes) {
     req.on('data', (chunk) => {
       size += chunk.length;
       if (size > maxBytes) {
-        const error = new Error('CV trop volumineux');
+        const error = new Error(`${label} trop volumineux`);
         error.status = 413;
         reject(error);
         req.destroy();
@@ -58,7 +62,7 @@ function readRequestBuffer(req, maxBytes) {
   });
 }
 
-async function getMultipartFile(req, fieldName) {
+async function getMultipartFile(req, fieldName, maxBytes = MAX_CV_BYTES, label = 'Fichier') {
   const contentType = req.headers['content-type'] || '';
   const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.[1]
     || contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.[2];
@@ -69,7 +73,7 @@ async function getMultipartFile(req, fieldName) {
     throw error;
   }
 
-  const body = await readRequestBuffer(req, MAX_CV_BYTES);
+  const body = await readRequestBuffer(req, maxBytes, label);
   const parts = body.toString('latin1').split(`--${boundary}`);
 
   for (const part of parts) {
@@ -96,7 +100,7 @@ async function getMultipartFile(req, fieldName) {
     };
   }
 
-  const error = new Error('Fichier CV manquant');
+  const error = new Error(`Fichier ${fieldName} manquant`);
   error.status = 400;
   throw error;
 }
@@ -121,6 +125,21 @@ function validateCvFile(file) {
 
 function validateMotivationFile(file) {
   validateProfileDocument(file, 'lettre de motivation');
+}
+
+function validateAvatarFile(file) {
+  const ext = path.extname(file.filename).toLowerCase();
+  const type = String(file.contentType || '').toLowerCase();
+  if (!AVATAR_EXTENSIONS.has(ext) || !AVATAR_MIME_TYPES.has(type)) {
+    const error = new Error('Format photo non supporte. Utilisez JPG, PNG, WEBP ou GIF.');
+    error.status = 400;
+    throw error;
+  }
+  if (!file.buffer.length) {
+    const error = new Error('Photo vide');
+    error.status = 400;
+    throw error;
+  }
 }
 
 function cleanExtractedText(text = '') {
@@ -299,11 +318,26 @@ async function ensureCvBucket() {
   if (error && !/already|exist/i.test(error.message || '')) throw error;
 }
 
+async function ensureAvatarBucket() {
+  const existing = await supabase.storage.getBucket(AVATAR_BUCKET);
+  if (!existing.error) return;
+
+  const { error } = await supabase.storage.createBucket(AVATAR_BUCKET, {
+    public: false,
+    allowedMimeTypes: [...AVATAR_MIME_TYPES],
+    fileSizeLimit: MAX_AVATAR_BYTES,
+  });
+
+  if (error && !/already|exist/i.test(error.message || '')) throw error;
+}
+
 async function withFreshCvUrl(profile) {
   const cvPath = profile?.axes?.meta?.cv_path;
   const cvBucket = profile?.axes?.meta?.cv_bucket || CV_BUCKET;
   const motivationPath = profile?.axes?.meta?.motivation_path;
   const motivationBucket = profile?.axes?.meta?.motivation_bucket || CV_BUCKET;
+  const avatarPath = profile?.axes?.meta?.avatar_path;
+  const avatarBucket = profile?.axes?.meta?.avatar_bucket || AVATAR_BUCKET;
   let nextProfile = profile;
 
   if (cvPath) {
@@ -318,6 +352,13 @@ async function withFreshCvUrl(profile) {
       .from(motivationBucket)
       .createSignedUrl(motivationPath, 60 * 60 * 24 * 7);
     if (!error && data?.signedUrl) nextProfile = { ...nextProfile, motivation_url: data.signedUrl };
+  }
+
+  if (avatarPath) {
+    const { data, error } = await supabase.storage
+      .from(avatarBucket)
+      .createSignedUrl(avatarPath, 60 * 60 * 24);
+    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, avatar_url: data.signedUrl };
   }
 
   return nextProfile;
@@ -533,9 +574,113 @@ async function uploadMotivation(req, res) {
   }
 }
 
+function omitKeys(obj = {}, keys = []) {
+  const blocked = new Set(keys);
+  return Object.fromEntries(Object.entries(obj || {}).filter(([key]) => !blocked.has(key)));
+}
+
+async function removeStorageFile(bucket, storagePath) {
+  if (!storagePath) return;
+  const { error } = await supabase.storage.from(bucket).remove([storagePath]);
+  if (error && !/not found|not exist|missing/i.test(error.message || '')) {
+    console.warn('Suppression storage impossible:', error.message || error);
+  }
+}
+
+async function uploadAvatar(req, res) {
+  try {
+    const current = await ensureCandidateProfile(req.user.id);
+    const file = await getMultipartFile(req, 'avatar', MAX_AVATAR_BYTES, 'Photo');
+    validateAvatarFile(file);
+    await ensureAvatarBucket();
+
+    const previousMeta = current.axes?.meta || {};
+    const storagePath = `${req.user.id}/avatar-${Date.now()}-${file.filename}`;
+    const { error: uploadError } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .upload(storagePath, file.buffer, {
+        contentType: file.contentType,
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    await removeStorageFile(previousMeta.avatar_bucket || AVATAR_BUCKET, previousMeta.avatar_path);
+
+    const nextAxes = {
+      ...(current.axes || {}),
+      meta: {
+        ...previousMeta,
+        avatar_bucket: AVATAR_BUCKET,
+        avatar_path: storagePath,
+        avatar_file_name: file.filename,
+        avatar_uploaded_at: new Date().toISOString(),
+      },
+    };
+
+    const { data: signed } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .createSignedUrl(storagePath, 60 * 60 * 24);
+
+    const { data, error } = await supabase
+      .from('candidats')
+      .update({ axes: nextAxes })
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      message: 'Photo de profil mise a jour',
+      avatar_url: signed?.signedUrl || '',
+      avatar_file_name: file.filename,
+      candidat: data,
+    });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
+  }
+}
+
+async function deleteProfileDocument(req, res, kind) {
+  try {
+    const current = await ensureCandidateProfile(req.user.id);
+    const meta = current.axes?.meta || {};
+    const isCv = kind === 'cv';
+    const bucket = isCv ? (meta.cv_bucket || CV_BUCKET) : (meta.motivation_bucket || CV_BUCKET);
+    const storagePath = isCv ? meta.cv_path : meta.motivation_path;
+    const keys = isCv
+      ? ['cv_bucket', 'cv_path', 'cv_file_name', 'cv_uploaded_at']
+      : ['motivation_bucket', 'motivation_path', 'motivation_file_name', 'motivation_uploaded_at'];
+
+    await removeStorageFile(bucket, storagePath);
+
+    const nextAxes = {
+      ...(current.axes || {}),
+      meta: omitKeys(meta, keys),
+    };
+    const patch = isCv ? { axes: nextAxes, cv_url: null } : { axes: nextAxes };
+
+    const { data, error } = await supabase
+      .from('candidats')
+      .update(patch)
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    res.json({ message: isCv ? 'CV supprime' : 'Lettre de motivation supprimee', candidat: data });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
+  }
+}
+
 router.post('/cv', authMiddleware, uploadCv);
 router.post('/import-cv', authMiddleware, uploadCv);
 router.post('/motivation', authMiddleware, uploadMotivation);
+router.post('/avatar', authMiddleware, uploadAvatar);
+router.delete('/cv', authMiddleware, (req, res) => deleteProfileDocument(req, res, 'cv'));
+router.delete('/motivation', authMiddleware, (req, res) => deleteProfileDocument(req, res, 'motivation'));
 
 router.put('/profil', authMiddleware, async (req, res) => {
   try {
@@ -634,6 +779,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
           initiales: initials,
           role: profile.titre || 'Commercial',
           anon,
+          avatar_url: anon ? '' : (profile.avatar_url || ''),
           m: compatibilityScore(axes, matching),
           adn_score: profile.score_adn || 0,
           adn_type: profile.axes?.resultat?.type || profile.axes?.resultat?.type_profil || 'Profil commercial',
