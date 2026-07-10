@@ -160,6 +160,43 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
 router.delete('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
+    const { data: offre, error: offerError } = await supabase
+      .from('offres')
+      .select('id')
+      .eq('id', req.params.id)
+      .eq('recruteur_id', recruteur.id)
+      .maybeSingle();
+
+    if (offerError) return res.status(400).json({ error: offerError });
+    if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
+
+    const { data: matchs, error: matchsError } = await supabase
+      .from('matchs')
+      .select('id')
+      .eq('offre_id', req.params.id);
+    if (matchsError) return res.status(400).json({ error: matchsError });
+
+    const matchIds = (matchs || []).map((match) => match.id);
+    if (matchIds.length) {
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .in('match_id', matchIds);
+      if (messagesError) return res.status(400).json({ error: messagesError });
+
+      const { error: deleteMatchesError } = await supabase
+        .from('matchs')
+        .delete()
+        .in('id', matchIds);
+      if (deleteMatchesError) return res.status(400).json({ error: deleteMatchesError });
+    }
+
+    const { error: candidaturesError } = await supabase
+      .from('candidatures')
+      .delete()
+      .eq('offre_id', req.params.id);
+    if (candidaturesError) return res.status(400).json({ error: candidaturesError });
+
     const { error } = await supabase
       .from('offres')
       .delete()
