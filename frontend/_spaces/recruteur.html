@@ -1027,6 +1027,8 @@ let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_TAGS = [];
 let HAS_PLAN = false;
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
+const SUPABASE_URL = window.__env?.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = window.__env?.SUPABASE_ANON_KEY || '';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function readStoredJson(key) {
