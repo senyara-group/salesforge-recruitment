@@ -1138,11 +1138,15 @@ function syncPageHistory(page, replace = false) {
   if (location.hash === nextHash && !replace) return;
   history[replace ? 'replaceState' : 'pushState']({ page }, '', location.pathname + location.search + nextHash);
 }
+function existingPageOrDashboard(page) {
+  return document.getElementById('p-' + page) ? page : 'dashboard';
+}
 
 // ------------------------------------------------------------
 // NAVIGATION
 // ------------------------------------------------------------
 function go(p, options = {}) {
+  p = existingPageOrDashboard(p);
   const ui = p !== 'auth';
   const PROTECTED_PAGES = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages'];
   if (PROTECTED_PAGES.includes(p) && !HAS_PLAN && TOKEN) {
@@ -1840,7 +1844,7 @@ if (hydrateRecruiterSession()) {
     .then(() => { HAS_PLAN = true; })
     .catch(() => { HAS_PLAN = false; })
     .finally(() => {
-      go(start === 'questions' ? 'questions' : getLastPage());
+      go(start ? existingPageOrDashboard(start) : getLastPage());
     });
 } else {
   goLanding();
