@@ -221,16 +221,15 @@ button,input,textarea,select{font-family:inherit}
 .q-add-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
 .q-selected-count{background:var(--bs);border:1px solid var(--bm);border-radius:9px;padding:10px 12px;font-size:12px;font-weight:600;color:var(--b);margin-top:12px;text-align:center}
 
-/* PIPELINE KANBAN */
+/* PIPELINE */
 .pipe-cols{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;padding:0 18px;scroll-snap-type:x mandatory}
 .pipe-cols::-webkit-scrollbar{display:none}
 .pipe-col{flex-shrink:0;width:248px;scroll-snap-align:start}
-.pipe-col-hd{display:none}
+.pipe-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px}
 .pipe-col-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
 .pipe-dot{width:8px;height:8px;border-radius:50%}
 .pipe-count{font-size:11px;font-weight:700;color:var(--mu);background:var(--bg);padding:2px 8px;border-radius:10px}
-.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.15s}
-.pipe-card:hover{border-color:var(--bd2);transform:translateY(-1px)}
+.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:default;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 .pipe-card-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
 .pc-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0}
 .pc-info{flex:1;min-width:0}
@@ -240,9 +239,6 @@ button,input,textarea,select{font-family:inherit}
 .pc-foot{display:flex;align-items:center;justify-content:space-between}
 .pc-tags{display:flex;gap:4px}
 .pc-tag{font-size:10px;font-weight:600;background:var(--bg);color:var(--ink2);padding:2px 6px;border-radius:5px}
-.pc-move{display:flex;gap:4px}
-.pc-move-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--bd);background:var(--w);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink3)}
-.pc-move-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5}
 
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
@@ -773,7 +769,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 </div>
 
 <!-- AUTH -->
-<div id="p-auth" class="page on">
+<div id="p-auth" class="page">
   <div class="auth-logo sf">S</div>
   <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">SalesForge Recruteur</h1>
   <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Recrutez les meilleurs commerciaux.<br>ADN vérifié, matching IA, sans cabinet.</p>
@@ -876,7 +872,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
-<!-- PIPELINE KANBAN -->
+<!-- PIPELINE -->
 <div id="p-pipeline" class="page">
   <div class="sec" style="padding-bottom:9px">
     <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><span class="chip chip-b"><span class="chip-dot"></span>Pipeline</span></div>
@@ -1021,8 +1017,8 @@ const API = location.protocol === 'file:' || location.hostname === 'localhost' |
 // ------------------------------------------------------------
 // ÉTAT GLOBAL
 // ------------------------------------------------------------
-let TOKEN = localStorage.getItem('sf_rec_token');
-let USER  = JSON.parse(localStorage.getItem('sf_rec_user') || 'null');
+let TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_token');
+let USER  = readStoredJson('sf_rec_user');
 let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
 let REALTIME_CHANNEL = null;
@@ -1031,6 +1027,26 @@ let OF_TYPE = '', OF_TAGS = [];
 let HAS_PLAN = false;
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function readStoredJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null');
+  } catch(e) {
+    return null;
+  }
+}
+
+function hydrateRecruiterSession() {
+  const recUser = readStoredJson('sf_rec_user');
+  const profile = readStoredJson('sf_profile');
+  TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_token') || TOKEN;
+  USER = recUser || (profile?.role === 'recruteur' ? profile : USER);
+  if (!TOKEN || !USER) return false;
+  if (USER.role && USER.role !== 'recruteur') return false;
+  localStorage.setItem('sf_rec_token', TOKEN);
+  localStorage.setItem('sf_rec_user', JSON.stringify(USER));
+  return true;
+}
 
 function seenCandidateStorageKey() {
   return 'sf_seen_candidates_' + (USER?.id || USER?.user_id || 'anon');
@@ -1550,14 +1566,14 @@ function renderPipeline() {
       </div>`;
     return;
   }
-  document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map((stage, si) => `
+  document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => `
     <div class="pipe-col">
       <div class="pipe-col-hd">
         <div class="pipe-col-t sf"><span class="pipe-dot" style="background:${stage.color}"></span>${stage.label}</div>
         <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
       </div>
       ${(PIPELINE[stage.key]||[]).map(c => `
-        <div class="pipe-card">
+        <div class="pipe-card" draggable="false" ondragstart="return false">
           <div class="pipe-card-top">
             <div class="pc-av" style="background:${c.bg}">${c.av}</div>
             <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
@@ -1565,20 +1581,9 @@ function renderPipeline() {
           </div>
           <div class="pc-foot">
             <div class="pc-tags">${c.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
-            <div class="pc-move">
-              ${si>0?`<div class="pc-move-btn" onclick="movePipe('${c.id}','${stage.key}','${PIPE_STAGES[si-1].key}')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>`:''}
-              ${si<PIPE_STAGES.length-1?`<div class="pc-move-btn" onclick="movePipe('${c.id}','${stage.key}','${PIPE_STAGES[si+1].key}')"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>`:''}
-            </div>
           </div>
         </div>`).join('')}
     </div>`).join('');
-}
-async function movePipe(id, from, to) {
-  const card = PIPELINE[from].find(c => c.id === id);
-  PIPELINE[from] = PIPELINE[from].filter(c => c.id !== id);
-  PIPELINE[to].push(card);
-  renderPipeline();
-  await api('PUT', '/recruteurs/pipeline/move', { candidature_id: id, to });
 }
 
 // ------------------------------------------------------------
@@ -1828,15 +1833,7 @@ function renderPlans() {
 // ------------------------------------------------------------
 // INIT
 // ------------------------------------------------------------
-if (!TOKEN && localStorage.getItem('sf_token')) TOKEN = localStorage.getItem('sf_token');
-if (TOKEN && !USER) {
-  USER = JSON.parse(localStorage.getItem('sf_profile') || 'null');
-  if (USER?.role === 'recruteur') {
-    localStorage.setItem('sf_rec_token', TOKEN);
-    localStorage.setItem('sf_rec_user', JSON.stringify(USER));
-  }
-}
-if (TOKEN && USER) {
+if (hydrateRecruiterSession()) {
   const start = new URLSearchParams(location.search).get('start');
   // Vérifier le plan au chargement
   api('GET', '/recruteurs/stats?t=' + Date.now())
