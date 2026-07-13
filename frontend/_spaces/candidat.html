@@ -1448,11 +1448,13 @@ let OFFRES = [], OFFRES_F = [], DECK_IDX = 0, BILLING = 'year';
 let ALL_CANDS = [], ALL_MATCHS = [];
 let THREADS = [];
 let ACTIVE_THREAD = null;
+let REALTIME_CHANNEL = null;
 let IS_REC = false, MR = null;
 let PENDING_CV_FILE = null;
 let PROFILE_CV_URL = '';
 let PROFILE_MOTIVATION_URL = '';
 let PROFILE_AVATAR_URL = '';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
@@ -2097,15 +2099,39 @@ async function openThread(id, surface = 'messages') {
   await loadThreadMessages();
   document.getElementById(prefix + '-input').focus();
 }
+
+function subscribeToMessages(matchId) {
+  // Désabonner l'ancien channel si existant
+  if (REALTIME_CHANNEL) {
+    REALTIME_CHANNEL.unsubscribe();
+    REALTIME_CHANNEL = null;
+  }
+
+  if (!matchId) return;
+
+  REALTIME_CHANNEL = supabaseClient
+    .channel('messages-' + matchId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `match_id=eq.${matchId}`
+    }, () => {
+      loadThreadMessages();
+    })
+    .subscribe();
+}
+
 async function loadThreadMessages() {
-  const prefix = 'chat';
+  const prefix = ACTIVE_THREAD?.surface === 'matchs' ? 'match-chat' : 'chat';
   if (!ACTIVE_THREAD?.match_id) {
-    document.getElementById(prefix + '-body').innerHTML = '<div class="chat-empty">Cette conversation n’est pas encore reliée à un match actif.</div>';
+    document.getElementById(prefix + '-body').innerHTML = '<div class="chat-empty">Cette conversation n\'est pas encore reliée à un match actif.</div>';
     return;
   }
   try {
     const messages = await api('GET', '/messages/thread/' + ACTIVE_THREAD.match_id);
     renderThreadMessages(messages);
+    subscribeToMessages(ACTIVE_THREAD.match_id); // ← ajouter ici
     await loadMessages();
   } catch(e) {
     document.getElementById(prefix + '-body').innerHTML = '<div class="chat-empty">Impossible de charger la conversation.</div>';
