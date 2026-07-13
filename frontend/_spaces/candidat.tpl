@@ -912,50 +912,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-auth" class="page on">
   <div class="auth-logo sf">S</div>
   <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">SalesForge</h1>
-  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">La plateforme des commerciaux, closers et sales.<br>Testez votre ADN. Trouvez votre mission.</p>
-  <div class="auth-tabs">
-    <button class="auth-tab on" onclick="switchTab(this,'login')">Se connecter</button>
-    <button class="auth-tab" onclick="switchTab(this,'register')">Créer un compte</button>
-  </div>
-  <div id="auth-err" class="err"></div>
-  <!-- LOGIN -->
-  <div id="login-form">
-    <div class="auth-form">
-      <input class="fi" id="l-email" type="email" placeholder="Email professionnel" autocomplete="email">
-      <input class="fi" id="l-pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
-      <button class="btn bp blk" id="btn-login" onclick="doLogin()">Se connecter</button>
-    </div>
-    <p style="text-align:center;font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:12px" onclick="doForgot()">Mot de passe oublié ?</p>
-  </div>
-  <!-- REGISTER -->
-  <div id="register-form" style="display:none">
-    <div class="cv-drop" onclick="document.getElementById('cv-file').click()">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
-      <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px">Importer mon CV</div>
-      <div style="font-size:12px;color:var(--mu)" id="cv-fn">PDF, Word — profil pré-rempli automatiquement</div>
-    </div>
-    <input type="file" id="cv-file" style="display:none" accept=".pdf,.doc,.docx" onchange="handleCV(this)">
-    <div class="cv-prog" id="cv-prog"><div style="font-size:12px;font-weight:700;color:var(--b)">Analyse CV en cours…</div><div class="cv-prog-bar"><div class="cv-prog-fill" id="cv-fill" style="width:0%"></div></div></div>
-    <div class="or-div">ou remplir manuellement</div>
-    <div class="auth-form">
-      <input class="fi" id="r-prenom" type="text" placeholder="Prénom" autocomplete="given-name">
-      <input class="fi" id="r-nom" type="text" placeholder="Nom" autocomplete="family-name">
-      <input class="fi" id="r-email" type="email" placeholder="Email professionnel" autocomplete="email">
-      <input class="fi" id="r-pass" type="password" placeholder="Mot de passe (8 min.)" autocomplete="new-password">
-      <button class="btn bp blk" id="btn-reg" onclick="doRegister()">Créer mon profil commercial</button>
-    </div>
-  </div>
-  <div class="or-div">ou continuer avec</div>
-  <button class="soc-btn" onclick="doOAuth('google')">
-    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Google
-  </button>
-  <div class="confirm-mail" id="confirm-mail">
-    <div class="confirm-ico">✓</div>
-    <h2>Confirmez votre email</h2>
-    <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
-    <button class="btn bp blk" onclick="showLoginAfterConfirm()">Se connecter</button>
-  </div>
+  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Redirection vers l'application...</p>
 </div>
 
 <!-- HOME -->
@@ -1668,66 +1625,11 @@ function go(p, options = {}) {
 // ------------------------------------------------------------
 // AUTH
 // ------------------------------------------------------------
-function switchTab(btn, tab) {
-  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
-  const confirm = document.getElementById('confirm-mail');
-  if (confirm) confirm.classList.remove('on');
-  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
-  document.querySelector('#p-auth .or-div').style.display = 'flex';
-  document.querySelector('#p-auth .soc-btn').style.display = 'flex';
-}
-function showRegisterConfirm() {
-  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on'));
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('register-form').style.display = 'none';
-  document.querySelector('#p-auth .or-div').style.display = 'none';
-  document.querySelector('#p-auth .soc-btn').style.display = 'none';
-  document.getElementById('confirm-mail').classList.add('on');
-}
-function showLoginAfterConfirm() {
-  const btn = document.querySelector('.auth-tab');
-  if (btn) switchTab(btn, 'login');
-}
-async function doLogin() {
-  const email = document.getElementById('l-email').value.trim(), password = document.getElementById('l-pass').value;
-  if (!email || !password) { showErr('Email et mot de passe requis'); return; }
-  setBtn('btn-login', true);
-  try {
-    const d = await api('POST', '/auth/login', { email, password });
-    TOKEN = d.token; USER = d.profile || d.user;
-    localStorage.setItem('sf_token', TOKEN); localStorage.setItem('sf_user', JSON.stringify(USER));
-    go('home');
-  } catch(e) { showErr(e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
-}
-async function doRegister() {
-  const prenom = document.getElementById('r-prenom').value.trim(), nom = document.getElementById('r-nom').value.trim();
-  const email = document.getElementById('r-email').value.trim(), password = document.getElementById('r-pass').value;
-  if (!prenom || !nom || !email || !password) { showErr('Tous les champs sont requis'); return; }
-  if (password.length < 8) { showErr('Mot de passe : 8 caractères minimum'); return; }
-  setBtn('btn-reg', true);
-  try {
-    await api('POST', '/auth/register', { prenom, nom, email, password, role:'candidat' });
-    TOKEN = null; USER = null; PENDING_CV_FILE = null;
-    localStorage.removeItem('sf_token');
-    localStorage.removeItem('sf_user');
-    localStorage.removeItem('sf_profile');
-    showRegisterConfirm();
-  } catch(e) { showErr(e.message); } finally { setBtn('btn-reg', false, 'Créer mon profil commercial'); }
-}
-async function doOAuth(provider) {
-  window.location.href = API + '/auth/oauth/' + provider + '?role=candidat';
-}
-async function doForgot() {
-  const email = document.getElementById('l-email').value.trim();
-  if (!email) { showErr('Entrez votre email'); return; }
-  try {
-    await api('POST', '/auth/forgot-password', { email });
-    toast('Email de réinitialisation envoyé');
-  } catch(e) { showErr(e.message); }
+function goAppLogin() {
+  window.top.location.href = 'salesforge_app.html?role=candidat';
 }
 function goLanding() {
-  window.top.location.href = new URL('../salesforge_landing.html', window.location.href).href;
+  window.top.location.href = 'salesforge_landing.html';
 }
 function doLogout() {
   TOKEN = null; USER = null;
@@ -1735,26 +1637,6 @@ function doLogout() {
   localStorage.removeItem('sf_user');
   localStorage.removeItem('sf_profile');
   goLanding();
-}
-async function handleCV(input) {
-  if (!input.files[0]) return;
-  const f = input.files[0];
-  const error = validateCVFile(f);
-  if (error) { showErr(error); input.value = ''; return; }
-
-  PENDING_CV_FILE = f;
-  document.getElementById('cv-fn').textContent = 'CV : ' + f.name;
-  const prog = document.getElementById('cv-prog'), fill = document.getElementById('cv-fill');
-  prog.classList.add('on'); let w = 0;
-  const iv = setInterval(() => { w += 8; fill.style.width = w + '%'; }, 150);
-  try {
-    const analysis = await analyzeCandidateCV(f);
-    applyCvAutofill(analysis.fields);
-    if (TOKEN) await uploadCandidateCV(f);
-    clearInterval(iv); fill.style.width = '100%';
-    const msg = TOKEN ? 'CV ajoute au profil' : 'CV analyse, creez votre compte pour l’ajouter';
-    setTimeout(() => { prog.classList.remove('on'); toast(msg); }, 500);
-  } catch(e) { clearInterval(iv); prog.classList.remove('on'); toast(e.message || 'Erreur CV'); }
 }
 
 // ------------------------------------------------------------
@@ -2424,12 +2306,12 @@ if (TOKEN && !USER) {
   if (USER?.role === 'candidat') localStorage.setItem('sf_user', JSON.stringify(USER));
 }
 if (TOKEN && USER) {
-  const start = new URLSearchParams(location.search).get('start');
+  const start = window.__SF_START || new URLSearchParams(location.search).get('start');
   go(pageFromHash() || (start === 'test' ? 'test' : getLastPage()), { replaceHistory: true });
   refreshMessageBadge();
   setInterval(refreshMessageBadge, 30000);
 } else {
-  goLanding();
+  goAppLogin();
 }
 window.addEventListener('popstate', () => {
   if (TOKEN && USER) go(pageFromHash() || getLastPage(), { history: false });
