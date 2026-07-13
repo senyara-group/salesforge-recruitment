@@ -147,7 +147,7 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
       recues: candidatures.length,
       recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
       chauds: candidatures.filter((c) => c.statut === 'repondu' || c.statut === 'entretien').length,
-      pipeline: candidatures.filter((c) => c.statut && c.statut !== 'envoyee').length,
+      pipeline: candidatures.length,
       offres: offres.length,
       plan_label: `Plan ${recruteur.plan || 'starter'} · ${offres.length} offres actives`,
     });
@@ -217,21 +217,11 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
   }
 });
 
-router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const { candidature_id, to } = req.body;
-    const { data, error } = await supabase
-      .from('candidatures')
-      .update({ statut: to })
-      .eq('id', candidature_id)
-      .select('*')
-      .single();
-
-    if (error) return res.status(400).json({ error });
-    res.json(data);
-  } catch (error) {
-    publicError(res, error);
-  }
+router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, (_req, res) => {
+  res.status(405).json({
+    error: 'PIPELINE_LOCKED',
+    message: 'Le pipeline est en lecture seule.',
+  });
 });
 
 router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => {
