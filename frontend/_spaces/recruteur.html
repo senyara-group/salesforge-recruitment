@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Espace recruteur - SalesForge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;scrollbar-width:none}
 *::-webkit-scrollbar{display:none}
@@ -1771,15 +1772,22 @@ function subscribeToMessages(matchId) {
     REALTIME_CHANNEL = null;
   }
 
-  if (!matchId) return;
+  const matchIds = [...new Set((ACTIVE_THREAD?.match_ids?.length ? ACTIVE_THREAD.match_ids : [matchId]).filter(Boolean))];
+  if (!matchIds.length) return;
+
+  // Le backend peut router un nouveau message vers un match_id "canonique" différent
+  // de celui affiché (voir ensureMatchAccess côté backend) -> on écoute tous les match_ids liés.
+  const filter = matchIds.length > 1
+    ? `match_id=in.(${matchIds.join(',')})`
+    : `match_id=eq.${matchIds[0]}`;
 
   REALTIME_CHANNEL = supabaseClient
-    .channel('messages-rec-' + matchId)
+    .channel('messages-rec-' + matchIds.join('-'))
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'messages',
-      filter: `match_id=eq.${matchId}`
+      filter
     }, () => {
       loadThreadMessages();
     })
@@ -1928,5 +1936,3 @@ window.addEventListener('popstate', (e) => {
 </script>
 </body>
 </html>
-
-

@@ -2132,15 +2132,22 @@ function subscribeToMessages(matchId) {
     REALTIME_CHANNEL = null;
   }
 
-  if (!matchId) return;
+  const matchIds = [...new Set((ACTIVE_THREAD?.match_ids?.length ? ACTIVE_THREAD.match_ids : [matchId]).filter(Boolean))];
+  if (!matchIds.length) return;
+
+  // Le backend peut router un nouveau message vers un match_id "canonique" différent
+  // de celui affiché (voir ensureMatchAccess côté backend) -> on écoute tous les match_ids liés.
+  const filter = matchIds.length > 1
+    ? `match_id=in.(${matchIds.join(',')})`
+    : `match_id=eq.${matchIds[0]}`;
 
   REALTIME_CHANNEL = supabaseClient
-    .channel('messages-' + matchId)
+    .channel('messages-' + matchIds.join('-'))
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'messages',
-      filter: `match_id=eq.${matchId}`
+      filter
     }, () => {
       loadThreadMessages();
     })
@@ -2480,6 +2487,3 @@ window.addEventListener('popstate', () => {
 </script>
 </body>
 </html>
-
-
-
