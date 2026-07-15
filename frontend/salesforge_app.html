@@ -319,16 +319,18 @@ async function openRoleSpace(){
     recruiterParams.set('v', Date.now().toString());
     frame.onload = profile.role === 'recruteur' ? syncRecruiterDashboardFrame : null;
     frame.src = profile.role === 'recruteur'
-      ? `_spaces/recruteur.html?${recruiterParams.toString()}`
-      : `_spaces/candidat.html${start ? `?start=${start}` : ''}`;
-      frame.addEventListener('load', () => {
+      ? `_spaces/recruteur.html?${recruiterParams.toString()}${paymentSuccess ? '&start=dashboard' : ''}`
+      : `_spaces/candidat.html${start ? `?start=${start}` : ''}${paymentSuccess ? '?start=accueil' : ''}`;
+
+    frame.addEventListener('load', () => {
       frame.contentWindow.postMessage({
         type: 'env',
         SUPABASE_URL: window.__env?.SUPABASE_URL,
         SUPABASE_ANON_KEY: window.__env?.SUPABASE_ANON_KEY
       }, '*');
     });
-      if (paymentSuccess) {
+
+    if (paymentSuccess) {
       setTimeout(() => {
         try {
           frame.contentWindow.toast('🎉 Abonnement activé ! Bienvenue !');

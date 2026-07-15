@@ -1844,20 +1844,29 @@ function renderPlans() {
 // ------------------------------------------------------------
 // INIT
 // ------------------------------------------------------------
-if (hydrateRecruiterSession()) {
-  const start = new URLSearchParams(location.search).get('start');
-  // Vérifier le plan au chargement
+if (!TOKEN && localStorage.getItem('sf_rec_token')) TOKEN = localStorage.getItem('sf_rec_token');
+if (!USER && localStorage.getItem('sf_rec_user')) {
+  try { USER = JSON.parse(localStorage.getItem('sf_rec_user')); } catch(e) {}
+}
+
+const startParam = new URLSearchParams(location.search).get('start');
+
+if (TOKEN && USER) {
   api('GET', '/recruteurs/stats?t=' + Date.now())
     .then(() => { HAS_PLAN = true; })
     .catch(() => { HAS_PLAN = false; })
     .finally(() => {
-      go(start ? existingPageOrDashboard(start) : getLastPage());
+      go(startParam || getLastPage());
     });
 } else {
   goLanding();
 }
-window.addEventListener('popstate', () => {
-  if (TOKEN && USER) go(pageFromHash() || getLastPage(), { history: false });
+
+window.addEventListener('popstate', (e) => {
+  if (TOKEN && USER) {
+    const page = e.state?.page || pageFromHash() || getLastPage();
+    go(page);
+  }
 });
 </script>
 </body>
