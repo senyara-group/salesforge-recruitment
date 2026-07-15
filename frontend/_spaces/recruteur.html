@@ -1733,6 +1733,7 @@ async function openThread(id) {
 }
 
 function subscribeToMessages(matchId) {
+  if (!supabaseClient) return; 
   if (REALTIME_CHANNEL) {
     REALTIME_CHANNEL.unsubscribe();
     REALTIME_CHANNEL = null;
