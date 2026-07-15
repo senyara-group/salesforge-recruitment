@@ -772,7 +772,41 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <div id="p-auth" class="page">
   <div class="auth-logo sf">S</div>
   <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">SalesForge Recruteur</h1>
-  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Redirection vers l'application...</p>
+  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Recrutez les meilleurs commerciaux.<br>ADN vérifié, matching IA, sans cabinet.</p>
+  <div class="auth-tabs">
+    <button class="auth-tab on" onclick="switchTab(this,'login')">Se connecter</button>
+    <button class="auth-tab" onclick="switchTab(this,'register')">Créer un compte</button>
+  </div>
+  <div id="auth-err" class="err"></div>
+  <div id="login-form">
+    <div class="auth-form">
+      <input class="fi" id="l-email" type="email" placeholder="Email professionnel" autocomplete="email">
+      <input class="fi" id="l-pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn bp blk" id="btn-login" onclick="doLogin()">Se connecter</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:12px" onclick="doForgot()">Mot de passe oublié ?</p>
+  </div>
+  <div id="register-form" style="display:none">
+    <div class="auth-form">
+      <input class="fi" id="r-entreprise" type="text" placeholder="Nom de l'entreprise">
+      <input class="fi" id="r-prenom" type="text" placeholder="Votre prénom">
+      <input class="fi" id="r-nom" type="text" placeholder="Votre nom">
+      <input class="fi" id="r-email" type="email" placeholder="Email professionnel" autocomplete="email">
+      <input class="fi" id="r-pass" type="password" placeholder="Mot de passe (8 min.)" autocomplete="new-password">
+      <button class="btn bp blk" id="btn-reg" onclick="doRegister()">Créer mon compte recruteur</button>
+    </div>
+  </div>
+  <div class="or-div">ou continuer avec</div>
+  <button class="soc-btn" onclick="doOAuth('google')">
+    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Google
+  </button>
+  <div class="confirm-mail" id="confirm-mail">
+    <div class="confirm-ico">✓</div>
+    <h2>Confirmez votre email</h2>
+    <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
+    <button class="btn bp blk" onclick="showLoginAfterConfirm()">Se connecter</button>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -1143,11 +1177,75 @@ function go(p, options = {}) {
 // ------------------------------------------------------------
 // AUTH
 // ------------------------------------------------------------
-function goAppLogin() {
-  window.top.location.href = 'salesforge_app.html?role=recruteur';
+function switchTab(btn, tab) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+  const confirm = document.getElementById('confirm-mail');
+  if (confirm) confirm.classList.remove('on');
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'flex';
+  document.querySelector('#p-auth .soc-btn').style.display = 'flex';
+}
+function showRegisterConfirm() {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'none';
+  document.querySelector('#p-auth .soc-btn').style.display = 'none';
+  document.getElementById('confirm-mail').classList.add('on');
+}
+function showLoginAfterConfirm() {
+  const btn = document.querySelector('.auth-tab');
+  if (btn) switchTab(btn, 'login');
+}
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim(), password = document.getElementById('l-pass').value;
+  if (!email || !password) { showErr('auth-err', 'Email et mot de passe requis'); return; }
+  setBtn('btn-login', true);
+  try {
+    const d = await api('POST', '/auth/login', { email, password });
+    TOKEN = d.token; USER = d.profile || d.user;
+    localStorage.setItem('sf_rec_token', TOKEN); localStorage.setItem('sf_rec_user', JSON.stringify(USER));
+    try {
+      await api('GET', '/recruteurs/stats');
+      HAS_PLAN = true;
+      go('dashboard');
+    } catch(e) {
+      HAS_PLAN = false;
+      if (!e.message.includes('requis') && !e.message.includes('inactif')) go('dashboard');
+    }
+  } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
+}
+async function doRegister() {
+  const entreprise = document.getElementById('r-entreprise').value.trim();
+  const prenom = document.getElementById('r-prenom').value.trim(), nom = document.getElementById('r-nom').value.trim();
+  const email = document.getElementById('r-email').value.trim(), password = document.getElementById('r-pass').value;
+  if (!entreprise || !prenom || !email || !password) { showErr('auth-err', 'Tous les champs sont requis'); return; }
+  if (password.length < 8) { showErr('auth-err', 'Mot de passe : 8 caractères minimum'); return; }
+  setBtn('btn-reg', true);
+  try {
+    await api('POST', '/auth/register', { entreprise, prenom, nom, email, password, role:'recruteur' });
+    TOKEN = null; USER = null;
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_rec_token');
+    localStorage.removeItem('sf_rec_user');
+    localStorage.removeItem('sf_profile');
+    showRegisterConfirm();
+  } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-reg', false, 'Créer mon compte recruteur'); }
+}
+async function doOAuth(provider) {
+  window.location.href = API + '/auth/oauth/' + provider + '?role=recruteur';
+}
+async function doForgot() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showErr('auth-err', 'Entrez votre email'); return; }
+  try {
+    await api('POST', '/auth/forgot-password', { email });
+    toast('Email de réinitialisation envoyé');
+  } catch(e) { showErr('auth-err', e.message); }
 }
 function goLanding() {
-  window.top.location.href = 'salesforge_landing.html';
+  window.top.location.href = new URL('../salesforge_landing.html', window.location.href).href;
 }
 function doLogout() {
   TOKEN = null; USER = null;
@@ -1747,7 +1845,7 @@ function renderPlans() {
 // INIT
 // ------------------------------------------------------------
 if (hydrateRecruiterSession()) {
-  const start = window.__SF_START || new URLSearchParams(location.search).get('start');
+  const start = new URLSearchParams(location.search).get('start');
   // Vérifier le plan au chargement
   api('GET', '/recruteurs/stats?t=' + Date.now())
     .then(() => { HAS_PLAN = true; })
@@ -1756,7 +1854,7 @@ if (hydrateRecruiterSession()) {
       go(start ? existingPageOrDashboard(start) : getLastPage());
     });
 } else {
-  goAppLogin();
+  goLanding();
 }
 window.addEventListener('popstate', () => {
   if (TOKEN && USER) go(pageFromHash() || getLastPage(), { history: false });

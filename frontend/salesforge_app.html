@@ -35,6 +35,8 @@ input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
 .msg{display:none;border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.45;margin-bottom:14px}
 .msg.error{display:block;background:#FBEAEA;color:var(--d);border:1px solid #F2C4C7}
 .msg.success{display:block;background:#ECFDF3;color:#067647;border:1px solid #ABEFC6}
+.forgot-btn{display:block;width:100%;border:0;background:none;color:var(--b);font:inherit;font-size:13px;font-weight:800;text-align:center;margin-top:12px;cursor:pointer}
+.forgot-btn:hover{text-decoration:underline}
 .boot{width:min(360px,100%);text-align:center}
 .boot .mark{width:52px;height:52px;border-radius:15px;margin:0 auto 16px;font-size:22px}
 .boot-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.6px;margin-bottom:8px}
@@ -80,6 +82,7 @@ iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
       <input id="password" type="password" autocomplete="current-password" required>
     </div>
     <button class="btn" id="login-submit" type="submit">Se connecter</button>
+    <button class="forgot-btn" id="forgot-submit" type="button">Mot de passe oublié ?</button>
   </form>
   <div class="or">ou continuer avec</div>
   <div class="socials">
@@ -88,6 +91,7 @@ iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
       Google
     </button>
   </div>
+  <a class="secondary" href="salesforge_start.html">Je n'ai pas de compte</a>
   <a class="back" href="salesforge_landing.html">Retour a l'accueil</a>
 </main>
 <section id="role-view" class="role-choice">
@@ -115,6 +119,7 @@ const roleView = document.getElementById('role-view');
 const roleMessage = document.getElementById('role-message');
 const frame = document.getElementById('app-frame');
 const loginSubmit = document.getElementById('login-submit');
+const forgotSubmit = document.getElementById('forgot-submit');
 
 function setPageTitle(title){
   document.title = `${title} - SalesForge`;
@@ -173,11 +178,7 @@ function showRoleMessage(text){
 }
 
 function socialLogin(provider){
-  const role = new URLSearchParams(window.location.search).get('role') || localStorage.getItem('sf_pending_role');
-  const roleQuery = role === 'candidat' || role === 'recruteur'
-    ? `?role=${encodeURIComponent(role)}`
-    : '';
-  window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}${roleQuery}`;
+  window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}`;
 }
 
 function syncRecruiterDashboardFrame(){
@@ -203,26 +204,6 @@ function syncRecruiterDashboardFrame(){
   if (actions.nextElementSibling !== candidates) {
     dashboard.append(actions, candidates);
   }
-}
-
-async function loadRoleTemplate(role, start = '') {
-  const templateUrl = role === 'recruteur' ? '_spaces/recruteur.tpl' : '_spaces/candidat.tpl';
-  const response = await fetch(templateUrl, { cache: 'no-store' });
-  if (!response.ok) throw new Error('Dashboard introuvable');
-  let html = await response.text();
-  const boot = `<script>window.__SF_START=${JSON.stringify(start || '')};<\/script>`;
-  html = html.includes('</head>') ? html.replace('</head>', `${boot}</head>`) : boot + html;
-  frame.onload = () => {
-    if (role === 'recruteur') syncRecruiterDashboardFrame();
-    try {
-      frame.contentWindow.postMessage({
-        type: 'env',
-        SUPABASE_URL: window.__env?.SUPABASE_URL,
-        SUPABASE_ANON_KEY: window.__env?.SUPABASE_ANON_KEY
-      }, '*');
-    } catch(e) {}
-  };
-  frame.srcdoc = html;
 }
 
 async function consumeAuthCallback(){
@@ -333,8 +314,21 @@ async function openRoleSpace(){
     const start = onboardingRole === profile.role
       ? (profile.role === 'recruteur' ? 'dashboard' : 'test')
       : '';
-    await loadRoleTemplate(profile.role, start);
-    if (paymentSuccess) {
+    const recruiterParams = new URLSearchParams();
+    if (start) recruiterParams.set('start', start);
+    recruiterParams.set('v', Date.now().toString());
+    frame.onload = profile.role === 'recruteur' ? syncRecruiterDashboardFrame : null;
+    frame.src = profile.role === 'recruteur'
+      ? `_spaces/recruteur.html?${recruiterParams.toString()}`
+      : `_spaces/candidat.html${start ? `?start=${start}` : ''}`;
+      frame.addEventListener('load', () => {
+      frame.contentWindow.postMessage({
+        type: 'env',
+        SUPABASE_URL: window.__env?.SUPABASE_URL,
+        SUPABASE_ANON_KEY: window.__env?.SUPABASE_ANON_KEY
+      }, '*');
+    });
+      if (paymentSuccess) {
       setTimeout(() => {
         try {
           frame.contentWindow.toast('🎉 Abonnement activé ! Bienvenue !');
@@ -400,6 +394,33 @@ form.addEventListener('submit', async (event) => {
     showMessage('Connexion impossible. Verifie que le serveur est lance.');
   } finally {
     loginSubmit.disabled = false;
+  }
+});
+
+forgotSubmit.addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  if (!email) {
+    showMessage('Entre ton email pour recevoir le lien de réinitialisation.');
+    document.getElementById('email').focus();
+    return;
+  }
+
+  try {
+    forgotSubmit.disabled = true;
+    forgotSubmit.textContent = 'Envoi en cours...';
+    const res = await fetch(`${API}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.error || 'Email impossible à envoyer');
+    showSuccess('Email envoyé. Vérifie ta boîte mail pour choisir un nouveau mot de passe.');
+  } catch (error) {
+    showMessage(error.message || 'Email impossible à envoyer.');
+  } finally {
+    forgotSubmit.disabled = false;
+    forgotSubmit.textContent = 'Mot de passe oublié ?';
   }
 });
 
