@@ -1640,7 +1640,6 @@ async function postOffre() {
   try {
     await api('POST', '/offres', { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut:'active' });
     toast('Offre publiée !');
-    OF_TYPE = ''; OF_TAGS = [];
     go('pipeline');
   } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, "Publier l'offre"); }
 }
