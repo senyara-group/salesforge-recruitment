@@ -1841,6 +1841,13 @@ function renderPlans() {
     </div>`).join('');
 }
 
+const RECRUTEUR_PAGES = ['dashboard', 'swipe', 'matching', 'questions', 'pipeline', 'offres', 'post-offre', 'messages', 'settings', 'pricing'];
+
+function pageFromHash() {
+  const hash = location.hash.slice(1);
+  return RECRUTEUR_PAGES.includes(hash) ? hash : null;
+}
+
 // ------------------------------------------------------------
 // INIT
 // ------------------------------------------------------------
