@@ -105,12 +105,12 @@ iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
   </div>
 </section>
 <iframe id="app-frame" title="Espace SalesForge"></iframe>
-
+ 
 <script>
 const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
   ? 'http://localhost:3000/api'
   : 'https://salesforge-recruitment-production.up.railway.app/api';
-
+ 
 const form = document.getElementById('login-form');
 const message = document.getElementById('message');
 const bootView = document.getElementById('boot-view');
@@ -120,11 +120,22 @@ const roleMessage = document.getElementById('role-message');
 const frame = document.getElementById('app-frame');
 const loginSubmit = document.getElementById('login-submit');
 const forgotSubmit = document.getElementById('forgot-submit');
-
+ 
 function setPageTitle(title){
   document.title = `${title} - SalesForge`;
 }
-
+ 
+let envConfigPromise = null;
+function ensureEnvConfig() {
+  if (!envConfigPromise) {
+    envConfigPromise = fetch(`${API}/config`)
+      .then(r => r.json())
+      .then(cfg => { window.__env = cfg; return cfg; })
+      .catch(err => { console.error('Erreur chargement config Supabase', err); return {}; });
+  }
+  return envConfigPromise;
+}
+ 
 function frError(text){
   const msg = String(text || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
@@ -133,17 +144,17 @@ function frError(text){
   if (msg.includes('signup disabled')) return 'La création de compte est temporairement indisponible.';
   return text || 'Une erreur est survenue.';
 }
-
+ 
 function showMessage(text){
   message.className = 'msg error';
   message.textContent = frError(text);
 }
-
+ 
 function showSuccess(text){
   message.className = 'msg success';
   message.textContent = text;
 }
-
+ 
 function clearStoredSession(){
   localStorage.removeItem('sf_token');
   localStorage.removeItem('sf_rec_token');
@@ -153,7 +164,7 @@ function clearStoredSession(){
   localStorage.removeItem('sf_pending_role');
   localStorage.removeItem('sf_onboarding_role');
 }
-
+ 
 function showLogin(){
   setPageTitle('Connexion');
   document.body.classList.add('auth');
@@ -162,7 +173,7 @@ function showLogin(){
   roleView.classList.remove('on');
   frame.style.display = 'none';
 }
-
+ 
 function showRoleChoice(){
   setPageTitle('Choix de l’espace');
   document.body.classList.add('auth');
@@ -171,16 +182,16 @@ function showRoleChoice(){
   roleView.classList.add('on');
   frame.style.display = 'none';
 }
-
+ 
 function showRoleMessage(text){
   roleMessage.className = 'msg error';
   roleMessage.textContent = frError(text);
 }
-
+ 
 function socialLogin(provider){
   window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}`;
 }
-
+ 
 function syncRecruiterDashboardFrame(){
   let doc;
   try {
@@ -200,12 +211,12 @@ function syncRecruiterDashboardFrame(){
   const actions = doc.querySelector('#p-dashboard .dash-actions');
   const candidates = doc.querySelector('#p-dashboard .dash-candidates');
   if (!dashboard || !actions || !candidates) return;
-
+ 
   if (actions.nextElementSibling !== candidates) {
     dashboard.append(actions, candidates);
   }
 }
-
+ 
 async function consumeAuthCallback(){
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
   const queryParams = new URLSearchParams(window.location.search);
@@ -213,18 +224,18 @@ async function consumeAuthCallback(){
   const code = queryParams.get('code');
   const role = queryParams.get('role');
   const confirmed = queryParams.get('confirmed') === '1';
-
+ 
   if (role === 'candidat' || role === 'recruteur') {
     localStorage.setItem('sf_pending_role', role);
   }
-
+ 
   if (token) {
     localStorage.setItem('sf_token', token);
     localStorage.setItem('sf_just_confirmed', '1');
     history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
     return;
   }
-
+ 
   if (code) {
     const pendingRole = localStorage.getItem('sf_pending_role');
     const res = await fetch(`${API}/auth/exchange-code`, {
@@ -245,18 +256,18 @@ async function consumeAuthCallback(){
     history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
     return;
   }
-
+ 
   if (confirmed) {
     localStorage.setItem('sf_just_confirmed', '1');
   }
 }
-
+ 
 async function openRoleSpace(){
   const paymentSuccess = new URLSearchParams(window.location.search).get('payment') === 'success';
   if (paymentSuccess) {
     history.replaceState(null, '', window.location.pathname);
   }
-
+ 
   const forceLogin = new URLSearchParams(window.location.search).get('login') === '1';
   const hasAuthCallback = window.location.hash.includes('access_token') || new URLSearchParams(window.location.search).has('code');
   if (forceLogin && !hasAuthCallback) {
@@ -269,7 +280,7 @@ async function openRoleSpace(){
     }
     return;
   }
-
+ 
   const token = localStorage.getItem('sf_token');
   if (!token) {
     showLogin();
@@ -281,7 +292,7 @@ async function openRoleSpace(){
     return;
   }
   const pendingRole = localStorage.getItem('sf_pending_role');
-
+ 
   try {
     const roleQuery = pendingRole ? `?role=${encodeURIComponent(pendingRole)}` : '';
     const res = await fetch(`${API}/auth/me${roleQuery}`, {
@@ -296,7 +307,7 @@ async function openRoleSpace(){
       return;
     }
     if (!res.ok) throw new Error(profile.error?.message || profile.error || 'Profil introuvable');
-
+ 
     document.body.classList.remove('auth');
     bootView.style.display = 'none';
     loginView.style.display = 'none';
@@ -321,15 +332,16 @@ async function openRoleSpace(){
     frame.src = profile.role === 'recruteur'
       ? `_spaces/recruteur.html?${recruiterParams.toString()}${paymentSuccess ? '&start=dashboard' : ''}`
       : `_spaces/candidat.html${start ? `?start=${start}` : ''}${paymentSuccess ? '?start=accueil' : ''}`;
-
-    frame.addEventListener('load', () => {
+ 
+    frame.addEventListener('load', async () => {
+      const env = await ensureEnvConfig();
       frame.contentWindow.postMessage({
         type: 'env',
-        SUPABASE_URL: window.__env?.SUPABASE_URL,
-        SUPABASE_ANON_KEY: window.__env?.SUPABASE_ANON_KEY
+        SUPABASE_URL: env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
       }, '*');
     });
-
+ 
     if (paymentSuccess) {
       setTimeout(() => {
         try {
@@ -345,14 +357,14 @@ async function openRoleSpace(){
     showMessage('Votre session a expiré. Reconnectez-vous.');
   }
 }
-
+ 
 async function chooseRole(role){
   const token = localStorage.getItem('sf_token');
   if (!token) {
     showRoleMessage('Session introuvable. Reconnecte-toi.');
     return;
   }
-
+ 
   try {
     const res = await fetch(`${API}/auth/role`, {
       method: 'POST',
@@ -370,12 +382,12 @@ async function chooseRole(role){
     showRoleMessage(error.message || 'Role impossible a enregistrer');
   }
 }
-
+ 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-
+ 
   try {
     loginSubmit.disabled = true;
     const res = await fetch(`${API}/auth/login`, {
@@ -398,7 +410,7 @@ form.addEventListener('submit', async (event) => {
     loginSubmit.disabled = false;
   }
 });
-
+ 
 forgotSubmit.addEventListener('click', async () => {
   const email = document.getElementById('email').value.trim();
   if (!email) {
@@ -406,7 +418,7 @@ forgotSubmit.addEventListener('click', async () => {
     document.getElementById('email').focus();
     return;
   }
-
+ 
   try {
     forgotSubmit.disabled = true;
     forgotSubmit.textContent = 'Envoi en cours...';
@@ -425,7 +437,7 @@ forgotSubmit.addEventListener('click', async () => {
     forgotSubmit.textContent = 'Mot de passe oublié ?';
   }
 });
-
+ 
 async function bootApp(){
   try {
     await consumeAuthCallback();
@@ -437,7 +449,7 @@ async function bootApp(){
     showMessage('Connexion impossible. Reconnectez-vous.');
   }
 }
-
+ 
 bootApp();
 // Intercepter les redirections Stripe depuis l'iframe
 window.addEventListener('message', (event) => {
@@ -448,4 +460,3 @@ window.addEventListener('message', (event) => {
 </script>
 </body>
 </html>
-
