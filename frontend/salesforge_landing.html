@@ -182,8 +182,8 @@ footer{background:var(--ink);padding:50px 5% 24px}
     <div class="logo-t">Sales<b>Forge</b></div>
   </a>
   <div class="nav-cta">
-    <a href="salesforge_app.html" class="btn btn-ghost">Connexion</a>
-    <a href="salesforge_app.html" class="btn btn-p">Commencer</a>
+    <a href="salesforge_app.html?login=1" class="btn btn-ghost">Connexion</a>
+    <a href="salesforge_start.html" class="btn btn-p">Commencer</a>
   </div>
 </nav>
 
@@ -193,8 +193,8 @@ footer{background:var(--ink);padding:50px 5% 24px}
     <h1>Les meilleurs closers<br>rencontrent les <em>bonnes</em><br>entreprises.</h1>
     <p class="hero-sub">SalesForge matche commerciaux et recruteurs via un scoring comportemental IA unique. Test ADN 10 étapes, swipe Tinder, simulation de pitch en direct.</p>
     <div class="hero-btns">
-      <a href="salesforge_app.html?role=candidat" class="btn btn-lg">Je suis commercial</a>
-      <a href="salesforge_app.html?role=recruteur" class="btn btn-o">Je recrute</a>
+      <a href="salesforge_start.html?role=candidat" class="btn btn-lg">Je suis commercial</a>
+      <a href="salesforge_start.html?role=recruteur" class="btn btn-o">Je recrute</a>
     </div>
     <div class="hero-trust">
       <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Freemium candidats à vie</span>
@@ -202,12 +202,12 @@ footer{background:var(--ink);padding:50px 5% 24px}
       <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Sans engagement</span>
     </div>
     <div class="devices">
-      <div class="device" onclick="location='salesforge_app.html?role=candidat'">
-        <div class="dev-screen"><iframe src="salesforge_app.html?role=candidat" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
+      <div class="device" onclick="location='salesforge_start.html?role=candidat'">
+        <div class="dev-screen"><iframe src="salesforge_start.html?role=candidat" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
         <div class="dev-lbl">Accès candidat</div>
       </div>
-      <div class="device" onclick="location='salesforge_app.html?role=recruteur'">
-        <div class="dev-screen"><iframe src="salesforge_app.html?role=recruteur" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
+      <div class="device" onclick="location='salesforge_start.html?role=recruteur'">
+        <div class="dev-screen"><iframe src="salesforge_start.html?role=recruteur" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
         <div class="dev-lbl">Accès recruteur</div>
       </div>
     </div>
@@ -277,8 +277,8 @@ footer{background:var(--ink);padding:50px 5% 24px}
   <h2>Prêt à rencontrer votre prochain match ?</h2>
   <p>Rejoignez les 4 200 commerciaux et 340 entreprises qui recrutent différemment.</p>
   <div class="cta-bb">
-    <a href="salesforge_app.html?role=candidat" class="btn-w">Je suis commercial</a>
-    <a href="salesforge_app.html?role=recruteur" class="btn-ob">Je recrute</a>
+    <a href="salesforge_start.html?role=candidat" class="btn-w">Je suis commercial</a>
+    <a href="salesforge_start.html?role=recruteur" class="btn-ob">Je recrute</a>
   </div>
 </div>
 
@@ -382,8 +382,8 @@ let ct='cand',cb='year';
 
 function goToApp(type = ct){
   window.location.href = type === 'rec'
-    ? 'salesforge_app.html?role=recruteur'
-    : 'salesforge_app.html?role=candidat';
+    ? 'salesforge_start.html?role=recruteur'
+    : 'salesforge_start.html?role=candidat';
 }
 
 function planSlug(name){
@@ -397,10 +397,6 @@ function planSlug(name){
 
 function startCheckout(type, period, planName){
   const plan = planSlug(planName);
-  if (plan === 'freemium') {
-    goToApp(type);
-    return;
-  }
   window.location.href = `${API}/stripe/checkout?type=${encodeURIComponent(type)}&period=${encodeURIComponent(period)}&plan=${encodeURIComponent(plan)}`;
 }
 
