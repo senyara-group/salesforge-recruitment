@@ -31,6 +31,16 @@ function validateOfferPayload({ titre, type, lieu }) {
   }
 }
 
+function normalizeOfferValue(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function isSameOffer(left, right) {
+  return normalizeOfferValue(left.titre) === normalizeOfferValue(right.titre)
+    && normalizeOfferValue(left.type) === normalizeOfferValue(right.type)
+    && normalizeOfferValue(left.lieu) === normalizeOfferValue(right.lieu);
+}
+
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
@@ -101,6 +111,20 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu });
+
+    const { data: existingOffers, error: duplicateError } = await supabase
+      .from('offres')
+      .select('id, titre, type, lieu')
+      .eq('recruteur_id', recruteur.id);
+
+    if (duplicateError) return res.status(400).json({ error: duplicateError });
+
+    if ((existingOffers || []).some((offre) => isSameOffer(offre, { titre, type, lieu }))) {
+      return res.status(409).json({
+        error: 'OFFER_ALREADY_EXISTS',
+        message: 'Cette offre existe deja.'
+      });
+    }
 
     // Vérification limite offres selon le plan
     if (req.recruiterPlan === 'starter') {
