@@ -4,7 +4,6 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRoleProfile } = require('../utils/profiles');
-const { sendPasswordResetEmail } = require('../utils/brevo');
 
 const authClient = createClient(
   process.env.SUPABASE_URL,
@@ -271,26 +270,14 @@ router.post('/forgot-password', async (req, res) => {
 
   try {
     const redirectTo = process.env.PASSWORD_RESET_REDIRECT_URL || `${getSiteUrl(req)}/salesforge_reset.html`;
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: { redirectTo },
-    });
+    const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo });
 
-    if (error) {
-      if (/not found|does not exist/i.test(error.message || '')) {
-        return res.json({ message: 'Si un compte existe, un email de reinitialisation a ete envoye' });
-      }
-      throw error;
-    }
+    // Supabase ne renvoie pas d'erreur si l'email n'existe pas (comportement voulu, anti-enumeration)
+    if (error) throw error;
 
-    const resetUrl = data?.properties?.action_link || data?.action_link;
-    if (!resetUrl) throw new Error('Lien de reinitialisation introuvable');
-
-    await sendPasswordResetEmail({ to: email, resetUrl });
-    res.json({ message: 'Email de reinitialisation envoye' });
+    res.json({ message: 'Si un compte existe, un email de reinitialisation a ete envoye' });
   } catch (error) {
-    res.status(500).json({ error: error.publicMessage || error.message || 'Email impossible a envoyer' });
+    res.status(500).json({ error: error.message || 'Email impossible a envoyer' });
   }
 });
 
