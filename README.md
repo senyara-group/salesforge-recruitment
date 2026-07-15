@@ -51,10 +51,8 @@ Dans Vercel, verifier:
 - Environment Variables: recopier les valeurs de `backend/.env.example`
 - `FRONTEND_URL=https://www.salesforgerecrutement.fr`
 - `OAUTH_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_app.html`
-- `PASSWORD_RESET_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_reset.html`
 
 ## Pages principales
 
 - `salesforge_landing.html`
-- `salesforge_start.html`
 - `salesforge_app.html`
