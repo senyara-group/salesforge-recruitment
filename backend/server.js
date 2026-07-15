@@ -4,6 +4,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
+app.disable('etag'); // désactive l'ETag auto d'Express (source des 304 sur /api/* avec données dynamiques)
 app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
@@ -12,6 +13,9 @@ app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
+  } else if (req.path.startsWith('/api/')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
   }
   next();
 });

@@ -1488,9 +1488,20 @@ const P2 = [
 async function api(method, path, body) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
-  const r = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Erreur serveur');
+  const r = await fetch(API + path, {
+    method,
+    headers: h,
+    body: body ? JSON.stringify(body) : undefined,
+    cache: 'no-store'
+  });
+  const text = await r.text();
+  let d = null;
+  try { d = text ? JSON.parse(text) : null; } catch (e) { d = null; }
+
+  const success = r.ok || r.status === 304; // 304 avec corps valide = OK
+  if (!success || d === null) {
+    throw new Error(d?.message || d?.error?.message || d?.error || 'Erreur serveur');
+  }
   return d;
 }
 async function apiUp(path, fd) {
@@ -2109,6 +2120,7 @@ async function openThread(id, surface = 'messages') {
 
 function subscribeToMessages(matchId) {
   // Désabonner l'ancien channel si existant
+  if (!supabaseClient) return;
   if (REALTIME_CHANNEL) {
     REALTIME_CHANNEL.unsubscribe();
     REALTIME_CHANNEL = null;
@@ -2141,6 +2153,7 @@ async function loadThreadMessages() {
     subscribeToMessages(ACTIVE_THREAD.match_id); // ← ajouter ici
     await loadMessages();
   } catch(e) {
+    console.error('erreur loadThreadMessages:', e);
     document.getElementById(prefix + '-body').innerHTML = '<div class="chat-empty">Impossible de charger la conversation.</div>';
   }
 }

@@ -1733,6 +1733,7 @@ async function openThread(id) {
 }
 
 function subscribeToMessages(matchId) {
+  if (!supabaseClient) return; 
   if (REALTIME_CHANNEL) {
     REALTIME_CHANNEL.unsubscribe();
     REALTIME_CHANNEL = null;
@@ -1761,7 +1762,7 @@ async function loadThreadMessages() {
     return;
   }
   try {
-    const messages = await api('GET', '/messages/thread/' + ACTIVE_THREAD.match_id);
+    const messages = await api('GET', '/messages/thread/' + ACTIVE_THREAD.match_id + '?t=' + Date.now());
     renderThreadMessages(messages);
     subscribeToMessages(ACTIVE_THREAD.match_id);
     await loadMessages();
