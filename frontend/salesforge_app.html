@@ -329,9 +329,13 @@ async function openRoleSpace(){
     if (start) recruiterParams.set('start', start);
     recruiterParams.set('v', Date.now().toString());
     frame.onload = profile.role === 'recruteur' ? syncRecruiterDashboardFrame : null;
+    const candidateParams = new URLSearchParams();
+    candidateParams.set('v', Date.now().toString());
+    if (start) candidateParams.set('start', start);
+    if (paymentSuccess) candidateParams.set('start', 'accueil');
     frame.src = profile.role === 'recruteur'
       ? `_spaces/recruteur.html?${recruiterParams.toString()}${paymentSuccess ? '&start=dashboard' : ''}`
-      : `_spaces/candidat.html${start ? `?start=${start}` : ''}${paymentSuccess ? '?start=accueil' : ''}`;
+      : `_spaces/candidat.html?${candidateParams.toString()}`;
  
     frame.addEventListener('load', async () => {
       const env = await ensureEnvConfig();

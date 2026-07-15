@@ -28,11 +28,11 @@ button,input,textarea,select{font-family:inherit}
 .top-r{display:flex;gap:7px}
 .ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:.15s;position:relative}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
-.nd{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--r);border-radius:50%;border:2px solid var(--w)}
+.nd{position:absolute;top:-5px;right:-14px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
-.nav-dot{position:absolute;top:3px;right:26%;width:8px;height:8px;background:var(--r);border-radius:50%;border:2px solid var(--w)}
+.nav-dot{position:absolute;top:-1px;right:5px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
 .page{display:none;padding-bottom:80px}.page.on{display:block}
 .btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
@@ -353,7 +353,7 @@ button,input,textarea,select{font-family:inherit}
 .msg-foot{display:flex;align-items:center;gap:6px;margin-top:4px}
 .msg-status{font-size:10px;font-weight:800;color:var(--mu)}
 .msg-status.unread{color:var(--b)}
-.ur-dot{width:8px;height:8px;border-radius:50%;background:var(--b);flex-shrink:0;margin-top:5px}
+.ur-badge{align-self:flex-start;background:var(--b);color:#fff;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;flex-shrink:0}
 .match-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .match-msg-btn{border:none;background:var(--bs);color:var(--b);border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .match-msg-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2}
@@ -453,7 +453,9 @@ button,input,textarea,select{font-family:inherit}
 .plans-row{display:grid;grid-template-columns:1fr;gap:12px;padding:16px 18px 24px}
 .plan-card{width:100%;background:var(--w);border:1.5px solid var(--bd);border-radius:16px;padding:20px 17px;position:relative;display:flex;flex-direction:column}
 .plan-card.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}.plan-card.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
+.plan-card.active-plan{border-color:var(--g);box-shadow:0 0 0 3px var(--gs)}
 .pop-ribbon{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--b);color:#fff;font-size:10px;font-weight:700;padding:3px 11px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+.active-plan-badge{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;font-size:10px;font-weight:800;padding:3px 11px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
 .pc-n{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;margin-bottom:3px}
 .pc-f{font-size:11px;color:var(--ink3);margin-bottom:13px}.plan-card.dk .pc-f{color:rgba(255,255,255,.48)}
 .pc-pr{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
@@ -467,6 +469,7 @@ button,input,textarea,select{font-family:inherit}
 .pc-fs li svg{width:13px;height:13px;flex-shrink:0;margin-top:2px;stroke:var(--g);fill:none;stroke-width:2.5}.plan-card.dk .pc-fs li svg{stroke:#5EFFA5}
 .pc-btn{padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--b);background:transparent;color:var(--b);transition:.15s;width:100%;font-family:'Sora',sans-serif}
 .pc-btn:hover,.plan-card.pop .pc-btn{background:var(--b);color:#fff}
+.pc-btn:disabled{cursor:default;background:var(--gs)!important;border-color:var(--g)!important;color:var(--g)!important}
 .plan-card.dk .pc-btn{border-color:rgba(255,255,255,.25);color:#fff}.plan-card.dk .pc-btn:hover{background:#fff;color:var(--ink)}
 
 /* OVERLAY MATCH */
@@ -904,7 +907,7 @@ button,input,textarea,select{font-family:inherit}
 <div class="topbar" id="topbar" style="display:none">
   <div class="logo" onclick="go('home')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div></div>
   <div class="top-r">
-    <div class="ib" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nd" id="msg-dot" style="display:none"></div></div>
+    <div class="ib" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nd" id="msg-dot" style="display:none">Nouveau</div></div>
     <div class="ib" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
   </div>
 </div>
@@ -1398,7 +1401,7 @@ button,input,textarea,select{font-family:inherit}
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
   <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
-  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none"></div></button>
+  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
 </nav>
 
@@ -1455,6 +1458,8 @@ let PENDING_CV_FILE = null;
 let PROFILE_CV_URL = '';
 let PROFILE_MOTIVATION_URL = '';
 let PROFILE_AVATAR_URL = '';
+let CURRENT_PLAN = 'freemium';
+let CURRENT_PLAN_LOADED = false;
 
 let supabaseClient = null;
 
@@ -2092,7 +2097,7 @@ async function loadMessages() {
     THREADS = await api('GET', '/messages/threads');
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t=>
-      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-dot"></div>':''}</div>`
+      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
     ).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
@@ -2210,6 +2215,8 @@ function renderProfile(p, a) {
   renderProfileCV(p);
   renderMotivationFile(p);
   const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
+  CURRENT_PLAN = activeSubscriptionPlan(a);
+  CURRENT_PLAN_LOADED = true;
   document.getElementById('plan-n').textContent=names[a.plan]||'Freemium';
   document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
   fillProfileEdit(p, avatarLabel);
@@ -2393,6 +2400,11 @@ const PLANS = {
     {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
   ]
 };
+function activeSubscriptionPlan(abonnement) {
+  const plan = String(abonnement?.plan || 'freemium').toLowerCase();
+  const status = String(abonnement?.statut || abonnement?.status || 'actif').toLowerCase();
+  return ['actif', 'active', 'trialing'].includes(status) ? plan : 'freemium';
+}
 async function selectPlan(plan, billing) {
   if (plan === 'freemium') { toast('Vous êtes déjà en Freemium'); return; }
   try {
@@ -2406,18 +2418,35 @@ async function selectPlan(plan, billing) {
   } catch(e) { toast('Erreur paiement'); }
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
+async function loadCurrentPlan() {
+  try {
+    const abonnement = await api('GET', '/abonnements/current?t=' + Date.now());
+    CURRENT_PLAN = activeSubscriptionPlan(abonnement);
+  } catch(e) {
+    CURRENT_PLAN = 'freemium';
+  } finally {
+    CURRENT_PLAN_LOADED = true;
+  }
+}
+function isCurrentPlan(plan) {
+  return String(plan || '').toLowerCase() === CURRENT_PLAN;
+}
 function renderPlans() {
-  document.getElementById('plans-row').innerHTML=PLANS[BILLING].map(p=>`
-    <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}">
-      ${p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
+  if (!CURRENT_PLAN_LOADED && TOKEN) loadCurrentPlan().then(renderPlans);
+  document.getElementById('plans-row').innerHTML=PLANS[BILLING].map(p=>{
+    const active = isCurrentPlan(p.n);
+    return `
+    <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
+      ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
       <div class="pc-n sf">${p.n}</div><div class="pc-f">${p.f}</div>
       <div class="pc-pr">${p.old?`<span class="pc-old">${p.old}€</span>`:''}
         <span class="pc-p sf">${p.p===0?'Gratuit':p.p+'€'}</span><span class="pc-u">${p.u}</span>
       </div>
       <div class="pc-h">${p.h}</div>
       <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-      <button class="pc-btn" onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${p.cta}</button>
-    </div>`).join('');
+      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${active?'Offre active':p.cta}</button>
+    </div>`;
+  }).join('');
 }
 
 // ------------------------------------------------------------
