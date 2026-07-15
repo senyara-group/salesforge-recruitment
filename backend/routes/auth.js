@@ -4,6 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRoleProfile } = require('../utils/profiles');
+const { sendPasswordResetEmail } = require('../utils/brevo');
 
 const authClient = createClient(
   process.env.SUPABASE_URL,
@@ -260,6 +261,57 @@ async function signup(req, res) {
 
 router.post('/signup', signup);
 router.post('/register', signup);
+
+router.post('/forgot-password', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email requis' });
+  }
+
+  try {
+    const redirectTo = process.env.PASSWORD_RESET_REDIRECT_URL || `${getSiteUrl(req)}/salesforge_reset.html`;
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo },
+    });
+
+    if (error) {
+      if (/not found|does not exist/i.test(error.message || '')) {
+        return res.json({ message: 'Si un compte existe, un email de reinitialisation a ete envoye' });
+      }
+      throw error;
+    }
+
+    const resetUrl = data?.properties?.action_link || data?.action_link;
+    if (!resetUrl) throw new Error('Lien de reinitialisation introuvable');
+
+    await sendPasswordResetEmail({ to: email, resetUrl });
+    res.json({ message: 'Email de reinitialisation envoye' });
+  } catch (error) {
+    res.status(500).json({ error: error.publicMessage || error.message || 'Email impossible a envoyer' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1] || req.body.access_token;
+  const password = String(req.body.password || '');
+
+  if (!token) return res.status(401).json({ error: 'Token requis' });
+  if (password.length < 8) return res.status(400).json({ error: 'Mot de passe : 8 caracteres minimum' });
+
+  const resetClient = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+  const { error } = await resetClient.auth.updateUser({ password });
+  if (error) return res.status(400).json({ error: error.message || error });
+
+  res.json({ message: 'Mot de passe mis a jour' });
+});
 
 router.post('/exchange-code', async (req, res) => {
   const code = String(req.body.code || '').trim();

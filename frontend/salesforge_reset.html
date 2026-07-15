@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reinitialiser le mot de passe - SalesForge</title>
+  <style>
+    :root{--b:#1340e0;--ink:#101828;--mut:#667085;--bd:#e4e7ec;--bg:#f6f8fb;--err:#b42318}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;background:var(--bg);font-family:Inter,Arial,sans-serif;color:var(--ink);padding:22px}
+    main{width:min(420px,100%);background:#fff;border:1px solid var(--bd);border-radius:12px;padding:28px;box-shadow:0 18px 60px rgba(16,24,40,.08)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;margin-bottom:18px}
+    .mark{width:36px;height:36px;border-radius:10px;background:var(--b);color:#fff;display:grid;place-items:center}
+    h1{font-size:24px;margin:0 0 8px}p{color:var(--mut);line-height:1.55;margin:0 0 22px}
+    label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}
+    input{width:100%;height:46px;border:1px solid var(--bd);border-radius:9px;padding:0 12px;font-size:15px;margin-bottom:14px}
+    button{width:100%;height:46px;border:0;border-radius:9px;background:var(--b);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+    button:disabled{opacity:.65;cursor:default}.msg{display:none;margin:0 0 14px;font-size:13px;font-weight:700}.msg.on{display:block}.msg.err{color:var(--err)}.msg.ok{color:#067647}
+    a{display:block;text-align:center;margin-top:16px;color:var(--b);font-weight:700;text-decoration:none;font-size:13px}
+    @media (max-width:380px){
+      body{padding:14px}
+      main{padding:22px 18px}
+      h1{font-size:22px}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="mark">S</span><span>SalesForge</span></div>
+    <h1>Nouveau mot de passe</h1>
+    <p>Choisissez un mot de passe de 8 caracteres minimum pour retrouver votre espace.</p>
+    <div id="msg" class="msg"></div>
+    <form id="reset-form">
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="confirm">Confirmer</label>
+      <input id="confirm" type="password" autocomplete="new-password" minlength="8" required>
+      <button id="submit" type="submit">Mettre a jour</button>
+    </form>
+    <a href="salesforge_app.html?login=1">Retour connexion</a>
+  </main>
+  <script>
+    const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000/api'
+      : 'https://salesforge-recruitment-production.up.railway.app/api';
+    const msg = document.getElementById('msg');
+    const form = document.getElementById('reset-form');
+    const submit = document.getElementById('submit');
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+    const token = hash.get('access_token') || query.get('access_token');
+
+    function show(text, ok = false) {
+      msg.textContent = text;
+      msg.className = 'msg on ' + (ok ? 'ok' : 'err');
+    }
+
+    if (!token) {
+      form.style.display = 'none';
+      show('Lien invalide ou expire. Relancez la reinitialisation.');
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+      if (password.length < 8) return show('Mot de passe : 8 caracteres minimum');
+      if (password !== confirm) return show('Les mots de passe ne correspondent pas');
+
+      submit.disabled = true;
+      try {
+        const response = await fetch(API + '/auth/reset-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({ password }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || data.error || 'Reinitialisation impossible');
+        show('Mot de passe mis a jour. Redirection...', true);
+        setTimeout(() => { window.location.href = 'salesforge_app.html?login=1'; }, 1200);
+      } catch (error) {
+        show(error.message || 'Reinitialisation impossible');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
