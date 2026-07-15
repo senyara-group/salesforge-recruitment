@@ -275,7 +275,7 @@ router.post('/forgot-password', async (req, res) => {
     // Supabase ne renvoie pas d'erreur si l'email n'existe pas (comportement voulu, anti-enumeration)
     if (error) throw error;
 
-    res.json({ message: 'Si un compte existe, un email de reinitialisation a ete envoye' });
+    res.json({ message: 'Si un compte existe, un email de réinitialisation à été envoyé' });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Email impossible a envoyer' });
   }
@@ -288,13 +288,12 @@ router.post('/reset-password', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'Token requis' });
   if (password.length < 8) return res.status(400).json({ error: 'Mot de passe : 8 caracteres minimum' });
 
-  const resetClient = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
+  const { data: userData, error: userError } = await authClient.auth.getUser(token);
+  if (userError || !userData?.user) {
+    return res.status(401).json({ error: 'Lien invalide ou expire' });
+  }
 
-  const { error } = await resetClient.auth.updateUser({ password });
+  const { error } = await supabase.auth.admin.updateUserById(userData.user.id, { password });
   if (error) return res.status(400).json({ error: error.message || error });
 
   res.json({ message: 'Mot de passe mis a jour' });
