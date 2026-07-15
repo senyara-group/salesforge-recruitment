@@ -99,7 +99,7 @@ router.get('/checkout', async (req, res) => {
     const plan = String(req.query.plan || '').toLowerCase();
 
     if (plan === 'freemium') {
-      return res.redirect(process.env.FREEMIUM_REDIRECT_URL || `${getFrontendUrl(req)}/salesforge_start.html?role=candidat`);
+      return res.redirect(process.env.FREEMIUM_REDIRECT_URL || `${getFrontendUrl(req)}/salesforge_app.html?role=candidat`);
     }
 
     const priceId = stripePrices[type]?.[period]?.[plan];
