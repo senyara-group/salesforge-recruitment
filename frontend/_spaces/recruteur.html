@@ -769,7 +769,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <div class="topbar" id="topbar" style="display:none">
   <div class="logo" onclick="go('dashboard')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div><span class="logo-tag">Recruteur</span></div>
   <div class="top-r">
-    <div class="ib" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nd" id="msg-dot" style="display:none">Nouveau</div></div>
     <div class="ib" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
   </div>
 </div>
@@ -1114,7 +1113,7 @@ async function api(method, path, body) {
     }
     // Limite offres atteinte
     if (d.error === 'OFFER_LIMIT_REACHED') {
-      toast('Limite de 3 offres atteinte — passez au plan Enterprise');
+      toast(d.message || 'Limite d\'offres actives atteinte — passez a un plan superieur');
       go('pricing');
       throw new Error(d.message || 'Limite offres atteinte');
     }
@@ -1847,11 +1846,13 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
     {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:349,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Passer Enterprise'},
     {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
     {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:279,old:349,u:'/mois',h:'Facturé 3 348 €/an · -840 €',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Économiser 20%'},
     {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
@@ -1859,7 +1860,7 @@ const PLANS = {
 };
 async function selectPlan(plan, billing) {
   try {
-    const mapped = {business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
+    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
     const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
@@ -1871,7 +1872,7 @@ async function selectPlan(plan, billing) {
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
 function planKey(plan) {
-  return { business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
+  return { 'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
 }
 function isCurrentPlan(plan) {
   return CURRENT_PLAN && planKey(plan) === CURRENT_PLAN;

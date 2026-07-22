@@ -298,33 +298,66 @@ button,input,textarea,select{font-family:inherit}
 .ta-field{width:100%;min-height:85px;border:1px solid var(--bd);border-radius:9px;padding:10px;font-size:13px;color:var(--ink);background:var(--bg);resize:vertical;line-height:1.65;transition:.15s}
 .ta-field:focus{outline:none;border-color:var(--b);background:var(--w)}
 .ta-count{font-size:11px;color:var(--mu);text-align:right;margin-top:4px}
-.analyzing{padding:50px 18px;text-align:center}
+.analyzing{padding:50px 18px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:12px}
 .analyzing h3{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;margin-bottom:6px}
 .analyzing p{font-size:13px;color:var(--mu);margin-bottom:17px}
 .ana-bar{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:8px}
 .ana-fill{height:100%;background:var(--b);border-radius:2px;transition:width .3s}
 .ana-st{font-size:11px;color:var(--ink3)}
-.res-card{background:var(--ink);color:#fff;border-radius:20px;padding:24px 20px;text-align:center;margin-bottom:13px}
-.res-tag{display:inline-block;font-size:10px;font-weight:700;color:rgba(155,185,255,1);background:rgba(19,64,224,.2);padding:4px 11px;border-radius:6px;text-transform:uppercase;margin-bottom:12px}
-.res-s{font-family:'Sora',sans-serif;font-size:62px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:3px}
-.res-d{font-size:12px;color:rgba(255,255,255,.42);margin-bottom:9px}
-.res-t{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;margin-bottom:7px}
-.res-desc{font-size:13px;line-height:1.7;color:rgba(255,255,255,.62);max-width:300px;margin:0 auto 14px}
-.res-axes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
-.res-ax{background:rgba(255,255,255,.07);border-radius:10px;padding:11px 7px}
-.res-ax-v{font-family:'Sora',sans-serif;font-size:20px;font-weight:900}
-.res-ax-l{font-size:10px;color:rgba(255,255,255,.42);margin-top:3px;font-weight:600}
-.res-tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
-.res-tp{background:rgba(255,255,255,.1);color:#fff;padding:5px 11px;border-radius:13px;font-size:11px;font-weight:600}
-.res-cta{display:flex;flex-direction:column;gap:7px}
-.res-docs{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px;margin:16px 0;text-align:left}
-.res-docs-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:#fff;margin-bottom:4px}
-.res-docs-s{font-size:12px;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:12px}
+.res-shell{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.res-hero{display:grid;gap:18px;background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.res-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--b),var(--g))}
+.res-main{position:relative;min-width:0}
+.res-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--b);background:var(--bs);border:1px solid var(--bm);padding:5px 9px;border-radius:7px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.res-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--g)}
+.res-t{font-family:'Sora',sans-serif;font-size:23px;font-weight:900;letter-spacing:-.7px;line-height:1.15;margin-bottom:8px;color:var(--ink)}
+.res-desc{font-size:13px;line-height:1.75;color:var(--ink3);max-width:620px;margin:0 0 12px}
+.res-tags{display:flex;gap:6px;flex-wrap:wrap}
+.res-tp{background:var(--bg);border:1px solid var(--bd);color:var(--ink2);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:800}
+.res-score-card{background:#0B1422;color:#fff;border-radius:12px;padding:18px;display:flex;align-items:center;gap:14px;min-height:142px}
+.res-ring{width:104px;height:104px;border-radius:50%;background:conic-gradient(var(--b) var(--score,0%),rgba(255,255,255,.12) 0);padding:8px;flex-shrink:0}
+.res-ring-in{width:100%;height:100%;border-radius:50%;background:#0B1422;border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.res-s{font-family:'Sora',sans-serif;font-size:34px;font-weight:900;letter-spacing:-1.4px}
+.res-score-unit{font-size:11px;color:rgba(255,255,255,.52);font-weight:800;margin-top:3px}
+.res-score-copy{min-width:0}
+.res-score-k{font-size:10px;color:#9BB9FF;font-weight:900;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.res-d{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5}
+.res-grid{display:grid;gap:12px}
+.res-panel{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:16px}
+.res-panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.res-panel-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;letter-spacing:-.2px}
+.res-panel-note{font-size:11px;color:var(--mu);font-weight:700}
+.res-axes{display:grid;gap:10px}
+.res-ax{display:grid;grid-template-columns:minmax(92px,130px) minmax(0,1fr) 34px;align-items:center;gap:10px}
+.res-ax-l{font-size:12px;font-weight:800;color:var(--ink2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-ax-tr{height:8px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.res-ax-f{height:100%;width:var(--axis-width,0%);background:var(--axis,var(--b));border-radius:8px;transition:width .5s}
+.res-ax-v{font-family:'Sora',sans-serif;font-size:13px;font-weight:900;text-align:right;color:var(--axis,var(--b))}
+.res-summary{display:grid;gap:9px}
+.res-note{border:1px solid var(--bd);background:var(--bg);border-radius:10px;padding:12px}
+.res-note-l{font-size:10px;font-weight:900;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.res-note-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--ink);line-height:1.25}
+.res-note-s{font-size:12px;color:var(--ink3);margin-top:4px;line-height:1.45}
+.res-docs{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:16px;display:grid;gap:13px}
+.res-docs-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--ink);margin-bottom:4px}
+.res-docs-s{font-size:12px;color:var(--ink3);line-height:1.6}
 .res-doc-actions{display:grid;grid-template-columns:1fr;gap:8px}
-.res-doc-btn{width:100%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.1);color:#fff;padding:11px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:800;cursor:pointer}
-.res-doc-btn:hover{background:rgba(255,255,255,.16)}
-.res-doc-status{display:none;margin-top:10px;font-size:12px;color:#8DFFC4;font-weight:700;text-align:center}
+.res-doc-btn{width:100%;border:1px solid var(--bd);background:var(--bg);color:var(--ink2);padding:11px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:800;cursor:pointer}
+.res-doc-btn:hover{border-color:var(--b);background:var(--bs);color:var(--b)}
+.res-doc-status{display:none;font-size:12px;color:var(--g);font-weight:800;text-align:left}
 .res-doc-status.on{display:block}
+.res-cta{display:grid;grid-template-columns:1fr;gap:8px}
+.res-cta .btn{min-height:46px}
+.res-secondary{background:var(--w);border:1.5px solid var(--bd2);color:var(--ink2)}
+
+@media (min-width:720px){
+  .res-hero{grid-template-columns:minmax(0,1fr) 288px;align-items:stretch;padding:22px 24px}
+  .res-score-card{flex-direction:column;align-items:flex-start;justify-content:space-between}
+  .res-grid{grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr)}
+  .res-docs{grid-template-columns:minmax(0,1fr) minmax(300px,360px);align-items:center}
+  .res-doc-status{grid-column:1/-1}
+  .res-cta{grid-template-columns:1fr 1fr}
+}
 
 /* CANDS & MATCHS */
 .tab-seg{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;margin-bottom:13px}
@@ -378,48 +411,55 @@ button,input,textarea,select{font-family:inherit}
 .chat-send svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4}
 
 /* PROFIL */
-.ph{background:var(--ink);color:#fff;padding:20px 18px}
-.ph-top{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.ph{background:var(--w);color:var(--ink);padding:18px;margin:15px 18px 10px;border:1px solid var(--bd);border-radius:16px;position:relative;overflow:hidden}
+.ph::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--b),var(--g))}
+.ph-top{display:flex;align-items:flex-start;gap:13px;margin-bottom:15px;position:relative}
 .ph-main{flex:1;min-width:0}
-.profile-edit-btn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.profile-edit-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.profile-edit-btn:hover{border-color:var(--b);background:var(--bs);color:var(--b)}
 .profile-edit-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
-.ph-av{width:60px;height:60px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:20px;font-weight:900;flex-shrink:0;overflow:hidden;color:#fff}
+.ph-av{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,var(--b),#2847D8);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:21px;font-weight:900;flex-shrink:0;overflow:hidden;color:#fff;box-shadow:0 12px 22px rgba(19,64,224,.18)}
 .ph-av img{width:100%;height:100%;object-fit:cover;display:block}
-.ph-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:900}
-.ph-title{font-size:13px;color:rgba(255,255,255,.58);margin-top:2px}
-.ph-rank{display:inline-flex;align-items:center;background:rgba(19,64,224,.25);color:#B0C8FF;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;margin-top:5px}
+.ph-kicker{font-size:10px;color:var(--b);font-weight:900;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.ph-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.5px;line-height:1.15;color:var(--ink)}
+.ph-title{font-size:13px;color:var(--ink3);margin-top:4px;font-weight:600}
+.ph-rank{display:inline-flex;align-items:center;background:var(--bs);color:var(--b);border:1px solid var(--bm);padding:4px 9px;border-radius:7px;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:8px}
 .ph-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
-.ph-badge{display:none;align-items:center;gap:5px;background:rgba(255,255,255,.09);color:#D7E4FF;border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+.ph-badge{display:none;align-items:center;gap:5px;background:var(--gs);color:var(--g);border:1px solid rgba(6,148,88,.18);border-radius:7px;padding:4px 8px;font-size:10px;font-weight:800;text-transform:uppercase}
 .ph-badge.on{display:inline-flex}
 .ph-badge.link{cursor:pointer}
 .ph-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
-.ph-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
-.profile-edit-panel{display:none;background:#101A28;border:1px solid rgba(176,196,216,.24);border-radius:14px;padding:18px;margin:18px 0;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 16px 34px rgba(0,0,0,.16)}
+.ph-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;position:relative}
+.ph-stat{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:12px 10px}
+.profile-edit-panel{display:none;background:#F8FAFD;border:1px solid var(--bd);border-radius:14px;padding:14px;margin:16px 0;text-align:left;box-shadow:0 12px 28px rgba(9,20,34,.08);position:relative}
 .profile-edit-panel.on{display:block}
-.profile-edit-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.profile-edit-photo{width:58px;height:58px;border-radius:50%;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:900;overflow:hidden;flex-shrink:0}
+.profile-edit-head{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.profile-edit-photo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--b),#2847D8);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:900;overflow:hidden;flex-shrink:0}
 .profile-edit-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.profile-edit-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:#fff}
-.profile-edit-sub{font-size:12px;color:rgba(255,255,255,.58);line-height:1.45;margin-top:2px}
+.profile-edit-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--ink)}
+.profile-edit-sub{font-size:12px;color:var(--ink3);line-height:1.45;margin-top:2px}
 .profile-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .profile-edit-field{display:flex;flex-direction:column;gap:5px}
-.profile-edit-field label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.5);font-weight:800}
-.profile-edit-field input{width:100%;min-height:42px;border:1px solid rgba(176,196,216,.26);background:#1B2735;color:#fff;font-size:14px;font-weight:700;outline:none;padding:10px 12px;border-radius:9px}
-.profile-edit-field input::placeholder{color:rgba(255,255,255,.45)}
-.profile-edit-field input:focus{border-color:rgba(255,255,255,.48);background:#2D3948;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.profile-edit-field label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);font-weight:900}
+.profile-edit-field input{width:100%;min-height:44px;border:1px solid var(--bd);background:var(--w);color:var(--ink);font-size:14px;font-weight:800;outline:none;padding:10px 12px;border-radius:10px}
+.profile-edit-field input::placeholder{color:var(--mu)}
+.profile-edit-field input:focus{border-color:var(--b);background:var(--w);box-shadow:0 0 0 3px var(--bs)}
 .profile-resource-list{display:grid;gap:8px;margin:12px 0}
-.profile-resource-row{background:#1B2735;border:1px solid rgba(176,196,216,.22);border-radius:11px;padding:11px;display:grid;gap:9px}
-.profile-resource-name{font-size:12px;font-weight:800;color:#fff;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.profile-resource-meta{font-size:11px;color:rgba(255,255,255,.54);margin-top:1px}
+.profile-resource-row{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:start}
+.profile-resource-icon{width:36px;height:36px;border-radius:10px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;grid-row:span 2}
+.profile-resource-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+.profile-resource-name{font-size:13px;font-weight:900;color:var(--ink);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-resource-meta{font-size:11px;color:var(--ink3);margin-top:2px}
 .profile-resource-actions{display:flex;gap:7px;flex-wrap:wrap}
-.profile-resource-actions button,.profile-edit-actions .btn,.profile-edit-head .upload-btn{border:1px solid rgba(176,196,216,.28);background:#263240;color:#fff;padding:9px 11px;font-size:12px;font-weight:900;border-radius:9px;cursor:pointer;font-family:'Sora',sans-serif}
-.profile-resource-actions button:hover,.profile-edit-actions .upload-btn:hover{background:#34404E;border-color:rgba(255,255,255,.32)}
+.profile-resource-actions button,.profile-edit-actions .btn,.profile-edit-head .upload-btn{border:1px solid var(--bd);background:var(--w);color:var(--ink2);padding:9px 11px;font-size:12px;font-weight:900;border-radius:9px;cursor:pointer;font-family:'Sora',sans-serif}
+.profile-resource-actions button:hover,.profile-edit-actions .upload-btn:hover,.profile-edit-head .upload-btn:hover{background:var(--bs);border-color:var(--b);color:var(--b)}
 .profile-resource-actions button:disabled{opacity:.42;cursor:not-allowed}
-.profile-resource-actions .danger{color:#FFD5D5;border-color:rgba(204,47,47,.35);background:rgba(204,47,47,.12)}
+.profile-resource-actions .danger{color:var(--r);border-color:rgba(204,47,47,.26);background:var(--rs)}
 .profile-edit-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
-.profile-edit-actions .save-btn{background:var(--b);border-color:var(--b);box-shadow:0 10px 22px rgba(19,64,224,.28)}
-.phs-v{font-family:'Sora',sans-serif;font-size:21px;font-weight:900}
-.phs-l{font-size:10px;color:rgba(255,255,255,.48);text-transform:uppercase;margin-top:2px;font-weight:600}
+.profile-edit-actions .save-btn{background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 10px 22px rgba(19,64,224,.28)}
+.phs-v{font-family:'Sora',sans-serif;font-size:22px;font-weight:900;color:var(--ink);line-height:1}
+#prof-status{font-size:14px;letter-spacing:0;line-height:1.2}
+.phs-l{font-size:10px;color:var(--ink3);text-transform:uppercase;margin-top:5px;font-weight:800;letter-spacing:.35px}
 .anon-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(6,148,88,.2);color:#5EFFA5;padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:9px}
 .card-sec{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:9px}
 .card-sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -554,7 +594,7 @@ button,input,textarea,select{font-family:inherit}
   #p-test .test-sticky{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
   #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
   #p-profile.page.on{display:grid;grid-template-columns:minmax(360px,500px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
-  #p-profile .ph{border-radius:18px;padding:28px;position:sticky;top:83px;align-self:start}
+  #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:sticky;top:83px;align-self:start;margin:0}
   #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
   #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
   #p-swipe.page.on{display:grid;grid-template-columns:minmax(340px,1fr) minmax(440px,560px) minmax(220px,.8fr);gap:24px;padding:0 28px 96px;align-items:start}
@@ -604,7 +644,7 @@ button,input,textarea,select{font-family:inherit}
   .doc-item,.tr-item,.match-item,.msg-th,.menu-i{padding:17px 18px}
   .doc-title,.tr-title,.mi-t,.msg-n,.card-sec-t{font-size:16px}
   .doc-meta,.tr-sub,.mi-s,.msg-prev{font-size:14px}
-  #p-profile .ph{position:static;padding:38px 42px}
+  #p-profile .ph{position:static;padding:34px 38px;margin:0;border:1px solid var(--bd);border-radius:16px}
   #p-profile>.sec{display:block}
   .ph-top{gap:20px}
   .ph-av{width:82px;height:82px;font-size:28px}
@@ -613,11 +653,12 @@ button,input,textarea,select{font-family:inherit}
   .ph-rank,.ph-badge{font-size:12px}
   .ph-stats{margin-top:20px}
   .phs-v{font-size:32px}
+  #prof-status{font-size:18px}
   .phs-l{font-size:12px}
-  .profile-edit-panel{max-width:none;padding:28px 24px;margin-top:22px;margin-bottom:22px}
-  .profile-edit-grid{gap:28px;margin-bottom:28px}
-  .profile-edit-field input{min-height:48px;font-size:17px}
-  .profile-edit-actions .btn{width:min(420px,100%);min-height:48px;font-size:16px}
+  .profile-edit-panel{max-width:none;padding:20px;margin-top:18px;margin-bottom:18px}
+  .profile-edit-grid{gap:14px;margin-bottom:14px}
+  .profile-edit-field input{min-height:48px;font-size:15px}
+  .profile-edit-actions .btn{width:auto;min-width:150px;min-height:44px;font-size:14px}
   #p-swipe.page.on{display:block;padding:0 0 96px}
   #p-swipe .swipe-hd{margin:0;padding:18px 42px}
   #p-swipe .deck-area{width:min(620px,calc(100% - 84px));height:min(720px,calc(100dvh - 230px));margin:22px auto 0}
@@ -638,8 +679,8 @@ button,input,textarea,select{font-family:inherit}
 }
 
 @media (min-width:1180px){
-  .profile-edit-panel{padding:26px 24px}
-  .profile-edit-actions .btn{width:min(460px,100%)}
+  .profile-edit-panel{padding:22px}
+  .profile-edit-actions .btn{width:auto;min-width:160px}
 }
 
 @media (min-width:720px){
@@ -822,6 +863,11 @@ button,input,textarea,select{font-family:inherit}
     border-radius:12px;
     padding:18px 20px;
   }
+  #p-test .test-body>#ts10{
+    background:transparent;
+    border:0;
+    padding:0;
+  }
   #p-test .step-nav{
     display:grid;
     grid-template-columns:160px 1fr;
@@ -845,6 +891,7 @@ button,input,textarea,select{font-family:inherit}
     width:100%;
     margin:0;
     padding:24px 28px;
+    border:1px solid var(--bd);
     border-radius:12px;
   }
   #p-profile>.sec{
@@ -907,7 +954,6 @@ button,input,textarea,select{font-family:inherit}
 <div class="topbar" id="topbar" style="display:none">
   <div class="logo" onclick="go('home')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div></div>
   <div class="top-r">
-    <div class="ib" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nd" id="msg-dot" style="display:none">Nouveau</div></div>
     <div class="ib" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
   </div>
 </div>
@@ -1250,17 +1296,48 @@ button,input,textarea,select{font-family:inherit}
         <div class="ana-st" id="as">Démarrage…</div>
       </div>
       <div id="res-block" style="display:none">
-        <div class="res-card">
-          <div class="res-tag">Votre ADN Commercial</div>
-          <div class="res-s sf" id="res-score">—</div>
-          <div class="res-d" id="res-denom">sur 100</div>
-          <div class="res-t sf" id="res-type">—</div>
-          <p class="res-desc" id="res-desc">—</p>
-          <div class="res-axes" id="res-axes"></div>
-          <div class="res-tags" id="res-tags"></div>
+        <div class="res-shell">
+          <section class="res-hero">
+            <div class="res-main">
+              <div class="res-tag">Votre ADN commercial</div>
+              <h2 class="res-t sf" id="res-type">—</h2>
+              <p class="res-desc" id="res-desc">—</p>
+              <div class="res-tags" id="res-tags"></div>
+            </div>
+            <div class="res-score-card" id="res-score-card">
+              <div class="res-ring">
+                <div class="res-ring-in">
+                  <div class="res-s sf" id="res-score">—</div>
+                  <div class="res-score-unit">/100</div>
+                </div>
+              </div>
+              <div class="res-score-copy">
+                <div class="res-score-k">Score ADN</div>
+                <div class="res-d" id="res-denom">Profil synchronisé</div>
+              </div>
+            </div>
+          </section>
+          <div class="res-grid">
+            <section class="res-panel">
+              <div class="res-panel-h">
+                <div class="res-panel-t sf">Axes commerciaux</div>
+                <div class="res-panel-note">Benchmark candidat</div>
+              </div>
+              <div class="res-axes" id="res-axes"></div>
+            </section>
+            <section class="res-panel">
+              <div class="res-panel-h">
+                <div class="res-panel-t sf">Lecture rapide</div>
+                <div class="res-panel-note">Synthèse</div>
+              </div>
+              <div class="res-summary" id="res-summary"></div>
+            </section>
+          </div>
           <div class="res-docs">
-            <div class="res-docs-t">Complétez votre profil</div>
-            <div class="res-docs-s">Ajoutez votre CV et votre lettre de motivation pour permettre aux recruteurs de consulter directement votre profil complet.</div>
+            <div>
+              <div class="res-docs-t">Complétez votre profil</div>
+              <div class="res-docs-s">Ajoutez votre CV et votre lettre de motivation pour rendre ce résultat exploitable par les recruteurs.</div>
+            </div>
             <div class="res-doc-actions">
               <button class="res-doc-btn" onclick="document.getElementById('cv-file-prof').click()">Importer mon CV</button>
               <button class="res-doc-btn" onclick="document.getElementById('motiv-file-prof').click()">Importer ma lettre de motivation</button>
@@ -1268,8 +1345,8 @@ button,input,textarea,select{font-family:inherit}
             <div class="res-doc-status" id="res-doc-status"></div>
           </div>
           <div class="res-cta">
-            <button class="btn blk" style="background:#fff;color:var(--ink);padding:12px;font-family:'Sora',sans-serif;font-weight:800;border-radius:10px;cursor:pointer" onclick="go('swipe')">Plus tard</button>
-            <button class="btn blk" style="background:rgba(255,255,255,.1);color:#fff;padding:11px;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700" onclick="go('profile')">Voir mon profil</button>
+            <button class="btn bp blk" onclick="go('swipe')">Explorer les offres</button>
+            <button class="btn res-secondary blk" onclick="go('profile')">Voir mon profil</button>
           </div>
         </div>
       </div>
@@ -1305,6 +1382,7 @@ button,input,textarea,select{font-family:inherit}
     <div class="ph-top">
       <div class="ph-av sf" id="prof-av">YS</div>
       <div class="ph-main">
+        <div class="ph-kicker">Profil candidat</div>
         <div class="ph-name sf" id="prof-name">—</div>
         <div class="ph-title" id="prof-title">—</div>
         <div class="ph-rank" id="prof-rank">—</div>
@@ -1330,6 +1408,7 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <div class="profile-resource-list">
         <div class="profile-resource-row">
+          <div class="profile-resource-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
           <div><div class="profile-resource-name" id="cv-menu-label">CV non ajouté</div><div class="profile-resource-meta">PDF, DOC ou DOCX</div></div>
           <div class="profile-resource-actions">
             <button type="button" onclick="document.getElementById('cv-file-prof').click()">Remplacer</button>
@@ -1338,6 +1417,7 @@ button,input,textarea,select{font-family:inherit}
           </div>
         </div>
         <div class="profile-resource-row">
+          <div class="profile-resource-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
           <div><div class="profile-resource-name" id="motiv-menu-label">Lettre de motivation non ajoutée</div><div class="profile-resource-meta">PDF, DOC ou DOCX</div></div>
           <div class="profile-resource-actions">
             <button type="button" onclick="document.getElementById('motiv-file-prof').click()">Remplacer</button>
@@ -1352,9 +1432,9 @@ button,input,textarea,select{font-family:inherit}
       </div>
     </div>
     <div class="ph-stats">
-      <div><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
-      <div><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
-      <div><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
+      <div class="ph-stat"><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
+      <div class="ph-stat"><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
+      <div class="ph-stat"><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
     </div>
   </div>
   <div class="sec">
@@ -2064,12 +2144,52 @@ async function submitToAPI() {
     renderResult(r);
   } catch(e) { toast('Erreur analyse — vérifiez la connexion'); }
 }
+function resultAxisColor(value) {
+  const score = Number(value || 0);
+  if (score >= 75) return 'var(--b)';
+  if (score >= 65) return 'var(--g)';
+  return 'var(--gold)';
+}
+function resultLevel(score) {
+  if (score >= 85) return 'Profil très fort';
+  if (score >= 72) return 'Bon alignement commercial';
+  return 'Base commerciale solide';
+}
 function renderResult(r) {
   document.getElementById('ana-block').style.display='none'; document.getElementById('res-block').style.display='block';
-  document.getElementById('res-score').textContent=r.score; document.getElementById('res-denom').textContent=r.rank;
-  document.getElementById('res-type').textContent=r.type; document.getElementById('res-desc').textContent=r.desc;
-  document.getElementById('res-axes').innerHTML=r.axes.map(a=>`<div class="res-ax"><div class="res-ax-v sf">${a.v}</div><div class="res-ax-l">${a.l}</div></div>`).join('');
-  document.getElementById('res-tags').innerHTML=r.tags.map(t=>`<span class="res-tp">${t}</span>`).join('');
+  const score = Math.max(0, Math.min(100, Math.round(Number(r.score || 0))));
+  const axes = Array.isArray(r.axes) ? r.axes.map(a => ({ l:String(a.l || ''), v:Math.max(0, Math.min(100, Math.round(Number(a.v || 0)))) })) : [];
+  const tags = Array.isArray(r.tags) ? r.tags : [];
+  document.getElementById('res-score').textContent = score || '—';
+  document.getElementById('res-score-card').style.setProperty('--score', score + '%');
+  document.getElementById('res-denom').textContent = r.rank || 'Profil synchronisé';
+  document.getElementById('res-type').textContent = r.type || 'Profil commercial';
+  document.getElementById('res-desc').textContent = r.desc || 'Votre score est synchronisé avec votre profil candidat.';
+  document.getElementById('res-axes').innerHTML = axes.map(a => `
+    <div class="res-ax" style="--axis:${resultAxisColor(a.v)};--axis-width:${a.v}%">
+      <div class="res-ax-l">${esc(a.l)}</div>
+      <div class="res-ax-tr"><div class="res-ax-f"></div></div>
+      <div class="res-ax-v sf">${a.v}</div>
+    </div>
+  `).join('');
+  const tagsEl = document.getElementById('res-tags');
+  tagsEl.innerHTML = tags.map(t => `<span class="res-tp">${esc(t)}</span>`).join('');
+  tagsEl.style.display = tags.length ? 'flex' : 'none';
+  const sortedAxes = axes.slice().sort((a,b) => b.v - a.v);
+  const best = sortedAxes[0];
+  const focus = sortedAxes[sortedAxes.length - 1];
+  const summary = [
+    { l:'Niveau', v:resultLevel(score), s:`Score global ${score}/100` },
+    best ? { l:'Point fort', v:best.l, s:`${best.v}/100 sur cet axe` } : null,
+    focus && (!best || focus.l !== best.l) ? { l:'Axe à consolider', v:focus.l, s:`${focus.v}/100 pour progresser` } : null,
+  ].filter(Boolean);
+  document.getElementById('res-summary').innerHTML = summary.map(item => `
+    <div class="res-note">
+      <div class="res-note-l">${esc(item.l)}</div>
+      <div class="res-note-v sf">${esc(item.v)}</div>
+      <div class="res-note-s">${esc(item.s)}</div>
+    </div>
+  `).join('');
   const st = document.getElementById('res-doc-status');
   if (st) { st.textContent = ''; st.classList.remove('on'); }
 }
@@ -2210,9 +2330,17 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 // PROFIL
 // ------------------------------------------------------------
+function profileDisplayName(p = {}) {
+  return [p.prenom, p.nom].filter(Boolean).join(' ').trim() || 'Profil candidat';
+}
+function profileInitials(p = {}) {
+  const first = String(p.prenom || '').trim()[0] || '';
+  const last = String(p.nom || '').trim()[0] || '';
+  return (first || last) ? (first + last).toUpperCase() : 'SF';
+}
 async function loadProfile() {
   if (!USER) return;
-  document.getElementById('prof-name').textContent=(USER.prenom||'')+' '+(USER.nom||'');
+  document.getElementById('prof-name').textContent = profileDisplayName(USER);
   try {
     const [p, abo, stats] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/abonnements/current'), api('GET', '/candidats/stats')]);
     renderProfile({...p, ...stats}, abo);
@@ -2221,11 +2349,13 @@ async function loadProfile() {
 function renderProfile(p, a) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
-  const avatarLabel = ((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase();
-  document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
+  const avatarLabel = profileInitials(p);
+  document.getElementById('prof-name').textContent = profileDisplayName(p);
   renderProfileAvatar(p, avatarLabel);
-  document.getElementById('prof-title').textContent=p.type_profil||'—'; document.getElementById('prof-rank').textContent=p.rank||'—';
+  document.getElementById('prof-title').textContent=p.type_profil||'Complétez votre profil';
+  document.getElementById('prof-rank').textContent=p.rank||'Profil à compléter';
   document.getElementById('prof-score').textContent=p.score_adn||'—'; document.getElementById('prof-matchs').textContent=p.matchs||'0';
+  document.getElementById('prof-status').textContent=p.score_adn?'Actif':'À compléter';
   document.getElementById('prof-adn').innerHTML=adn(p.axes);
   const cvLabel = document.getElementById('cv-menu-label');
   if (cvLabel) cvLabel.textContent = p.axes?.meta?.cv_file_name ? 'CV : ' + p.axes.meta.cv_file_name : 'Importer un nouveau CV';
@@ -2270,8 +2400,8 @@ async function saveProfileEdit() {
     const p = await api('PUT', '/candidats/profil', { prenom, nom });
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
-    document.getElementById('prof-name').textContent=(p.prenom||'')+' '+(p.nom||'');
-    renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, ((p.prenom||'?')[0]+(p.nom||'?')[0]).toUpperCase());
+    document.getElementById('prof-name').textContent = profileDisplayName(p);
+    renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
     document.getElementById('profile-edit-panel').classList.remove('on');
     toast('Profil mis à jour');
   } catch(e) {
@@ -2368,8 +2498,7 @@ async function updateAvatar(input) {
   try {
     const data = await uploadProfilePhoto(file);
     PROFILE_AVATAR_URL = data.avatar_url || '';
-    const label = ((USER?.prenom||'?')[0]+(USER?.nom||'?')[0]).toUpperCase();
-    renderProfileAvatar({ avatar_url: PROFILE_AVATAR_URL }, label);
+    renderProfileAvatar({ avatar_url: PROFILE_AVATAR_URL }, profileInitials(USER));
     toast('Photo de profil mise à jour');
   } catch(e) {
     toast(e.message || 'Erreur upload photo');
