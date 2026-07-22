@@ -355,11 +355,13 @@ const D={
   },
   rec:{
     month:[
+      {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
       {n:'Starter',f:'Besoins ponctuels',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Choisir Starter'},
       {n:'Pro',f:'Recrutement continu',p:399,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Essai gratuit 7j',pop:true},
       {n:'Enterprise',f:'Équipes & Chasseurs',p:799,u:'/mois',h:'Engagement 12 mois',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Contacter les Sales',dk:true}
     ],
     year:[
+      {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · Économie 216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
       {n:'Starter',f:'Besoins ponctuels',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · Économie 360 €',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Économiser 20%'},
       {n:'Pro',f:'Recrutement continu',p:319,old:399,u:'/mois',h:'Facturé 3 828 €/an · Économie 960 €',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Économiser 20%',pop:true},
       {n:'Enterprise',f:'Équipes & Chasseurs',p:639,old:799,u:'/mois',h:'Facturé 7 668 €/an · Économie 1920 €',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Économiser 20%',dk:true}
@@ -387,10 +389,12 @@ function goToApp(type = ct){
 }
 
 function planSlug(name){
-  return name
+  const base = name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (base.startsWith('entrepreneur')) return 'solo';
+  return base
     .replace('platine', 'platine')
     .replace(/[^a-z]/g, '');
 }
