@@ -1243,16 +1243,102 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <!-- STEP 9 PREFS -->
     <div id="ts9" style="display:none">
-      <div class="qt sf">Vos préférences de mission</div>
+      <div class="qt sf">Votre profil commercial cible</div>
       <div class="qh">Ces choix alimentent directement l'algorithme de matching. Soyez précis.</div>
-      <div class="prefs-sec"><div class="prefs-l sf">Type de poste</div><div class="prefs-chips">
-        <button class="pc" onclick="tg(this,'poste','closer')">Closer</button>
-        <button class="pc" onclick="tg(this,'poste','sales')">Sales</button>
-        <button class="pc" onclick="tg(this,'poste','sdr')">SDR / BDR</button>
-        <button class="pc" onclick="tg(this,'poste','ae')">Account Executive</button>
-        <button class="pc" onclick="tg(this,'poste','head')">Head of Sales</button>
-        <button class="pc" onclick="tg(this,'poste','se')">Sales Engineer</button>
+      <div class="prefs-sec"><div class="prefs-l sf">Quel type de poste recherchez-vous ?</div><div class="prefs-chips">
+        <button class="pc" onclick="adnRole(this,'sdr_bdr')">SDR / BDR</button>
+        <button class="pc" onclick="adnRole(this,'business_developer')">Business Developer</button>
+        <button class="pc" onclick="adnRole(this,'account_executive')">Account Executive</button>
+        <button class="pc" onclick="adnRole(this,'commercial_terrain')">Commercial terrain</button>
+        <button class="pc" onclick="adnRole(this,'key_account_manager')">Key Account Manager</button>
+        <button class="pc" onclick="adnRole(this,'manager_commercial')">Manager commercial</button>
       </div></div>
+      <div class="prefs-sec"><div class="prefs-l sf">Vous vous décrivez plutôt comme :</div><div class="prefs-chips">
+        <button class="pc" onclick="adnPosture(this,'hunter')">Hunter (chercher de nouveaux clients)</button>
+        <button class="pc" onclick="adnPosture(this,'farmer')">Farmer (développer les comptes existants)</button>
+        <button class="pc" onclick="adnPosture(this,'full_cycle')">Full cycle (les deux)</button>
+      </div></div>
+      <div id="role-empty" class="loading-state" style="margin-bottom:20px">Sélectionnez un type de poste pour afficher les 2 questions spécifiques.</div>
+      <div class="mcqg" data-role-panel="sdr_bdr" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Combien d'appels de prospection par jour ?</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'daily_calls','lt20')">Moins de 20</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'daily_calls','20_50')">20 à 50</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'daily_calls','50_80')">50 à 80</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'daily_calls','gt80')">Plus de 80</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Face à un barrage secrétaire, votre réflexe</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'gatekeeper','call_later')">Je rappelle plus tard</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'gatekeeper','ask_decision_maker')">Je demande le nom du décideur</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'gatekeeper','clear_reason')">Je donne une raison précise et j'assume</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'gatekeeper','send_email')">J'envoie un email à la place</button>
+        </div></div>
+      </div>
+      <div class="mcqg" data-role-panel="business_developer" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Montant moyen des contrats signés</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'average_contract','lt5k')">Moins de 5K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'average_contract','5_20k')">5 à 20K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'average_contract','20_50k')">20 à 50K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'average_contract','gt50k')">Plus de 50K€</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Vous gérez le cycle de vente</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'sales_cycle','prospection_to_closing')">De la prospection au closing</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'sales_cycle','qualified_meeting')">À partir du rendez-vous qualifié</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'sales_cycle','closing_only')">Uniquement le closing</button>
+        </div></div>
+      </div>
+      <div class="mcqg" data-role-panel="account_executive" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Votre plus gros contrat signé</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'largest_contract','lt20k')">Moins de 20K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'largest_contract','20_50k')">20 à 50K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'largest_contract','50_150k')">50 à 150K€</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'largest_contract','gt150k')">Plus de 150K€</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Comment gérez-vous un deal qui stagne depuis 3 semaines ?</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'stalled_deal','wait_client')">J'attends que le client revienne</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'stalled_deal','value_content')">Je relance avec du contenu à valeur</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'stalled_deal','breakup_email')">J'envoie un mail de rupture</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'stalled_deal','escalate')">Je remonte au niveau supérieur</button>
+        </div></div>
+      </div>
+      <div class="mcqg" data-role-panel="commercial_terrain" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Combien de visites clients par semaine ?</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'weekly_visits','lt5')">Moins de 5</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'weekly_visits','5_15')">5 à 15</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'weekly_visits','15_25')">15 à 25</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'weekly_visits','gt25')">Plus de 25</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Votre secteur géographique idéal</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'geo_scope','local')">Local (moins de 50 km)</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'geo_scope','regional')">Régional</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'geo_scope','national')">National avec découchés</button>
+        </div></div>
+      </div>
+      <div class="mcqg" data-role-panel="key_account_manager" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Combien de comptes gérez-vous simultanément ?</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'account_count','lt5')">Moins de 5</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'account_count','5_15')">5 à 15</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'account_count','15_30')">15 à 30</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'account_count','gt30')">Plus de 30</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Face à un client mécontent qui menace de partir</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'churn_risk','discount')">Je fais un geste commercial</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'churn_risk','root_problem')">Je comprends d'abord le problème de fond</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'churn_risk','management')">Je remonte à ma direction</button>
+        </div></div>
+      </div>
+      <div class="mcqg" data-role-panel="manager_commercial" style="display:none">
+        <div class="mcq"><div class="mcq-q sf">Combien de commerciaux avez-vous encadrés ?</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'team_size','none')">Aucun encore</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'team_size','1_3')">1 à 3</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'team_size','4_10')">4 à 10</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'team_size','gt10')">Plus de 10</button>
+        </div></div>
+        <div class="mcq"><div class="mcq-q sf">Face à un commercial en sous-performance</div><div class="mcq-os">
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'underperformance','performance_plan')">Je fixe un plan de redressement chiffré</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'underperformance','field_coaching')">Je fais du terrain avec lui</button>
+          <button class="mcq-o" onclick="adnRoleAnswer(this,'underperformance','diagnose_first')">Je cherche à comprendre ce qui bloque avant d'agir</button>
+        </div></div>
+      </div>
       <div class="prefs-sec"><div class="prefs-l sf">Type de contrat</div><div class="prefs-chips">
         <button class="pc" onclick="tg(this,'contrat','cdi')">CDI</button>
         <button class="pc" onclick="tg(this,'contrat','mission_c')">Mission courte</button>
@@ -1552,11 +1638,20 @@ window.addEventListener('message', (e) => {
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
   mcq: {}, pitches: {}, story: '',
-  prefs: { poste:[], contrat:[], mode:[], secteur:[], remun:'', taille:[] }
+  roleFit: { poste:'', posture:'', specifics:{} },
+  prefs: { poste:'', contrat:[], mode:[], secteur:[], remun:'', taille:[] }
 };
 
 const STEPS = {1:'Scénario comportemental',2:'Scénario relance',3:'Scénario rétention',4:'Compétences sales réelles',5:'Culture commerciale',6:'Simulation pitch — Objection',7:'Simulation pitch — Discovery',8:'Votre meilleure vente',9:'Préférences de poste',10:'Résultat ADN'};
 const ANA_MSGS = ['Analyse des scénarios comportementaux…','Détection des biais déclaratifs…','Benchmarking sur 4 200 commerciaux…','Analyse des simulations de pitch…','Évaluation culture sales…','Traitement narration STAR…','Génération de votre ADN Commercial…'];
+const ROLE_SPECIFIC_KEYS = {
+  sdr_bdr: ['daily_calls','gatekeeper'],
+  business_developer: ['average_contract','sales_cycle'],
+  account_executive: ['largest_contract','stalled_deal'],
+  commercial_terrain: ['weekly_visits','geo_scope'],
+  key_account_manager: ['account_count','churn_risk'],
+  manager_commercial: ['team_size','underperformance'],
+};
 const P1 = [
   {t:"Approche directe mais vous vous justifiez avant de recréer l'intérêt. Efficace sur profils analytiques.",a:78,b:72,c:85},
   {t:"Très fort. Vous retournez l'objection en question de valeur. Technique challenger avancée.",a:91,b:95,c:88},
@@ -2105,9 +2200,10 @@ function canContinueStep(step) {
   if (step === 7 && ADN.pitches.p2 === undefined) return needAnswer();
   if (step === 8 && !String(ADN.story || '').trim()) return needAnswer();
   if (step === 9) {
-    const p = ADN.prefs || {};
-    const hasPrefs = ['poste','contrat','mode','secteur','taille'].some(k => Array.isArray(p[k]) && p[k].length) || Boolean(p.remun);
-    if (!hasPrefs) return needAnswer();
+    const roleFit = ADN.roleFit || {};
+    const required = ROLE_SPECIFIC_KEYS[roleFit.poste] || [];
+    if (!roleFit.poste || !roleFit.posture) return needAnswer();
+    if (required.some(k => roleFit.specifics?.[k] === undefined)) return needAnswer();
   }
   return true;
 }
@@ -2130,6 +2226,27 @@ function pp(btn, pid, idx) {
   bub.classList.add('on');
   const fb=document.getElementById('pfb'+pid.slice(1)); if (fb) fb.classList.remove('on');
   const nb=document.getElementById('bn'+(pid==='p1'?'6':'7')); if(nb) nb.disabled=false;
+}
+function adnRole(btn, val) {
+  tg1(btn, 'poste', val);
+  ADN.roleFit.poste = val;
+  ADN.roleFit.specifics = {};
+  document.querySelectorAll('[data-role-panel]').forEach(panel => {
+    const isActive = panel.getAttribute('data-role-panel') === val;
+    panel.querySelectorAll('.mcq-o').forEach(o => o.classList.remove('sel'));
+    panel.style.display = isActive ? 'flex' : 'none';
+  });
+  const empty = document.getElementById('role-empty');
+  if (empty) empty.style.display = val ? 'none' : 'block';
+}
+function adnPosture(btn, val) {
+  tg1(btn, 'posture', val);
+  ADN.roleFit.posture = val;
+}
+function adnRoleAnswer(btn, key, val) {
+  btn.closest('.mcq-os').querySelectorAll('.mcq-o').forEach(o=>o.classList.remove('sel'));
+  btn.classList.add('sel');
+  ADN.roleFit.specifics[key] = val;
 }
 function tg(btn, cat, val) { btn.classList.toggle('on'); if(!ADN.prefs[cat]) ADN.prefs[cat]=[]; if(btn.classList.contains('on')) ADN.prefs[cat].push(val); else ADN.prefs[cat]=ADN.prefs[cat].filter(v=>v!==val); }
 function tg1(btn, cat, val) { btn.parentElement.querySelectorAll('.pc').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); ADN.prefs[cat]=val; }

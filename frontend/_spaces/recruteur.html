@@ -653,43 +653,35 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   }
   #p-messages>.sec{
     display:grid;
-    grid-template-columns:1fr;
-    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
     gap:14px;
-    align-items:stretch;
-    min-height:calc(100dvh - 52px - 96px - 44px);
+    align-items:start;
   }
   #p-messages .sec-hd{grid-column:1/-1}
   #p-messages #msgs-list{
     grid-column:1;
-    grid-row:2;
-    display:grid;
-    grid-template-columns:1fr;
+    display:flex;
+    flex-direction:column;
     gap:10px;
-    min-height:0;
-    overflow-y:auto;
   }
   #p-messages .msg-th{margin-bottom:0}
   #p-messages #chat-panel{
-    grid-column:1;
-    grid-row:3;
+    grid-column:2;
     margin-top:0;
-    align-self:stretch;
-    position:relative;
-    top:auto;
-    min-height:0;
+    align-self:start;
+    position:sticky;
+    top:68px;
   }
   #p-messages #chat-panel.on{
     display:flex;
     flex-direction:column;
-    height:100%;
-    min-height:0;
+    min-height:520px;
   }
   #p-messages .chat-head{flex-shrink:0}
   #p-messages .chat-body{
     flex:1;
-    min-height:0;
-    max-height:none;
+    min-height:420px;
+    max-height:calc(100dvh - 210px);
   }
   #p-messages .chat-compose{flex-shrink:0}
 }
@@ -697,6 +689,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (min-width:1080px){
   #p-offres>.sec{padding-left:64px;padding-right:64px}
   #p-offres .offers-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
 }
 
 @media (min-width:720px) and (max-width:1023px){
@@ -1139,7 +1132,7 @@ async function api(method, path, body) {
     }
     // Limite offres atteinte
     if (d.error === 'OFFER_LIMIT_REACHED') {
-      toast('Limite de 3 offres atteinte — passez au plan Enterprise');
+      toast(d.message || 'Limite d\'offres actives atteinte — passez a un plan superieur');
       go('pricing');
       throw new Error(d.message || 'Limite offres atteinte');
     }
@@ -1892,11 +1885,13 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
     {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:349,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Passer Enterprise'},
     {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
     {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
     {n:'Enterprise',f:'Recrutement à volume',p:279,old:349,u:'/mois',h:'Facturé 3 348 €/an · -840 €',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Économiser 20%'},
     {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
@@ -1904,7 +1899,7 @@ const PLANS = {
 };
 async function selectPlan(plan, billing) {
   try {
-    const mapped = {business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
+    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
     const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
@@ -1916,7 +1911,7 @@ async function selectPlan(plan, billing) {
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
 function planKey(plan) {
-  return { business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
+  return { 'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
 }
 function isCurrentPlan(plan) {
   return CURRENT_PLAN && planKey(plan) === CURRENT_PLAN;

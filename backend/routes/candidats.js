@@ -340,25 +340,26 @@ async function withFreshCvUrl(profile) {
   const avatarBucket = profile?.axes?.meta?.avatar_bucket || AVATAR_BUCKET;
   let nextProfile = profile;
 
-  if (cvPath) {
-    const { data, error } = await supabase.storage
-      .from(cvBucket)
-      .createSignedUrl(cvPath, 60 * 60 * 24 * 7);
-    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, cv_url: data.signedUrl };
-  }
+  const [cvResult, motivationResult, avatarResult] = await Promise.all([
+    cvPath
+      ? supabase.storage.from(cvBucket).createSignedUrl(cvPath, 60 * 60 * 24 * 7)
+      : Promise.resolve(null),
+    motivationPath
+      ? supabase.storage.from(motivationBucket).createSignedUrl(motivationPath, 60 * 60 * 24 * 7)
+      : Promise.resolve(null),
+    avatarPath
+      ? supabase.storage.from(avatarBucket).createSignedUrl(avatarPath, 60 * 60 * 24)
+      : Promise.resolve(null),
+  ]);
 
-  if (motivationPath) {
-    const { data, error } = await supabase.storage
-      .from(motivationBucket)
-      .createSignedUrl(motivationPath, 60 * 60 * 24 * 7);
-    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, motivation_url: data.signedUrl };
+  if (cvResult && !cvResult.error && cvResult.data?.signedUrl) {
+    nextProfile = { ...nextProfile, cv_url: cvResult.data.signedUrl };
   }
-
-  if (avatarPath) {
-    const { data, error } = await supabase.storage
-      .from(avatarBucket)
-      .createSignedUrl(avatarPath, 60 * 60 * 24);
-    if (!error && data?.signedUrl) nextProfile = { ...nextProfile, avatar_url: data.signedUrl };
+  if (motivationResult && !motivationResult.error && motivationResult.data?.signedUrl) {
+    nextProfile = { ...nextProfile, motivation_url: motivationResult.data.signedUrl };
+  }
+  if (avatarResult && !avatarResult.error && avatarResult.data?.signedUrl) {
+    nextProfile = { ...nextProfile, avatar_url: avatarResult.data.signedUrl };
   }
 
   return nextProfile;

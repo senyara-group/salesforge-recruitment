@@ -93,6 +93,11 @@ async function ensureUserProfile(user, requestedRole = null) {
 
   const role = requested || normalizeRole(existing?.role, user.email);
 
+  // Rien n'a change depuis la derniere fois : pas besoin de reecrire en base
+  if (existing && existing.role === role && existing.email === user.email) {
+    return existing;
+  }
+
   const { data, error } = await supabase
     .from('users')
     .upsert({
