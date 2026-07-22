@@ -230,7 +230,9 @@ button,input,textarea,select{font-family:inherit}
 .pipe-col-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
 .pipe-dot{width:8px;height:8px;border-radius:50%}
 .pipe-count{font-size:11px;font-weight:700;color:var(--mu);background:var(--bg);padding:2px 8px;border-radius:10px}
-.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:default;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
+.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;transition:.15s}
+.pipe-card:hover{border-color:var(--b);background:var(--bs);transform:translateY(-1px)}
+.pipe-card.discussed{border-color:rgba(181,98,0,.24);background:var(--as)}
 .pipe-card-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
 .pc-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0}
 .pc-info{flex:1;min-width:0}
@@ -240,6 +242,7 @@ button,input,textarea,select{font-family:inherit}
 .pc-foot{display:flex;align-items:center;justify-content:space-between}
 .pc-tags{display:flex;gap:4px}
 .pc-tag{font-size:10px;font-weight:600;background:var(--bg);color:var(--ink2);padding:2px 6px;border-radius:5px}
+.pc-contact{font-size:10px;font-weight:900;color:var(--b);text-transform:uppercase;letter-spacing:.35px}
 
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
@@ -761,6 +764,28 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .deck-area{height:min(620px,calc(100dvh - 205px))}
 }
 
+@media (min-width:720px){
+  #p-pipeline .pipe-cols{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    overflow:visible;
+    padding:0 42px;
+    scroll-snap-type:none;
+  }
+  #p-pipeline .pipe-col{
+    width:auto;
+    min-width:0;
+  }
+}
+
+@media (min-width:1180px){
+  #p-pipeline .pipe-cols{
+    padding-left:64px;
+    padding-right:64px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1032,6 +1057,7 @@ let TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_tok
 let USER  = readStoredJson('sf_rec_user');
 let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
+let PENDING_THREAD = null;
 let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_TAGS = [];
@@ -1573,8 +1599,6 @@ async function saveQuestions() {
 const PIPE_STAGES = [
   { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
   { key:'contacte', label:'Contactés', color:'var(--a)' },
-  { key:'entretien', label:'Entretien', color:'var(--pu)' },
-  { key:'offre', label:'Offre', color:'var(--g)' },
 ];
 let PIPELINE = {};
 async function loadPipeline() {
@@ -1611,17 +1635,26 @@ function renderPipeline() {
         <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
       </div>
       ${(PIPELINE[stage.key]||[]).map(c => `
-        <div class="pipe-card" draggable="false" ondragstart="return false">
+        <div class="pipe-card${c.discussed?' discussed':''}" draggable="false" ondragstart="return false" onclick="contactPipelineCandidate('${esc(c.id)}')">
           <div class="pipe-card-top">
-            <div class="pc-av" style="background:${c.bg}">${c.av}</div>
-            <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
-            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div>
+            <div class="pc-av" style="background:${esc(c.bg)}">${esc(c.av)}</div>
+            <div class="pc-info"><div class="pc-n sf">${esc(c.name)}</div><div class="pc-r">${esc(c.role)}</div></div>
+            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${esc(c.score)}</div>
           </div>
           <div class="pc-foot">
-            <div class="pc-tags">${c.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
+            <div class="pc-tags">${(c.tags||[]).map(t=>`<span class="pc-tag">${esc(t)}</span>`).join('')}</div>
+            <div class="pc-contact">${c.discussed?'Discussion':'Contacter'}</div>
           </div>
         </div>`).join('')}
     </div>`).join('');
+}
+async function contactPipelineCandidate(candidatureId) {
+  try {
+    PENDING_THREAD = await api('POST', '/recruteurs/pipeline/contact', { candidature_id: candidatureId });
+    go('messages');
+  } catch(e) {
+    toast(e.message || 'Contact impossible');
+  }
 }
 
 // ------------------------------------------------------------
@@ -1748,6 +1781,19 @@ async function loadMessages() {
         <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
         ${t.ur?'<div class="ur-badge">Nouveau</div>':''}
       </div>`).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
+    if (PENDING_THREAD) {
+      const pending = PENDING_THREAD;
+      PENDING_THREAD = null;
+      const pendingIds = new Set((pending.match_ids?.length ? pending.match_ids : [pending.match_id]).filter(Boolean).map(String));
+      const target = THREADS.find(t =>
+        String(t.id) === String(pending.id) ||
+        String(t.receiver_id) === String(pending.receiver_id) ||
+        (t.match_ids || []).some(id => pendingIds.has(String(id)))
+      );
+      const thread = target || pending;
+      if (!target) THREADS.unshift(thread);
+      openThread(thread.id);
+    }
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
 async function openThread(id) {

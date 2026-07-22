@@ -66,7 +66,7 @@ async function upsertCandidature(candidatId, offreId, action, source = 'recruteu
   if (error) throw error;
 }
 
-function normalizeCandidate(candidature) {
+function normalizeCandidate(candidature, context = {}) {
   const candidat = candidature.candidats || {};
   const axes = candidat.axes?.resultat?.axes || candidat.axes || {};
   const axisEntries = Array.isArray(axes)
@@ -78,11 +78,15 @@ function normalizeCandidate(candidature) {
   return {
     id: candidature.id,
     candidat_id: candidat.id,
+    receiver_id: candidat.user_id,
+    match_id: context.match?.id || null,
+    match_ids: context.matchIds || [],
+    discussed: Boolean(context.discussed),
     av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
     bg: '#1340E0',
     name,
     role: candidat.titre || 'Commercial',
-    score: candidature.score_match || candidat.score_adn || 0,
+    score: context.match?.score_match || candidature.score_match || candidat.score_adn || 0,
     tags: axisEntries.slice(0, 3).map((axis) => axis.l),
   };
 }
@@ -201,17 +205,122 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
     const { data, error } = offreIds.length
       ? await supabase
         .from('candidatures')
-        .select('id, statut, candidats(id, nom, prenom, titre, score_adn, axes)')
+        .select('id, statut, candidat_id, offre_id, candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
         .in('offre_id', offreIds)
       : { data: [], error: null };
     if (error) return res.status(400).json({ error });
 
-    const pipeline = { nouveau: [], contacte: [], entretien: [], offre: [] };
+    const candidatIds = [...new Set((data || []).map((row) => row.candidat_id).filter(Boolean))];
+    const { data: matchs, error: matchsError } = offreIds.length && candidatIds.length
+      ? await supabase
+        .from('matchs')
+        .select('id, candidat_id, offre_id, score_match, score_compat, created_at')
+        .in('offre_id', offreIds)
+        .in('candidat_id', candidatIds)
+        .order('created_at', { ascending: false })
+      : { data: [], error: null };
+    if (matchsError) return res.status(400).json({ error: matchsError });
+
+    const matchIds = (matchs || []).map((match) => match.id);
+    const { data: messages, error: messagesError } = matchIds.length
+      ? await supabase
+        .from('messages')
+        .select('match_id')
+        .in('match_id', matchIds)
+      : { data: [], error: null };
+    if (messagesError) return res.status(400).json({ error: messagesError });
+
+    const discussedMatchIds = new Set((messages || []).map((message) => String(message.match_id)));
+    const matchesByPair = new Map();
+    const matchesByCandidate = new Map();
+    (matchs || []).forEach((match) => {
+      const pairKey = `${match.offre_id}:${match.candidat_id}`;
+      if (!matchesByPair.has(pairKey)) matchesByPair.set(pairKey, match);
+      const candidateKey = String(match.candidat_id);
+      if (!matchesByCandidate.has(candidateKey)) matchesByCandidate.set(candidateKey, []);
+      matchesByCandidate.get(candidateKey).push(match);
+    });
+
+    const pipeline = { nouveau: [], contacte: [] };
     data.forEach((candidature) => {
-      const key = pipeline[candidature.statut] ? candidature.statut : 'nouveau';
-      pipeline[key].push(normalizeCandidate(candidature));
+      const candidateKey = String(candidature.candidat_id);
+      const candidateMatches = matchesByCandidate.get(candidateKey) || [];
+      const match = matchesByPair.get(`${candidature.offre_id}:${candidature.candidat_id}`) || candidateMatches[0] || null;
+      const candidateMatchIds = candidateMatches.map((item) => item.id);
+      const discussed = candidateMatchIds.some((id) => discussedMatchIds.has(String(id)));
+      pipeline[discussed ? 'contacte' : 'nouveau'].push(normalizeCandidate(candidature, {
+        match,
+        matchIds: candidateMatchIds,
+        discussed,
+      }));
     });
     res.json(pipeline);
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+router.post('/pipeline/contact', authMiddleware, requireRecruiterPlan, async (req, res) => {
+  try {
+    const recruteur = await ensureRecruiterProfile(req.user.id);
+    const { candidature_id } = req.body;
+    if (!candidature_id) return res.status(400).json({ error: 'candidature_id requis' });
+
+    const { data: candidature, error: candidatureError } = await supabase
+      .from('candidatures')
+      .select('id, candidat_id, offre_id, candidats(id, user_id, nom, prenom, titre, score_adn), offres(id, titre, recruteur_id)')
+      .eq('id', candidature_id)
+      .maybeSingle();
+    if (candidatureError) return res.status(400).json({ error: candidatureError });
+    if (!candidature) return res.status(404).json({ error: 'Candidature introuvable' });
+    if (String(candidature.offres?.recruteur_id) !== String(recruteur.id)) {
+      return res.status(403).json({ error: 'Candidature non autorisee' });
+    }
+
+    const { data: existingMatches, error: existingError } = await supabase
+      .from('matchs')
+      .select('id, created_at')
+      .eq('candidat_id', candidature.candidat_id)
+      .eq('offre_id', candidature.offre_id)
+      .order('created_at', { ascending: false });
+    if (existingError) return res.status(400).json({ error: existingError });
+
+    let match = existingMatches?.[0] || null;
+    if (!match) {
+      const score = Math.max(70, Number(candidature.candidats?.score_adn || 0));
+      const { data: createdMatch, error: createError } = await supabase
+        .from('matchs')
+        .insert({
+          candidat_id: candidature.candidat_id,
+          offre_id: candidature.offre_id,
+          score_match: score,
+          score_compat: score,
+        })
+        .select('id, created_at')
+        .single();
+      if (createError) return res.status(400).json({ error: createError });
+      match = createdMatch;
+    }
+
+    const candidat = candidature.candidats || {};
+    if (!candidat.user_id) return res.status(400).json({ error: 'Candidat sans compte utilisateur' });
+    const shortName = candidat.nom ? `${candidat.nom.slice(0, 1)}.` : '';
+    const name = [candidat.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
+    res.json({
+      id: match.id,
+      match_id: match.id,
+      match_ids: [match.id],
+      receiver_id: candidat.user_id,
+      av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
+      bg: '#1340E0',
+      nom: name,
+      time: 'Maintenant',
+      prev: `Match sur ${candidature.offres?.titre || 'votre offre'}`,
+      ur: false,
+      mine: true,
+      read: null,
+      status: '',
+    });
   } catch (error) {
     publicError(res, error);
   }
