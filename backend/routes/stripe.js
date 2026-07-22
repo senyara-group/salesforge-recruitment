@@ -19,11 +19,13 @@ const stripePrices = {
   },
   rec: {
     month: {
+      solo: process.env.STRIPE_PRICE_RECRUTEUR_SOLO_MONTH,
       starter: process.env.STRIPE_PRICE_RECRUTEUR_STARTER_MONTH,
       pro: process.env.STRIPE_PRICE_RECRUTEUR_PRO_MONTH,
       enterprise: process.env.STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH,
     },
     year: {
+      solo: process.env.STRIPE_PRICE_RECRUTEUR_SOLO_YEAR,
       starter: process.env.STRIPE_PRICE_RECRUTEUR_STARTER_YEAR,
       pro: process.env.STRIPE_PRICE_RECRUTEUR_PRO_YEAR,
       enterprise: process.env.STRIPE_PRICE_RECRUTEUR_ENTERPRISE_YEAR,
@@ -46,11 +48,13 @@ const checkoutPlans = {
   },
   rec: {
     month: {
+      solo: { name: 'Recruteur Entrepreneur / Indépendant', amount: 8900 },
       starter: { name: 'Recruteur Starter', amount: 14900 },
       pro: { name: 'Recruteur Pro', amount: 39900 },
       enterprise: { name: 'Recruteur Enterprise', amount: 79900 },
     },
     year: {
+      solo: { name: 'Recruteur Entrepreneur / Indépendant annuel', amount: 7100 },
       starter: { name: 'Recruteur Starter annuel', amount: 11900 },
       pro: { name: 'Recruteur Pro annuel', amount: 31900 },
       enterprise: { name: 'Recruteur Enterprise annuel', amount: 63900 },

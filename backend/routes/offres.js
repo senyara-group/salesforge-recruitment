@@ -10,7 +10,10 @@ function uniqueValues(values = []) {
 }
 
 function publicError(res, error) {
-  return res.status(error.status || 400).json({ error: error.message || error });
+  return res.status(error.status || 400).json({
+    error: error.code || error.message || error,
+    message: error.message || undefined,
+  });
 }
 
 function validateOfferPayload({ titre, type, lieu }) {
@@ -27,6 +30,36 @@ function validateOfferPayload({ titre, type, lieu }) {
   if (!String(lieu || '').trim()) {
     const error = new Error('Lieu requis');
     error.status = 400;
+    throw error;
+  }
+}
+
+const OFFER_LIMITS = { solo: 1, starter: 3 };
+
+// excludeOfferId : à passer lors d'une mise à jour, pour ne pas compter l'offre déjà active qu'on modifie
+async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
+  const limit = OFFER_LIMITS[plan];
+  if (!limit) return; // plan sans limite (pro, enterprise, ou plan inconnu géré ailleurs)
+
+  let query = supabase
+    .from('offres')
+    .select('id')
+    .eq('recruteur_id', recruteurId)
+    .eq('statut', 'active');
+
+  if (excludeOfferId) query = query.neq('id', excludeOfferId);
+
+  const { data: offresActives, error: countError } = await query;
+  if (countError) {
+    const error = new Error(countError.message || countError);
+    error.status = 400;
+    throw error;
+  }
+
+  if (offresActives.length >= limit) {
+    const error = new Error(`Limite de ${limit} offre${limit > 1 ? 's' : ''} active${limit > 1 ? 's' : ''} atteinte — passez a un plan superieur pour publier plus d'offres`);
+    error.status = 403;
+    error.code = 'OFFER_LIMIT_REACHED';
     throw error;
   }
 }
@@ -102,23 +135,8 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu });
 
-    // Vérification limite offres selon le plan
-    if (req.recruiterPlan === 'starter') {
-      const { data: offresActives, error: countError } = await supabase
-        .from('offres')
-        .select('id')
-        .eq('recruteur_id', recruteur.id)
-        .eq('statut', 'active');
-
-      if (countError) return res.status(400).json({ error: countError });
-
-      if (offresActives.length >= 3) {
-        return res.status(403).json({
-          error: 'OFFER_LIMIT_REACHED',
-          message: 'Limite de 3 offres actives atteinte — passez au plan Pro pour publier plus d\'offres'
-        });
-      }
-    }
+    // Vérification limite offres actives selon le plan
+    await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan);
 
     const { data, error } = await supabase
       .from('offres')
@@ -141,6 +159,22 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu });
+
+    if (statut === 'active') {
+      const { data: existingOffer, error: existingError } = await supabase
+        .from('offres')
+        .select('statut')
+        .eq('id', req.params.id)
+        .eq('recruteur_id', recruteur.id)
+        .maybeSingle();
+
+      if (existingError) return res.status(400).json({ error: existingError });
+
+      // On ne revérifie la limite que si l'offre n'était pas déjà active (réactivation, pas simple édition)
+      if (existingOffer && existingOffer.statut !== 'active') {
+        await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan, req.params.id);
+      }
+    }
 
     const { data, error } = await supabase
       .from('offres')
