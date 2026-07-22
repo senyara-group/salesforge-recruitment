@@ -94,6 +94,7 @@ async function getMatchParticipants(matchId) {
 
   return {
     candidateId: data.candidat_id,
+    offreId: data.offre_id,
     recruiterId: data.offres?.recruteur_id,
     candidateUserId: data.candidats?.user_id,
     recruiterUserId: data.offres?.recruteurs?.user_id,
@@ -294,6 +295,18 @@ router.get('/thread/:matchId', authMiddleware, async (req, res) => {
   }
 });
 
+async function markCandidatureContacted(candidatId, offreId) {
+  if (!candidatId || !offreId) return;
+
+  // On ne fait avancer le statut que s'il est encore au tout début (evite d'ecraser entretien/offre etc.)
+  await supabase
+    .from('candidatures')
+    .update({ statut: 'contacte' })
+    .eq('candidat_id', candidatId)
+    .eq('offre_id', offreId)
+    .eq('statut', 'envoyee');
+}
+
 router.post('/send', authMiddleware, async (req, res) => {
   try {
     const { receiver_id, destinataire_id, match_id, contenu, texte } = req.body;
@@ -332,6 +345,12 @@ router.post('/send', authMiddleware, async (req, res) => {
       .single();
 
     if (error) return res.status(400).json({ error });
+
+    // Le recruteur vient de contacter le candidat : on fait avancer le pipeline
+    if (participants && String(req.user.id) === String(participants.recruiterUserId)) {
+      await markCandidatureContacted(participants.candidateId, participants.offreId);
+    }
+
     res.json(data);
   } catch (error) {
     res.status(error.status || 400).json({ error: error.message || error });
