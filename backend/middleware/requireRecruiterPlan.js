@@ -14,7 +14,7 @@ module.exports = async (req, res, next) => {
     const abonnement = data?.[0];
 
     // Aucun abonnement ou plan invalide
-    if (!abonnement || !['starter', 'pro', 'enterprise'].includes(abonnement.plan)) {
+    if (!abonnement || !['solo', 'starter', 'pro', 'enterprise'].includes(abonnement.plan)) {
       return res.status(403).json({
         error: 'PLAN_REQUIRED',
         message: 'Un abonnement recruteur est requis pour accéder à cette fonctionnalité'
