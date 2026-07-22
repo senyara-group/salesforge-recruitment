@@ -176,14 +176,16 @@ async function checkContactLimit(senderId, receiverId) {
 
 router.get('/threads', authMiddleware, async (req, res) => {
   try {
-    const role = await getUserRole(req.user.id);
-    const messages = await getLatestMessages(req.user.id);
+    const [role, messages] = await Promise.all([
+      getUserRole(req.user.id),
+      getLatestMessages(req.user.id),
+    ]);
     const byMatch = latestByMatch(messages);
     let threads = [];
     let coveredMatchIds = new Set();
 
     if (role === 'recruteur') {
-      const recruteur = await ensureRecruiterProfile(req.user.id);
+      const recruteur = await ensureRecruiterProfile(req.user.id, role);
       const { data: offres, error: offresError } = await supabase
         .from('offres')
         .select('id')
@@ -226,7 +228,7 @@ router.get('/threads', authMiddleware, async (req, res) => {
         };
       });
     } else {
-      const candidat = await ensureCandidateProfile(req.user.id);
+      const candidat = await ensureCandidateProfile(req.user.id, role);
       const { data: matchs, error: matchsError } = await supabase
         .from('matchs')
         .select('id, created_at, offres(titre, recruteurs(user_id, entreprise))')
