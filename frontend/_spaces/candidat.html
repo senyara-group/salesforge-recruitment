@@ -376,6 +376,12 @@ button,input,textarea,select{font-family:inherit}
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
 .msg-th.ur{background:var(--bs);border-color:var(--bm)}
+.msg-welcome{text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:30px 20px}
+.msg-welcome-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.msg-welcome-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+.msg-welcome h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:-.4px;margin-bottom:9px}
+.msg-welcome-sub{font-size:13px;font-weight:700;color:var(--b);margin-bottom:10px}
+.msg-welcome-text{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto}
 .msg-av{width:39px;height:39px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0;color:#fff}
 .msg-b{flex:1;min-width:0}
 .msg-top{display:flex;justify-content:space-between;margin-bottom:2px}
@@ -2226,7 +2232,13 @@ async function loadMessages() {
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t=>
       `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
-    ).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
+    ).join('') : `<div class="msg-welcome">
+      <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <h2 class="sf">Bienvenue sur SalesForge recrutement</h2>
+      <div class="msg-welcome-sub">Ici, vous ne postulez pas. On vient vous chercher.</div>
+      <div class="msg-welcome-text">Cette messagerie s'ouvrira à votre premier match. Les profils au test ADN complété reçoivent 4× plus de likes.</div>
+      <button class="btn bp" onclick="go('test')">Compléter mon test</button>
+    </div>`;
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
 async function openThread(id, surface = 'messages') {
