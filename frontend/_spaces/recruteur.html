@@ -230,9 +230,7 @@ button,input,textarea,select{font-family:inherit}
 .pipe-col-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
 .pipe-dot{width:8px;height:8px;border-radius:50%}
 .pipe-count{font-size:11px;font-weight:700;color:var(--mu);background:var(--bg);padding:2px 8px;border-radius:10px}
-.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;transition:.15s}
-.pipe-card:hover{border-color:var(--b);background:var(--bs);transform:translateY(-1px)}
-.pipe-card.discussed{border-color:rgba(181,98,0,.24);background:var(--as)}
+.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:default;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 .pipe-card-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
 .pc-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0}
 .pc-info{flex:1;min-width:0}
@@ -242,11 +240,16 @@ button,input,textarea,select{font-family:inherit}
 .pc-foot{display:flex;align-items:center;justify-content:space-between}
 .pc-tags{display:flex;gap:4px}
 .pc-tag{font-size:10px;font-weight:600;background:var(--bg);color:var(--ink2);padding:2px 6px;border-radius:5px}
-.pc-contact{font-size:10px;font-weight:900;color:var(--b);text-transform:uppercase;letter-spacing:.35px}
 
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
 .msg-th.ur{background:var(--bs);border-color:var(--bm)}
+.msg-welcome{text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:30px 20px}
+.msg-welcome-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.msg-welcome-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+.msg-welcome h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:-.4px;margin-bottom:9px}
+.msg-welcome-sub{font-size:13px;font-weight:700;color:var(--b);margin-bottom:10px}
+.msg-welcome-text{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto}
 .msg-av{width:39px;height:39px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0;color:#fff}
 .msg-b{flex:1;min-width:0}
 .msg-top{display:flex;justify-content:space-between;margin-bottom:2px}
@@ -653,35 +656,43 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   }
   #p-messages>.sec{
     display:grid;
-    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
     gap:14px;
-    align-items:start;
+    align-items:stretch;
+    min-height:calc(100dvh - 52px - 96px - 44px);
   }
   #p-messages .sec-hd{grid-column:1/-1}
   #p-messages #msgs-list{
     grid-column:1;
-    display:flex;
-    flex-direction:column;
+    grid-row:2;
+    display:grid;
+    grid-template-columns:1fr;
     gap:10px;
+    min-height:0;
+    overflow-y:auto;
   }
   #p-messages .msg-th{margin-bottom:0}
   #p-messages #chat-panel{
-    grid-column:2;
+    grid-column:1;
+    grid-row:3;
     margin-top:0;
-    align-self:start;
-    position:sticky;
-    top:68px;
+    align-self:stretch;
+    position:relative;
+    top:auto;
+    min-height:0;
   }
   #p-messages #chat-panel.on{
     display:flex;
     flex-direction:column;
-    min-height:520px;
+    height:100%;
+    min-height:0;
   }
   #p-messages .chat-head{flex-shrink:0}
   #p-messages .chat-body{
     flex:1;
-    min-height:420px;
-    max-height:calc(100dvh - 210px);
+    min-height:0;
+    max-height:none;
   }
   #p-messages .chat-compose{flex-shrink:0}
 }
@@ -689,7 +700,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (min-width:1080px){
   #p-offres>.sec{padding-left:64px;padding-right:64px}
   #p-offres .offers-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
-  #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
 }
 
 @media (min-width:720px) and (max-width:1023px){
@@ -755,28 +765,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (min-width:1080px){
   #p-swipe .deck-area,#p-swipe .deck-actions{width:min(560px,calc(100% - 96px))}
   #p-swipe .deck-area{height:min(620px,calc(100dvh - 205px))}
-}
-
-@media (min-width:720px){
-  #p-pipeline .pipe-cols{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:14px;
-    overflow:visible;
-    padding:0 42px;
-    scroll-snap-type:none;
-  }
-  #p-pipeline .pipe-col{
-    width:auto;
-    min-width:0;
-  }
-}
-
-@media (min-width:1180px){
-  #p-pipeline .pipe-cols{
-    padding-left:64px;
-    padding-right:64px;
-  }
 }
 
 </style>
@@ -1050,7 +1038,6 @@ let TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_tok
 let USER  = readStoredJson('sf_rec_user');
 let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
-let PENDING_THREAD = null;
 let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_TAGS = [];
@@ -1592,6 +1579,8 @@ async function saveQuestions() {
 const PIPE_STAGES = [
   { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
   { key:'contacte', label:'Contactés', color:'var(--a)' },
+  { key:'entretien', label:'Entretien', color:'var(--pu)' },
+  { key:'offre', label:'Offre', color:'var(--g)' },
 ];
 let PIPELINE = {};
 async function loadPipeline() {
@@ -1628,26 +1617,17 @@ function renderPipeline() {
         <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
       </div>
       ${(PIPELINE[stage.key]||[]).map(c => `
-        <div class="pipe-card${c.discussed?' discussed':''}" draggable="false" ondragstart="return false" onclick="contactPipelineCandidate('${esc(c.id)}')">
+        <div class="pipe-card" draggable="false" ondragstart="return false">
           <div class="pipe-card-top">
-            <div class="pc-av" style="background:${esc(c.bg)}">${esc(c.av)}</div>
-            <div class="pc-info"><div class="pc-n sf">${esc(c.name)}</div><div class="pc-r">${esc(c.role)}</div></div>
-            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${esc(c.score)}</div>
+            <div class="pc-av" style="background:${c.bg}">${c.av}</div>
+            <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
+            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div>
           </div>
           <div class="pc-foot">
-            <div class="pc-tags">${(c.tags||[]).map(t=>`<span class="pc-tag">${esc(t)}</span>`).join('')}</div>
-            <div class="pc-contact">${c.discussed?'Discussion':'Contacter'}</div>
+            <div class="pc-tags">${c.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
           </div>
         </div>`).join('')}
     </div>`).join('');
-}
-async function contactPipelineCandidate(candidatureId) {
-  try {
-    PENDING_THREAD = await api('POST', '/recruteurs/pipeline/contact', { candidature_id: candidatureId });
-    go('messages');
-  } catch(e) {
-    toast(e.message || 'Contact impossible');
-  }
 }
 
 // ------------------------------------------------------------
@@ -1773,20 +1753,13 @@ async function loadMessages() {
         <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
         <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
         ${t.ur?'<div class="ur-badge">Nouveau</div>':''}
-      </div>`).join('') : '<div class="loading-state">Aucune conversation pour le moment</div>';
-    if (PENDING_THREAD) {
-      const pending = PENDING_THREAD;
-      PENDING_THREAD = null;
-      const pendingIds = new Set((pending.match_ids?.length ? pending.match_ids : [pending.match_id]).filter(Boolean).map(String));
-      const target = THREADS.find(t =>
-        String(t.id) === String(pending.id) ||
-        String(t.receiver_id) === String(pending.receiver_id) ||
-        (t.match_ids || []).some(id => pendingIds.has(String(id)))
-      );
-      const thread = target || pending;
-      if (!target) THREADS.unshift(thread);
-      openThread(thread.id);
-    }
+      </div>`).join('') : `<div class="msg-welcome">
+      <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <h2 class="sf">Bienvenue sur SalesForge recrutement</h2>
+      <div class="msg-welcome-sub">Des commerciaux évalués, pas des CV.</div>
+      <div class="msg-welcome-text">Cette messagerie s'ouvrira dès qu'un candidat vous like en retour ou postule à une de vos offres.</div>
+      <button class="btn bp" onclick="go('post-offre')">Publier ma première offre</button>
+    </div>`;
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
 async function openThread(id) {
