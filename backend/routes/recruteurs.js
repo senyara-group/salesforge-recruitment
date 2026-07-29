@@ -1,422 +1,2016 @@
-const express = require('express');
-const router = express.Router();
-const supabase = require('../supabase');
-const authMiddleware = require('../middleware/auth');
-const { ensureRecruiterProfile } = require('../utils/profiles');
-const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Espace recruteur - SalesForge</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+:root{
+  --bg:#F2F5F9;--w:#fff;--ink:#091422;--ink2:#243549;--ink3:#5A7090;--mu:#96AABB;
+  --bd:#DCE4F0;--bd2:#B0C4D8;
+  --b:#1340E0;--b2:#0C2FB0;--bs:#EAF0FF;--bm:#C0CCFA;
+  --g:#069458;--gs:#E3F5ED;--r:#CC2F2F;--rs:#FBEBEB;
+  --a:#B56200;--as:#FBF0E0;--pu:#6830D0;--pus:#F0EBFD;
+  --gold:#C8860A;--golds:#FDF5E0;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font-family:inherit}
+.sf{font-family:'Sora',sans-serif}
+.app{max-width:430px;margin:0 auto;background:var(--w);min-height:100dvh}
+.topbar{background:var(--w);border-bottom:1px solid var(--bd);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60}
+.logo{display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo-m{width:30px;height:30px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:900;font-size:15px}
+.logo-n{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.3px}
+.logo-n b{color:var(--b)}
+.logo-tag{font-size:9px;font-weight:700;color:var(--b);background:var(--bs);padding:2px 6px;border-radius:5px;letter-spacing:.5px;text-transform:uppercase;margin-left:4px}
+.top-r{display:flex;gap:7px}
+.ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:.15s;position:relative}
+.ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+.nd{position:absolute;top:-5px;right:-14px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
+.bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
+.nav-dot{position:absolute;top:-1px;right:5px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.page{display:none;padding-bottom:80px}.page.on{display:block}
+.btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
+.bo{background:transparent;border:1.5px solid var(--bd2);color:var(--ink2);padding:12px 18px;font-size:14px}
+.bg2{background:var(--bs);color:var(--b);padding:8px 14px;font-size:13px}
+.bsm{padding:8px 13px;font-size:12px}.blk{width:100%}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px}
+.chip-b{background:var(--bs);color:var(--b);border:1px solid var(--bm)}.chip-g{background:var(--gs);color:var(--g)}
+.chip-r{background:var(--rs);color:var(--r)}.chip-a{background:var(--as);color:var(--a)}
+.chip-pu{background:var(--pus);color:var(--pu)}.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--bm);border-top-color:var(--b);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{background:var(--rs);border:1px solid var(--r);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--r);font-weight:600;margin-bottom:12px;display:none}
+.err.on{display:block}
+.sec{padding:15px 18px}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px}
+.loading-state{text-align:center;padding:24px;color:var(--mu);font-size:13px}
+.empty-state{min-height:138px;border:1px dashed var(--bd2);border-radius:12px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--ink3);font-size:13px;line-height:1.55;padding:20px}
+.empty-state b{font-family:'Sora',sans-serif;color:var(--ink);font-size:14px;margin-bottom:4px}
+.hscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 4px}
+.hscroll::-webkit-scrollbar{display:none}
 
-function definedOnly(obj) {
-  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
+/* AUTH */
+#p-auth{background:linear-gradient(160deg,#EEF1F8 0%,var(--w) 55%);padding:36px 22px;text-align:center}
+.auth-logo{width:56px;height:56px;background:var(--ink);border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:900;font-size:26px;margin:0 auto 20px}
+.auth-tabs{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px;margin-bottom:16px}
+.auth-tab{flex:1;padding:8px;border:none;background:none;font-size:13px;font-weight:700;color:var(--mu);cursor:pointer;border-radius:7px;transition:.15s}
+.auth-tab.on{background:var(--w);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.fi{padding:12px 13px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;background:var(--w);color:var(--ink);width:100%;transition:.15s}
+.fi:focus{outline:none;border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
+.auth-form{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.or-div{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--mu);font-size:12px;font-weight:600}
+.or-div::before,.or-div::after{content:'';flex:1;height:1px;background:var(--bd)}
+.soc-btn{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--w);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:7px;transition:.15s}
+.confirm-mail{display:none;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:22px 16px;margin-top:12px}
+.confirm-mail.on{display:block}
+.confirm-ico{width:56px;height:56px;border-radius:16px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Sora',sans-serif;font-weight:900;font-size:26px}
+.confirm-mail h2{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.6px;margin-bottom:8px}
+.confirm-mail p{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:16px}
+
+/* DASHBOARD */
+.dash-hero{padding:18px;background:linear-gradient(180deg,#EEF1F8 0%,var(--w) 100%)}
+.dash-co{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.dash-co-logo{width:46px;height:46px;border-radius:11px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:900;flex-shrink:0}
+.dash-co-n{font-family:'Sora',sans-serif;font-size:16px;font-weight:900;letter-spacing:-.3px}
+.dash-co-s{font-size:12px;color:var(--ink3);margin-top:1px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.kpi{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.kpi-l{font-size:10px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.kpi-v{font-family:'Sora',sans-serif;font-size:23px;font-weight:900;letter-spacing:-.5px;margin-top:3px}
+.kpi-t{font-size:11px;font-weight:600;margin-top:3px}
+.tu{color:var(--g)}.tf{color:var(--mu)}
+.alert-card{background:linear-gradient(135deg,#3A0600,#C0330A);color:#fff;border-radius:14px;padding:15px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
+.alert-card::before{content:'';position:absolute;top:-30%;right:-15%;width:180px;height:180px;background:radial-gradient(circle,rgba(255,255,255,.1),transparent 65%)}
+.alert-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;background:rgba(255,255,255,.15);padding:3px 9px;border-radius:6px;text-transform:uppercase;margin-bottom:9px}
+.alert-tag .fire{font-size:12px}
+.alert-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;margin-bottom:5px}
+.alert-text{font-size:12px;color:rgba(255,255,255,.78);line-height:1.6;margin-bottom:11px}
+.alert-btn{background:#fff;color:var(--ink);border:none;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+.cand-recue{background:var(--w);border:1px solid var(--bd);border-radius:13px;padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:.15s}
+.cand-recue:hover{border-color:var(--bd2)}.cand-recue.hot{border-left:3px solid var(--r)}
+.cr-av{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:14px;font-weight:900;flex-shrink:0}
+.cr-info{flex:1;min-width:0}
+.cr-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px}
+.cr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+.cr-title{font-size:12px;color:var(--ink3);margin-top:2px}
+.cr-meta{display:flex;gap:8px;margin-top:5px}
+.cr-tag{font-size:10px;font-weight:600;color:var(--ink2);background:var(--bg);padding:2px 7px;border-radius:5px}
+.cr-score{text-align:center;flex-shrink:0}
+.cr-score-v{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.5px}
+.cr-score-l{font-size:9px;color:var(--mu);font-weight:600;text-transform:uppercase}
+
+/* SWIPE RECRUTEUR */
+.swipe-hd{padding:12px 18px;background:var(--w);border-top:0;border-bottom:1px solid var(--bd);position:sticky;top:58px;z-index:40}
+.deck-area{position:relative;height:calc(100dvh - 240px);min-height:460px;max-height:600px;margin:12px 18px 0}
+.swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px 22px 0 0;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:none;will-change:transform;z-index:0}
+.swipe-card.swiping{pointer-events:none}
+.swipe-card:nth-last-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
+.swipe-card:nth-last-child(3){transform:scale(.926) translateY(20px);z-index:0;pointer-events:none;opacity:.75}
+.swipe-card:nth-last-child(n+4){display:none}.swipe-card:last-child{z-index:10}
+.sw-lbl{position:absolute;top:20px;padding:8px 15px;border:3px solid;border-radius:12px;font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:.8px;opacity:0;pointer-events:none;z-index:20;text-transform:uppercase}
+.sw-lbl.like{left:18px;color:var(--g);border-color:var(--g);transform:rotate(-13deg)}
+.sw-lbl.pass{right:18px;color:var(--r);border-color:var(--r);transform:rotate(13deg)}
+.sw-lbl.super{left:50%;transform:translateX(-50%);color:var(--a);border-color:var(--a);bottom:130px;top:auto}
+.cand-top{height:128px;position:relative;flex-shrink:0;background:linear-gradient(135deg,#091422,#1340E0);display:flex;align-items:center;justify-content:center}
+.cand-top.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
+.swipe-card .cand-top{border-radius:22px 22px 0 0}
+.cand-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:26px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
+.cand-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.cand-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
+.cand-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
+.cand-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
+.cand-anon-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#fff;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;display:flex;align-items:center;gap:4px}
+.cand-anon-badge svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5}
+.cand-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.cand-body::-webkit-scrollbar{width:3px}.cand-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.cand-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;text-align:center}
+.cand-role{font-size:12px;color:var(--ink3);text-align:center;margin-top:-7px}
+.cand-rank{display:flex;justify-content:center}
+.cand-rank-badge{display:inline-flex;align-items:center;gap:4px;background:var(--bs);color:var(--b);padding:4px 11px;border-radius:7px;font-size:11px;font-weight:700}
+.cand-adn-section{background:var(--ink);color:#fff;border-radius:13px;padding:14px}
+.cand-adn-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.cand-adn-score{font-family:'Sora',sans-serif;font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1}
+.cand-adn-lbl{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.cand-adn-type{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;text-align:right}
+.cand-adn-bars{display:flex;flex-direction:column;gap:7px}
+.cadn-row{display:flex;align-items:center;gap:9px}
+.cadn-l{font-size:11px;color:rgba(255,255,255,.7);width:75px;flex-shrink:0}
+.cadn-tr{flex:1;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+.cadn-f{height:100%;background:#5B8DEF;border-radius:2px}
+.cadn-v{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;width:24px;text-align:right;color:#fff}
+.cand-pitch{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:12px;padding:12px}
+.cand-pitch-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cand-pitch-t{font-size:12px;font-weight:700;color:var(--pu);display:flex;align-items:center;gap:5px}
+.cand-pitch-t svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.cand-pitch-score{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--pu)}
+.cand-pitch-text{font-size:12px;color:var(--ink2);line-height:1.6;font-style:italic;padding:8px 10px;background:var(--w);border-radius:8px}
+.cand-letter{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.cand-letter-tabs{display:flex;border-bottom:1px solid var(--bd)}
+.clt{flex:1;padding:9px;border:none;background:var(--w);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--ink3);transition:.15s}
+.clt svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.clt.on{background:var(--bs);color:var(--b)}
+.cand-letter-body{padding:12px}
+.cand-letter-text{font-size:12px;color:var(--ink2);line-height:1.65}
+.cand-letter-media{display:flex;align-items:center;gap:10px;padding:4px}
+.clm-play{width:40px;height:40px;border-radius:50%;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.clm-play svg{width:16px;height:16px;stroke:none;fill:currentColor}
+.clm-wave{flex:1;height:28px;display:flex;align-items:center;gap:2px}
+.clm-bar{flex:1;background:var(--bm);border-radius:1px}
+.cand-skills{display:flex;flex-wrap:wrap;gap:5px}
+.cand-skill{font-size:11px;font-weight:600;background:var(--bg);color:var(--ink2);padding:4px 9px;border-radius:13px;border:1px solid var(--bd)}
+.cand-docs{display:flex;flex-wrap:wrap;gap:7px}
+.cand-doc{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);background:var(--w);color:var(--ink2);border-radius:12px;padding:8px 10px;font-size:11px;font-weight:800;cursor:pointer;transition:.15s;max-width:100%}
+.cand-doc:hover{border-color:var(--b);color:var(--b);background:var(--bs)}
+.cand-doc svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.cand-doc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cand-ai{background:var(--bs);border:1px solid var(--bm);border-radius:11px;padding:11px}
+.cand-ai-t{font-size:11px;font-weight:700;color:var(--b);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.cand-ai-text{font-size:12px;color:var(--ink2);line-height:1.6}
+.cand-predict{display:flex;gap:8px}
+.cand-predict-box{flex:1;background:var(--gs);border-radius:10px;padding:9px;text-align:center}
+.cand-predict-v{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--g)}
+.cand-predict-l{font-size:9px;color:var(--g);opacity:.8;margin-top:2px;font-weight:600}
+.deck-actions{position:sticky;bottom:70px;background:var(--w);border-top:1px solid var(--bd);padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30}
+.db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
+.db:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.db-pass{width:50px;height:50px}.db-pass:hover{border-color:var(--r);color:var(--r)}
+.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:none}
+.db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
+.db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
+.deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px}
+.deck-empty.on{display:flex}
+
+/* MATCHING ENGINE */
+.match-engine{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:10px}
+.me-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.me-count{font-family:'Sora',sans-serif;font-size:14px;font-weight:800}
+.me-count b{color:var(--b)}
+.me-row{margin-bottom:14px}
+.me-row-hd{display:flex;justify-content:space-between;margin-bottom:5px}
+.me-l{font-size:13px;font-weight:600}
+.me-v{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--b)}
+.me-inp{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--bd);outline:none;cursor:pointer}
+.me-inp::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--b);cursor:pointer;border:2.5px solid #fff;box-shadow:0 0 0 3px rgba(19,64,224,.13)}
+.me-weight{display:flex;gap:5px;margin-top:5px}
+.me-wp{flex:1;padding:5px;border:1.5px solid var(--bd);border-radius:7px;background:var(--w);font-size:11px;font-weight:700;cursor:pointer;color:var(--ink3);transition:.15s}
+.me-wp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* QUESTIONS PRESET (recruteur choisit) */
+.q-preset-card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:10px}
+.q-preset-intro{font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:13px}
+.q-item{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--bd);cursor:pointer}
+.q-item:last-child{border-bottom:none}
+.q-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px}
+.q-check svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:3;opacity:0}
+.q-item.on .q-check{background:var(--b);border-color:var(--b)}
+.q-item.on .q-check svg{opacity:1}
+.q-text{flex:1;font-size:13px;line-height:1.5;font-weight:500}
+.q-cat{font-size:10px;font-weight:700;color:var(--pu);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.q-custom-input{display:flex;gap:8px;margin-top:12px}
+.q-custom-field{flex:1;padding:10px 12px;border:1.5px solid var(--bd);border-radius:9px;font-size:13px;background:var(--bg);outline:none}
+.q-custom-field:focus{border-color:var(--b)}
+.q-add-btn{width:42px;height:42px;border-radius:9px;background:var(--b);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.q-add-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
+.q-selected-count{background:var(--bs);border:1px solid var(--bm);border-radius:9px;padding:10px 12px;font-size:12px;font-weight:600;color:var(--b);margin-top:12px;text-align:center}
+
+/* PIPELINE */
+.pipe-cols{display:flex;gap:11px;overflow-x:auto;scrollbar-width:none;padding:0 18px;scroll-snap-type:x mandatory}
+.pipe-cols::-webkit-scrollbar{display:none}
+.pipe-col{flex-shrink:0;width:248px;scroll-snap-align:start}
+.pipe-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px}
+.pipe-col-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
+.pipe-dot{width:8px;height:8px;border-radius:50%}
+.pipe-count{font-size:11px;font-weight:700;color:var(--mu);background:var(--bg);padding:2px 8px;border-radius:10px}
+.pipe-card{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;cursor:default;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
+.pipe-card-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.pc-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0}
+.pc-info{flex:1;min-width:0}
+.pc-n{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-r{font-size:11px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-score{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;flex-shrink:0}
+.pc-foot{display:flex;align-items:center;justify-content:space-between}
+.pc-tags{display:flex;gap:4px}
+.pc-tag{font-size:10px;font-weight:600;background:var(--bg);color:var(--ink2);padding:2px 6px;border-radius:5px}
+
+/* MESSAGES */
+.msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
+.msg-th.ur{background:var(--bs);border-color:var(--bm)}
+.msg-welcome{text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:30px 20px}
+.msg-welcome-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.msg-welcome-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+.msg-welcome h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:-.4px;margin-bottom:9px}
+.msg-welcome-sub{font-size:13px;font-weight:700;color:var(--b);margin-bottom:10px}
+.msg-welcome-text{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto}
+.msg-av{width:39px;height:39px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:12px;font-weight:900;flex-shrink:0;color:#fff}
+.msg-b{flex:1;min-width:0}
+.msg-top{display:flex;justify-content:space-between;margin-bottom:2px}
+.msg-n{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
+.msg-time{font-size:11px;color:var(--mu)}
+.msg-prev{font-size:12px;color:var(--ink3);line-height:1.55;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.msg-th.ur .msg-prev{color:var(--ink);font-weight:500}
+.msg-foot{display:flex;align-items:center;gap:6px;margin-top:4px}
+.msg-status{font-size:10px;font-weight:800;color:var(--mu)}
+.msg-status.unread{color:var(--b)}
+.ur-badge{align-self:flex-start;background:var(--b);color:#fff;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;flex-shrink:0}
+.chat-panel{display:none;background:var(--w);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-top:12px}
+.chat-panel.on{display:block}
+.chat-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.chat-back{width:31px;height:31px;border-radius:8px;border:1px solid var(--bd);background:var(--w);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.chat-back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2}
+.chat-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
+.chat-sub{font-size:11px;color:var(--ink3);margin-top:1px}
+.chat-body{min-height:250px;max-height:390px;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
+.chat-body.has-messages::before{content:'';margin-top:auto}
+.chat-empty{margin:auto;text-align:center;color:var(--mu);font-size:12px;line-height:1.6;max-width:230px}
+.bubble{max-width:82%;padding:9px 11px;border-radius:13px;font-size:13px;line-height:1.45;word-break:break-word}
+.bubble.mine{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:4px}
+.bubble.theirs{align-self:flex-start;background:var(--w);border:1px solid var(--bd);color:var(--ink2);border-bottom-left-radius:4px}
+.bubble-time{font-size:9px;opacity:.65;margin-top:4px;text-align:right}
+.bubble-receipt{font-size:9px;font-weight:800;opacity:.78;margin-top:2px;text-align:right}
+.chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w)}
+.chat-input{flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:10px 11px;font-size:13px;outline:none;background:var(--bg);color:var(--ink)}
+.chat-input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs);background:var(--w)}
+.chat-send{width:42px;height:42px;border:none;border-radius:10px;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.chat-send svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4}
+
+/* POST OFFRE */
+.form-group{margin-bottom:15px}
+.form-label{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;margin-bottom:6px;display:block}
+.form-field{width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;background:var(--w);color:var(--ink);transition:.15s}
+.form-field:focus{outline:none;border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
+textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
+.form-chips{display:flex;flex-wrap:wrap;gap:6px}
+.form-chip{padding:7px 13px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;color:var(--ink2)}
+.form-chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.offers-list{display:flex;flex-direction:column;gap:10px}
+.offer-card{background:var(--w);border:1px solid var(--bd);border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.offer-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.offer-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;line-height:1.25}
+.offer-status{font-size:10px;font-weight:900;text-transform:uppercase;border-radius:999px;padding:4px 8px;background:var(--gs);color:var(--g);white-space:nowrap}
+.offer-status.paused,.offer-status.inactive{background:var(--rs);color:var(--r)}
+.offer-meta{display:flex;flex-wrap:wrap;gap:7px;color:var(--ink3);font-size:12px}
+.offer-meta span{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 8px}
+.offer-tags{display:flex;flex-wrap:wrap;gap:5px}
+.offer-tag{font-size:11px;font-weight:700;color:var(--b);background:var(--bs);border-radius:999px;padding:4px 8px}
+.offer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pipeline-offers{padding:0 18px 14px}
+.pipeline-offers .offers-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+
+/* PRICING */
+.pricing-hd{padding:22px 18px 14px;text-align:center}
+.pricing-hd h2{font-family:'Sora',sans-serif;font-size:21px;font-weight:900;margin-bottom:6px}
+.pricing-hd p{font-size:13px;color:var(--ink3);max-width:320px;margin:0 auto 16px;line-height:1.6}
+.bill-toggle{display:inline-flex;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:3px}
+.bill-opt{padding:7px 15px;font-size:13px;font-weight:700;color:var(--mu);border:none;background:none;cursor:pointer;border-radius:7px;transition:.15s}
+.bill-opt.on{background:var(--w);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.bill-save{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px}
+.plans-row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:16px 18px 4px;scroll-snap-type:x mandatory}
+.plans-row::-webkit-scrollbar{display:none}
+.plan-card{flex-shrink:0;width:calc(100vw - 76px);max-width:290px;background:var(--w);border:1.5px solid var(--bd);border-radius:16px;padding:20px 17px;scroll-snap-align:center;position:relative;display:flex;flex-direction:column}
+.plan-card.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}.plan-card.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
+.plan-card.active-plan{border-color:var(--g);box-shadow:0 0 0 3px var(--gs)}
+.pop-ribbon{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--b);color:#fff;font-size:10px;font-weight:700;padding:3px 11px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+.active-plan-badge{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;font-size:10px;font-weight:800;padding:3px 11px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+.pc-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;margin-bottom:3px}
+.pc-f{font-size:11px;color:var(--ink3);margin-bottom:13px}.plan-card.dk .pc-f{color:rgba(255,255,255,.48)}
+.pc-pr{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
+.pc-old{font-size:13px;color:var(--mu);text-decoration:line-through;margin-right:3px}
+.pc-p{font-family:'Sora',sans-serif;font-size:32px;font-weight:900;letter-spacing:-1.5px;line-height:1}
+.pc-u{font-size:12px;color:var(--ink3)}.plan-card.dk .pc-u{color:rgba(255,255,255,.48)}
+.pc-h{font-size:11px;color:var(--mu);margin-bottom:14px}.plan-card.dk .pc-h{color:rgba(255,255,255,.33)}
+.pc-fs{list-style:none;border-top:1px solid var(--bd);padding-top:12px;margin-bottom:13px;flex:1;display:flex;flex-direction:column;gap:7px}
+.plan-card.dk .pc-fs{border-top-color:rgba(255,255,255,.1)}
+.pc-fs li{font-size:12px;display:flex;gap:6px;align-items:flex-start;color:var(--ink2);line-height:1.5}.plan-card.dk .pc-fs li{color:rgba(255,255,255,.7)}
+.pc-fs li svg{width:13px;height:13px;flex-shrink:0;margin-top:2px;stroke:var(--g);fill:none;stroke-width:2.5}.plan-card.dk .pc-fs li svg{stroke:#5EFFA5}
+.pc-btn{padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--b);background:transparent;color:var(--b);transition:.15s;width:100%;font-family:'Sora',sans-serif}
+.pc-btn:hover,.plan-card.pop .pc-btn{background:var(--b);color:#fff}
+.pc-btn:disabled{cursor:default;background:var(--gs)!important;border-color:var(--g)!important;color:var(--g)!important}
+.plan-card.dk .pc-btn{border-color:rgba(255,255,255,.25);color:#fff}.plan-card.dk .pc-btn:hover{background:#fff;color:var(--ink)}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(9,20,34,0);pointer-events:none;transition:background .3s;display:flex;align-items:flex-end;justify-content:center;max-width:430px;margin:0 auto}
+.overlay.on{background:rgba(9,20,34,.65);pointer-events:auto;backdrop-filter:blur(7px)}
+.bottom-sheet{width:100%;background:var(--w);border-radius:22px 22px 0 0;padding:17px 20px 22px;transform:translateY(100%);transition:transform .44s cubic-bezier(.34,1.3,.64,1);max-height:90dvh;overflow-y:auto}
+.overlay.on .bottom-sheet{transform:translateY(0)}
+.sh-handle{width:32px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 14px}
+.match-hd{text-align:center;margin-bottom:15px}
+.match-icons{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:12px}
+.mco{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:16px;font-weight:900}
+.mlink{width:24px;height:24px;border-radius:50%;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center}
+.mlink svg{width:12px;height:12px;stroke:currentColor;fill:currentColor;stroke-width:2}
+.match-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;margin-bottom:4px}
+.match-sub{font-size:13px;color:var(--ink3);line-height:1.6}
+.match-stats{display:flex;justify-content:center;margin-bottom:12px}
+.mstat{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 22px;text-align:center}
+.mstat-v{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;color:var(--b)}
+.mstat-l{font-size:10px;color:var(--mu);margin-top:2px;font-weight:600;text-transform:uppercase}
+.cov-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:16px}
+.q-ask-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
+.q-ask-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px}
+.q-ask-list{display:flex;flex-direction:column;gap:5px}
+.q-ask-item{font-size:12px;color:var(--ink2);padding:7px 9px;background:var(--w);border-radius:8px;line-height:1.5}
+.sh-actions{display:flex;flex-direction:column;gap:7px}
+.toast{position:fixed;top:17px;left:50%;transform:translate(-50%,-120px);background:var(--ink);color:#fff;padding:10px 17px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.on{transform:translate(-50%,0)}
+
+@media (max-width:380px){
+  body{font-size:13px}
+  .topbar{padding:10px 12px}
+  .logo-n{font-size:14px}
+  .logo-tag{display:none}
+  .ib{width:32px;height:32px}
+  .sec,.dash-hero,.pricing-hd{padding-left:14px;padding-right:14px}
+  .hscroll{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}
+  .kpi{padding:10px}
+  .kpi-v{font-size:20px}
+  .swipe-hd{top:54px;padding:10px 14px}
+  .deck-area{margin-left:12px;margin-right:12px;min-height:420px;height:calc(100dvh - 230px)}
+  .deck-actions{padding:10px 12px;gap:9px}
+  .cand-name{font-size:16px}
+  .cand-adn-section{padding:12px}
+  .cadn-l{width:66px}
+  .cand-predict{flex-direction:column}
+  .q-custom-input{gap:6px}
+  .pipe-cols{padding-left:14px;padding-right:14px}
+  .pipe-col{width:232px}
+  .plans-row{padding-left:14px;padding-right:14px}
+  .plan-card{width:calc(100vw - 56px)}
+  .bottom-sheet{padding-left:16px;padding-right:16px}
+  .toast{width:calc(100% - 28px);text-align:center}
 }
 
-function publicError(res, error) {
-  return res.status(error.status || 400).json({ error: error.message || error });
+@media (max-width:719px){
+  #p-swipe .cand-body{
+    overflow:hidden !important;
+    scrollbar-width:none;
+    padding:8px 14px;
+    gap:6px;
+  }
+  #p-swipe .cand-body::-webkit-scrollbar{display:none}
+  #p-swipe .cand-top{height:112px}
+  #p-swipe .cand-avatar{width:60px;height:60px;font-size:23px}
+  #p-swipe .cand-match-box{top:9px;right:9px;padding:5px 8px}
+  #p-swipe .cand-match-n{font-size:16px}
+  #p-swipe .cand-match-l{font-size:8px}
+  #p-swipe .cand-name{font-size:17px}
+  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
+  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
+  #p-swipe .cand-adn-section{padding:8px 10px;border-radius:10px}
+  #p-swipe .cand-adn-hd{margin-bottom:6px}
+  #p-swipe .cand-adn-score{font-size:24px}
+  #p-swipe .cand-adn-lbl{font-size:8px}
+  #p-swipe .cand-adn-type{font-size:11px}
+  #p-swipe .cand-adn-bars{gap:3px}
+  #p-swipe .cadn-row{gap:6px}
+  #p-swipe .cadn-l{width:64px;font-size:9px}
+  #p-swipe .cadn-tr{height:3px}
+  #p-swipe .cadn-v{font-size:10px;width:20px}
+  #p-swipe .cand-skills{gap:4px}
+  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
+  #p-swipe .cand-docs{gap:5px}
+  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
+  #p-swipe .cand-doc svg{width:11px;height:11px}
+  #p-swipe .cand-pitch,
+  #p-swipe .cand-ai{padding:7px;border-radius:9px}
+  #p-swipe .cand-pitch-hd{margin-bottom:5px}
+  #p-swipe .cand-pitch-t,
+  #p-swipe .cand-ai-t{font-size:10px}
+  #p-swipe .cand-pitch-score{font-size:13px}
+  #p-swipe .cand-pitch-text,
+  #p-swipe .cand-ai-text{font-size:10px;line-height:1.25;padding:5px 7px}
+  #p-swipe .cand-letter{border-radius:9px}
+  #p-swipe .clt{padding:6px;font-size:9px}
+  #p-swipe .cand-letter-body{padding:7px}
+  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
+  #p-swipe .cand-predict{gap:6px}
+  #p-swipe .cand-predict-box{padding:5px}
+  #p-swipe .cand-predict-v{font-size:12px}
+  #p-swipe .cand-predict-l{font-size:7px}
 }
 
-function appendUnique(values = [], value) {
-  return [...new Set([...values.map(String), String(value)])];
+@media (min-width:720px){
+  body{background:var(--bg)}
+  .app{width:100%;max-width:none;box-shadow:none;min-height:100dvh}
+  .bnav,.overlay{max-width:none}
+  .topbar,.swipe-hd{padding-left:26px;padding-right:26px}
+  .sec,.dash-hero,.pricing-hd{padding-left:28px;padding-right:28px}
+  .hscroll{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+  #p-auth{max-width:460px;margin:0 auto;background:transparent}
+  .page.on:not(#p-auth){background:var(--bg);min-height:calc(100dvh - 59px)}
+  .dash-hero{padding-top:24px;background:var(--w);border:1px solid var(--bd);border-radius:16px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
+  .cand-recue,.alert-card,.match-engine,.q-preset-card,.menu-list,.chat-panel{max-width:none;margin-left:0;margin-right:0}
+  #p-dashboard.page.on{display:grid;grid-template-columns:minmax(330px,440px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
+  #p-dashboard .dash-hero{grid-row:span 2;padding:22px}
+  #p-dashboard>.sec{padding:0}
+  #p-dashboard .hscroll{margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  #p-dashboard .cand-recue,#p-dashboard .alert-card{width:100%}
+  #p-swipe.page.on{display:grid;grid-template-columns:minmax(340px,1fr) minmax(440px,560px) minmax(220px,.8fr);gap:24px;padding:0 28px 96px;align-items:start}
+  #p-swipe .swipe-hd{grid-column:1/-1;margin:0 -28px}
+  #p-swipe .deck-area{grid-column:2;width:100%;height:min(660px,calc(100dvh - 210px));margin:18px 0 0}
+  #p-swipe .deck-actions{grid-column:2;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
+  #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
+  #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
+  #p-matching .sec-hd{grid-column:1/-1}
+  #p-matching .match-engine,#p-matching .q-preset-card{margin:0}
+  #p-messages #msgs-list{display:grid;grid-template-columns:1fr;gap:10px}
+  .pipe-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;padding-left:0;padding-right:0}
+  .pipe-col{width:auto;min-width:0}
+  .plans-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
+  .plan-card{width:100%;max-width:none}
+  .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
 }
 
-function removeValue(values = [], value) {
-  return values.map(String).filter((item) => item !== String(value));
+@media (min-width:1080px){
+  .app{max-width:none}
+  .bnav,.overlay{max-width:none}
+  .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
+  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
+  #p-dashboard.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
+  #p-dashboard .dash-hero{grid-row:span 1}
+  #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #p-swipe.page.on{grid-template-columns:minmax(260px,1fr) minmax(500px,620px) minmax(260px,1fr);padding-left:42px;padding-right:42px}
+  #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
+  .pipe-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #p-messages #msgs-list{grid-template-columns:1fr}
+  .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
 
-function firstIntersection(left = [], right = []) {
-  const rightSet = new Set(right.map(String));
-  return left.find((item) => rightSet.has(String(item)));
+@media (min-width:720px){
+  .page.on:not(#p-auth){display:block;padding-bottom:96px}
+  .dash-hero{border-radius:0;border:none}
+  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:0 0 96px}
+  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:22px 42px}
+  #p-dashboard .dash-hero{padding:34px 42px}
+  .dash-co{gap:18px}
+  .dash-co-logo{width:72px;height:72px;font-size:24px;border-radius:18px}
+  .dash-co-n{font-size:24px}
+  .dash-co-s{font-size:16px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{padding:18px}
+  .kpi-v{font-size:30px}
+  .sec-t{font-size:18px}
+  .hscroll{display:flex;overflow-x:auto;margin:0 -42px;padding:0 42px 6px}
+  .cand-recue,.alert-card,.match-engine,.q-preset-card,.menu-list,.chat-panel{width:100%;max-width:none}
+  .cand-recue,.msg-th,.menu-i{padding:17px 18px}
+  .cr-name,.pc-n,.msg-n{font-size:16px}
+  .cr-title,.cr-tag,.msg-prev{font-size:14px}
+  #p-swipe.page.on{display:block;padding:0 0 96px}
+  #p-swipe .swipe-hd{margin:0;padding:18px 42px}
+  #p-swipe .deck-area{width:min(620px,calc(100% - 84px));height:min(740px,calc(100dvh - 220px));margin:22px auto 0}
+  #p-swipe .deck-actions{width:min(620px,calc(100% - 84px));margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  .cand-top{height:170px}
+  .cand-avatar{width:92px;height:92px;font-size:34px}
+  .cand-name{font-size:24px}
+  .cand-body{padding:18px 22px;gap:14px}
+  #p-matching>.sec{display:block}
+  #p-matching .match-engine,#p-matching .q-preset-card{margin-bottom:14px}
+  .pipe-cols{display:flex;overflow-x:auto;padding:0 42px;gap:14px;scroll-snap-type:x mandatory}
+  .pipe-col{width:320px;flex-shrink:0}
+  #p-messages #msgs-list{display:grid;grid-template-columns:1fr}
+  .plans-row{display:grid;grid-template-columns:1fr;gap:16px;padding:18px 42px 28px}
+  .plan-card{width:100%;max-width:none}
+  .pricing-hd{padding:34px 42px 14px}
+  .bottom-sheet{max-width:680px}
 }
 
-function mergeMatching(currentMatching = {}, matching, extraMeta = {}) {
-  return {
-    ...(currentMatching || {}),
-    ...(matching || {}),
-    meta: {
-      ...(currentMatching?.meta || {}),
-      ...extraMeta,
-    },
-  };
+@media (min-width:1180px){
+  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding-left:64px;padding-right:64px}
+  #p-dashboard .dash-hero,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(680px,calc(100% - 128px))}
+  .pipe-cols{padding-left:64px;padding-right:64px}
+  .plans-row{padding-left:64px;padding-right:64px}
 }
 
-async function upsertCandidature(candidatId, offreId, action, source = 'recruteur_like') {
-  const { data: existingCandidature } = await supabase
-    .from('candidatures')
-    .select('id, statut, lettre_type')
-    .eq('candidat_id', candidatId)
-    .eq('offre_id', offreId)
-    .maybeSingle();
-
-  const payload = {
-    statut: existingCandidature?.lettre_type && existingCandidature.lettre_type !== 'recruteur_like'
-      ? existingCandidature.statut || 'envoyee'
-      : 'nouveau',
-    lettre_type: existingCandidature?.lettre_type && existingCandidature.lettre_type !== 'recruteur_like'
-      ? existingCandidature.lettre_type
-      : source,
-  };
-
-  const query = existingCandidature
-    ? supabase.from('candidatures').update(payload).eq('id', existingCandidature.id)
-    : supabase.from('candidatures').insert({
-      candidat_id: candidatId,
-      offre_id: offreId,
-      ...payload,
-    });
-
-  const { error } = await query;
-  if (error) throw error;
+@media (min-width:720px){
+  #p-pricing .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
 }
 
-function normalizeCandidate(candidature, context = {}) {
-  const candidat = candidature.candidats || {};
-  const axes = candidat.axes?.resultat?.axes || candidat.axes || {};
-  const axisEntries = Array.isArray(axes)
-    ? axes
-    : Object.entries(axes).filter(([, value]) => typeof value === 'number').map(([l, v]) => ({ l, v }));
-  const shortName = candidat.nom ? `${candidat.nom.slice(0, 1)}.` : '';
-  const name = [candidat.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
-
-  return {
-    id: candidature.id,
-    candidat_id: candidat.id,
-    receiver_id: candidat.user_id,
-    match_id: context.match?.id || null,
-    match_ids: context.matchIds || [],
-    discussed: Boolean(context.discussed),
-    av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
-    bg: '#1340E0',
-    name,
-    role: candidat.titre || 'Commercial',
-    score: context.match?.score_match || candidature.score_match || candidat.score_adn || 0,
-    tags: axisEntries.slice(0, 3).map((axis) => axis.l),
-  };
+@media (min-width:1180px){
+  #p-pricing .plans-row{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
-router.get('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const profil = await ensureRecruiterProfile(req.user.id);
-    res.json(profil);
-  } catch (error) {
-    publicError(res, error);
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  .app{
+    width:100%;
+    max-width:none;
+    margin:0;
+    background:var(--bg);
+    min-height:100dvh;
+    box-shadow:none;
+  }
+  .bnav,.overlay{
+    width:100%;
+    max-width:none;
+  }
+  .topbar{height:52px;padding:0 36px}
+  .logo-m{width:26px;height:26px;border-radius:7px;font-size:13px}
+  .logo-n{font-size:12px;letter-spacing:-.2px}
+  .logo-tag{font-size:8px;padding:2px 5px}
+  .ib{width:28px;height:28px;border-radius:8px}
+  .ib svg{width:14px;height:14px}
+  #p-swipe .swipe-hd{
+    top:52px;
+    margin-top:-1px;
+  }
+
+  #p-dashboard.page.on{
+    display:grid !important;
+    grid-template-columns:minmax(320px,520px) minmax(360px,1fr);
+    column-gap:40px;
+    row-gap:26px;
+    align-items:start;
+    align-content:start;
+    background:var(--bg);
+    padding:24px clamp(32px,4vw,76px) 96px;
+    min-height:calc(100dvh - 52px);
+    width:100%;
+    max-width:1500px;
+    margin:0 auto;
+  }
+  #p-dashboard .dash-hero{
+    order:1;
+    grid-column:1/-1;
+    margin:0;
+    padding:18px 20px;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
+  }
+  #p-dashboard .dash-actions{
+    order:2;
+    grid-column:1;
+    width:100%;
+    max-width:480px;
+  }
+  #p-dashboard .dash-candidates{
+    order:3;
+    grid-column:2;
+    width:100%;
+    min-width:0;
+  }
+  #p-dashboard>.sec{
+    padding:0 !important;
+    max-width:none;
+    width:100%;
+  }
+  #p-dashboard .dash-candidates .sec-hd .btn{display:none}
+  #p-dashboard .sec-hd{margin-bottom:12px}
+  #p-dashboard .sec-t{font-size:17px}
+
+  #p-dashboard .dash-co{gap:16px;margin-bottom:14px}
+  #p-dashboard .dash-co-logo{width:54px;height:54px;border-radius:12px;font-size:18px}
+  #p-dashboard .dash-co-n{font-size:18px}
+  #p-dashboard .dash-co-s{font-size:12px}
+  #p-dashboard .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  #p-dashboard .kpi{min-height:74px;padding:12px;border-radius:7px}
+  #p-dashboard .kpi-l{font-size:8px}
+  #p-dashboard .kpi-v{font-size:20px}
+  #p-dashboard .kpi-t{font-size:9px}
+
+  #p-dashboard .dash-actions .btn{
+    min-height:44px;
+    border-radius:10px;
+    font-size:13px;
+    line-height:1.2;
+    padding:11px 16px;
+    margin-bottom:10px !important;
+    width:100%;
+    white-space:normal;
+  }
+  #p-dashboard .dash-actions .bp{
+    box-shadow:0 8px 18px rgba(19,64,224,.16);
+  }
+  #p-dashboard .dash-actions .bo{
+    background:rgba(255,255,255,.45);
+    border-color:#C7D2E3;
+  }
+  #p-dashboard .dash-actions .bo:hover{
+    background:var(--w);
+    border-color:var(--b);
+    color:var(--b);
+  }
+}
+@media (min-width:720px){
+  #p-offres.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 59px);
+    padding:0 0 96px;
+  }
+  #p-messages.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 52px);
+    padding:0 0 96px;
+  }
+  #p-offres>.sec{padding:22px 42px}
+  #p-offres .offers-list{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(280px,1fr));
+    gap:12px;
+  }
+  #p-messages>.sec{
+    display:grid;
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
+    gap:14px;
+    align-items:stretch;
+    min-height:calc(100dvh - 52px - 96px - 44px);
+  }
+  #p-messages .sec-hd{grid-column:1/-1}
+  #p-messages #msgs-list{
+    grid-column:1;
+    grid-row:2;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    min-height:0;
+    overflow-y:auto;
+  }
+  #p-messages .msg-th{margin-bottom:0}
+  #p-messages #chat-panel{
+    grid-column:1;
+    grid-row:3;
+    margin-top:0;
+    align-self:stretch;
+    position:relative;
+    top:auto;
+    min-height:0;
+  }
+  #p-messages #chat-panel.on{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    min-height:0;
+  }
+  #p-messages .chat-head{flex-shrink:0}
+  #p-messages .chat-body{
+    flex:1;
+    min-height:0;
+    max-height:none;
+  }
+  #p-messages .chat-compose{flex-shrink:0}
+}
+
+@media (min-width:1080px){
+  #p-offres>.sec{padding-left:64px;padding-right:64px}
+  #p-offres .offers-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+}
+
+@media (min-width:720px) and (max-width:1023px){
+  #p-swipe .cand-body{
+    overflow:hidden;
+    scrollbar-width:none;
+    padding:10px 16px;
+    gap:7px;
+  }
+  #p-swipe .cand-body::-webkit-scrollbar{display:none}
+  #p-swipe .cand-top{height:118px}
+  #p-swipe .cand-avatar{width:62px;height:62px;font-size:24px}
+  #p-swipe .cand-match-box{top:10px;right:10px;padding:5px 9px}
+  #p-swipe .cand-match-n{font-size:16px}
+  #p-swipe .cand-match-l{font-size:8px}
+  #p-swipe .cand-name{font-size:18px}
+  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
+  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
+  #p-swipe .cand-adn-section{padding:9px 11px;border-radius:10px}
+  #p-swipe .cand-adn-hd{margin-bottom:6px}
+  #p-swipe .cand-adn-score{font-size:24px}
+  #p-swipe .cand-adn-lbl{font-size:8px}
+  #p-swipe .cand-adn-type{font-size:11px}
+  #p-swipe .cand-adn-bars{gap:4px}
+  #p-swipe .cadn-row{gap:6px}
+  #p-swipe .cadn-l{width:64px;font-size:9px}
+  #p-swipe .cadn-tr{height:3px}
+  #p-swipe .cadn-v{font-size:10px;width:20px}
+  #p-swipe .cand-skills{gap:4px}
+  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
+  #p-swipe .cand-docs{gap:5px}
+  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
+  #p-swipe .cand-doc svg{width:11px;height:11px}
+  #p-swipe .cand-pitch,
+  #p-swipe .cand-ai{padding:8px;border-radius:9px}
+  #p-swipe .cand-pitch-hd{margin-bottom:5px}
+  #p-swipe .cand-pitch-t,
+  #p-swipe .cand-ai-t{font-size:10px}
+  #p-swipe .cand-pitch-score{font-size:13px}
+  #p-swipe .cand-pitch-text,
+  #p-swipe .cand-ai-text{font-size:10px;line-height:1.3;padding:6px 8px}
+  #p-swipe .cand-letter{border-radius:9px}
+  #p-swipe .clt{padding:6px;font-size:9px}
+  #p-swipe .cand-letter-body{padding:7px}
+  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
+  #p-swipe .cand-predict{gap:6px}
+  #p-swipe .cand-predict-box{padding:5px}
+  #p-swipe .cand-predict-v{font-size:12px}
+  #p-swipe .cand-predict-l{font-size:7px}
+}
+
+/* Recruiter cards sizing */
+#p-swipe .deck-area{min-height:390px;max-height:560px}
+#p-swipe .cand-top{height:112px}
+#p-swipe .cand-avatar{width:64px;height:64px;font-size:23px}
+#p-swipe .cand-body{gap:9px;padding:12px 15px}
+#p-swipe .cand-adn-section,#p-swipe .cand-pitch,#p-swipe .cand-letter,#p-swipe .cand-ai{border-radius:10px;padding:10px}
+#p-swipe .cand-name{font-size:16px}
+@media (min-width:720px){
+  #p-swipe .deck-area{height:min(600px,calc(100dvh - 210px));max-width:540px}
+  #p-swipe .cand-top{height:126px}
+}
+@media (min-width:1080px){
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(560px,calc(100% - 96px))}
+  #p-swipe .deck-area{height:min(620px,calc(100dvh - 205px))}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="logo" onclick="go('dashboard')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div><span class="logo-tag">Recruteur</span></div>
+  <div class="top-r">
+    <div class="ib" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="p-auth" class="page">
+  <div class="auth-logo sf">S</div>
+  <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">SalesForge Recruteur</h1>
+  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Recrutez les meilleurs commerciaux.<br>ADN vérifié, matching IA, sans cabinet.</p>
+  <div class="auth-tabs">
+    <button class="auth-tab on" onclick="switchTab(this,'login')">Se connecter</button>
+    <button class="auth-tab" onclick="switchTab(this,'register')">Créer un compte</button>
+  </div>
+  <div id="auth-err" class="err"></div>
+  <div id="login-form">
+    <div class="auth-form">
+      <input class="fi" id="l-email" type="email" placeholder="Email professionnel" autocomplete="email">
+      <input class="fi" id="l-pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn bp blk" id="btn-login" onclick="doLogin()">Se connecter</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:12px" onclick="doForgot()">Mot de passe oublié ?</p>
+  </div>
+  <div id="register-form" style="display:none">
+    <div class="auth-form">
+      <input class="fi" id="r-entreprise" type="text" placeholder="Nom de l'entreprise">
+      <input class="fi" id="r-prenom" type="text" placeholder="Votre prénom">
+      <input class="fi" id="r-nom" type="text" placeholder="Votre nom">
+      <input class="fi" id="r-email" type="email" placeholder="Email professionnel" autocomplete="email">
+      <input class="fi" id="r-pass" type="password" placeholder="Mot de passe (8 min.)" autocomplete="new-password">
+      <button class="btn bp blk" id="btn-reg" onclick="doRegister()">Créer mon compte recruteur</button>
+    </div>
+  </div>
+  <div class="or-div">ou continuer avec</div>
+  <button class="soc-btn" onclick="doOAuth('google')">
+    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Google
+  </button>
+  <div class="confirm-mail" id="confirm-mail">
+    <div class="confirm-ico">✓</div>
+    <h2>Confirmez votre email</h2>
+    <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
+    <button class="btn bp blk" onclick="showLoginAfterConfirm()">Se connecter</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="p-dashboard" class="page">
+  <div class="dash-hero">
+    <div class="dash-co">
+      <div class="dash-co-logo sf" id="dash-logo">SC</div>
+      <div><div class="dash-co-n sf" id="dash-co-name">Chargement…</div><div class="dash-co-s" id="dash-co-plan">—</div></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-l">Candidatures reçues</div><div class="kpi-v sf" id="kpi-recues">—</div><div class="kpi-t tf" id="kpi-recues-t">—</div></div>
+      <div class="kpi"><div class="kpi-l">Candidats chauds</div><div class="kpi-v sf" id="kpi-chauds">—</div><div class="kpi-t tf">Score +85</div></div>
+      <div class="kpi"><div class="kpi-l">En pipeline</div><div class="kpi-v sf" id="kpi-pipeline">—</div><div class="kpi-t tf">Tous stades</div></div>
+      <div class="kpi"><div class="kpi-l">Offres actives</div><div class="kpi-v sf" id="kpi-offres">—</div><div class="kpi-t tf">Publiées</div></div>
+    </div>
+  </div>
+  <div class="sec dash-actions">
+    <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
+    <button class="btn bp blk" style="margin-bottom:8px" onclick="go('post-offre')">+ Publier une offre</button>
+    <button class="btn bo blk" style="margin-bottom:8px" onclick="go('pipeline')">Offres actives</button>
+    <button class="btn bo blk" onclick="go('swipe')">Sourcer des candidats</button>
+  </div>
+  <div class="sec dash-candidates">
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><button class="btn bg2 bsm" onclick="go('pipeline')">Pipeline</button></div>
+    <div id="cands-recues"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- SWIPE RECRUTEUR -->
+<div id="p-swipe" class="page">
+  <div class="swipe-hd">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="sec-t sf">Sourcing candidats</div>
+      <span style="font-size:12px;color:var(--mu)" id="deck-count">Chargement…</span>
+    </div>
+  </div>
+  <div class="deck-area" id="deck-area">
+    <div id="deck-cards"></div>
+    <div class="deck-empty" id="deck-empty">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center;color:var(--g)"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="sf" style="font-size:16px;font-weight:800">Tous les profils vus</div>
+      <p style="font-size:13px;color:var(--ink3);max-width:220px;line-height:1.65;text-align:center">Ajustez votre moteur de matching ou revenez demain.</p>
+      <button class="btn bp" onclick="go('matching')">Ajuster le matching</button>
+    </div>
+  </div>
+  <div class="deck-actions">
+    <div class="db db-pass" onclick="swipe('pass')"><svg width="21" height="21" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="db db-like" onclick="swipe('like')"><svg width="25" height="25" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+    <div class="db db-super" onclick="swipe('super')"><svg width="21" height="21" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+  </div>
+</div>
+
+<!-- MATCHING ENGINE -->
+<div id="p-matching" class="page">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-t sf">Moteur de matching</div><span class="chip chip-b"><span class="chip-dot"></span>Temps réel</span></div>
+    <p style="font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:13px">Ajustez l'importance de chaque critère. Le nombre de candidats compatibles se met à jour en direct.</p>
+    <div class="match-engine">
+      <div class="me-hd"><div class="me-count sf"><b id="me-count">52</b> candidats compatibles</div></div>
+      <div id="matching-criteria"></div>
+    </div>
+    <button class="btn bp blk" id="btn-matching-save" onclick="saveMatchingAndSource()">Appliquer et sourcer</button>
+  </div>
+</div>
+
+<!-- PIPELINE -->
+<div id="p-pipeline" class="page">
+  <div class="sec pipeline-offers">
+    <div class="sec-hd">
+      <div class="sec-t sf">Offres actives</div>
+      <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
+    </div>
+    <div id="pipeline-offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+  <div class="sec" style="padding-bottom:9px">
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><span class="chip chip-b"><span class="chip-dot"></span>Pipeline</span></div>
+  </div>
+  <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
+</div>
+
+<!-- POST OFFRE -->
+<div id="p-post-offre" class="page">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-t sf">Publier une offre</div></div>
+    <div id="post-err" class="err"></div>
+    <div class="form-group"><label class="form-label sf">Intitulé du poste</label><input class="form-field" id="of-titre" placeholder="Ex : Closer Senior B2B SaaS"></div>
+    <div class="form-group"><label class="form-label sf">Type de contrat</label><div class="form-chips" id="of-type">
+      <button class="form-chip" onclick="ofPick(this,'of-type-v','CDI')">CDI</button>
+      <button class="form-chip" onclick="ofPick(this,'of-type-v','Mission')">Mission</button>
+      <button class="form-chip" onclick="ofPick(this,'of-type-v','Freelance')">Freelance</button>
+    </div></div>
+    <div class="form-group"><label class="form-label sf">Localisation</label><input class="form-field" id="of-lieu" placeholder="Ex : Paris · Remote"></div>
+    <div class="form-group"><label class="form-label sf">Rémunération</label><input class="form-field" id="of-salaire" placeholder="Ex : 45 – 65K€ + variable"></div>
+    <div class="form-group"><label class="form-label sf">Description</label><textarea class="form-field" id="of-desc" placeholder="Décrivez le poste, la mission, l'équipe…"></textarea></div>
+    <div class="form-group"><label class="form-label sf">Compétences recherchées</label><div class="form-chips" id="of-skills">
+      <button class="form-chip" onclick="ofTag(this,'Closing')">Closing</button>
+      <button class="form-chip" onclick="ofTag(this,'Cold Calling')">Cold Calling</button>
+      <button class="form-chip" onclick="ofTag(this,'SaaS')">SaaS</button>
+      <button class="form-chip" onclick="ofTag(this,'Outbound')">Outbound</button>
+      <button class="form-chip" onclick="ofTag(this,'HubSpot')">HubSpot</button>
+      <button class="form-chip" onclick="ofTag(this,'Salesforce')">Salesforce</button>
+      <button class="form-chip" onclick="ofTag(this,'Négociation')">Négociation</button>
+    </div></div>
+    <div class="form-group">
+      <label class="form-label sf">Candidature automatique</label>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--gs);border-radius:10px;border:1px solid rgba(6,148,88,.15)">
+        <div style="flex:1;font-size:12px;color:var(--g);font-weight:600">Recevoir les candidatures auto des profils compatibles</div>
+        <input type="checkbox" id="of-auto" checked style="width:18px;height:18px;accent-color:var(--g)">
+      </div>
+    </div>
+    <button class="btn bp blk" id="btn-post-offre" onclick="postOffre()">Publier l'offre</button>
+  </div>
+</div>
+
+<!-- MES OFFRES -->
+<div id="p-offres" class="page">
+  <div class="sec">
+    <div class="sec-hd">
+      <div class="sec-t sf">Mes offres</div>
+      <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
+    </div>
+    <div id="offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- MESSAGES -->
+<div id="p-messages" class="page">
+  <div class="sec">
+    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Messages</div></div>
+    <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
+    <div id="chat-panel" class="chat-panel">
+      <div class="chat-head">
+        <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div style="flex:1;min-width:0">
+          <div class="chat-title" id="chat-title">Conversation</div>
+          <div class="chat-sub" id="chat-sub">Match SalesForge</div>
+        </div>
+      </div>
+      <div id="chat-body" class="chat-body"></div>
+      <form class="chat-compose" onsubmit="sendThreadMessage(event)">
+        <input id="chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
+        <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="p-settings" class="page">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-t sf">Paramètres</div></div>
+    <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('post-offre')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Publier une offre</div></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('matching')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Moteur de matching</div></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('pricing')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Abonnement et tarifs</div></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer" onclick="doLogout()"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Déconnexion</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div id="p-pricing" class="page">
+  <div class="pricing-hd">
+    <h2 class="sf">Formules recruteur</h2>
+    <p>Sans commission. Sans cabinet. Payez l'outil, pas le placement.</p>
+    <div class="bill-toggle">
+      <button class="bill-opt" onclick="setBill(this,'month')">Mensuel</button>
+      <button class="bill-opt on" onclick="setBill(this,'year')">Annuel <span class="bill-save">-20%</span></button>
+    </div>
+  </div>
+  <div class="plans-row" id="plans-row"></div>
+</div>
+
+</div><!-- /.app -->
+
+<!-- BOTTOM NAV -->
+<nav class="bnav" id="bnav" style="display:none">
+  <button class="bn on" id="nav-dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Tableau</span></button>
+  <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Sourcer</span></button>
+  <button class="bn" id="nav-pipeline" onclick="go('pipeline')"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Pipeline</span></button>
+  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></button>
+  <button class="bn" id="nav-settings" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Réglages</span></button>
+</nav>
+
+<!-- MATCH OVERLAY -->
+<div class="overlay" id="ov" onclick="closeOv(event)">
+  <div class="bottom-sheet">
+    <div class="sh-handle"></div>
+    <div class="match-hd">
+      <div class="match-icons">
+        <div class="mco" id="ov-co" style="background:var(--ink)">SC</div>
+        <div class="mlink"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+        <div class="mco" id="ov-cand" style="background:var(--b)">AB</div>
+      </div>
+      <div class="match-title sf" id="ov-title">Match confirmé</div>
+      <div class="match-sub" id="ov-sub">—</div>
+    </div>
+    <div class="sh-actions">
+      <button class="btn bp blk" onclick="closeOv({target:ov});go('messages')">Contacter le candidat</button>
+      <button class="btn bo blk" onclick="closeOv({target:ov})">Continuer le sourcing</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cand-ov" onclick="closeCandOv(event)">
+  <div class="bottom-sheet">
+    <div class="sh-handle"></div>
+    <div class="match-hd">
+      <div class="mco" id="cov-av" style="background:var(--b);margin:0 auto 14px">--</div>
+      <div class="match-title sf" id="cov-name">—</div>
+      <div class="match-sub" id="cov-role">—</div>
+    </div>
+    <div class="match-stats">
+      <div class="mstat"><div class="mstat-v sf" id="cov-score">—</div><div class="mstat-l">Score ADN</div></div>
+    </div>
+    <div class="cov-tags" id="cov-tags"></div>
+    <div class="sh-actions">
+      <button class="btn bp blk" id="cov-contact-btn" onclick="contactFromPipeline()">Contacter le candidat</button>
+      <button class="btn bo blk" onclick="closeCandOv({target:document.getElementById('cand-ov')})">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Action réalisée</div>
+<script>
+// ------------------------------------------------------------
+// CONFIG — Alexis : remplacer par l'URL Railway en production
+// ------------------------------------------------------------
+const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : 'https://salesforge-recruitment-production.up.railway.app/api';
+
+// ------------------------------------------------------------
+// ÉTAT GLOBAL
+// ------------------------------------------------------------
+let TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_token');
+let USER  = readStoredJson('sf_rec_user');
+let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
+let ACTIVE_THREAD = null;
+let REALTIME_CHANNEL = null;
+let SELECTED_QUESTIONS = [];
+let OF_TYPE = '', OF_TAGS = [];
+let HAS_PLAN = false;
+let CURRENT_PLAN = '';
+let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
+
+let supabaseClient = null;
+
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'env' && !supabaseClient && e.data.SUPABASE_URL) {
+    supabaseClient = supabase.createClient(e.data.SUPABASE_URL, e.data.SUPABASE_ANON_KEY);
   }
 });
 
-router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
+function readStoredJson(key) {
   try {
-    const current = await ensureRecruiterProfile(req.user.id);
-
-    const { entreprise, secteur, plan, questions, matching } = req.body;
-    const nextMatching = matching === undefined
-      ? current.matching
-      : mergeMatching(current.matching, matching);
-
-    const { data, error } = await supabase
-      .from('recruteurs')
-      .update(definedOnly({
-        entreprise,
-        secteur,
-        plan,
-        questions,
-        matching: nextMatching,
-      }))
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
-
-    if (error) return res.status(400).json({ error });
-    res.json(data);
-  } catch (error) {
-    publicError(res, error);
+    return JSON.parse(localStorage.getItem(key) || 'null');
+  } catch(e) {
+    return null;
   }
-});
+}
 
-router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => {
+function hydrateRecruiterSession() {
+  const recUser = readStoredJson('sf_rec_user');
+  const profile = readStoredJson('sf_profile');
+  TOKEN = localStorage.getItem('sf_rec_token') || localStorage.getItem('sf_token') || TOKEN;
+  USER = recUser || (profile?.role === 'recruteur' ? profile : USER);
+  if (!TOKEN || !USER) return false;
+  if (USER.role && USER.role !== 'recruteur') return false;
+  localStorage.setItem('sf_rec_token', TOKEN);
+  localStorage.setItem('sf_rec_user', JSON.stringify(USER));
+  return true;
+}
+
+function seenCandidateStorageKey() {
+  return 'sf_seen_candidates_' + (USER?.id || USER?.user_id || 'anon');
+}
+
+function getSeenCandidates() {
   try {
-    const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { data: offres, error: offresError } = await supabase
-      .from('offres')
-      .select('id, statut')
-      .eq('recruteur_id', recruteur.id);
-
-    if (offresError) return res.status(400).json({ error: offresError });
-    const offreIds = offres.map((offre) => offre.id);
-
-    const { data: candidatures, error: candidaturesError } = offreIds.length
-      ? await supabase.from('candidatures').select('id, statut, created_at').in('offre_id', offreIds)
-      : { data: [], error: null };
-
-    if (candidaturesError) return res.status(400).json({ error: candidaturesError });
-
-    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    res.json({
-      recues: candidatures.length,
-      recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
-      chauds: candidatures.filter((c) => c.statut === 'repondu' || c.statut === 'entretien').length,
-      pipeline: candidatures.length,
-      offres: offres.length,
-      plan_label: `Plan ${recruteur.plan || 'starter'} · ${offres.length} offres actives`,
-    });
-  } catch (error) {
-    publicError(res, error);
+    return JSON.parse(localStorage.getItem(seenCandidateStorageKey()) || '[]').map(String);
+  } catch(e) {
+    return [];
   }
-});
+}
 
-router.get('/questions', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const recruteur = await ensureRecruiterProfile(req.user.id);
-    res.json({ questions: recruteur.questions || [] });
-  } catch (error) {
-    publicError(res, error);
-  }
-});
+function rememberSeenCandidate(cand) {
+  const ids = [cand?.id, cand?.user_id].filter(Boolean).map(String);
+  const next = [...new Set([...getSeenCandidates(), ...ids])];
+  localStorage.setItem(seenCandidateStorageKey(), JSON.stringify(next));
+}
 
-router.post('/matching-count', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const { matching = {} } = req.body;
-    const { data, error } = await supabase.from('candidats').select('axes');
-    if (error) return res.status(400).json({ error });
+function isSeenCandidate(cand) {
+  const seen = getSeenCandidates();
+  return seen.includes(String(cand?.id)) || seen.includes(String(cand?.user_id));
+}
 
-    const count = data.filter((candidate) => {
-      const axes = candidate.axes?.resultat?.axes || candidate.axes || {};
-      const entries = Array.isArray(axes) ? axes : Object.entries(axes).map(([l, v]) => ({ l, v }));
-      const score = Object.entries(matching).reduce((sum, [key, weight]) => {
-        const axis = entries.find((item) => item.l?.toLowerCase().includes(key.toLowerCase()));
-        return sum + Number(axis?.v || 50) * Number(weight || 0);
-      }, 0);
-      const weights = Object.values(matching).reduce((sum, weight) => sum + Number(weight || 0), 0);
-      return weights ? Math.round(score / weights) >= 70 : true;
-    }).length;
-
-    res.json({ count });
-  } catch (error) {
-    publicError(res, error);
-  }
-});
-
-router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { data: offres, error: offresError } = await supabase
-      .from('offres')
-      .select('id')
-      .eq('recruteur_id', recruteur.id);
-    if (offresError) return res.status(400).json({ error: offresError });
-
-    const offreIds = offres.map((offre) => offre.id);
-    const { data, error } = offreIds.length
-      ? await supabase
-        .from('candidatures')
-        .select('id, statut, candidat_id, offre_id, candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
-        .in('offre_id', offreIds)
-      : { data: [], error: null };
-    if (error) return res.status(400).json({ error });
-
-    const candidatIds = [...new Set((data || []).map((row) => row.candidat_id).filter(Boolean))];
-    const { data: matchs, error: matchsError } = offreIds.length && candidatIds.length
-      ? await supabase
-        .from('matchs')
-        .select('id, candidat_id, offre_id, score_match, score_compat, created_at')
-        .in('offre_id', offreIds)
-        .in('candidat_id', candidatIds)
-        .order('created_at', { ascending: false })
-      : { data: [], error: null };
-    if (matchsError) return res.status(400).json({ error: matchsError });
-
-    const matchIds = (matchs || []).map((match) => match.id);
-    const { data: messages, error: messagesError } = matchIds.length
-      ? await supabase
-        .from('messages')
-        .select('match_id')
-        .in('match_id', matchIds)
-      : { data: [], error: null };
-    if (messagesError) return res.status(400).json({ error: messagesError });
-
-    const discussedMatchIds = new Set((messages || []).map((message) => String(message.match_id)));
-    const matchesByPair = new Map();
-    const matchesByCandidate = new Map();
-    (matchs || []).forEach((match) => {
-      const pairKey = `${match.offre_id}:${match.candidat_id}`;
-      if (!matchesByPair.has(pairKey)) matchesByPair.set(pairKey, match);
-      const candidateKey = String(match.candidat_id);
-      if (!matchesByCandidate.has(candidateKey)) matchesByCandidate.set(candidateKey, []);
-      matchesByCandidate.get(candidateKey).push(match);
-    });
-
-    const pipeline = { nouveau: [], contacte: [] };
-    data.forEach((candidature) => {
-      const candidateKey = String(candidature.candidat_id);
-      const candidateMatches = matchesByCandidate.get(candidateKey) || [];
-      const match = matchesByPair.get(`${candidature.offre_id}:${candidature.candidat_id}`) || candidateMatches[0] || null;
-      const candidateMatchIds = candidateMatches.map((item) => item.id);
-      const discussed = candidateMatchIds.some((id) => discussedMatchIds.has(String(id)));
-      pipeline[discussed ? 'contacte' : 'nouveau'].push(normalizeCandidate(candidature, {
-        match,
-        matchIds: candidateMatchIds,
-        discussed,
-      }));
-    });
-    res.json(pipeline);
-  } catch (error) {
-    publicError(res, error);
-  }
-});
-
-router.post('/pipeline/contact', authMiddleware, requireRecruiterPlan, async (req, res) => {
-  try {
-    const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { candidature_id } = req.body;
-    if (!candidature_id) return res.status(400).json({ error: 'candidature_id requis' });
-
-    const { data: candidature, error: candidatureError } = await supabase
-      .from('candidatures')
-      .select('id, candidat_id, offre_id, candidats(id, user_id, nom, prenom, titre, score_adn), offres(id, titre, recruteur_id)')
-      .eq('id', candidature_id)
-      .maybeSingle();
-    if (candidatureError) return res.status(400).json({ error: candidatureError });
-    if (!candidature) return res.status(404).json({ error: 'Candidature introuvable' });
-    if (String(candidature.offres?.recruteur_id) !== String(recruteur.id)) {
-      return res.status(403).json({ error: 'Candidature non autorisee' });
+// ------------------------------------------------------------
+// HELPERS
+// ------------------------------------------------------------
+async function api(method, path, body) {
+  const h = { 'Content-Type': 'application/json' };
+  if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+  const r = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json();
+  if (!r.ok) {
+    // Pas d'abonnement recruteur
+    if (d.error === 'PLAN_REQUIRED') {
+      toast('Un abonnement est requis pour accéder à cette fonctionnalité');
+      go('pricing');
+      throw new Error(d.message || 'Abonnement requis');
     }
-
-    const { data: existingMatches, error: existingError } = await supabase
-      .from('matchs')
-      .select('id, created_at')
-      .eq('candidat_id', candidature.candidat_id)
-      .eq('offre_id', candidature.offre_id)
-      .order('created_at', { ascending: false });
-    if (existingError) return res.status(400).json({ error: existingError });
-
-    let match = existingMatches?.[0] || null;
-    if (!match) {
-      const score = Math.max(70, Number(candidature.candidats?.score_adn || 0));
-      const { data: createdMatch, error: createError } = await supabase
-        .from('matchs')
-        .insert({
-          candidat_id: candidature.candidat_id,
-          offre_id: candidature.offre_id,
-          score_match: score,
-          score_compat: score,
-        })
-        .select('id, created_at')
-        .single();
-      if (createError) return res.status(400).json({ error: createError });
-      match = createdMatch;
+    // Abonnement inactif
+    if (d.error === 'PLAN_INACTIVE') {
+      toast('Votre abonnement est inactif ou expiré');
+      go('pricing');
+      throw new Error(d.message || 'Abonnement inactif');
     }
-
-    const candidat = candidature.candidats || {};
-    if (!candidat.user_id) return res.status(400).json({ error: 'Candidat sans compte utilisateur' });
-    const shortName = candidat.nom ? `${candidat.nom.slice(0, 1)}.` : '';
-    const name = [candidat.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
-    res.json({
-      id: match.id,
-      match_id: match.id,
-      match_ids: [match.id],
-      receiver_id: candidat.user_id,
-      av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
-      bg: '#1340E0',
-      nom: name,
-      time: 'Maintenant',
-      prev: `Match sur ${candidature.offres?.titre || 'votre offre'}`,
-      ur: false,
-      mine: true,
-      read: null,
-      status: '',
-    });
-  } catch (error) {
-    publicError(res, error);
+    // Limite offres atteinte
+    if (d.error === 'OFFER_LIMIT_REACHED') {
+      toast(d.message || 'Limite d\'offres actives atteinte — passez a un plan superieur');
+      go('pricing');
+      throw new Error(d.message || 'Limite offres atteinte');
+    }
+    throw new Error(d.message || d.error || 'Erreur serveur');
   }
-});
+  return d;
+}
+function frError(text){
+  const msg = String(text || '').toLowerCase();
+  if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('email not confirmed')) return 'Votre email n’est pas encore confirmé.';
+  if (msg.includes('user already registered')) return 'Un compte existe déjà avec cet email.';
+  if (msg.includes('signup disabled')) return 'La création de compte est temporairement indisponible.';
+  return text || 'Une erreur est survenue.';
+}
+function showErr(id, msg) { const e = document.getElementById(id); e.textContent = frError(msg); e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 4000); }
+function setBtn(id, loading, txt) { const b = document.getElementById(id); if (!b) return; b.disabled = loading; b.innerHTML = loading ? '<div class="spinner"></div>' : txt; }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2400); }
+function esc(text = '') {
+  return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function shortDate(value) {
+  if (!value) return '';
+  return new Date(value).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+function messageStatusLabel(status = '') {
+  return String(status).replace('Envoye', 'Envoyé');
+}
+const APP_PAGES = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];
+function normalizeRecruiterPage(page) { return page === 'offres' ? 'pipeline' : page; }
+function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }
+function saveLastPage(p) {
+  p = normalizeRecruiterPage(p);
+  if (p !== 'auth' && p !== 'pricing') localStorage.setItem(lastPageKey(), p);
+}
+function getLastPage() {
+  const hashPage = pageFromHash();
+  if (hashPage) return hashPage;
+  const page = normalizeRecruiterPage(localStorage.getItem(lastPageKey()));
+  return APP_PAGES.includes(page) ? page : 'dashboard';
+}
+function syncPageHistory(page, replace = false) {
+  if (page === 'auth') return;
+  const nextHash = '#' + page;
+  if (location.hash === nextHash && !replace) return;
+  history[replace ? 'replaceState' : 'pushState']({ page }, '', location.pathname + location.search + nextHash);
+}
+function existingPageOrDashboard(page) {
+  page = normalizeRecruiterPage(page);
+  return document.getElementById('p-' + page) ? page : 'dashboard';
+}
 
-router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, (_req, res) => {
-  res.status(405).json({
-    error: 'PIPELINE_LOCKED',
-    message: 'Le pipeline est en lecture seule.',
+// ------------------------------------------------------------
+// NAVIGATION
+// ------------------------------------------------------------
+function go(p, options = {}) {
+  p = existingPageOrDashboard(p);
+  const ui = p !== 'auth';
+  const PROTECTED_PAGES = ['dashboard','swipe','matching','questions','pipeline','offres','post-offre','messages'];
+  if (PROTECTED_PAGES.includes(p) && !HAS_PLAN && TOKEN) {
+    toast('Un abonnement est requis pour accéder à cette fonctionnalité');
+    p = 'pricing';
+  }
+  saveLastPage(p);
+  document.getElementById('topbar').style.display = ui ? 'flex' : 'none';
+  document.getElementById('bnav').style.display = ui ? 'flex' : 'none';
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.bn').forEach(x => x.classList.remove('on'));
+  const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
+  if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
+  window.scrollTo(0, 0);
+  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
+  if (m[p]) m[p]();
+  if (ui && p !== 'messages') refreshMessageBadge();
+  if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
+}
+
+// ------------------------------------------------------------
+// AUTH
+// ------------------------------------------------------------
+function switchTab(btn, tab) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+  const confirm = document.getElementById('confirm-mail');
+  if (confirm) confirm.classList.remove('on');
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'flex';
+  document.querySelector('#p-auth .soc-btn').style.display = 'flex';
+}
+function showRegisterConfirm() {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.querySelector('#p-auth .or-div').style.display = 'none';
+  document.querySelector('#p-auth .soc-btn').style.display = 'none';
+  document.getElementById('confirm-mail').classList.add('on');
+}
+function showLoginAfterConfirm() {
+  const btn = document.querySelector('.auth-tab');
+  if (btn) switchTab(btn, 'login');
+}
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim(), password = document.getElementById('l-pass').value;
+  if (!email || !password) { showErr('auth-err', 'Email et mot de passe requis'); return; }
+  setBtn('btn-login', true);
+  try {
+    const d = await api('POST', '/auth/login', { email, password });
+    TOKEN = d.token; USER = d.profile || d.user;
+    localStorage.setItem('sf_rec_token', TOKEN); localStorage.setItem('sf_rec_user', JSON.stringify(USER));
+    try {
+      await api('GET', '/recruteurs/stats');
+      HAS_PLAN = true;
+      go('dashboard');
+    } catch(e) {
+      HAS_PLAN = false;
+      if (!e.message.includes('requis') && !e.message.includes('inactif')) go('dashboard');
+    }
+  } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
+}
+async function doRegister() {
+  const entreprise = document.getElementById('r-entreprise').value.trim();
+  const prenom = document.getElementById('r-prenom').value.trim(), nom = document.getElementById('r-nom').value.trim();
+  const email = document.getElementById('r-email').value.trim(), password = document.getElementById('r-pass').value;
+  if (!entreprise || !prenom || !email || !password) { showErr('auth-err', 'Tous les champs sont requis'); return; }
+  if (password.length < 8) { showErr('auth-err', 'Mot de passe : 8 caractères minimum'); return; }
+  setBtn('btn-reg', true);
+  try {
+    await api('POST', '/auth/register', { entreprise, prenom, nom, email, password, role:'recruteur' });
+    TOKEN = null; USER = null;
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_rec_token');
+    localStorage.removeItem('sf_rec_user');
+    localStorage.removeItem('sf_profile');
+    showRegisterConfirm();
+  } catch(e) { showErr('auth-err', e.message); } finally { setBtn('btn-reg', false, 'Créer mon compte recruteur'); }
+}
+async function doOAuth(provider) {
+  window.location.href = API + '/auth/oauth/' + provider + '?role=recruteur';
+}
+async function doForgot() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showErr('auth-err', 'Entrez votre email'); return; }
+  try {
+    await api('POST', '/auth/forgot-password', { email });
+    toast('Email de réinitialisation envoyé');
+  } catch(e) { showErr('auth-err', e.message); }
+}
+function goLanding() {
+  window.top.location.href = new URL('../salesforge_landing.html', window.location.href).href;
+}
+function doLogout() {
+  TOKEN = null; USER = null;
+  localStorage.removeItem('sf_token');
+  localStorage.removeItem('sf_rec_token');
+  localStorage.removeItem('sf_rec_user');
+  localStorage.removeItem('sf_profile');
+  goLanding();
+}
+
+// ------------------------------------------------------------
+// DASHBOARD
+// ------------------------------------------------------------
+async function loadDashboard() {
+  if (!USER) return;
+  const init = ((USER.entreprise||'?')[0] + (USER.entreprise||'??')[1]).toUpperCase();
+  document.getElementById('dash-logo').textContent = init;
+  document.getElementById('dash-co-name').textContent = USER.entreprise || '—';
+  try {
+    const [stats, recues] = await Promise.all([
+      api('GET', '/recruteurs/stats'),
+      api('GET', '/candidatures/recues?limit=4')
+    ]);
+    renderDashStats(stats); document.getElementById('dash-co-plan').textContent = stats.plan_label;
+    renderRecues(recues);
+  } catch(e) { console.error(e); }
+}
+function renderDashStats(s) {
+  document.getElementById('kpi-recues').textContent = s.recues || '0';
+  document.getElementById('kpi-recues-t').textContent = s.recues_new ? '+' + s.recues_new + ' nouvelles' : 'Aucune nouvelle';
+  document.getElementById('kpi-recues-t').className = 'kpi-t ' + (s.recues_new > 0 ? 'tu' : 'tf');
+  document.getElementById('kpi-chauds').textContent = s.chauds || '0';
+  document.getElementById('kpi-pipeline').textContent = s.pipeline || '0';
+  document.getElementById('kpi-offres').textContent = s.offres || '0';
+}
+function renderRecues(list) {
+  if (!list.length) {
+    document.getElementById('cands-recues').innerHTML = `
+      <div class="empty-state">
+        <b>Aucune candidature reçue</b>
+        Les nouveaux profils apparaîtront ici dès qu'ils postulent.
+      </div>`;
+    return;
+  }
+  document.getElementById('cands-recues').innerHTML = list.map(c => `
+    <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${c.id}')">
+      <div class="cr-av" style="background:${c.bg}">${c.av}</div>
+      <div class="cr-info">
+        <div class="cr-name sf">${c.name}${c.badge?`<span class="cr-badge" style="background:${c.badgeBg};color:${c.badgeColor}">${c.badge}</span>`:''}</div>
+        <div class="cr-title">${c.titre}</div>
+        <div class="cr-meta">${c.tags.map(t=>`<span class="cr-tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="cr-score"><div class="cr-score-v sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div><div class="cr-score-l">match</div></div>
+    </div>`).join('');
+}
+function viewCandidate(id) {
+  localStorage.setItem('sf_focus_candidature', id);
+  go('pipeline');
+}
+
+// ------------------------------------------------------------
+// SWIPE CANDIDATS
+// ------------------------------------------------------------
+async function loadCandidates() {
+  DECK_IDX = 0;
+  document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    CANDS = (await api('GET', '/candidats/deck?matching=' + encodeURIComponent(JSON.stringify(MATCHING))))
+      .filter(c => !isSeenCandidate(c));
+    renderDeck();
+  } catch(e) { document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>'; }
+}
+function renderDeck() {
+  const el = document.getElementById('deck-cards'); el.innerHTML = '';
+  const rem = Math.max(0, CANDS.length - DECK_IDX);
+  document.getElementById('deck-count').textContent = rem + ' profil' + (rem > 1 ? 's' : '');
+  document.getElementById('deck-empty').classList.toggle('on', rem === 0);
+  CANDS.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(c => el.appendChild(buildCandCard(c)));
+}
+function candDocs(c) {
+  const docs = [];
+  if (c.cv_url) docs.push({ label: c.cv_file_name || 'CV', url: c.cv_url, icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>' });
+  if (c.motivation_url) docs.push({ label: c.motivation_file_name || 'Lettre de motivation', url: c.motivation_url, icon: '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>' });
+  if (!docs.length) return '';
+  return `<div class="cand-docs">${docs.map(doc=>`<button class="cand-doc" type="button" onclick='window.open(${JSON.stringify(doc.url)},"_blank","noopener")'><svg viewBox="0 0 24 24">${doc.icon}</svg><span>${doc.label}</span></button>`).join('')}</div>`;
+}
+function buildCandCard(c) {
+  const d = document.createElement('div'); d.className = 'swipe-card';
+  const sc = c.m >= 90 ? 'var(--pu)' : c.m >= 80 ? 'var(--b)' : 'var(--a)';
+  d.innerHTML = `
+    <div class="sw-lbl like">Intéressé</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
+    <div class="cand-top${c.anon?' anon':''}">
+      <div class="cand-avatar"></div>
+      ${c.anon?'<div class="cand-anon-badge"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Anonyme</div>':''}
+      <div class="cand-match-box"><div class="cand-match-n sf" style="color:${sc}">${c.m}</div><div class="cand-match-l">Match</div></div>
+    </div>
+    <div class="cand-body">
+      <div class="cand-name sf">${c.name}</div>
+      <div class="cand-role">${c.role}</div>
+      <div class="cand-rank"><span class="cand-rank-badge">${c.rank} · ${c.adn_type}</span></div>
+      <div class="cand-adn-section">
+        <div class="cand-adn-hd"><div><div class="cand-adn-score sf">${c.adn_score}</div><div class="cand-adn-lbl">ADN Commercial</div></div><div class="cand-adn-type sf">${c.adn_type}</div></div>
+        <div class="cand-adn-bars">${c.axes.map(a=>`<div class="cadn-row"><div class="cadn-l">${a.l}</div><div class="cadn-tr"><div class="cadn-f" style="width:${a.v}%"></div></div><div class="cadn-v sf">${a.v}</div></div>`).join('')}</div>
+      </div>
+      <div class="cand-skills">${c.skills.map(s=>`<span class="cand-skill">${s}</span>`).join('')}</div>
+      ${candDocs(c)}
+      <div class="cand-pitch">
+        <div class="cand-pitch-hd"><div class="cand-pitch-t sf"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Simulation de pitch</div><div class="cand-pitch-score sf">${c.pitch_score}/100</div></div>
+        <div class="cand-pitch-text">${c.pitch_text}</div>
+      </div>
+      <div class="cand-letter">
+        <div class="cand-letter-tabs">
+          <button class="clt on" onclick="cltSwitch(this,'text-${c.id}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Écrite</button>
+          ${c.letter_audio?`<button class="clt" onclick="cltSwitch(this,'audio-${c.id}')"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>Audio</button>`:''}
+          ${c.letter_video?`<button class="clt" onclick="cltSwitch(this,'video-${c.id}')"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Vidéo</button>`:''}
+        </div>
+        <div class="cand-letter-body">
+          <div class="cand-letter-text" id="text-${c.id}">${c.letter_text}</div>
+          <div class="cand-letter-media" id="audio-${c.id}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="clm-wave">${Array(28).fill(0).map(()=>`<div class="clm-bar" style="height:${20+Math.random()*70}%"></div>`).join('')}</div></div>
+          <div class="cand-letter-media" id="video-${c.id}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div style="flex:1;font-size:12px;color:var(--ink3)">Pitch vidéo · 48 sec</div></div>
+        </div>
+      </div>
+      <div class="cand-ai"><div class="cand-ai-t sf"><span class="chip-dot" style="background:var(--b)"></span>Analyse IA</div><div class="cand-ai-text">${c.ai}</div></div>
+      <div class="cand-predict">${c.predict.map(p=>`<div class="cand-predict-box"><div class="cand-predict-v sf">${p.v}</div><div class="cand-predict-l">${p.l}</div></div>`).join('')}</div>
+    </div>`;
+  const avatarEl = d.querySelector('.cand-avatar');
+  if (c.avatar_url) {
+    const img = document.createElement('img');
+    img.src = c.avatar_url;
+    img.alt = c.name || 'Candidat';
+    avatarEl.appendChild(img);
+  } else {
+    avatarEl.textContent = c.initiales || 'SF';
+  }
+  attachDrag(d, c); return d;
+}
+function cltSwitch(btn, id) {
+  const card = btn.closest('.cand-letter');
+  card.querySelectorAll('.clt').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+  card.querySelectorAll('.cand-letter-text,.cand-letter-media').forEach(x => x.style.display = 'none');
+  document.getElementById(id).style.display = id.startsWith('text') ? 'block' : 'flex';
+}
+function attachDrag(card, cand) {
+  let sx=0,sy=0,cx=0,cy=0,on=false;
+  const top = () => document.querySelector('#deck-cards .swipe-card:last-child');
+  const isInteractive = e => e.target.closest('.clt,.clm-play,.cand-letter-tabs,.cand-doc');
+  const point = e => e.touches?.[0] || e.changedTouches?.[0] || e;
+  const s = e => { if (card !== top() || isInteractive(e)) return; if (e.cancelable) e.preventDefault(); on = true; const p = point(e); sx=p.clientX; sy=p.clientY; cx=0; cy=0; card.style.transition='none'; };
+  const m = e => {
+    if (!on) return;
+    if (e.cancelable) e.preventDefault();
+    const p=point(e); cx=p.clientX-sx; cy=p.clientY-sy;
+    const up = cy < -45 && Math.abs(cy) > Math.abs(cx) * .7;
+    card.style.transform=`translate(${cx}px,${up?cy:cy*.35}px) rotate(${cx*.065}deg)`;
+    const lk=card.querySelector('.sw-lbl.like'),ps=card.querySelector('.sw-lbl.pass'),su=card.querySelector('.sw-lbl.super');
+    if(up){su.style.opacity=Math.min((-cy-45)/75,1);lk.style.opacity=0;ps.style.opacity=0}
+    else if(cx>40){lk.style.opacity=Math.min((cx-40)/65,1);ps.style.opacity=0;su.style.opacity=0}
+    else if(cx<-40){ps.style.opacity=Math.min((-cx-40)/65,1);lk.style.opacity=0;su.style.opacity=0}
+    else{lk.style.opacity=0;ps.style.opacity=0;su.style.opacity=0}
+  };
+  const e2 = e => { if (!on) return; on=false; if (e.cancelable) e.preventDefault(); card.style.transition='transform .35s ease,opacity .3s ease'; const up = cy < -82 && Math.abs(cy) > Math.abs(cx) * .7; if(up)fly(card,'u',cand);else if(cx>82)fly(card,'r',cand);else if(cx<-82)fly(card,'l',cand);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
+  card.addEventListener('mousedown',s); card.addEventListener('touchstart',s,{passive:false});
+  window.addEventListener('mousemove',m); window.addEventListener('touchmove',m,{passive:false});
+  window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2); window.addEventListener('touchcancel',e2);
+}
+async function fly(card, dir, cand) {
+  if (!card || !cand) return;
+  card.classList.add('swiping');
+  card.style.transition='transform .55s cubic-bezier(.22,.8,.25,1),opacity .5s ease';
+  card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0);
+  if (dir==='r') {
+    card.querySelector('.sw-lbl.like').style.opacity=1;
+    card.style.transform='translateX(110vw) rotate(28deg)';
+    await doSwipe('like',cand);
+  }
+  else if (dir==='l') {
+    card.querySelector('.sw-lbl.pass').style.opacity=1;
+    card.style.transform='translateX(-110vw) rotate(-28deg)';
+    await doSwipe('pass',cand);
+  }
+  else {
+    card.querySelector('.sw-lbl.super').style.opacity=1;
+    card.style.transform='translateY(-110vh) scale(.96)';
+    await doSwipe('super',cand);
+  }
+  card.style.opacity='0';
+  setTimeout(() => { card.remove(); DECK_IDX++; renderDeck(); }, 380);
+}
+async function doSwipe(action, cand) {
+  rememberSeenCandidate(cand);
+  try {
+    const r = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
+    if (r.match) showMatch(cand, r);
+  } catch(e) { console.error(e); }
+}
+function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', CANDS[DECK_IDX]); }
+function showMatch(cand, r) {
+  document.getElementById('ov-co').textContent = ((USER.entreprise||'?')[0]+(USER.entreprise||'??')[1]).toUpperCase();
+  document.getElementById('ov-cand').textContent = cand.initiales === '?' ? cand.name.slice(0,2).toUpperCase() : cand.initiales;
+  document.getElementById('ov-title').textContent = 'Match confirmé';
+  document.getElementById('ov-sub').innerHTML = `Avec <strong>${cand.name}</strong> · Score ${cand.m}%`;
+  document.getElementById('ov').classList.add('on');
+}
+function closeOv(e) { if (e.target===document.getElementById('ov')||e.target.closest('.sh-actions')) document.getElementById('ov').classList.remove('on'); }
+
+// ------------------------------------------------------------
+// MATCHING ENGINE
+// ------------------------------------------------------------
+const MATCHING_CRITERIA = [
+  { key:'closing', label:'Closing' }, { key:'cycle', label:'Cycle de vente court' },
+  { key:'saas', label:'Expérience SaaS' }, { key:'resilience', label:'Résilience' },
+  { key:'salestech', label:'Maîtrise SalesTech' }, { key:'outbound', label:'Outbound' },
+  { key:'drive', label:'Drive et autonomie' }
+];
+function renderMatching() {
+  document.getElementById('matching-criteria').innerHTML = MATCHING_CRITERIA.map(c => `
+    <div class="me-row">
+      <div class="me-row-hd"><span class="me-l">${c.label}</span><span class="me-v sf" id="mev-${c.key}">${MATCHING[c.key]}%</span></div>
+      <input type="range" class="me-inp" min="0" max="100" value="${MATCHING[c.key]}" oninput="updateMatching('${c.key}', this.value)">
+    </div>`).join('');
+  recomputeMatch();
+}
+function updateMatching(key, val) {
+  MATCHING[key] = parseInt(val);
+  document.getElementById('mev-' + key).textContent = val + '%';
+  recomputeMatch();
+}
+async function recomputeMatch() {
+  try {
+    const { count } = await api('POST', '/recruteurs/matching-count', { matching: MATCHING });
+    document.getElementById('me-count').textContent = count;
+  } catch(e) {
+    document.getElementById('me-count').textContent = '—';
+  }
+}
+async function saveMatchingAndSource() {
+  setBtn('btn-matching-save', true);
+  try {
+    await api('PUT', '/recruteurs/profil', { matching: MATCHING });
+    toast('Critères appliqués');
+    go('swipe');
+  } catch(e) {
+    toast(e.message || 'Erreur matching');
+  } finally {
+    setBtn('btn-matching-save', false, 'Appliquer et sourcer');
+  }
+}
+
+// ------------------------------------------------------------
+// QUESTIONS DE PRÉ-QUALIFICATION
+// ------------------------------------------------------------
+const QUESTION_BANK = [
+  { id:'q1', text:'Quel est votre cycle de vente moyen sur un deal type ?', cat:'Expérience' },
+  { id:'q2', text:'Décrivez votre meilleur deal et comment vous l\'avez signé.', cat:'Performance' },
+  { id:'q3', text:'Quel est votre TJM ou votre prétention salariale ?', cat:'Rémunération' },
+  { id:'q4', text:'Êtes-vous disponible immédiatement ? Sinon, sous quel délai ?', cat:'Disponibilité' },
+  { id:'q5', text:'Quels outils SalesTech maîtrisez-vous (CRM, séquenceurs) ?', cat:'Compétences' },
+  { id:'q6', text:'Comment gérez-vous un prospect qui ne répond plus ?', cat:'Méthode' },
+  { id:'q7', text:'Préférez-vous l\'inbound ou l\'outbound ? Pourquoi ?', cat:'Profil' },
+  { id:'q8', text:'Quelle est votre expérience dans notre secteur d\'activité ?', cat:'Secteur' },
+  { id:'q9', text:'Qu\'est-ce qui vous motive à changer de poste maintenant ?', cat:'Motivation' },
+  { id:'q10', text:'Comment structurez-vous un premier call de découverte ?', cat:'Méthode' },
+];
+async function loadQuestions() {
+  try {
+    const saved = await api('GET', '/recruteurs/questions');
+    SELECTED_QUESTIONS = saved.questions || [];
+  } catch(e) {}
+  renderQuestions();
+}
+function renderQuestions() {
+  document.getElementById('questions-list').innerHTML = QUESTION_BANK.map(q => `
+    <div class="q-item${SELECTED_QUESTIONS.includes(q.text)?' on':''}" onclick="toggleQuestion('${q.id}')">
+      <div class="q-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="q-text">${q.text}<div class="q-cat">${q.cat}</div></div>
+    </div>`).join('');
+  updateQCount();
+}
+function toggleQuestion(id) {
+  const q = QUESTION_BANK.find(x => x.id === id);
+  if (SELECTED_QUESTIONS.includes(q.text)) SELECTED_QUESTIONS = SELECTED_QUESTIONS.filter(t => t !== q.text);
+  else { if (SELECTED_QUESTIONS.length >= 5) { toast('Maximum 5 questions'); return; } SELECTED_QUESTIONS.push(q.text); }
+  renderQuestions();
+}
+function addCustomQuestion() {
+  const field = document.getElementById('q-custom');
+  const text = field.value.trim();
+  if (!text) return;
+  if (SELECTED_QUESTIONS.length >= 5) { toast('Maximum 5 questions'); return; }
+  SELECTED_QUESTIONS.push(text);
+  field.value = '';
+  updateQCount();
+  toast('Question ajoutée');
+}
+function updateQCount() {
+  document.getElementById('q-count').textContent = SELECTED_QUESTIONS.length + ' question' + (SELECTED_QUESTIONS.length > 1 ? 's' : '') + ' sélectionnée' + (SELECTED_QUESTIONS.length > 1 ? 's' : '') + ' / 5';
+}
+async function saveQuestions() {
+  try {
+    await api('PUT', '/recruteurs/profil', { questions: SELECTED_QUESTIONS });
+    toast('Questions enregistrees');
+    go('dashboard');
+  } catch(e) { toast('Erreur Supabase : ajoutez questions jsonb dans recruteurs'); }
+}
+
+// ═══════════════════════════════════════════════════════════// PIPELINE KANBAN
+// ------------------------------------------------------------
+const PIPE_STAGES = [
+  { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
+  { key:'contacte', label:'Contactés', color:'var(--a)' },
+  // Entretien et Offre masqués : le backend ne les alimente pas encore (a reactiver avec la logique correspondante)
+];
+let PIPELINE = {};
+async function loadPipeline() {
+  document.getElementById('pipe-cols').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  const offersList = document.getElementById('pipeline-offers-list');
+  if (offersList) offersList.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    const [pipeline, offers] = await Promise.all([
+      api('GET', '/recruteurs/pipeline'),
+      api('GET', '/offres/mine')
+    ]);
+    PIPELINE = pipeline;
+    renderPipelineOffers(offers);
+    renderPipeline();
+  } catch(e) {
+    if (offersList) offersList.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+    document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Erreur</div>';
+  }
+}
+function renderPipeline() {
+  const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
+  if (!total) {
+    document.getElementById('pipe-cols').innerHTML = `
+      <div class="empty-state">
+        <b>Aucune candidature reçue</b>
+        Les candidats qui postulent à vos offres apparaîtront ici.
+      </div>`;
+    return;
+  }
+  PIPELINE_CARDS = {};
+  PIPE_STAGES.forEach(stage => (PIPELINE[stage.key] || []).forEach(c => { PIPELINE_CARDS[c.id] = c; }));
+  document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => `
+    <div class="pipe-col">
+      <div class="pipe-col-hd">
+        <div class="pipe-col-t sf"><span class="pipe-dot" style="background:${stage.color}"></span>${stage.label}</div>
+        <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
+      </div>
+      ${(PIPELINE[stage.key]||[]).map(c => `
+        <div class="pipe-card" draggable="false" ondragstart="return false" onclick="openPipelineCandidate('${c.id}')" style="cursor:pointer">
+          <div class="pipe-card-top">
+            <div class="pc-av" style="background:${c.bg}">${c.av}</div>
+            <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
+            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div>
+          </div>
+          <div class="pc-foot">
+            <div class="pc-tags">${c.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+let PIPELINE_CARDS = {};
+let CURRENT_PIPELINE_CANDIDATE = null;
+
+function openPipelineCandidate(candidatureId) {
+  const c = PIPELINE_CARDS[candidatureId];
+  if (!c) return;
+  CURRENT_PIPELINE_CANDIDATE = c;
+  document.getElementById('cov-av').textContent = c.av;
+  document.getElementById('cov-av').style.background = c.bg;
+  document.getElementById('cov-name').textContent = c.name;
+  document.getElementById('cov-role').textContent = c.role;
+  document.getElementById('cov-score').textContent = c.score;
+  document.getElementById('cov-tags').innerHTML = c.tags.map(t => `<span class="pc-tag">${t}</span>`).join('');
+  document.getElementById('cov-contact-btn').textContent = c.discussed ? 'Ouvrir la conversation' : 'Contacter le candidat';
+  document.getElementById('cand-ov').classList.add('on');
+}
+function closeCandOv(e) {
+  const overlay = document.getElementById('cand-ov');
+  if (e.target === overlay || e.target.closest('.sh-actions')) overlay.classList.remove('on');
+}
+async function contactFromPipeline() {
+  if (!CURRENT_PIPELINE_CANDIDATE) return;
+  const btn = document.getElementById('cov-contact-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Un instant…';
+  try {
+    const thread = await api('POST', '/recruteurs/pipeline/contact', { candidature_id: CURRENT_PIPELINE_CANDIDATE.id });
+    document.getElementById('cand-ov').classList.remove('on');
+    go('messages');
+    await loadMessages();
+    openThread(thread.id);
+  } catch(e) {
+    toast(e.message || 'Impossible de contacter ce candidat');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+// ------------------------------------------------------------
+// POST OFFRE
+// ------------------------------------------------------------
+function ofPick(btn, varName, val) { btn.parentElement.querySelectorAll('.form-chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); OF_TYPE = val; }
+function ofTag(btn, tag) { btn.classList.toggle('on'); if(OF_TAGS.includes(tag)) OF_TAGS=OF_TAGS.filter(t=>t!==tag); else OF_TAGS.push(tag); }
+async function postOffre() {
+  const titre = document.getElementById('of-titre').value.trim();
+  const lieu = document.getElementById('of-lieu').value.trim();
+  const salaire = document.getElementById('of-salaire').value.trim();
+  const desc = document.getElementById('of-desc').value.trim();
+  const auto = document.getElementById('of-auto').checked;
+  if (!titre || !OF_TYPE || !lieu) { showErr('post-err', 'Titre, type et lieu sont requis'); return; }
+  setBtn('btn-post-offre', true);
+  try {
+    await api('POST', '/offres', { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut:'active' });
+    toast('Offre publiée !');
+    go('pipeline');
+  } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, "Publier l'offre"); }
+}
+
+async function loadOffers() {
+  const list = document.getElementById('offers-list');
+  list.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    const offers = await api('GET', '/offres/mine');
+    renderOffers(offers);
+  } catch(e) {
+    list.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+  }
+}
+function offerStatusLabel(status = '') {
+  const value = String(status || 'active').toLowerCase();
+  if (value === 'active') return 'Active';
+  if (value === 'paused') return 'Pause';
+  if (value === 'inactive') return 'Inactive';
+  return status || 'Active';
+}
+function offerTags(tags) {
+  if (Array.isArray(tags)) return tags;
+  if (!tags) return [];
+  return String(tags).split(',').map(t => t.trim()).filter(Boolean);
+}
+async function deleteOffer(id) {
+  if (!id) return;
+  if (!confirm('Supprimer cette offre ?')) return;
+  try {
+    await api('DELETE', '/offres/' + encodeURIComponent(id));
+    toast('Offre supprimée');
+    if (document.getElementById('p-pipeline')?.classList.contains('on')) loadPipeline();
+    else loadOffers();
+  } catch(e) {
+    toast(e.message || 'Suppression impossible');
+  }
+}
+function renderPipelineOffers(offers = []) {
+  const activeOffers = offers.filter(o => String(o.statut || 'active').toLowerCase() === 'active');
+  renderOffers(activeOffers, 'pipeline-offers-list', 'Aucune offre active pour le moment.');
+}
+function renderOffers(offers = [], targetId = 'offers-list', emptyText = 'Aucune offre publiée pour le moment.') {
+  const list = document.getElementById(targetId);
+  if (!list) return;
+  if (!offers.length) {
+    list.innerHTML = `
+      <div class="loading-state">
+        ${emptyText}<br><br>
+        <button class="btn bp" onclick="go('post-offre')">Publier ma première offre</button>
+      </div>`;
+    return;
+  }
+  list.innerHTML = offers.map(o => {
+    const status = String(o.statut || 'active').toLowerCase();
+    const tags = offerTags(o.tags);
+    return `
+      <div class="offer-card">
+        <div class="offer-card-hd">
+          <div>
+            <div class="offer-title">${esc(o.titre || 'Offre sans titre')}</div>
+            <div class="offer-meta" style="margin-top:8px">
+              ${o.type ? `<span>${esc(o.type)}</span>` : ''}
+              ${o.lieu ? `<span>${esc(o.lieu)}</span>` : ''}
+              ${o.salaire ? `<span>${esc(o.salaire)}</span>` : ''}
+              ${o.created_at ? `<span>Publiée le ${esc(shortDate(o.created_at))}</span>` : ''}
+            </div>
+          </div>
+          <div class="offer-status ${esc(status)}">${esc(offerStatusLabel(status))}</div>
+        </div>
+        ${tags.length ? `<div class="offer-tags">${tags.map(t => `<span class="offer-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        <div class="offer-actions">
+          <button class="btn bg2 bsm" onclick="go('pipeline')">Voir candidatures</button>
+          <button class="btn bo bsm" onclick="deleteOffer('${esc(o.id)}')">Supprimer</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ------------------------------------------------------------
+// MESSAGES
+// ------------------------------------------------------------
+function setMessageBadges(unreadCount) {
+  const hasUnread = Number(unreadCount || 0) > 0;
+  ['msg-dot', 'msg-dot-nav'].forEach(id => {
+    const dot = document.getElementById(id);
+    if (dot) dot.style.display = hasUnread ? 'block' : 'none';
   });
-});
-
-router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => {
+  document.title = hasUnread ? 'Nouveaux messages - SalesForge' : 'Espace recruteur - SalesForge';
+}
+async function refreshMessageBadge() {
+  if (!USER) return;
   try {
-    const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { candidat_id, action } = req.body;
-    if (!candidat_id) return res.status(400).json({ error: 'candidat_id requis' });
-    if (!['like', 'super', 'pass'].includes(action)) {
-      return res.status(400).json({ error: 'Action de swipe invalide' });
+    const threads = await api('GET', '/messages/threads');
+    setMessageBadges(threads.filter(t => t.ur).length);
+  } catch(e) {}
+}
+async function loadMessages() {
+  if (!USER) return;
+  try {
+    THREADS = await api('GET', '/messages/threads');
+    setMessageBadges(THREADS.filter(t=>t.ur).length);
+    document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t => `
+      <div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')">
+        <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
+        <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
+        ${t.ur?'<div class="ur-badge">Nouveau</div>':''}
+      </div>`).join('') : `<div class="msg-welcome">
+      <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <h2 class="sf">Bienvenue sur SalesForge recrutement</h2>
+      <div class="msg-welcome-sub">Des commerciaux évalués, pas des CV.</div>
+      <div class="msg-welcome-text">Cette messagerie s'ouvrira dès qu'un candidat vous like en retour ou postule à une de vos offres.</div>
+      <button class="btn bp" onclick="go('post-offre')">Publier ma première offre</button>
+    </div>`;
+  } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
+}
+async function openThread(id) {
+  const thread = THREADS.find(t => String(t.id) === String(id));
+  if (!thread) return;
+  ACTIVE_THREAD = thread;
+  document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
+  document.getElementById('chat-sub').textContent = thread.prev || 'Match SalesForge';
+  document.getElementById('chat-panel').classList.add('on');
+  const chatBody = document.getElementById('chat-body');
+  chatBody.classList.remove('has-messages');
+  chatBody.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  await loadThreadMessages();
+  document.getElementById('chat-input').focus();
+}
+
+function subscribeToMessages(matchId) {
+  if (!supabaseClient) return;
+  if (REALTIME_CHANNEL) {
+    REALTIME_CHANNEL.unsubscribe();
+    REALTIME_CHANNEL = null;
+  }
+
+  const matchIds = [...new Set((ACTIVE_THREAD?.match_ids?.length ? ACTIVE_THREAD.match_ids : [matchId]).filter(Boolean))];
+  if (!matchIds.length) return;
+
+  // Le backend peut router un nouveau message vers un match_id "canonique" différent
+  // de celui affiché (voir ensureMatchAccess côté backend) -> on écoute tous les match_ids liés.
+  const filter = matchIds.length > 1
+    ? `match_id=in.(${matchIds.join(',')})`
+    : `match_id=eq.${matchIds[0]}`;
+
+  REALTIME_CHANNEL = supabaseClient
+    .channel('messages-rec-' + matchIds.join('-'))
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter
+    }, () => {
+      loadThreadMessages();
+    })
+    .subscribe();
+}
+
+async function loadThreadMessages() {
+  if (!ACTIVE_THREAD?.match_id) {
+    const body = document.getElementById('chat-body');
+    body.classList.remove('has-messages');
+    body.innerHTML = '<div class="chat-empty">Cette conversation n’est pas encore reliée à un match actif.</div>';
+    return;
+  }
+  try {
+    const messages = await api('GET', '/messages/thread/' + ACTIVE_THREAD.match_id + '?t=' + Date.now());
+    renderThreadMessages(messages);
+    subscribeToMessages(ACTIVE_THREAD.match_id);
+    await loadMessages();
+  } catch(e) {
+    const body = document.getElementById('chat-body');
+    body.classList.remove('has-messages');
+    body.innerHTML = '<div class="chat-empty">Impossible de charger la conversation.</div>';
+  }
+}
+function renderThreadMessages(messages) {
+  const body = document.getElementById('chat-body');
+  body.classList.toggle('has-messages', messages.length > 0);
+  body.innerHTML = messages.length ? messages.map(m => {
+    const mine = String(m.sender_id) === String(USER?.id || USER?.user_id);
+    const receipt = mine ? `<div class="bubble-receipt">${m.lu ? 'Lu' : 'Envoyé'}</div>` : '';
+    return `<div class="bubble ${mine ? 'mine' : 'theirs'}">${esc(m.contenu || '')}<div class="bubble-time">${esc(shortDate(m.created_at))}</div>${receipt}</div>`;
+  }).join('') : '<div class="chat-empty">Aucun message pour le moment. Envoyez le premier message au candidat.</div>';
+  body.scrollTop = body.scrollHeight;
+}
+function closeThread() {
+  ACTIVE_THREAD = null;
+  document.getElementById('chat-panel').classList.remove('on');
+}
+async function sendThreadMessage(event) {
+  event.preventDefault();
+  if (!ACTIVE_THREAD) return;
+  const input = document.getElementById('chat-input');
+  const contenu = input.value.trim();
+  if (!contenu) return;
+  input.value = '';
+  try {
+    await api('POST', '/messages/send', { receiver_id: ACTIVE_THREAD.receiver_id, match_id: ACTIVE_THREAD.match_id, contenu });
+    await loadThreadMessages();
+  } catch(e) {
+    input.value = contenu;
+    toast(e.message || 'Erreur envoi message');
+  }
+}
+
+// ------------------------------------------------------------
+// PRICING
+// ------------------------------------------------------------
+const PLANS = {
+  month:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
+    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Enterprise',f:'Recrutement à volume',p:349,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Passer Enterprise'},
+    {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+  ],
+  year:[
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
+    {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
+    {n:'Enterprise',f:'Recrutement à volume',p:279,old:349,u:'/mois',h:'Facturé 3 348 €/an · -840 €',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Économiser 20%'},
+    {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+  ]
+};
+async function selectPlan(plan, billing) {
+  try {
+    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
+    const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
+    // Envoyer l'URL au parent pour éviter le problème iframe
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
+    } else {
+      window.location.href = url;
     }
+  } catch(e) { toast('Erreur paiement'); }
+}
+function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
+function planKey(plan) {
+  return { 'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
+}
+function isCurrentPlan(plan) {
+  return CURRENT_PLAN && planKey(plan) === CURRENT_PLAN;
+}
+async function loadCurrentPlan() {
+  try {
+    const abonnement = await api('GET', '/abonnements/current?t=' + Date.now());
+    CURRENT_PLAN = abonnement?.statut === 'actif' ? String(abonnement.plan || '').toLowerCase() : '';
+  } catch(e) {
+    CURRENT_PLAN = '';
+  }
+}
+function renderPlans() {
+  document.getElementById('plans-row').innerHTML = PLANS[BILLING].map(p => {
+    const active = isCurrentPlan(p.n);
+    return `
+    <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
+      ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus choisi</div>':''}
+      <div class="pc-name sf">${p.n}</div><div class="pc-f">${p.f}</div>
+      <div class="pc-pr">${p.old?`<span class="pc-old">${p.old}€</span>`:''}<span class="pc-p sf">${p.p}€</span><span class="pc-u">${p.u}</span></div>
+      <div class="pc-h">${p.h}</div>
+      <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
+      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${active?'Offre active':p.cta}</button>
+    </div>`;
+  }).join('');
+}
 
-    const meta = recruteur.matching?.meta || {};
-    const swipedCandidateIds = appendUnique(meta.swiped_candidate_ids || [], candidat_id);
-    const likedCandidateIds = action === 'pass'
-      ? removeValue(meta.liked_candidate_ids || [], candidat_id)
-      : appendUnique(meta.liked_candidate_ids || [], candidat_id);
-    const passedCandidateIds = action === 'pass'
-      ? appendUnique(meta.passed_candidate_ids || [], candidat_id)
-      : removeValue(meta.passed_candidate_ids || [], candidat_id);
-    const { error: seenError } = await supabase
-      .from('recruteurs')
-      .update({
-        matching: mergeMatching(recruteur.matching, undefined, {
-          swiped_candidate_ids: swipedCandidateIds,
-          liked_candidate_ids: likedCandidateIds,
-          passed_candidate_ids: passedCandidateIds,
-        }),
-      })
-      .eq('id', recruteur.id);
-    if (seenError) console.warn('Swipe vu non persiste:', seenError.message || seenError);
+const RECRUTEUR_PAGES = ['dashboard', 'swipe', 'matching', 'questions', 'pipeline', 'offres', 'post-offre', 'messages', 'settings', 'pricing'];
 
-    if (action === 'pass') return res.json({ match: false });
+function pageFromHash() {
+  const hash = normalizeRecruiterPage(location.hash.slice(1));
+  return RECRUTEUR_PAGES.includes(hash) ? hash : null;
+}
 
-    const score = action === 'super' ? 95 : 85;
-    const { data: offres } = await supabase
-      .from('offres')
-      .select('id')
-      .eq('recruteur_id', recruteur.id);
-    const offreIds = (offres || []).map((row) => row.id);
-    if (!offreIds.length) return res.status(400).json({ error: 'Publiez une offre avant de matcher un candidat' });
+// ------------------------------------------------------------
+// INIT
+// ------------------------------------------------------------
+if (!TOKEN && localStorage.getItem('sf_rec_token')) TOKEN = localStorage.getItem('sf_rec_token');
+if (!USER && localStorage.getItem('sf_rec_user')) {
+  try { USER = JSON.parse(localStorage.getItem('sf_rec_user')); } catch(e) {}
+}
 
-    const { data: candidat, error: candidatError } = await supabase
-      .from('candidats')
-      .select('id, swipes_meta')
-      .eq('id', candidat_id)
-      .maybeSingle();
-    if (candidatError) return res.status(400).json({ error: candidatError });
-    if (!candidat) return res.status(404).json({ error: 'Candidat introuvable' });
+const startParam = new URLSearchParams(location.search).get('start');
 
-    const candidateLikedOfferId = firstIntersection(candidat.swipes_meta?.liked_offer_ids || [], offreIds);
-    const targetOfferId = candidateLikedOfferId || offreIds[0];
-    await upsertCandidature(candidat_id, targetOfferId, action);
+if (TOKEN && USER) {
+  api('GET', '/recruteurs/stats?t=' + Date.now())
+    .then(async () => { HAS_PLAN = true; await loadCurrentPlan(); })
+    .catch(async () => { HAS_PLAN = false; await loadCurrentPlan(); })
+    .finally(() => {
+      go(startParam || getLastPage());
+    });
+} else {
+  goLanding();
+}
 
-    const { data: existingMatches, error: existingError } = offreIds.length
-      ? await supabase
-        .from('matchs')
-        .select('id, created_at')
-        .eq('candidat_id', candidat_id)
-        .in('offre_id', offreIds)
-        .order('created_at', { ascending: false })
-      : { data: [], error: null };
-    if (existingError) return res.status(400).json({ error: existingError });
-
-    const existingMatch = existingMatches?.[0];
-    if (!existingMatch && !candidateLikedOfferId) {
-      return res.json({ match: false, candidature_sent: true });
-    }
-
-    const matchQuery = existingMatch
-      ? supabase.from('matchs').update({ score_match: score, score_compat: score }).eq('id', existingMatch.id)
-      : supabase.from('matchs').insert({
-        candidat_id,
-        offre_id: candidateLikedOfferId,
-        score_match: score,
-        score_compat: score,
-      });
-
-    const { data: match, error } = await matchQuery
-      .select('*')
-      .single();
-
-    if (error) return res.status(400).json({ error });
-    res.json({ match: true, ...match });
-  } catch (error) {
-    publicError(res, error);
+window.addEventListener('popstate', (e) => {
+  if (TOKEN && USER) {
+    const page = e.state?.page || pageFromHash() || getLastPage();
+    go(page);
   }
 });
-
-module.exports = router;
+</script>
+</body>
+</html>
