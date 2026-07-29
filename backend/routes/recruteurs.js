@@ -1603,7 +1603,8 @@ async function saveQuestions() {
 const PIPE_STAGES = [
   { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
   { key:'contacte', label:'Contactés', color:'var(--a)' },
-  // Entretien et Offre masqués : le backend ne les alimente pas encore (a reactiver avec la logique correspondante)
+  { key:'entretien', label:'Entretien', color:'var(--pu)' },
+  { key:'offre', label:'Offre', color:'var(--g)' },
 ];
 let PIPELINE = {};
 async function loadPipeline() {
