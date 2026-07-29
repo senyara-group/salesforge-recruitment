@@ -349,6 +349,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .mlink svg{width:12px;height:12px;stroke:currentColor;fill:currentColor;stroke-width:2}
 .match-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;margin-bottom:4px}
 .match-sub{font-size:13px;color:var(--ink3);line-height:1.6}
+.match-stats{display:flex;justify-content:center;margin-bottom:12px}
+.mstat{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 22px;text-align:center}
+.mstat-v{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;color:var(--b)}
+.mstat-l{font-size:10px;color:var(--mu);margin-top:2px;font-weight:600;text-transform:uppercase}
+.cov-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:16px}
 .q-ask-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
 .q-ask-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px}
 .q-ask-list{display:flex;flex-direction:column;gap:5px}
@@ -1022,6 +1027,25 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
+<div class="overlay" id="cand-ov" onclick="closeCandOv(event)">
+  <div class="bottom-sheet">
+    <div class="sh-handle"></div>
+    <div class="match-hd">
+      <div class="mco" id="cov-av" style="background:var(--b);margin:0 auto 14px">--</div>
+      <div class="match-title sf" id="cov-name">—</div>
+      <div class="match-sub" id="cov-role">—</div>
+    </div>
+    <div class="match-stats">
+      <div class="mstat"><div class="mstat-v sf" id="cov-score">—</div><div class="mstat-l">Score ADN</div></div>
+    </div>
+    <div class="cov-tags" id="cov-tags"></div>
+    <div class="sh-actions">
+      <button class="btn bp blk" id="cov-contact-btn" onclick="contactFromPipeline()">Contacter le candidat</button>
+      <button class="btn bo blk" onclick="closeCandOv({target:document.getElementById('cand-ov')})">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast">Action réalisée</div>
 <script>
 // ------------------------------------------------------------
@@ -1579,8 +1603,7 @@ async function saveQuestions() {
 const PIPE_STAGES = [
   { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
   { key:'contacte', label:'Contactés', color:'var(--a)' },
-  { key:'entretien', label:'Entretien', color:'var(--pu)' },
-  { key:'offre', label:'Offre', color:'var(--g)' },
+  // Entretien et Offre masqués : le backend ne les alimente pas encore (a reactiver avec la logique correspondante)
 ];
 let PIPELINE = {};
 async function loadPipeline() {
@@ -1610,6 +1633,8 @@ function renderPipeline() {
       </div>`;
     return;
   }
+  PIPELINE_CARDS = {};
+  PIPE_STAGES.forEach(stage => (PIPELINE[stage.key] || []).forEach(c => { PIPELINE_CARDS[c.id] = c; }));
   document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => `
     <div class="pipe-col">
       <div class="pipe-col-hd">
@@ -1617,7 +1642,7 @@ function renderPipeline() {
         <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
       </div>
       ${(PIPELINE[stage.key]||[]).map(c => `
-        <div class="pipe-card" draggable="false" ondragstart="return false">
+        <div class="pipe-card" draggable="false" ondragstart="return false" onclick="openPipelineCandidate('${c.id}')" style="cursor:pointer">
           <div class="pipe-card-top">
             <div class="pc-av" style="background:${c.bg}">${c.av}</div>
             <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
@@ -1628,6 +1653,46 @@ function renderPipeline() {
           </div>
         </div>`).join('')}
     </div>`).join('');
+}
+
+let PIPELINE_CARDS = {};
+let CURRENT_PIPELINE_CANDIDATE = null;
+
+function openPipelineCandidate(candidatureId) {
+  const c = PIPELINE_CARDS[candidatureId];
+  if (!c) return;
+  CURRENT_PIPELINE_CANDIDATE = c;
+  document.getElementById('cov-av').textContent = c.av;
+  document.getElementById('cov-av').style.background = c.bg;
+  document.getElementById('cov-name').textContent = c.name;
+  document.getElementById('cov-role').textContent = c.role;
+  document.getElementById('cov-score').textContent = c.score;
+  document.getElementById('cov-tags').innerHTML = c.tags.map(t => `<span class="pc-tag">${t}</span>`).join('');
+  document.getElementById('cov-contact-btn').textContent = c.discussed ? 'Ouvrir la conversation' : 'Contacter le candidat';
+  document.getElementById('cand-ov').classList.add('on');
+}
+function closeCandOv(e) {
+  const overlay = document.getElementById('cand-ov');
+  if (e.target === overlay || e.target.closest('.sh-actions')) overlay.classList.remove('on');
+}
+async function contactFromPipeline() {
+  if (!CURRENT_PIPELINE_CANDIDATE) return;
+  const btn = document.getElementById('cov-contact-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Un instant…';
+  try {
+    const thread = await api('POST', '/recruteurs/pipeline/contact', { candidature_id: CURRENT_PIPELINE_CANDIDATE.id });
+    document.getElementById('cand-ov').classList.remove('on');
+    go('messages');
+    await loadMessages();
+    openThread(thread.id);
+  } catch(e) {
+    toast(e.message || 'Impossible de contacter ce candidat');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 // ------------------------------------------------------------
