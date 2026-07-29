@@ -29,6 +29,24 @@ button,input,textarea,select{font-family:inherit}
 .ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:.15s;position:relative}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
 .nd{position:absolute;top:-5px;right:-14px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.notif-wrap{position:relative}
+.notif-panel{display:none;position:absolute;top:44px;right:0;width:320px;max-width:90vw;background:var(--w);border:1px solid var(--bd);border-radius:14px;box-shadow:0 14px 34px rgba(9,20,34,.16);z-index:120;overflow:hidden}
+.notif-panel.on{display:block}
+.notif-panel-hd{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.notif-panel-t{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
+.notif-panel-clear{font-size:11px;color:var(--b);font-weight:700;cursor:pointer;background:none;border:none}
+.notif-list{max-height:360px;overflow-y:auto}
+.notif-item{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:.15s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:var(--bs)}
+.notif-ico{width:32px;height:32px;border-radius:9px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.notif-item.unread .notif-ico{background:var(--b);color:#fff}
+.notif-b{flex:1;min-width:0}
+.notif-t{font-size:12px;font-weight:700;color:var(--ink)}
+.notif-s{font-size:12px;color:var(--ink3);margin-top:1px;line-height:1.4}
+.notif-time{font-size:10px;color:var(--mu);margin-top:3px;font-weight:600}
+.notif-empty{padding:28px 14px;text-align:center;font-size:12px;color:var(--mu)}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
@@ -960,6 +978,13 @@ button,input,textarea,select{font-family:inherit}
 <div class="topbar" id="topbar" style="display:none">
   <div class="logo" onclick="go('home')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div></div>
   <div class="top-r">
+    <div class="ib notif-wrap">
+      <div onclick="toggleNotifPanel()"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div class="nd" id="notif-dot" style="display:none">0</div></div>
+      <div class="notif-panel" id="notif-panel">
+        <div class="notif-panel-hd"><div class="notif-panel-t sf">Notifications</div><button class="notif-panel-clear" onclick="clearNotifications()">Tout marquer lu</button></div>
+        <div class="notif-list" id="notif-list"><div class="notif-empty">Aucune notification</div></div>
+      </div>
+    </div>
     <div class="ib" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
   </div>
 </div>
@@ -1546,6 +1571,10 @@ let PROFILE_MOTIVATION_URL = '';
 let PROFILE_AVATAR_URL = '';
 let CURRENT_PLAN = 'freemium';
 let CURRENT_PLAN_LOADED = false;
+let NOTIFICATIONS = [];
+let CANDIDAT_ID = null;
+let NOTIF_CHANNEL_MSG = null;
+let NOTIF_CHANNEL_MATCH = null;
 
 let supabaseClient = null;
 
@@ -2230,16 +2259,34 @@ async function loadMessages() {
   try {
     THREADS = await api('GET', '/messages/threads');
     setMessageBadges(THREADS.filter(t=>t.ur).length);
-    document.getElementById('msgs-list').innerHTML = THREADS.length ? THREADS.map(t=>
+    if (!THREADS.length) {
+      document.getElementById('msgs-list').innerHTML = await renderMessagesWelcome();
+      return;
+    }
+    document.getElementById('msgs-list').innerHTML = THREADS.map(t=>
       `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
-    ).join('') : `<div class="msg-welcome">
+    ).join('');
+  } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
+}
+async function renderMessagesWelcome() {
+  let testDone = false;
+  try {
+    const p = await api('GET', '/candidats/profil');
+    testDone = Boolean(p.score_adn);
+  } catch(e) {}
+  const cta = testDone
+    ? `<button class="btn bp" onclick="go('swipe')">Explorer les offres</button>`
+    : `<button class="btn bp" onclick="go('test')">Compléter mon test</button>`;
+  const text = testDone
+    ? `Cette messagerie s'ouvrira à votre premier match. Continuez à explorer les offres pour augmenter vos chances.`
+    : `Cette messagerie s'ouvrira à votre premier match. Les profils au test ADN complété reçoivent 4× plus de likes.`;
+  return `<div class="msg-welcome">
       <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
       <h2 class="sf">Bienvenue sur SalesForge recrutement</h2>
       <div class="msg-welcome-sub">Ici, vous ne postulez pas. On vient vous chercher.</div>
-      <div class="msg-welcome-text">Cette messagerie s'ouvrira à votre premier match. Les profils au test ADN complété reçoivent 4× plus de likes.</div>
-      <button class="btn bp" onclick="go('test')">Compléter mon test</button>
+      <div class="msg-welcome-text">${text}</div>
+      ${cta}
     </div>`;
-  } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
 async function openThread(id, surface = 'messages') {
   if (surface === 'matchs') surface = 'messages';
@@ -2284,6 +2331,98 @@ function subscribeToMessages(matchId) {
       loadThreadMessages();
     })
     .subscribe();
+}
+
+// ------------------------------------------------------------
+// NOTIFICATIONS GLOBALES
+// ------------------------------------------------------------
+function timeAgo(date) {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(date).getTime()) / 1000));
+  if (s < 60) return 'à l\'instant';
+  if (s < 3600) return Math.floor(s / 60) + ' min';
+  if (s < 86400) return Math.floor(s / 3600) + ' h';
+  return Math.floor(s / 86400) + ' j';
+}
+function pushNotification(n) {
+  NOTIFICATIONS.unshift({ id: Date.now() + Math.random(), read: false, time: new Date(), ...n });
+  NOTIFICATIONS = NOTIFICATIONS.slice(0, 30);
+  renderNotifPanel();
+  toast(n.text);
+  updateTabTitle();
+}
+function renderNotifPanel() {
+  const unread = NOTIFICATIONS.filter(n => !n.read).length;
+  const dot = document.getElementById('notif-dot');
+  if (dot) { dot.style.display = unread ? 'flex' : 'none'; dot.textContent = unread > 9 ? '9+' : unread; }
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  list.innerHTML = NOTIFICATIONS.length ? NOTIFICATIONS.map(n => `
+    <div class="notif-item${n.read ? '' : ' unread'}" onclick="openNotification(${n.id})">
+      <div class="notif-ico">${n.icon || '🔔'}</div>
+      <div class="notif-b"><div class="notif-t">${esc(n.title)}</div><div class="notif-s">${esc(n.text)}</div><div class="notif-time">${timeAgo(n.time)}</div></div>
+    </div>`).join('') : '<div class="notif-empty">Aucune notification</div>';
+}
+function openNotification(id) {
+  const n = NOTIFICATIONS.find(x => x.id === id);
+  if (!n) return;
+  n.read = true;
+  renderNotifPanel();
+  toggleNotifPanel(false);
+  updateTabTitle();
+  if (n.page) go(n.page);
+}
+function clearNotifications() {
+  NOTIFICATIONS.forEach(n => n.read = true);
+  renderNotifPanel();
+  updateTabTitle();
+}
+function toggleNotifPanel(force) {
+  const panel = document.getElementById('notif-panel');
+  if (!panel) return;
+  const show = force !== undefined ? force : !panel.classList.contains('on');
+  panel.classList.toggle('on', show);
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.notif-wrap');
+  if (wrap && !wrap.contains(e.target)) toggleNotifPanel(false);
+});
+function updateTabTitle() {
+  const unread = NOTIFICATIONS.filter(n => !n.read).length;
+  const base = 'Espace candidat - SalesForge';
+  document.title = unread ? `(${unread}) ${base}` : base;
+}
+async function initNotifications() {
+  if (!USER) return;
+  try {
+    if (!CANDIDAT_ID) {
+      const p = await api('GET', '/candidats/profil');
+      CANDIDAT_ID = p.id;
+    }
+  } catch (e) { return; }
+  const waitForClient = () => {
+    if (!supabaseClient) { setTimeout(waitForClient, 400); return; }
+    if (NOTIF_CHANNEL_MSG) NOTIF_CHANNEL_MSG.unsubscribe();
+    if (NOTIF_CHANNEL_MATCH) NOTIF_CHANNEL_MATCH.unsubscribe();
+
+    NOTIF_CHANNEL_MSG = supabaseClient
+      .channel('notif-messages-' + USER.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${USER.id}` }, (payload) => {
+        const row = payload.new;
+        const openMatchIds = ACTIVE_THREAD?.match_ids?.length ? ACTIVE_THREAD.match_ids : (ACTIVE_THREAD?.match_id ? [ACTIVE_THREAD.match_id] : []);
+        if (document.getElementById('p-messages')?.classList.contains('on') && openMatchIds.includes(row.match_id)) return;
+        pushNotification({ type: 'message', icon: '💬', title: 'Nouveau message', text: 'Un recruteur vous a écrit', page: 'messages' });
+        refreshMessageBadge();
+      })
+      .subscribe();
+
+    NOTIF_CHANNEL_MATCH = supabaseClient
+      .channel('notif-matchs-' + CANDIDAT_ID)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matchs', filter: `candidat_id=eq.${CANDIDAT_ID}` }, () => {
+        pushNotification({ type: 'match', icon: '🔥', title: 'Nouveau match !', text: 'Un recruteur a matché avec vous', page: 'messages' });
+      })
+      .subscribe();
+  };
+  waitForClient();
 }
 
 async function loadThreadMessages() {
@@ -2619,6 +2758,7 @@ if (TOKEN && USER) {
   go(pageFromHash() || (start === 'test' ? 'test' : getLastPage()), { replaceHistory: true });
   refreshMessageBadge();
   setInterval(refreshMessageBadge, 30000);
+  initNotifications();
 } else {
   goLanding();
 }
