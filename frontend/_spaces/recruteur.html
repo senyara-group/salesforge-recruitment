@@ -388,6 +388,12 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .toast{position:fixed;top:17px;left:50%;transform:translate(-50%,-120px);background:var(--ink);color:#fff;padding:10px 17px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .toast.on{transform:translate(-50%,0)}
 
+@media (max-width:719px){
+  .deck-actions{padding:8px 18px;gap:9px}
+  .db-pass,.db-super{width:44px;height:44px}
+  .db-like{width:52px;height:52px}
+}
+
 @media (max-width:380px){
   body{font-size:13px}
   .topbar{padding:10px 12px}
@@ -480,10 +486,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard>.sec{padding:0}
   #p-dashboard .hscroll{margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
   #p-dashboard .cand-recue,#p-dashboard .alert-card{width:100%}
-  #p-swipe.page.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(560px,760px) minmax(0,1fr);gap:24px;padding:0 28px 96px;align-items:start}
-  #p-swipe .swipe-hd{grid-column:1/-1;margin:0 -28px}
-  #p-swipe .deck-area{grid-column:2;width:100%;height:min(660px,calc(100dvh - 210px));margin:18px 0 0}
-  #p-swipe .deck-actions{grid-column:2;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  #p-swipe.page.on{display:flex !important;flex-direction:column;align-items:center;padding:0 28px 96px}
+  #p-swipe .swipe-hd{width:100%;margin:0 -28px}
+  #p-swipe .deck-area{width:min(760px,100%);height:min(660px,calc(100dvh - 210px));margin:18px auto 0}
+  #p-swipe .deck-actions{width:min(760px,100%);margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
   #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
   #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
@@ -505,10 +511,16 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
   #p-dashboard .dash-hero{grid-row:span 1}
   #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #p-swipe.page.on{grid-template-columns:minmax(0,1fr) minmax(680px,900px) minmax(0,1fr);padding-left:42px;padding-right:42px}
-  #p-swipe .cand-body{display:block;column-count:2;column-gap:24px}
-  #p-swipe .cand-name,#p-swipe .cand-role,#p-swipe .cand-rank{column-span:all}
-  #p-swipe .cand-adn-section,#p-swipe .cand-skills,#p-swipe .cand-docs,#p-swipe .cand-pitch,#p-swipe .cand-letter,#p-swipe .cand-ai,#p-swipe .cand-predict{break-inside:avoid;margin-bottom:14px}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(900px,100%)}
+  #p-swipe .cand-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:11px;align-items:start}
+  #p-swipe .cand-name,#p-swipe .cand-role,#p-swipe .cand-rank{grid-column:1/-1}
+  #p-swipe .cand-adn-section{grid-column:1;grid-row:4}
+  #p-swipe .cand-skills{grid-column:1;grid-row:5}
+  #p-swipe .cand-docs{grid-column:1;grid-row:6}
+  #p-swipe .cand-pitch{grid-column:2;grid-row:4}
+  #p-swipe .cand-letter{grid-column:2;grid-row:5}
+  #p-swipe .cand-ai{grid-column:2;grid-row:6}
+  #p-swipe .cand-predict{grid-column:1/-1;grid-row:7}
   #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
   .pipe-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
   #p-messages #msgs-list{grid-template-columns:1fr}
@@ -553,7 +565,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (min-width:1180px){
   #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding-left:64px;padding-right:64px}
   #p-dashboard .dash-hero,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
-  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(900px,calc(100% - 128px))}
   .pipe-cols{padding-left:64px;padding-right:64px}
   .plans-row{padding-left:64px;padding-right:64px}
 }
