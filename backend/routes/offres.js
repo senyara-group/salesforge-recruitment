@@ -96,7 +96,7 @@ router.get('/', async (req, res) => {
 router.get('/deck', authMiddleware, async (req, res) => {
   try {
     const candidat = await ensureCandidateProfile(req.user.id);
-    const seenFromProfile = candidat.axes?.meta?.swiped_offer_ids || [];
+    const seenFromProfile = candidat.swipes_meta?.swiped_offer_ids || [];
 
     const [candidatures, matchs] = await Promise.all([
       supabase.from('candidatures').select('offre_id').eq('candidat_id', candidat.id),

@@ -1060,8 +1060,8 @@ button,input,textarea,select{font-family:inherit}
       <svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
-      <div class="kpi"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
+      <div class="kpi" style="cursor:pointer" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
+      <div class="kpi" style="cursor:pointer" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
       <div class="kpi"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
       <div class="kpi"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
     </div>
@@ -1669,6 +1669,13 @@ const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','p
 function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
 function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
+function returnAfterUpgradeKey() { return 'sf_return_after_upgrade_' + (USER?.id || USER?.user_id || 'anon'); }
+function goToPricing() {
+  // Mémorise la page en cours pour pouvoir y revenir après le paiement (pas juste "accueil")
+  const current = APP_PAGES.find(p => document.getElementById('p-' + p)?.classList.contains('on'));
+  if (current && current !== 'pricing') localStorage.setItem(returnAfterUpgradeKey(), current);
+  go('pricing');
+}
 function pageFromHash() {
   const page = normalizePage(location.hash.replace(/^#/, ''));
   return APP_PAGES.includes(page) ? page : '';
@@ -1935,7 +1942,7 @@ function renderHomeCands(c) {
     return;
   }
   document.getElementById('home-cands').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
+    `<div class="tr-item" onclick="go('candidatures')"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
   ).join('');
 }
 async function snooze() {
@@ -2070,7 +2077,7 @@ async function doSwipe(action, offre) {
   } catch(e) {
     if (e.message?.includes('Limite Freemium')) {
       toast('Limite de 5 swipes atteinte — passez à un plan payant');
-      go('pricing');
+      goToPricing();
     } else {
       console.error(e);
     }
@@ -2471,7 +2478,7 @@ async function sendThreadMessage(event) {
     // Gérer la limite de contacts
     if (e.message?.includes('Limite de')) {
       toast(e.message);
-      go('pricing');
+      goToPricing();
     } else {
       toast(e.message || 'Erreur envoi message');
     }
@@ -2754,8 +2761,19 @@ if (TOKEN && !USER) {
   if (USER?.role === 'candidat') localStorage.setItem('sf_user', JSON.stringify(USER));
 }
 if (TOKEN && USER) {
-  const start = new URLSearchParams(location.search).get('start');
-  go(pageFromHash() || (start === 'test' ? 'test' : getLastPage()), { replaceHistory: true });
+  const params = new URLSearchParams(location.search);
+  const start = params.get('start');
+  const paymentSuccess = params.get('payment') === 'success';
+
+  let targetPage = pageFromHash() || (start === 'test' ? 'test' : getLastPage());
+  if (paymentSuccess) {
+    const returnTo = localStorage.getItem(returnAfterUpgradeKey());
+    if (returnTo && APP_PAGES.includes(returnTo)) targetPage = returnTo;
+    localStorage.removeItem(returnAfterUpgradeKey());
+  }
+
+  go(targetPage, { replaceHistory: true });
+  if (paymentSuccess) setTimeout(() => toast('Abonnement activé ! Vous pouvez continuer.'), 400);
   refreshMessageBadge();
   setInterval(refreshMessageBadge, 30000);
   initNotifications();
