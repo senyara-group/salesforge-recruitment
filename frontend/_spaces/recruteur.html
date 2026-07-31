@@ -30,7 +30,7 @@ button,input,textarea,select{font-family:inherit}
 .top-r{display:flex;gap:7px}
 .ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:.15s;position:relative}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
-.nd{position:absolute;top:-5px;right:-14px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.nd{position:absolute;top:-6px;right:-6px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
 .notif-wrap{position:relative}
 .notif-panel{display:none;position:absolute;top:44px;right:0;width:320px;max-width:90vw;background:var(--w);border:1px solid var(--bd);border-radius:14px;box-shadow:0 14px 34px rgba(9,20,34,.16);z-index:120;overflow:hidden}
 .notif-panel.on{display:block}
@@ -517,6 +517,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .dash-hero{border-radius:0;border:none}
   #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:0 0 96px}
   #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:22px 42px}
+  #p-post-offre>.sec{max-width:640px;margin:0 auto}
   #p-dashboard .dash-hero{padding:34px 42px}
   .dash-co{gap:18px}
   .dash-co-logo{width:72px;height:72px;font-size:24px;border-radius:18px}
@@ -531,10 +532,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .cand-recue,.msg-th,.menu-i{padding:17px 18px}
   .cr-name,.pc-n,.msg-n{font-size:16px}
   .cr-title,.cr-tag,.msg-prev{font-size:14px}
-  #p-swipe.page.on{display:block;padding:0 0 96px}
-  #p-swipe .swipe-hd{margin:0;padding:18px 42px}
-  #p-swipe .deck-area{width:min(620px,calc(100% - 84px));height:min(740px,calc(100dvh - 220px));margin:22px auto 0}
-  #p-swipe .deck-actions{width:min(620px,calc(100% - 84px));margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   .cand-top{height:170px}
   .cand-avatar{width:92px;height:92px;font-size:34px}
   .cand-name{font-size:24px}
@@ -780,22 +777,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .cand-predict-box{padding:5px}
   #p-swipe .cand-predict-v{font-size:12px}
   #p-swipe .cand-predict-l{font-size:7px}
-}
-
-/* Recruiter cards sizing */
-#p-swipe .deck-area{min-height:390px;max-height:560px}
-#p-swipe .cand-top{height:112px}
-#p-swipe .cand-avatar{width:64px;height:64px;font-size:23px}
-#p-swipe .cand-body{gap:9px;padding:12px 15px}
-#p-swipe .cand-adn-section,#p-swipe .cand-pitch,#p-swipe .cand-letter,#p-swipe .cand-ai{border-radius:10px;padding:10px}
-#p-swipe .cand-name{font-size:16px}
-@media (min-width:720px){
-  #p-swipe .deck-area{height:min(600px,calc(100dvh - 210px));max-width:540px}
-  #p-swipe .cand-top{height:126px}
-}
-@media (min-width:1080px){
-  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(560px,calc(100% - 96px))}
-  #p-swipe .deck-area{height:min(620px,calc(100dvh - 205px))}
 }
 
 </style>
