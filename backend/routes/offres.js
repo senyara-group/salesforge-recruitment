@@ -42,16 +42,23 @@ function validateOfferPayload({ titre, type, lieu, salaire }) {
     error.status = 400;
     throw error;
   }
-  const salaireValue = String(salaire || '').trim();
-  if (salaireValue) {
-    const hasDigit = /\d/.test(salaireValue);
-    const hasFormat = /(€|k€|k\b|negoci|négoci)/i.test(salaireValue);
-    if (!hasDigit || !hasFormat) {
-      const error = new Error('Format de remuneration invalide (ex: 45K€, 40-50K€, a negocier)');
-      error.status = 400;
-      throw error;
-    }
+  const salaireValue = String(salaire || '').trim().toLowerCase();
+  if (salaireValue && !isPlausibleSalaire(salaireValue)) {
+    const error = new Error('Format de remuneration invalide ou montant irrealiste (ex: 45K€, 40-50K€, a negocier)');
+    error.status = 400;
+    throw error;
   }
+}
+
+function isPlausibleSalaire(s) {
+  if (/negoci|négoci/.test(s)) return true;
+  if (/\d\s*k\s*€?/i.test(s)) return true;
+  if (!/€/.test(s)) return false;
+  const nombres = (s.match(/\d+([.,]\d+)?/g) || []).map((n) => parseFloat(n.replace(',', '.')));
+  if (!nombres.length) return false;
+  const estTarifFreelance = /tjm|\/\s*j(our)?\b|par\s*jour|\/\s*sem(aine)?\b|par\s*semaine/i.test(s);
+  if (estTarifFreelance) return nombres.some((n) => n >= 100);
+  return nombres.some((n) => n >= 15000);
 }
 
 const OFFER_LIMITS = { solo: 1, starter: 3 };

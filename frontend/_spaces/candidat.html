@@ -50,7 +50,8 @@ button,input,textarea,select{font-family:inherit}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
-.nav-dot{position:absolute;top:2px;right:18px;width:8px;height:8px;background:var(--r);border-radius:50%;border:2px solid var(--w);padding:0;font-size:0;text-indent:-9999px;overflow:hidden}
+.bn-ico-wrap{position:relative;display:inline-flex}
+.nav-dot{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:max-content;background:var(--r);color:#fff;border-radius:999px;border:1.5px solid var(--w);padding:2px 6px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;white-space:nowrap}
 .page{display:none;padding-bottom:80px}.page.on{display:block}
 .btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
@@ -1512,7 +1513,7 @@ button,input,textarea,select{font-family:inherit}
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
   <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
-  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></button>
+  <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
 </nav>
 
