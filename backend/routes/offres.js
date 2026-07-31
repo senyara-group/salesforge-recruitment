@@ -16,9 +16,14 @@ function publicError(res, error) {
   });
 }
 
-function validateOfferPayload({ titre, type, lieu }) {
+function validateOfferPayload({ titre, type, lieu, salaire }) {
   if (!String(titre || '').trim()) {
     const error = new Error('Titre requis');
+    error.status = 400;
+    throw error;
+  }
+  if (String(titre).length > 80) {
+    const error = new Error('Titre trop long (80 caracteres max)');
     error.status = 400;
     throw error;
   }
@@ -31,6 +36,21 @@ function validateOfferPayload({ titre, type, lieu }) {
     const error = new Error('Lieu requis');
     error.status = 400;
     throw error;
+  }
+  if (String(lieu).length > 100) {
+    const error = new Error('Lieu trop long (100 caracteres max)');
+    error.status = 400;
+    throw error;
+  }
+  const salaireValue = String(salaire || '').trim();
+  if (salaireValue) {
+    const hasDigit = /\d/.test(salaireValue);
+    const hasFormat = /(€|k€|k\b|negoci|négoci)/i.test(salaireValue);
+    if (!hasDigit || !hasFormat) {
+      const error = new Error('Format de remuneration invalide (ex: 45K€, 40-50K€, a negocier)');
+      error.status = 400;
+      throw error;
+    }
   }
 }
 
@@ -133,7 +153,7 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
-    validateOfferPayload({ titre, type, lieu });
+    validateOfferPayload({ titre, type, lieu, salaire });
 
     // Vérification limite offres actives selon le plan
     await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan);
@@ -158,7 +178,7 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
-    validateOfferPayload({ titre, type, lieu });
+    validateOfferPayload({ titre, type, lieu, salaire });
 
     if (statut === 'active') {
       const { data: existingOffer, error: existingError } = await supabase
