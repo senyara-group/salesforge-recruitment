@@ -328,13 +328,14 @@ async function openRoleSpace(){
     const recruiterParams = new URLSearchParams();
     if (start) recruiterParams.set('start', start);
     recruiterParams.set('v', Date.now().toString());
+    if (paymentSuccess) recruiterParams.set('payment', 'success');
     frame.onload = profile.role === 'recruteur' ? syncRecruiterDashboardFrame : null;
     const candidateParams = new URLSearchParams();
     candidateParams.set('v', Date.now().toString());
     if (start) candidateParams.set('start', start);
-    if (paymentSuccess) candidateParams.set('start', 'accueil');
+    if (paymentSuccess) candidateParams.set('payment', 'success');
     frame.src = profile.role === 'recruteur'
-      ? `_spaces/recruteur.html?${recruiterParams.toString()}${paymentSuccess ? '&start=dashboard' : ''}`
+      ? `_spaces/recruteur.html?${recruiterParams.toString()}`
       : `_spaces/candidat.html?${candidateParams.toString()}`;
  
     frame.addEventListener('load', async () => {

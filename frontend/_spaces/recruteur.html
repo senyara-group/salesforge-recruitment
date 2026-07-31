@@ -1681,6 +1681,12 @@ function renderPipeline() {
           </div>
         </div>`).join('')}
     </div>`).join('');
+
+  const focusId = localStorage.getItem('sf_focus_candidature');
+  if (focusId) {
+    localStorage.removeItem('sf_focus_candidature');
+    if (PIPELINE_CARDS[focusId]) openPipelineCandidate(focusId);
+  }
 }
 
 let PIPELINE_CARDS = {};
