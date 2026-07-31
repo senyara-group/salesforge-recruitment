@@ -446,7 +446,8 @@ async function recruiterSeenCandidateIds(userId) {
 router.get('/profil', authMiddleware, async (req, res) => {
   try {
     const profil = await ensureCandidateProfile(req.user.id);
-    res.json(await withFreshCvUrl(profil));
+    const withUrls = await withFreshCvUrl(profil);
+    res.json({ ...withUrls, ville: profil.axes?.meta?.ville || '' });
   } catch (error) {
     publicError(res, error);
   }
@@ -688,19 +689,20 @@ router.put('/profil', authMiddleware, async (req, res) => {
     await ensureCandidateProfile(req.user.id);
 
     const current = await ensureCandidateProfile(req.user.id);
-    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label } = req.body;
+    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label, ville } = req.body;
     const nextAxes = axes === undefined
       ? current.axes
       : {
         ...(current.axes || {}),
         ...(axes || {}),
       };
-    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined) {
+    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined) {
       nextAxes.meta = {
         ...(current.axes?.meta || {}),
         ...(motivation !== undefined ? { motivation } : {}),
         ...(anonyme !== undefined ? { anonyme } : {}),
         ...(avatar_label !== undefined ? { avatar_label } : {}),
+        ...(ville !== undefined ? { ville } : {}),
       };
     }
 

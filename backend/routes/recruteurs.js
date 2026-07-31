@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRecruiterProfile } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
+
+const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
+const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
+const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 function definedOnly(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
@@ -15,6 +21,137 @@ function publicError(res, error) {
 
 function appendUnique(values = [], value) {
   return [...new Set([...values.map(String), String(value)])];
+}
+
+function sanitizeFilename(filename = 'photo.jpg') {
+  const clean = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '-');
+  return clean || 'photo.jpg';
+}
+
+function parseContentDisposition(header = '') {
+  return header.split(';').slice(1).reduce((params, part) => {
+    const [key, ...valueParts] = part.trim().split('=');
+    if (!key || !valueParts.length) return params;
+    let value = valueParts.join('=').trim();
+    if (value.startsWith('"') && value.endsWith('"')) {
+      value = value.slice(1, -1).replace(/\\"/g, '"');
+    }
+    params[key.toLowerCase()] = value;
+    return params;
+  }, {});
+}
+
+function readRequestBuffer(req, maxBytes, label = 'Fichier') {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        const error = new Error(`${label} trop volumineux`);
+        error.status = 413;
+        reject(error);
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+async function getMultipartFile(req, fieldName, maxBytes, label = 'Fichier') {
+  const contentType = req.headers['content-type'] || '';
+  const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.[1]
+    || contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.[2];
+
+  if (!boundary) {
+    const error = new Error('Formulaire multipart invalide');
+    error.status = 400;
+    throw error;
+  }
+
+  const body = await readRequestBuffer(req, maxBytes, label);
+  const parts = body.toString('latin1').split(`--${boundary}`);
+
+  for (const part of parts) {
+    const headerEnd = part.indexOf('\r\n\r\n');
+    if (headerEnd === -1) continue;
+
+    const rawHeaders = part.slice(0, headerEnd);
+    const content = part.slice(headerEnd + 4).replace(/\r\n$/, '');
+    const headers = Object.fromEntries(rawHeaders
+      .split('\r\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [key, ...value] = line.split(':');
+        return [key.toLowerCase(), value.join(':').trim()];
+      }));
+
+    const disposition = parseContentDisposition(headers['content-disposition']);
+    if (disposition.name !== fieldName || !disposition.filename) continue;
+
+    return {
+      filename: sanitizeFilename(disposition.filename),
+      contentType: headers['content-type'] || 'application/octet-stream',
+      buffer: Buffer.from(content, 'latin1'),
+    };
+  }
+
+  const error = new Error(`Fichier ${fieldName} manquant`);
+  error.status = 400;
+  throw error;
+}
+
+function validateAvatarFile(file) {
+  const ext = path.extname(file.filename).toLowerCase();
+  const type = String(file.contentType || '').toLowerCase();
+  if (!AVATAR_EXTENSIONS.has(ext) || !AVATAR_MIME_TYPES.has(type)) {
+    const error = new Error('Format photo non supporte. Utilisez JPG, PNG, WEBP ou GIF.');
+    error.status = 400;
+    throw error;
+  }
+  if (!file.buffer.length) {
+    const error = new Error('Photo vide');
+    error.status = 400;
+    throw error;
+  }
+}
+
+async function ensureAvatarBucket() {
+  const existing = await supabase.storage.getBucket(AVATAR_BUCKET);
+  if (!existing.error) return;
+
+  const { error } = await supabase.storage.createBucket(AVATAR_BUCKET, {
+    public: false,
+    allowedMimeTypes: [...AVATAR_MIME_TYPES],
+    fileSizeLimit: MAX_AVATAR_BYTES,
+  });
+
+  if (error && !/already|exist/i.test(error.message || '')) throw error;
+}
+
+async function removeStorageFile(bucket, storagePath) {
+  if (!storagePath) return;
+  const { error } = await supabase.storage.from(bucket).remove([storagePath]);
+  if (error && !/not found|not exist|missing/i.test(error.message || '')) {
+    console.warn('Suppression storage impossible:', error.message || error);
+  }
+}
+
+async function withFreshRecruiterAvatarUrl(profile) {
+  const avatarPath = profile?.avatar_meta?.avatar_path;
+  const avatarBucket = profile?.avatar_meta?.avatar_bucket || AVATAR_BUCKET;
+  if (!avatarPath) return { ...profile, avatar_url: '' };
+
+  const { data, error } = await supabase.storage
+    .from(avatarBucket)
+    .createSignedUrl(avatarPath, 60 * 60 * 24);
+
+  return { ...profile, avatar_url: !error && data?.signedUrl ? data.signedUrl : '' };
 }
 
 function removeValue(values = [], value) {
@@ -100,6 +237,72 @@ router.get('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => 
   }
 });
 
+router.post('/avatar', authMiddleware, async (req, res) => {
+  try {
+    const current = await ensureRecruiterProfile(req.user.id);
+    const file = await getMultipartFile(req, 'avatar', MAX_AVATAR_BYTES, 'Photo');
+    validateAvatarFile(file);
+    await ensureAvatarBucket();
+
+    const previousMeta = current.avatar_meta || {};
+    const storagePath = `${req.user.id}/avatar-${Date.now()}-${file.filename}`;
+    const { error: uploadError } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .upload(storagePath, file.buffer, {
+        contentType: file.contentType,
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    await removeStorageFile(previousMeta.avatar_bucket || AVATAR_BUCKET, previousMeta.avatar_path);
+
+    const nextMeta = {
+      ...previousMeta,
+      avatar_bucket: AVATAR_BUCKET,
+      avatar_path: storagePath,
+      avatar_file_name: file.filename,
+      avatar_uploaded_at: new Date().toISOString(),
+    };
+
+    const { data: signed } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .createSignedUrl(storagePath, 60 * 60 * 24);
+
+    const { data, error } = await supabase
+      .from('recruteurs')
+      .update({ avatar_meta: nextMeta })
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    res.json({ recruteur: data, avatar_url: signed?.signedUrl || '' });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+router.delete('/avatar', authMiddleware, async (req, res) => {
+  try {
+    const current = await ensureRecruiterProfile(req.user.id);
+    const meta = current.avatar_meta || {};
+    await removeStorageFile(meta.avatar_bucket || AVATAR_BUCKET, meta.avatar_path);
+
+    const { data, error } = await supabase
+      .from('recruteurs')
+      .update({ avatar_meta: {} })
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    res.json({ recruteur: data });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const current = await ensureRecruiterProfile(req.user.id);
@@ -149,6 +352,7 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur / Indépendant', starter: 'Business', pro: 'Partenaire', enterprise: 'Enterprise' };
     const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
+    const { avatar_url } = await withFreshRecruiterAvatarUrl(recruteur);
     res.json({
       recues: candidatures.length,
       recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
@@ -156,6 +360,8 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
       pipeline: candidatures.length,
       offres: offres.length,
       plan_label: `Plan ${planName} · ${offres.length} offres actives`,
+      entreprise: recruteur.entreprise || '',
+      avatar_url,
     });
   } catch (error) {
     publicError(res, error);
