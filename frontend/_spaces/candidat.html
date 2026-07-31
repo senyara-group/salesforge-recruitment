@@ -629,10 +629,12 @@ button,input,textarea,select{font-family:inherit}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:sticky;top:83px;align-self:start;margin:0}
   #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
   #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
-  #p-swipe.page.on{display:flex !important;flex-direction:column;align-items:center;padding:0 28px 96px}
-  #p-swipe .swipe-hd{width:100%;margin:0 -28px}
-  #p-swipe .deck-area{width:min(620px,100%);height:min(660px,calc(100dvh - 220px));margin:18px auto 0}
-  #p-swipe .deck-actions{width:min(620px,100%);margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  #p-swipe.page.on{display:grid !important;grid-template-columns:220px minmax(0,620px) 1fr;grid-template-rows:auto auto;grid-template-areas:"sidebar card spare" "sidebar actions spare";column-gap:24px;align-items:start;padding:24px 28px 96px}
+  #p-swipe .swipe-hd{grid-area:sidebar;position:static;background:none;border:none;padding:0;top:auto}
+  #p-swipe .filter-row{flex-direction:column;overflow:visible;margin-top:14px}
+  #p-swipe .fp{width:100%;text-align:left}
+  #p-swipe .deck-area{grid-area:card;width:100%;height:min(660px,calc(100dvh - 260px));margin:0}
+  #p-swipe .deck-actions{grid-area:actions;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
   .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
 }
@@ -650,8 +652,8 @@ button,input,textarea,select{font-family:inherit}
   #p-profile>.sec{grid-template-columns:1.2fr .8fr}
   #p-profile .card-sec{grid-row:span 2}
   #p-profile .menu-list{align-self:start}
-  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(760px,100%)}
-  #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
+  #p-swipe.page.on{grid-template-columns:260px minmax(0,900px) 1fr;padding-left:42px;padding-right:42px}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:100%}
   #p-swipe .card-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:10px;align-items:start}
   #p-swipe .card-title,#p-swipe .card-meta,#p-swipe .card-salary{grid-column:1/-1}
   #p-swipe .compat-bar{grid-column:1;grid-row:4}
@@ -705,7 +707,7 @@ button,input,textarea,select{font-family:inherit}
 
 @media (min-width:1180px){
   #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
-  #p-home .home-hero,#p-profile .ph,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
+  #p-home .home-hero,#p-profile .ph,.pricing-hd{padding-left:64px;padding-right:64px}
   .plans-row{padding-left:64px;padding-right:64px}
 }
 
