@@ -2116,7 +2116,7 @@ function renderCands(c) {
     return;
   }
   document.getElementById('cands-list').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
+    `<div class="tr-item" onclick="go('messages')" style="cursor:pointer"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
   ).join('');
 }
 

@@ -2332,11 +2332,13 @@ if (!USER && localStorage.getItem('sf_rec_user')) {
 const startParam = new URLSearchParams(location.search).get('start');
 
 if (TOKEN && USER) {
+  const paymentSuccess = new URLSearchParams(location.search).get('payment') === 'success';
   api('GET', '/recruteurs/stats?t=' + Date.now())
     .then(async () => { HAS_PLAN = true; await loadCurrentPlan(); })
     .catch(async () => { HAS_PLAN = false; await loadCurrentPlan(); })
     .finally(() => {
       go(startParam || getLastPage());
+      if (paymentSuccess) setTimeout(() => toast('Abonnement activé ! Vous pouvez continuer.'), 400);
       initNotifications();
     });
 } else {
