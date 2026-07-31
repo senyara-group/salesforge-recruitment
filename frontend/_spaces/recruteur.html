@@ -52,7 +52,7 @@ button,input,textarea,select{font-family:inherit}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
-.nav-dot{position:absolute;top:-1px;right:5px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.nav-dot{position:absolute;top:2px;right:18px;width:8px;height:8px;background:var(--r);border-radius:50%;border:2px solid var(--w);padding:0;font-size:0;text-indent:-9999px;overflow:hidden}
 .page{display:none;padding-bottom:80px}.page.on{display:block}
 .btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
@@ -302,6 +302,13 @@ button,input,textarea,select{font-family:inherit}
 
 /* POST OFFRE */
 .form-group{margin-bottom:15px}
+.autocomplete-list{display:none;position:absolute;top:100%;left:0;right:0;background:var(--w);border:1px solid var(--bd);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:30;box-shadow:0 8px 22px rgba(9,20,34,.1)}
+.autocomplete-list.on{display:block}
+.autocomplete-item{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--bd)}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover,.autocomplete-item.active{background:var(--bs);color:var(--b)}
+.autocomplete-item.remote{color:var(--b);font-weight:700}
+.form-hint-err{font-size:11px;color:var(--r);margin-top:5px;font-weight:600}
 .form-label{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;margin-bottom:6px;display:block}
 .form-field{width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;background:var(--w);color:var(--ink);transition:.15s}
 .form-field:focus{outline:none;border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
@@ -933,14 +940,39 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Publier une offre</div></div>
     <div id="post-err" class="err"></div>
-    <div class="form-group"><label class="form-label sf">Intitulé du poste</label><input class="form-field" id="of-titre" placeholder="Ex : Closer Senior B2B SaaS"></div>
+    <div class="form-group"><label class="form-label sf">Intitulé du poste</label><input class="form-field" id="of-titre" list="of-titre-suggestions" maxlength="80" placeholder="Ex : Closer Senior B2B SaaS"></div>
+    <datalist id="of-titre-suggestions">
+      <option value="Sales Development Representative (SDR)">
+      <option value="Business Development Representative (BDR)">
+      <option value="Account Executive">
+      <option value="Key Account Manager">
+      <option value="Closer B2B">
+      <option value="Chargé(e) d'affaires">
+      <option value="Ingénieur(e) commercial(e)">
+      <option value="Responsable commercial(e)">
+      <option value="Head of Sales">
+      <option value="Directeur(trice) commercial(e)">
+      <option value="Business Developer">
+      <option value="Customer Success Manager">
+      <option value="Sales Manager">
+      <option value="Commercial(e) terrain">
+      <option value="Commercial(e) sédentaire">
+    </datalist>
     <div class="form-group"><label class="form-label sf">Type de contrat</label><div class="form-chips" id="of-type">
       <button class="form-chip" onclick="ofPick(this,'of-type-v','CDI')">CDI</button>
       <button class="form-chip" onclick="ofPick(this,'of-type-v','Mission')">Mission</button>
       <button class="form-chip" onclick="ofPick(this,'of-type-v','Freelance')">Freelance</button>
     </div></div>
-    <div class="form-group"><label class="form-label sf">Localisation</label><input class="form-field" id="of-lieu" placeholder="Ex : Paris · Remote"></div>
-    <div class="form-group"><label class="form-label sf">Rémunération</label><input class="form-field" id="of-salaire" placeholder="Ex : 45 – 65K€ + variable"></div>
+    <div class="form-group" style="position:relative">
+      <label class="form-label sf">Localisation</label>
+      <input class="form-field" id="of-lieu" placeholder="Ex : Paris" autocomplete="off" oninput="searchVilles(this.value)" onfocus="searchVilles(this.value)">
+      <div class="autocomplete-list" id="of-lieu-list"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label sf">Rémunération</label>
+      <input class="form-field" id="of-salaire" maxlength="60" placeholder="Ex : 45 – 65K€ + variable" oninput="document.getElementById('of-salaire-err').style.display='none'">
+      <div class="form-hint-err" id="of-salaire-err" style="display:none">Précise un montant (ex: 45K€, 40-50K€, à négocier)</div>
+    </div>
     <div class="form-group"><label class="form-label sf">Description</label><textarea class="form-field" id="of-desc" placeholder="Décrivez le poste, la mission, l'équipe…"></textarea></div>
     <div class="form-group"><label class="form-label sf">Compétences recherchées</label><div class="form-chips" id="of-skills">
       <button class="form-chip" onclick="ofTag(this,'Closing')">Closing</button>
@@ -1734,6 +1766,13 @@ async function contactFromPipeline() {
 // ------------------------------------------------------------
 function ofPick(btn, varName, val) { btn.parentElement.querySelectorAll('.form-chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); OF_TYPE = val; }
 function ofTag(btn, tag) { btn.classList.toggle('on'); if(OF_TAGS.includes(tag)) OF_TAGS=OF_TAGS.filter(t=>t!==tag); else OF_TAGS.push(tag); }
+function isValidSalaire(v) {
+  const s = v.trim().toLowerCase();
+  if (!s) return true;
+  const hasDigit = /\d/.test(s);
+  const hasFormat = /(€|k€|k\b|negoci|négoci)/i.test(s);
+  return hasDigit && hasFormat;
+}
 async function postOffre() {
   const titre = document.getElementById('of-titre').value.trim();
   const lieu = document.getElementById('of-lieu').value.trim();
@@ -1741,6 +1780,11 @@ async function postOffre() {
   const desc = document.getElementById('of-desc').value.trim();
   const auto = document.getElementById('of-auto').checked;
   if (!titre || !OF_TYPE || !lieu) { showErr('post-err', 'Titre, type et lieu sont requis'); return; }
+  if (!isValidSalaire(salaire)) {
+    document.getElementById('of-salaire-err').style.display = 'block';
+    document.getElementById('of-salaire').focus();
+    return;
+  }
   setBtn('btn-post-offre', true);
   try {
     await api('POST', '/offres', { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut:'active' });
@@ -1749,6 +1793,41 @@ async function postOffre() {
     initNotifications();
   } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, "Publier l'offre"); }
 }
+
+let VILLE_SEARCH_TIMER = null;
+function searchVilles(query) {
+  clearTimeout(VILLE_SEARCH_TIMER);
+  VILLE_SEARCH_TIMER = setTimeout(() => fetchVilles(query.trim()), 250);
+}
+async function fetchVilles(query) {
+  const list = document.getElementById('of-lieu-list');
+  if (!list) return;
+  let items = [{ label: 'Remote / Télétravail', remote: true }];
+  if (query.length >= 2) {
+    try {
+      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,codeDepartement&boost=population&limit=7`);
+      if (res.ok) {
+        const data = await res.json();
+        items = items.concat(data.map(c => ({ label: `${c.nom} (${c.codeDepartement})`, value: c.nom })));
+      }
+    } catch (e) {}
+  }
+  list.innerHTML = items.map((it, i) => `<div class="autocomplete-item${it.remote?' remote':''}" onmousedown="pickVille(${i})">${esc(it.label)}</div>`).join('');
+  list.dataset.items = JSON.stringify(items);
+  list.classList.add('on');
+}
+function pickVille(i) {
+  const list = document.getElementById('of-lieu-list');
+  const items = JSON.parse(list.dataset.items || '[]');
+  const it = items[i];
+  if (!it) return;
+  document.getElementById('of-lieu').value = it.remote ? 'Remote / Télétravail' : it.value;
+  list.classList.remove('on');
+}
+document.addEventListener('click', (e) => {
+  const list = document.getElementById('of-lieu-list');
+  if (list && !e.target.closest('#of-lieu') && !e.target.closest('#of-lieu-list')) list.classList.remove('on');
+});
 
 async function loadOffers() {
   const list = document.getElementById('offers-list');
