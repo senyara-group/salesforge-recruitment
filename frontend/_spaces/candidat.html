@@ -566,6 +566,12 @@ button,input,textarea,select{font-family:inherit}
 .toast{position:fixed;top:17px;left:50%;transform:translate(-50%,-120px);background:var(--ink);color:#fff;padding:10px 17px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .toast.on{transform:translate(-50%,0)}
 
+@media (max-width:719px){
+  .deck-actions{padding:8px 18px;gap:9px}
+  .db-pass,.db-super{width:44px;height:44px}
+  .db-like{width:52px;height:52px}
+}
+
 @media (max-width:380px){
   body{font-size:13px}
   .topbar{padding:10px 12px}
@@ -623,10 +629,10 @@ button,input,textarea,select{font-family:inherit}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:sticky;top:83px;align-self:start;margin:0}
   #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
   #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
-  #p-swipe.page.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,620px) minmax(0,1fr);gap:24px;padding:0 28px 96px;align-items:start}
-  #p-swipe .swipe-hd{grid-column:1/-1;margin:0 -28px}
-  #p-swipe .deck-area{grid-column:2;width:100%;height:min(660px,calc(100dvh - 220px));margin:18px 0 0}
-  #p-swipe .deck-actions{grid-column:2;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
+  #p-swipe.page.on{display:flex !important;flex-direction:column;align-items:center;padding:0 28px 96px}
+  #p-swipe .swipe-hd{width:100%;margin:0 -28px}
+  #p-swipe .deck-area{width:min(620px,100%);height:min(660px,calc(100dvh - 220px));margin:18px auto 0}
+  #p-swipe .deck-actions{width:min(620px,100%);margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
   .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
 }
@@ -644,11 +650,12 @@ button,input,textarea,select{font-family:inherit}
   #p-profile>.sec{grid-template-columns:1.2fr .8fr}
   #p-profile .card-sec{grid-row:span 2}
   #p-profile .menu-list{align-self:start}
-  #p-swipe.page.on{grid-template-columns:minmax(0,1fr) minmax(560px,760px) minmax(0,1fr);padding-left:42px;padding-right:42px}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(760px,100%)}
   #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
-  #p-swipe .card-body{display:block;column-count:2;column-gap:22px}
-  #p-swipe .card-title,#p-swipe .card-meta,#p-swipe .card-salary{column-span:all}
-  #p-swipe .compat-bar,#p-swipe .card-ai{break-inside:avoid;margin-bottom:13px}
+  #p-swipe .card-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:10px;align-items:start}
+  #p-swipe .card-title,#p-swipe .card-meta,#p-swipe .card-salary{grid-column:1/-1}
+  #p-swipe .compat-bar{grid-column:1;grid-row:4}
+  #p-swipe .card-ai{grid-column:2;grid-row:4}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
@@ -699,7 +706,6 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:1180px){
   #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
   #p-home .home-hero,#p-profile .ph,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
-  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(760px,calc(100% - 128px))}
   .plans-row{padding-left:64px;padding-right:64px}
 }
 
