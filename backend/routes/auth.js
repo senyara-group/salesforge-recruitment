@@ -194,7 +194,7 @@ router.get('/oauth/:provider', async (req, res) => {
 });
 
 async function signup(req, res) {
-  const { email, password, role, entreprise, secteur, prenom, nom } = req.body;
+  const { email, password, role, entreprise, secteur, prenom, nom, ville } = req.body;
   const normalizedRole = role === 'recruteur' ? 'recruteur' : 'candidat';
 
   if (!email || !password) {
@@ -237,10 +237,20 @@ async function signup(req, res) {
       roleProfile = updatedProfile;
     }
 
-    if (normalizedRole === 'candidat' && (prenom || nom)) {
+    if (normalizedRole === 'candidat' && (prenom || nom || ville)) {
+      const patch = definedOnly({ prenom, nom });
+      if (ville) {
+        const { data: existing } = await supabase
+          .from('candidats')
+          .select('axes')
+          .eq('user_id', data.user.id)
+          .single();
+        patch.axes = { ...(existing?.axes || {}), meta: { ...(existing?.axes?.meta || {}), ville } };
+      }
+
       const { data: updatedProfile, error: updateError } = await supabase
         .from('candidats')
-        .update(definedOnly({ prenom, nom }))
+        .update(patch)
         .eq('user_id', data.user.id)
         .select('*')
         .single();
