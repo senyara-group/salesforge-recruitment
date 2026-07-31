@@ -309,6 +309,18 @@ async function markCandidatureContacted(candidatId, offreId) {
     .eq('statut', 'envoyee');
 }
 
+async function markCandidatureRepondu(candidatId, offreId) {
+  if (!candidatId || !offreId) return;
+
+  // Le candidat repond apres avoir ete contacte : on ne fait avancer que depuis 'contacte' (evite d'ecraser entretien/offre etc.)
+  await supabase
+    .from('candidatures')
+    .update({ statut: 'repondu' })
+    .eq('candidat_id', candidatId)
+    .eq('offre_id', offreId)
+    .eq('statut', 'contacte');
+}
+
 router.post('/send', authMiddleware, async (req, res) => {
   try {
     const { receiver_id, destinataire_id, match_id, contenu, texte } = req.body;
@@ -351,6 +363,10 @@ router.post('/send', authMiddleware, async (req, res) => {
     // Le recruteur vient de contacter le candidat : on fait avancer le pipeline
     if (participants && String(req.user.id) === String(participants.recruiterUserId)) {
       await markCandidatureContacted(participants.candidateId, participants.offreId);
+    }
+    // Le candidat vient de repondre au recruteur : on fait avancer le pipeline dans l'autre sens
+    if (participants && String(req.user.id) === String(participants.candidateUserId)) {
+      await markCandidatureRepondu(participants.candidateId, participants.offreId);
     }
 
     res.json(data);
