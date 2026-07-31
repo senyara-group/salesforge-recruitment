@@ -28,7 +28,7 @@ button,input,textarea,select{font-family:inherit}
 .top-r{display:flex;gap:7px}
 .ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:.15s;position:relative}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
-.nd{position:absolute;top:-5px;right:-14px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
+.nd{position:absolute;top:-6px;right:-6px;width:auto;height:auto;background:var(--r);color:#fff;border-radius:999px;border:1px solid var(--w);padding:2px 5px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px}
 .notif-wrap{position:relative}
 .notif-panel{display:none;position:absolute;top:44px;right:0;width:320px;max-width:90vw;background:var(--w);border:1px solid var(--bd);border-radius:14px;box-shadow:0 14px 34px rgba(9,20,34,.16);z-index:120;overflow:hidden}
 .notif-panel.on{display:block}
@@ -2116,7 +2116,7 @@ function renderCands(c) {
     return;
   }
   document.getElementById('cands-list').innerHTML = c.map(x =>
-    `<div class="tr-item" onclick="go('messages')" style="cursor:pointer"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
+    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
   ).join('');
 }
 
