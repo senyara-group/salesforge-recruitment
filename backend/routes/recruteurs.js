@@ -147,13 +147,15 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
     if (candidaturesError) return res.status(400).json({ error: candidaturesError });
 
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur / Indépendant', starter: 'Business', pro: 'Partenaire', enterprise: 'Enterprise' };
+    const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
     res.json({
       recues: candidatures.length,
       recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
       chauds: candidatures.filter((c) => c.statut === 'repondu' || c.statut === 'entretien').length,
       pipeline: candidatures.length,
       offres: offres.length,
-      plan_label: `Plan ${recruteur.plan || 'starter'} · ${offres.length} offres actives`,
+      plan_label: `Plan ${planName} · ${offres.length} offres actives`,
     });
   } catch (error) {
     publicError(res, error);
