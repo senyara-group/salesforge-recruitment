@@ -145,10 +145,10 @@ button,input,textarea,select{font-family:inherit}
 .sw-lbl.like{left:18px;color:var(--g);border-color:var(--g);transform:rotate(-13deg)}
 .sw-lbl.pass{right:18px;color:var(--r);border-color:var(--r);transform:rotate(13deg)}
 .sw-lbl.super{left:50%;transform:translateX(-50%);color:var(--a);border-color:var(--a);bottom:130px;top:auto}
-.cand-top{height:128px;position:relative;flex-shrink:0;background:linear-gradient(135deg,#091422,#1340E0);display:flex;align-items:center;justify-content:center}
+.cand-top{height:90px;position:relative;flex-shrink:0;background:linear-gradient(135deg,#091422,#1340E0);display:flex;align-items:center;justify-content:center}
 .cand-top.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
 .swipe-card .cand-top{border-radius:22px 22px 0 0}
-.cand-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:26px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
+.cand-avatar{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:21px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
 .cand-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .cand-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:10px;padding:6px 10px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
 .cand-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
@@ -434,8 +434,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     gap:6px;
   }
   #p-swipe .cand-body::-webkit-scrollbar{display:none}
-  #p-swipe .cand-top{height:112px}
-  #p-swipe .cand-avatar{width:60px;height:60px;font-size:23px}
+  #p-swipe .cand-top{height:90px}
+  #p-swipe .cand-avatar{width:56px;height:56px;font-size:21px}
   #p-swipe .cand-match-box{top:9px;right:9px;padding:5px 8px}
   #p-swipe .cand-match-n{font-size:16px}
   #p-swipe .cand-match-l{font-size:8px}
@@ -553,8 +553,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .cand-recue,.msg-th,.menu-i{padding:17px 18px}
   .cr-name,.pc-n,.msg-n{font-size:16px}
   .cr-title,.cr-tag,.msg-prev{font-size:14px}
-  .cand-top{height:170px}
-  .cand-avatar{width:92px;height:92px;font-size:34px}
+  .cand-top{height:108px}
+  .cand-avatar{width:64px;height:64px;font-size:24px}
   .cand-name{font-size:24px}
   .cand-body{padding:18px 22px;gap:14px}
   #p-matching>.sec{display:block}
@@ -758,8 +758,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     gap:7px;
   }
   #p-swipe .cand-body::-webkit-scrollbar{display:none}
-  #p-swipe .cand-top{height:118px}
-  #p-swipe .cand-avatar{width:62px;height:62px;font-size:24px}
+  #p-swipe .cand-top{height:100px}
+  #p-swipe .cand-avatar{width:60px;height:60px;font-size:22px}
   #p-swipe .cand-match-box{top:10px;right:10px;padding:5px 9px}
   #p-swipe .cand-match-n{font-size:16px}
   #p-swipe .cand-match-l{font-size:8px}
@@ -967,7 +967,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div id="pipeline-offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
   <div class="sec" style="padding-bottom:9px">
-    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><span class="chip chip-b"><span class="chip-dot"></span>Pipeline</span></div>
+    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div></div>
   </div>
   <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
 </div>
@@ -2109,9 +2109,9 @@ function renderOffers(offers = [], targetId = 'offers-list', emptyText = 'Aucune
   if (!list) return;
   if (!offers.length) {
     list.innerHTML = `
-      <div class="loading-state">
-        ${emptyText}<br><br>
-        <button class="btn bp" onclick="go('post-offre')">Publier ma première offre</button>
+      <div class="empty-state">
+        <b>${emptyText}</b>
+        <button class="btn bp bsm" style="margin-top:12px" onclick="go('post-offre')">Publier ma première offre</button>
       </div>`;
     return;
   }

@@ -165,13 +165,14 @@ button,input,textarea,select{font-family:inherit}
 .skill-score{text-align:right;flex-shrink:0}
 .skill-score-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--b)}
 .skill-score-l{font-size:10px;color:var(--mu);font-weight:600}
-.doc-list{display:flex;flex-direction:column;gap:9px}
-.doc-item{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit;transition:.15s}
-.doc-item:hover{border-color:var(--bm);background:var(--bs)}
-.doc-num{width:34px;height:34px;border-radius:10px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:900;flex-shrink:0}
+.doc-list{display:flex;flex-direction:column;gap:11px}
+.doc-item{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px 15px;display:flex;align-items:center;gap:13px;text-decoration:none;color:inherit;transition:.18s}
+.doc-item:hover{border-color:var(--b);box-shadow:0 6px 18px rgba(19,64,224,.1);transform:translateY(-1px)}
+.doc-num{width:42px;height:42px;border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.doc-num svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
 .doc-info{flex:1;min-width:0}
 .doc-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;line-height:1.3}
-.doc-meta{font-size:11px;color:var(--ink3);margin-top:2px}
+.doc-meta{font-size:11.5px;color:var(--ink3);margin-top:3px;line-height:1.4}
 .doc-open{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex-shrink:0}
 .doc-open svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 .bench-card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
@@ -748,6 +749,7 @@ button,input,textarea,select{font-family:inherit}
     flex-direction:column;
     gap:10px;
   }
+  #p-messages #msgs-list.empty{grid-column:1/-1}
   #p-messages .msg-th{margin-bottom:0}
   #p-messages #chat-panel{
     grid-column:2;
@@ -815,9 +817,12 @@ button,input,textarea,select{font-family:inherit}
     border-radius:12px;
   }
   #p-home>.sec{
-    padding:0 !important;
+    padding:18px 20px !important;
     max-width:none;
     width:100%;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
   }
   #p-home .sec-hd{margin-bottom:12px}
   #p-home .sec-t{font-size:17px}
@@ -948,7 +953,10 @@ button,input,textarea,select{font-family:inherit}
   }
   #p-home>.sec{
     width:100%;
-    padding:0 !important;
+    padding:18px 20px !important;
+    background:var(--w);
+    border:1px solid var(--bd);
+    border-radius:12px;
   }
   #p-home .sec-hd{
     margin-bottom:10px;
@@ -1087,28 +1095,28 @@ button,input,textarea,select{font-family:inherit}
     <div class="sec-hd"><div class="sec-t sf">Ressources</div></div>
     <div class="doc-list">
       <a class="doc-item" href="../documents/1-traiter-les-objections.pdf" target="_blank" rel="noopener">
-        <div class="doc-num">1</div>
-        <div class="doc-info"><div class="doc-title">Traiter les objections</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-num" style="background:#1340E0"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+        <div class="doc-info"><div class="doc-title">Traiter les objections</div><div class="doc-meta">Désamorcer les réticences client et reprendre la main dans l'échange</div></div>
         <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
       </a>
       <a class="doc-item" href="../documents/2-200-questions-qui-font-vendre.pdf" target="_blank" rel="noopener">
-        <div class="doc-num">2</div>
-        <div class="doc-info"><div class="doc-title">200 questions qui font vendre</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-num" style="background:#8B5CF6"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="doc-info"><div class="doc-title">200 questions qui font vendre</div><div class="doc-meta">Une banque de questions de découverte prêtes à l'emploi</div></div>
         <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
       </a>
       <a class="doc-item" href="../documents/3-neuro-vente.pdf" target="_blank" rel="noopener">
-        <div class="doc-num">3</div>
-        <div class="doc-info"><div class="doc-title">Neuro-vente</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-num" style="background:#EC4899"><svg viewBox="0 0 24 24"><path d="M9.5 2a2.5 2.5 0 00-2.5 2.5v.35a3 3 0 00-2 2.65v.5a2.5 2.5 0 00-1 4.9 3 3 0 002.7 3.6 2.5 2.5 0 002.4 3H10V2z"/><path d="M14.5 2a2.5 2.5 0 012.5 2.5v.35a3 3 0 012 2.65v.5a2.5 2.5 0 011 4.9 3 3 0 01-2.7 3.6 2.5 2.5 0 01-2.4 3H14V2z"/></svg></div>
+        <div class="doc-info"><div class="doc-title">Neuro-vente</div><div class="doc-meta">Comprendre les biais de décision pour mieux convaincre</div></div>
         <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
       </a>
       <a class="doc-item" href="../documents/4-business-development.pdf" target="_blank" rel="noopener">
-        <div class="doc-num">4</div>
-        <div class="doc-info"><div class="doc-title">Business Development</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-num" style="background:#059669"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div class="doc-info"><div class="doc-title">Business Development</div><div class="doc-meta">Structurer sa prospection et générer un pipeline solide</div></div>
         <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
       </a>
       <a class="doc-item" href="../documents/5-account-executive.pdf" target="_blank" rel="noopener">
-        <div class="doc-num">5</div>
-        <div class="doc-info"><div class="doc-title">Account Executive</div><div class="doc-meta">PDF</div></div>
+        <div class="doc-num" style="background:#D97706"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+        <div class="doc-info"><div class="doc-title">Account Executive</div><div class="doc-meta">Piloter un cycle de vente complet, de la démo au closing</div></div>
         <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
       </a>
     </div>
@@ -1421,7 +1429,7 @@ button,input,textarea,select{font-family:inherit}
         <div class="ph-kicker">Profil candidat</div>
         <div class="ph-name sf" id="prof-name">—</div>
         <div class="ph-title" id="prof-title">—</div>
-        <div class="ph-rank" id="prof-rank">—</div>
+        <div class="ph-rank link" id="prof-rank" onclick="handleRankClick()" style="cursor:pointer">—</div>
         <div class="ph-badges">
           <button class="ph-badge link" id="prof-cv-badge" onclick="openProfileCV()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CV intégré</button>
           <button class="ph-badge link" id="prof-motiv-badge" onclick="openMotivationFile()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Lettre intégrée</button>
@@ -1473,9 +1481,9 @@ button,input,textarea,select{font-family:inherit}
       </div>
     </div>
     <div class="ph-stats">
-      <div class="ph-stat"><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
-      <div class="ph-stat"><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
-      <div class="ph-stat"><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
+      <div class="ph-stat" style="cursor:pointer" onclick="go('test')"><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
+      <div class="ph-stat" style="cursor:pointer" onclick="go('swipe')"><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
+      <div class="ph-stat" style="cursor:pointer" onclick="toggleProfileEdit()"><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
     </div>
   </div>
   <div class="sec">
@@ -2318,14 +2326,17 @@ async function refreshMessageBadge() {
 }
 async function loadMessages() {
   if (!USER) return;
+  const list = document.getElementById('msgs-list');
   try {
     THREADS = await api('GET', '/messages/threads');
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     if (!THREADS.length) {
-      document.getElementById('msgs-list').innerHTML = await renderMessagesWelcome();
+      list.classList.add('empty');
+      list.innerHTML = await renderMessagesWelcome();
       return;
     }
-    document.getElementById('msgs-list').innerHTML = THREADS.map(t=>
+    list.classList.remove('empty');
+    list.innerHTML = THREADS.map(t=>
       `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
     ).join('');
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
@@ -2565,8 +2576,9 @@ function renderProfile(p, a) {
   const avatarLabel = profileInitials(p);
   document.getElementById('prof-name').textContent = profileDisplayName(p);
   renderProfileAvatar(p, avatarLabel);
-  document.getElementById('prof-title').textContent=p.type_profil||'Complétez votre profil';
-  document.getElementById('prof-rank').textContent=p.rank||'Profil à compléter';
+  document.getElementById('prof-title').textContent = p.type_profil || '';
+  document.getElementById('prof-title').style.display = p.type_profil ? '' : 'none';
+  document.getElementById('prof-rank').textContent = p.rank || 'Passer le test ADN pour compléter mon profil';
   document.getElementById('prof-score').textContent=p.score_adn||'—'; document.getElementById('prof-matchs').textContent=p.matchs||'0';
   document.getElementById('prof-status').textContent=p.score_adn?'Actif':'À compléter';
   document.getElementById('prof-adn').innerHTML=adn(p.axes);
@@ -2603,6 +2615,10 @@ function fillProfileEdit(p, avatarLabel) {
   document.getElementById('edit-nom').value = p.nom || '';
   document.getElementById('edit-ville').value = p.ville || '';
   renderAvatarInto(document.getElementById('edit-avatar-preview'), p.avatar_url || PROFILE_AVATAR_URL, avatarLabel);
+}
+function handleRankClick() {
+  const rankEl = document.getElementById('prof-rank');
+  if (rankEl && rankEl.textContent.includes('test ADN')) go('test');
 }
 function toggleProfileEdit() {
   document.getElementById('profile-edit-panel').classList.toggle('on');
