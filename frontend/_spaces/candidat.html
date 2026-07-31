@@ -181,7 +181,8 @@ button,input,textarea,select{font-family:inherit}
 
 /* SWIPE */
 .swipe-hd{padding:12px 18px;background:var(--w);border-bottom:1px solid var(--bd);position:sticky;top:59px;z-index:40}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.filter-row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:9px}
+.filter-row::-webkit-scrollbar{display:none}
 .fp{flex-shrink:0;padding:5px 11px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;white-space:nowrap;transition:.15s}
 .fp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .deck-area{position:relative;height:calc(100dvh - 285px);min-height:440px;max-height:570px;margin:12px 18px 0}
@@ -622,7 +623,7 @@ button,input,textarea,select{font-family:inherit}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:sticky;top:83px;align-self:start;margin:0}
   #p-profile>.sec{padding:0;display:grid;grid-template-columns:1fr;gap:12px;align-self:start}
   #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
-  #p-swipe.page.on{display:grid;grid-template-columns:minmax(340px,1fr) minmax(440px,560px) minmax(220px,.8fr);gap:24px;padding:0 28px 96px;align-items:start}
+  #p-swipe.page.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,620px) minmax(0,1fr);gap:24px;padding:0 28px 96px;align-items:start}
   #p-swipe .swipe-hd{grid-column:1/-1;margin:0 -28px}
   #p-swipe .deck-area{grid-column:2;width:100%;height:min(660px,calc(100dvh - 220px));margin:18px 0 0}
   #p-swipe .deck-actions{grid-column:2;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
@@ -643,8 +644,11 @@ button,input,textarea,select{font-family:inherit}
   #p-profile>.sec{grid-template-columns:1.2fr .8fr}
   #p-profile .card-sec{grid-row:span 2}
   #p-profile .menu-list{align-self:start}
-  #p-swipe.page.on{grid-template-columns:minmax(260px,1fr) minmax(500px,620px) minmax(260px,1fr);padding-left:42px;padding-right:42px}
+  #p-swipe.page.on{grid-template-columns:minmax(0,1fr) minmax(560px,760px) minmax(0,1fr);padding-left:42px;padding-right:42px}
   #p-swipe .swipe-hd{margin-left:-42px;margin-right:-42px}
+  #p-swipe .card-body{display:block;column-count:2;column-gap:22px}
+  #p-swipe .card-title,#p-swipe .card-meta,#p-swipe .card-salary{column-span:all}
+  #p-swipe .compat-bar,#p-swipe .card-ai{break-inside:avoid;margin-bottom:13px}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
@@ -684,10 +688,6 @@ button,input,textarea,select{font-family:inherit}
   .profile-edit-grid{gap:14px;margin-bottom:14px}
   .profile-edit-field input{min-height:48px;font-size:15px}
   .profile-edit-actions .btn{width:auto;min-width:150px;min-height:44px;font-size:14px}
-  #p-swipe.page.on{display:block;padding:0 0 96px}
-  #p-swipe .swipe-hd{margin:0;padding:18px 42px}
-  #p-swipe .deck-area{width:min(620px,calc(100% - 84px));height:min(720px,calc(100dvh - 230px));margin:22px auto 0}
-  #p-swipe .deck-actions{width:min(620px,calc(100% - 84px));margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   .card-top{height:160px}
   .card-title{font-size:24px}
   .card-body{padding:18px 22px;gap:13px}
@@ -699,7 +699,7 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:1180px){
   #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
   #p-home .home-hero,#p-profile .ph,#p-swipe .swipe-hd,.pricing-hd{padding-left:64px;padding-right:64px}
-  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(680px,calc(100% - 128px))}
+  #p-swipe .deck-area,#p-swipe .deck-actions{width:min(760px,calc(100% - 128px))}
   .plans-row{padding-left:64px;padding-right:64px}
 }
 
@@ -834,33 +834,6 @@ button,input,textarea,select{font-family:inherit}
   .tr-logo,.msg-av{width:42px;height:42px}
   .tr-title,.doc-title,.mi-t,.msg-n{font-size:14px}
   .tr-sub,.doc-meta,.mi-s,.msg-prev{font-size:12px}
-
-  #p-swipe.page.on{
-    display:block !important;
-    padding:0 0 96px;
-    background:var(--bg);
-  }
-  #p-swipe .swipe-hd{
-    top:52px;
-    margin:0;
-    padding:18px clamp(42px,4vw,64px);
-  }
-  #p-swipe .deck-area{
-    width:min(680px,calc(100% - 128px));
-    height:min(720px,calc(100dvh - 230px));
-    margin:22px auto 0;
-  }
-  #p-swipe .deck-actions{
-    width:min(680px,calc(100% - 128px));
-    margin:0 auto;
-    border-left:1px solid var(--bd);
-    border-right:1px solid var(--bd);
-    border-radius:0 0 18px 18px;
-  }
-  #p-swipe .swipe-card{border-radius:22px 22px 0 0}
-  #p-swipe .card-top{height:160px}
-  #p-swipe .card-title{font-size:24px}
-  #p-swipe .card-body{padding:18px 22px;gap:13px}
 
   #p-test.page.on{
     background:var(--bg);
