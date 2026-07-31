@@ -52,7 +52,8 @@ button,input,textarea,select{font-family:inherit}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
 .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
-.nav-dot{position:absolute;top:2px;right:18px;width:8px;height:8px;background:var(--r);border-radius:50%;border:2px solid var(--w);padding:0;font-size:0;text-indent:-9999px;overflow:hidden}
+.bn-ico-wrap{position:relative;display:inline-flex}
+.nav-dot{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:max-content;background:var(--r);color:#fff;border-radius:999px;border:1.5px solid var(--w);padding:2px 6px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;white-space:nowrap}
 .page{display:none;padding-bottom:80px}.page.on{display:block}
 .btn{border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;border-radius:10px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px}.bp:hover{background:var(--b2)}
@@ -943,20 +944,114 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="form-group"><label class="form-label sf">Intitulé du poste</label><input class="form-field" id="of-titre" list="of-titre-suggestions" maxlength="80" placeholder="Ex : Closer Senior B2B SaaS"></div>
     <datalist id="of-titre-suggestions">
       <option value="Sales Development Representative (SDR)">
+      <option value="Sales Development Representative Senior">
       <option value="Business Development Representative (BDR)">
+      <option value="Business Development Representative Senior">
       <option value="Account Executive">
+      <option value="Account Executive Junior">
+      <option value="Account Executive Senior">
+      <option value="Enterprise Account Executive">
+      <option value="Mid-Market Account Executive">
+      <option value="SMB Account Executive">
+      <option value="Account Manager">
+      <option value="Account Manager Junior">
+      <option value="Account Manager Senior">
+      <option value="Strategic Account Manager">
+      <option value="Global Account Manager">
       <option value="Key Account Manager">
       <option value="Closer B2B">
+      <option value="Closer B2C">
       <option value="Chargé(e) d'affaires">
+      <option value="Chargé(e) d'affaires bancaires">
+      <option value="Chargé(e) de clientèle">
+      <option value="Conseiller(ère) clientèle bancaire">
+      <option value="Chargé(e) de développement commercial">
       <option value="Ingénieur(e) commercial(e)">
+      <option value="Ingénieur(e) d'affaires">
+      <option value="Ingénieur(e) technico-commercial(e)">
+      <option value="Ingénieur(e) avant-vente">
+      <option value="Consultant(e) avant-vente">
       <option value="Responsable commercial(e)">
-      <option value="Head of Sales">
+      <option value="Responsable de secteur">
+      <option value="Responsable grands comptes">
       <option value="Directeur(trice) commercial(e)">
+      <option value="Directeur(trice) des ventes">
+      <option value="Directeur(trice) régional(e) des ventes">
+      <option value="Directeur(trice) grands comptes">
+      <option value="Directeur(trice) de la relation client">
+      <option value="Chef(fe) des ventes">
+      <option value="Head of Sales">
+      <option value="VP Sales">
+      <option value="VP Revenue">
+      <option value="Chief Revenue Officer (CRO)">
+      <option value="Chief Sales Officer (CSO)">
+      <option value="Chief Commercial Officer (CCO)">
       <option value="Business Developer">
+      <option value="Business Development Manager">
+      <option value="New Business Manager">
       <option value="Customer Success Manager">
       <option value="Sales Manager">
+      <option value="Sales Executive">
+      <option value="Sales Consultant">
+      <option value="Consultant(e) commercial(e)">
+      <option value="National Sales Manager">
+      <option value="Regional Sales Manager">
+      <option value="Area Sales Manager">
+      <option value="District Sales Manager">
+      <option value="Territory Manager">
+      <option value="Export Sales Manager">
+      <option value="Commercial(e) export">
       <option value="Commercial(e) terrain">
       <option value="Commercial(e) sédentaire">
+      <option value="Commercial(e) B2B">
+      <option value="Commercial(e) B2C">
+      <option value="Commercial(e) grands comptes">
+      <option value="Commercial(e) junior">
+      <option value="Commercial(e) confirmé(e)">
+      <option value="Commercial(e) senior">
+      <option value="Attaché(e) commercial(e)">
+      <option value="Technico-commercial(e)">
+      <option value="Représentant(e) commercial(e)">
+      <option value="Conseiller(ère) commercial(e)">
+      <option value="Négociateur(trice)">
+      <option value="Négociateur(trice) immobilier">
+      <option value="Agent(e) commercial(e) immobilier">
+      <option value="Conseiller(ère) en assurance">
+      <option value="Agent(e) général(e) d'assurance">
+      <option value="Courtier(ère) en assurance">
+      <option value="Délégué(e) pharmaceutique">
+      <option value="Visiteur(euse) médical(e)">
+      <option value="Vendeur(euse) automobile">
+      <option value="Conseiller(ère) commercial(e) automobile">
+      <option value="Vendeur(euse) conseil">
+      <option value="Responsable de magasin">
+      <option value="Store Manager">
+      <option value="Chargé(e) de prospection">
+      <option value="Téléconseiller(ère) commercial(e)">
+      <option value="Télévendeur(euse)">
+      <option value="Category Manager">
+      <option value="Merchandiser">
+      <option value="Trade Marketing Manager">
+      <option value="Channel Sales Manager">
+      <option value="Channel Account Manager">
+      <option value="Partner Account Manager">
+      <option value="Partnership Manager">
+      <option value="Alliance Manager">
+      <option value="Franchise Development Manager">
+      <option value="Inside Sales Representative">
+      <option value="Field Sales Representative">
+      <option value="Sales Development Manager">
+      <option value="Growth Manager">
+      <option value="Revenue Operations Manager">
+      <option value="Sales Enablement Manager">
+      <option value="Revenue Enablement Manager">
+      <option value="CRM Manager">
+      <option value="Marketplace Manager">
+      <option value="E-commerce Sales Manager">
+      <option value="Sales Engineer">
+      <option value="Sales Operations Manager">
+      <option value="Sales Trainer">
+      <option value="Sales Coach">
     </datalist>
     <div class="form-group"><label class="form-label sf">Type de contrat</label><div class="form-chips" id="of-type">
       <button class="form-chip" onclick="ofPick(this,'of-type-v','CDI')">CDI</button>
@@ -970,8 +1065,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     </div>
     <div class="form-group">
       <label class="form-label sf">Rémunération</label>
-      <input class="form-field" id="of-salaire" maxlength="60" placeholder="Ex : 45 – 65K€ + variable" oninput="document.getElementById('of-salaire-err').style.display='none'">
-      <div class="form-hint-err" id="of-salaire-err" style="display:none">Précise un montant (ex: 45K€, 40-50K€, à négocier)</div>
+      <input class="form-field" id="of-salaire" maxlength="60" placeholder="Ex : 45-65K€ + variable, ou TJM 500€" oninput="document.getElementById('of-salaire-err').style.display='none'">
+      <div class="form-hint-err" id="of-salaire-err" style="display:none">Précise un montant (ex: 45K€, 40-50K€, TJM 500€/jour, à négocier)</div>
     </div>
     <div class="form-group"><label class="form-label sf">Description</label><textarea class="form-field" id="of-desc" placeholder="Décrivez le poste, la mission, l'équipe…"></textarea></div>
     <div class="form-group"><label class="form-label sf">Compétences recherchées</label><div class="form-chips" id="of-skills">
@@ -1060,7 +1155,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <button class="bn on" id="nav-dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Tableau</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Sourcer</span></button>
   <button class="bn" id="nav-pipeline" onclick="go('pipeline')"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Pipeline</span></button>
-  <button class="bn" id="nav-messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>Messages</span><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></button>
+  <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-settings" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Réglages</span></button>
 </nav>
 
@@ -1768,11 +1863,18 @@ function ofPick(btn, varName, val) { btn.parentElement.querySelectorAll('.form-c
 function ofTag(btn, tag) { btn.classList.toggle('on'); if(OF_TAGS.includes(tag)) OF_TAGS=OF_TAGS.filter(t=>t!==tag); else OF_TAGS.push(tag); }
 function isValidSalaire(v) {
   const s = v.trim().toLowerCase();
-  if (!s) return true;
-  const hasDigit = /\d/.test(s);
-  const hasFormat = /(€|k€|k\b|negoci|négoci)/i.test(s);
-  return hasDigit && hasFormat;
+  if (!s) return true; // champ optionnel
+  if (/negoci|négoci/.test(s)) return true;
+  if (/\d\s*k\s*€?/i.test(s)) return true; // notation "45K€" / "45K" déjà en milliers
+  if (!/€/.test(s)) return false; // sans € ni K ni "à négocier", on n'accepte pas
+  const nombres = (s.match(/\d+([.,]\d+)?/g) || []).map(n => parseFloat(n.replace(',', '.')));
+  if (!nombres.length) return false;
+  // Tarif freelance (TJM, taux jour/semaine) : montants bien plus bas qu'un salaire annuel, à traiter différemment
+  const estTarifFreelance = /tjm|\/\s*j(our)?\b|par\s*jour|\/\s*sem(aine)?\b|par\s*semaine/i.test(s);
+  if (estTarifFreelance) return nombres.some(n => n >= 100); // TJM plausible : au moins ~100€/jour
+  return nombres.some(n => n >= 15000); // sinon salaire annuel : rejette les montants irréalistes type "4€"
 }
+let LIEU_SELECTIONNE = false;
 async function postOffre() {
   const titre = document.getElementById('of-titre').value.trim();
   const lieu = document.getElementById('of-lieu').value.trim();
@@ -1780,6 +1882,7 @@ async function postOffre() {
   const desc = document.getElementById('of-desc').value.trim();
   const auto = document.getElementById('of-auto').checked;
   if (!titre || !OF_TYPE || !lieu) { showErr('post-err', 'Titre, type et lieu sont requis'); return; }
+  if (!LIEU_SELECTIONNE) { showErr('post-err', 'Sélectionnez une localisation dans la liste proposée'); document.getElementById('of-lieu').focus(); return; }
   if (!isValidSalaire(salaire)) {
     document.getElementById('of-salaire-err').style.display = 'block';
     document.getElementById('of-salaire').focus();
@@ -1796,22 +1899,27 @@ async function postOffre() {
 
 let VILLE_SEARCH_TIMER = null;
 function searchVilles(query) {
+  LIEU_SELECTIONNE = false;
   clearTimeout(VILLE_SEARCH_TIMER);
   VILLE_SEARCH_TIMER = setTimeout(() => fetchVilles(query.trim()), 250);
 }
 async function fetchVilles(query) {
   const list = document.getElementById('of-lieu-list');
   if (!list) return;
-  let items = [{ label: 'Remote / Télétravail', remote: true }];
-  if (query.length >= 2) {
+  const q = query.toLowerCase();
+  // "Remote" n'a de sens que si le champ est vide (première suggestion) ou si on tape explicitement un mot lié au remote
+  const remotePertinent = !q || /remote|teletravail|télétravail|distance|domicile/.test(q);
+  let items = remotePertinent ? [{ label: 'Remote / Télétravail', remote: true }, { label: 'France entière', value: 'France entière' }] : [];
+  if (query.length >= 2 && !remotePertinent) {
     try {
-      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,codeDepartement&boost=population&limit=7`);
+      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,codeDepartement&boost=population&limit=8`);
       if (res.ok) {
         const data = await res.json();
         items = items.concat(data.map(c => ({ label: `${c.nom} (${c.codeDepartement})`, value: c.nom })));
       }
     } catch (e) {}
   }
+  if (!items.length) { list.classList.remove('on'); return; }
   list.innerHTML = items.map((it, i) => `<div class="autocomplete-item${it.remote?' remote':''}" onmousedown="pickVille(${i})">${esc(it.label)}</div>`).join('');
   list.dataset.items = JSON.stringify(items);
   list.classList.add('on');
@@ -1822,6 +1930,7 @@ function pickVille(i) {
   const it = items[i];
   if (!it) return;
   document.getElementById('of-lieu').value = it.remote ? 'Remote / Télétravail' : it.value;
+  LIEU_SELECTIONNE = true;
   list.classList.remove('on');
 }
 document.addEventListener('click', (e) => {
