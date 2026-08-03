@@ -495,6 +495,10 @@ router.post('/pipeline/contact', authMiddleware, requireRecruiterPlan, async (re
 
     let match = existingMatches?.[0] || null;
     if (!match) {
+      const canContactWithoutMatch = ['pro', 'enterprise'].includes(req.recruiterPlan);
+      if (!canContactWithoutMatch) {
+        return res.status(403).json({ error: 'Contact direct sans match reserve aux plans superieurs' });
+      }
       const score = Math.max(70, Number(candidature.candidats?.score_adn || 0));
       const { data: createdMatch, error: createError } = await supabase
         .from('matchs')
