@@ -758,11 +758,13 @@ button,input,textarea,select{font-family:inherit}
     align-self:start;
     position:sticky;
     top:68px;
+    max-height:calc(100dvh - 90px);
   }
   #p-messages #chat-panel.on{
     display:flex;
     flex-direction:column;
     min-height:520px;
+    overflow:hidden;
   }
   #p-messages #chat-placeholder{
     grid-column:2;
@@ -773,6 +775,7 @@ button,input,textarea,select{font-family:inherit}
     text-align:center;
     gap:10px;
     min-height:520px;
+    max-height:calc(100dvh - 90px);
     background:var(--w);
     border:1px solid var(--bd);
     border-radius:14px;
@@ -787,9 +790,9 @@ button,input,textarea,select{font-family:inherit}
   .chat-placeholder-s{font-size:12.5px;color:var(--ink3);max-width:240px;line-height:1.5}
   #p-messages .chat-body{
     flex:1;
-    min-height:420px;
-    max-height:calc(100dvh - 210px);
+    min-height:0;
   }
+  #p-messages .chat-compose{flex-shrink:0}
 }
 
 @media (min-width:1080px){
