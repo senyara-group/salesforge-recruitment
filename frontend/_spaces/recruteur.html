@@ -386,6 +386,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .mstat-v{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;color:var(--b)}
 .mstat-l{font-size:10px;color:var(--mu);margin-top:2px;font-weight:600;text-transform:uppercase}
 .cov-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:16px}
+.cov-plan-note{background:var(--bs);border:1px solid var(--bm);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--b);text-align:center;line-height:1.5;margin-bottom:12px}
 .q-ask-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
 .q-ask-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px}
 .q-ask-list{display:flex;flex-direction:column;gap:5px}
@@ -1227,6 +1228,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="mstat"><div class="mstat-v sf" id="cov-score">—</div><div class="mstat-l">Score ADN</div></div>
     </div>
     <div class="cov-tags" id="cov-tags"></div>
+    <div class="cov-plan-note" id="cov-plan-note" style="display:none"></div>
     <div class="sh-actions">
       <button class="btn bp blk" id="cov-contact-btn" onclick="contactFromPipeline()">Contacter le candidat</button>
       <button class="btn bo blk" onclick="closeCandOv({target:document.getElementById('cand-ov')})">Fermer</button>
@@ -1957,7 +1959,21 @@ function openPipelineCandidate(candidatureId) {
   document.getElementById('cov-role').textContent = c.role;
   document.getElementById('cov-score').textContent = c.score;
   document.getElementById('cov-tags').innerHTML = c.tags.map(t => `<span class="pc-tag">${t}</span>`).join('');
-  document.getElementById('cov-contact-btn').textContent = c.discussed ? 'Ouvrir la conversation' : 'Contacter le candidat';
+
+  const btn = document.getElementById('cov-contact-btn');
+  const note = document.getElementById('cov-plan-note');
+  const hasMatch = Boolean(c.match_id);
+  const canContactWithoutMatch = ['pro', 'enterprise'].includes(CURRENT_PLAN);
+
+  if (!hasMatch && !canContactWithoutMatch) {
+    btn.style.display = 'none';
+    note.style.display = 'block';
+    note.textContent = "Ce candidat n'a pas encore matché avec votre offre. La messagerie directe sans match est réservée aux plans Partenaire et Enterprise — pour l'instant, vous pouvez consulter son profil ci-dessus.";
+  } else {
+    btn.style.display = '';
+    note.style.display = 'none';
+    btn.textContent = c.discussed ? 'Ouvrir la conversation' : 'Contacter le candidat';
+  }
   document.getElementById('cand-ov').classList.add('on');
 }
 function closeCandOv(e) {
