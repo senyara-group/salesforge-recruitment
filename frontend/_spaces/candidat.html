@@ -281,6 +281,7 @@ button,input,textarea,select{font-family:inherit}
 .ob-h{background:var(--rs);color:var(--r)}.ob-f{background:var(--gs);color:var(--g)}
 .ob-c{background:var(--bs);color:var(--b)}.ob-a{background:var(--as);color:var(--a)}
 .ot{font-size:13px;font-weight:600;line-height:1.5;padding-right:65px}
+#ts-job .ot,#ts-huntfarm .ot,#ts-profileq1 .ot,#ts-profileq2 .ot{padding-right:13px}
 .oh{font-size:11px;color:var(--mu);padding-right:65px;line-height:1.5;margin-top:2px}
 .slg{display:flex;flex-direction:column;gap:18px;margin-bottom:20px}
 .sl-row{display:flex;flex-direction:column;gap:4px}
@@ -1369,7 +1370,42 @@ button,input,textarea,select{font-family:inherit}
         <button class="pc" onclick="tg(this,'taille','eti')">ETI</button>
         <button class="pc" onclick="tg(this,'taille','gc')">Grand compte</button>
       </div></div>
-      <div class="step-nav"><button class="btn bo" onclick="ns(8)">Retour</button><button class="btn bp" onclick="submitADN()">Analyser mon ADN</button></div>
+      <div class="step-nav"><button class="btn bo" onclick="ns(8)">Retour</button><button class="btn bp" onclick="goToJobStep()">Continuer</button></div>
+    </div>
+    <!-- STEP JOB TYPE -->
+    <div id="ts-job" style="display:none">
+      <div class="qt sf">Quel type de poste recherchez-vous ?</div>
+      <div class="opts" id="job-type-opts">
+        <button class="opt" onclick="selectJobType('sdr',this)"><span class="ot">SDR / BDR</span></button>
+        <button class="opt" onclick="selectJobType('bizdev',this)"><span class="ot">Business Developer</span></button>
+        <button class="opt" onclick="selectJobType('ae',this)"><span class="ot">Account Executive</span></button>
+        <button class="opt" onclick="selectJobType('terrain',this)"><span class="ot">Commercial terrain</span></button>
+        <button class="opt" onclick="selectJobType('kam',this)"><span class="ot">Key Account Manager</span></button>
+        <button class="opt" onclick="selectJobType('manager',this)"><span class="ot">Manager commercial</span></button>
+      </div>
+      <div class="step-nav"><button class="btn bo" onclick="ns(9)">Retour</button><button class="btn bp" id="bn-job" onclick="ns_custom('ts-huntfarm')" disabled>Continuer</button></div>
+    </div>
+    <!-- STEP HUNTER / FARMER -->
+    <div id="ts-huntfarm" style="display:none">
+      <div class="qt sf">Vous vous décrivez plutôt comme :</div>
+      <div class="opts" id="huntfarm-opts">
+        <button class="opt" onclick="selectHuntFarm('hunter',this)"><span class="ot">Hunter (chercher de nouveaux clients)</span></button>
+        <button class="opt" onclick="selectHuntFarm('farmer',this)"><span class="ot">Farmer (développer les comptes existants)</span></button>
+        <button class="opt" onclick="selectHuntFarm('full',this)"><span class="ot">Full cycle (les deux)</span></button>
+      </div>
+      <div class="step-nav"><button class="btn bo" onclick="ns_custom('ts-job')">Retour</button><button class="btn bp" id="bn-huntfarm" onclick="renderProfileQuestion(1)" disabled>Continuer</button></div>
+    </div>
+    <!-- STEP PROFILE Q1 (contenu dynamique selon le poste choisi) -->
+    <div id="ts-profileq1" style="display:none">
+      <div class="qt sf" id="profileq1-text">—</div>
+      <div class="opts" id="profileq1-opts"></div>
+      <div class="step-nav"><button class="btn bo" onclick="ns_custom('ts-huntfarm')">Retour</button><button class="btn bp" id="bn-profileq1" onclick="renderProfileQuestion(2)" disabled>Continuer</button></div>
+    </div>
+    <!-- STEP PROFILE Q2 (contenu dynamique selon le poste choisi) -->
+    <div id="ts-profileq2" style="display:none">
+      <div class="qt sf" id="profileq2-text">—</div>
+      <div class="opts" id="profileq2-opts"></div>
+      <div class="step-nav"><button class="btn bo" onclick="ns_custom('ts-profileq1')">Retour</button><button class="btn bp" id="bn-profileq2" onclick="submitADN()" disabled>Analyser mon ADN</button></div>
     </div>
     <!-- STEP 10 RESULT -->
     <div id="ts10" style="display:none">
@@ -2239,16 +2275,104 @@ function renderCands(c) {
 // ------------------------------------------------------------
 // TEST ADN
 // ------------------------------------------------------------
+const CUSTOM_TEST_STEPS = ['ts-job', 'ts-huntfarm', 'ts-profileq1', 'ts-profileq2'];
+function hideAllTestSteps() {
+  for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
+  CUSTOM_TEST_STEPS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
 function ns(n) {
   const current = getCurrentStep();
   if (n > current && !canContinueStep(current)) return;
-  for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
+  hideAllTestSteps();
   const el = document.getElementById('ts'+n); if(el) el.style.display='block';
-  document.getElementById('test-sl').textContent = 'Étape '+n+' sur 10';
+  document.getElementById('test-sl').textContent = 'Étape '+n+' sur 13';
   document.getElementById('test-st').textContent = STEPS[n];
-  document.getElementById('test-pf').style.width = (n*10) + '%';
+  document.getElementById('test-pf').style.width = (n*(100/13)) + '%';
   if (n===10) runAnalysis();
   window.scrollTo(0,0);
+}
+const CUSTOM_STEP_META = {
+  'ts-job': { n: 10, title: 'Poste recherché' },
+  'ts-huntfarm': { n: 11, title: 'Profil de chasse' },
+  'ts-profileq1': { n: 12, title: 'Question spécifique' },
+  'ts-profileq2': { n: 13, title: 'Question spécifique' },
+};
+function ns_custom(id) {
+  hideAllTestSteps();
+  const el = document.getElementById(id); if (el) el.style.display = 'block';
+  const meta = CUSTOM_STEP_META[id] || { n: 10, title: '' };
+  document.getElementById('test-sl').textContent = 'Étape ' + meta.n + ' sur 13';
+  document.getElementById('test-st').textContent = meta.title;
+  document.getElementById('test-pf').style.width = (meta.n*(100/13)) + '%';
+  window.scrollTo(0,0);
+}
+function goToJobStep() {
+  if (!canContinueStep(9)) return;
+  ns_custom('ts-job');
+}
+const PROFILE_QUESTIONS = {
+  sdr: {
+    label: 'SDR / BDR',
+    q1: { text: "Combien d'appels de prospection par jour ?", options: ['Moins de 20', '20 à 50', '50 à 80', 'Plus de 80'] },
+    q2: { text: 'Face à un barrage secrétaire, votre réflexe :', options: ['Je rappelle plus tard', 'Je demande le nom du décideur', "Je donne une raison précise et j'assume", "J'envoie un email à la place"] },
+  },
+  bizdev: {
+    label: 'Business Developer',
+    q1: { text: 'Montant moyen des contrats signés :', options: ['Moins de 5K€', '5 à 20K€', '20 à 50K€', 'Plus de 50K€'] },
+    q2: { text: 'Vous gérez le cycle de vente :', options: ['De la prospection au closing', 'À partir du rendez-vous qualifié', 'Uniquement le closing'] },
+  },
+  ae: {
+    label: 'Account Executive',
+    q1: { text: 'Votre plus gros contrat signé :', options: ['Moins de 20K€', '20 à 50K€', '50 à 150K€', 'Plus de 150K€'] },
+    q2: { text: 'Comment gérez-vous un deal qui stagne depuis 3 semaines ?', options: ["J'attends que le client revienne", 'Je relance avec du contenu à valeur', "J'envoie un mail de rupture", 'Je remonte au niveau supérieur'] },
+  },
+  terrain: {
+    label: 'Commercial terrain',
+    q1: { text: 'Combien de visites clients par semaine ?', options: ['Moins de 5', '5 à 15', '15 à 25', 'Plus de 25'] },
+    q2: { text: 'Votre secteur géographique idéal :', options: ['Local (moins de 50 km)', 'Régional', 'National avec découchés'] },
+  },
+  kam: {
+    label: 'Key Account Manager',
+    q1: { text: 'Combien de comptes gérez-vous simultanément ?', options: ['Moins de 5', '5 à 15', '15 à 30', 'Plus de 30'] },
+    q2: { text: 'Face à un client mécontent qui menace de partir :', options: ['Je fais un geste commercial', "Je comprends d'abord le problème de fond", 'Je remonte à ma direction'] },
+  },
+  manager: {
+    label: 'Manager commercial',
+    q1: { text: 'Combien de commerciaux avez-vous encadrés ?', options: ['Aucun encore', '1 à 3', '4 à 10', 'Plus de 10'] },
+    q2: { text: 'Face à un commercial en sous-performance :', options: ['Je fixe un plan de redressement chiffré', 'Je fais du terrain avec lui', "Je cherche à comprendre ce qui bloque avant d'agir"] },
+  },
+};
+let TEST_JOB_TYPE = null;
+let TEST_HUNT_FARM = null;
+let TEST_PROFILE_ANSWERS = { q1: null, q2: null };
+function selectJobType(key, btn) {
+  TEST_JOB_TYPE = key;
+  btn.parentElement.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('bn-job').disabled = false;
+}
+function selectHuntFarm(key, btn) {
+  TEST_HUNT_FARM = key;
+  btn.parentElement.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('bn-huntfarm').disabled = false;
+}
+function renderProfileQuestion(qNum) {
+  const profile = PROFILE_QUESTIONS[TEST_JOB_TYPE];
+  if (!profile) { ns(10); return; }
+  const q = profile['q' + qNum];
+  document.getElementById('profileq' + qNum + '-text').textContent = q.text;
+  document.getElementById('profileq' + qNum + '-opts').innerHTML = q.options.map((opt, i) =>
+    `<button class="opt" onclick="selectProfileAnswer(${qNum},this)"><span class="ot">${esc(opt)}</span></button>`
+  ).join('');
+  document.getElementById('bn-profileq' + qNum).disabled = true;
+  ns_custom('ts-profileq' + qNum);
+}
+function selectProfileAnswer(qNum, btn) {
+  TEST_PROFILE_ANSWERS['q' + qNum] = btn.querySelector('.ot').textContent;
+  btn.parentElement.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('bn-profileq' + qNum).disabled = false;
 }
 function getCurrentStep() {
   for (let i=1;i<=10;i++) {
@@ -2299,6 +2423,12 @@ async function runAnalysis() {
 }
 async function submitToAPI() {
   try {
+    ADN.job_profile = {
+      poste: TEST_JOB_TYPE,
+      poste_label: PROFILE_QUESTIONS[TEST_JOB_TYPE]?.label || '',
+      style: TEST_HUNT_FARM,
+      reponses: TEST_PROFILE_ANSWERS,
+    };
     const r = await api('POST', '/ai/score-adn', { reponses: ADN });
     renderResult(r);
   } catch(e) { toast('Erreur analyse — vérifiez la connexion'); }
