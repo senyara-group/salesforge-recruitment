@@ -389,6 +389,16 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .cov-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:16px}
 .cov-plan-note{background:var(--bs);border:1px solid var(--bm);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--b);text-align:center;line-height:1.5;margin-bottom:12px}
 .cov-full-profile{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:left}
+.comp-cat{border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.comp-cat-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;cursor:pointer;background:var(--bg);font-size:12.5px;font-weight:800}
+.comp-cat-count{font-size:10.5px;color:var(--b);background:var(--bs);border-radius:999px;padding:2px 8px;font-weight:800}
+.comp-cat-chevron{transition:.2s;color:var(--ink3);flex-shrink:0}
+.comp-cat.on .comp-cat-chevron{transform:rotate(180deg)}
+.comp-cat-body{display:none;flex-wrap:wrap;gap:6px;padding:11px 13px}
+.comp-cat.on .comp-cat-body{display:flex}
+.comp-pill{padding:6px 12px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11.5px;font-weight:700;color:var(--ink3);cursor:pointer;transition:.15s}
+.comp-pill.on{background:var(--b);border-color:var(--b);color:#fff}
+.comp-filter-badge{font-size:10px;background:#fff;color:var(--b);border-radius:999px;padding:1px 7px;font-weight:900}
 .q-ask-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
 .q-ask-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px}
 .q-ask-list{display:flex;flex-direction:column;gap:5px}
@@ -946,6 +956,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="sec-t sf">Sourcing candidats</div>
       <span style="font-size:12px;color:var(--mu)" id="deck-count">Chargement…</span>
     </div>
+    <button class="btn bg2 bsm" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openCompFilterModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filtres
+      <span class="comp-filter-badge" id="comp-filter-badge" style="display:none">0</span>
+    </button>
   </div>
   <div class="deck-area" id="deck-area">
     <div id="deck-cards"></div>
@@ -1256,6 +1271,19 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="sh-actions">
       <button class="btn bp blk" id="cov-contact-btn" onclick="contactFromPipeline()">Contacter le candidat</button>
       <button class="btn bo blk" onclick="closeCandOv({target:document.getElementById('cand-ov')})">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="comp-filter-ov" onclick="closeCompFilterOv(event)">
+  <div class="bottom-sheet" style="max-width:520px">
+    <div class="sh-handle"></div>
+    <div class="match-title sf" style="margin-bottom:4px">Filtrer par compétences</div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Sélectionnez une ou plusieurs compétences pour affiner le sourcing.</div>
+    <div id="comp-filter-accordion" style="max-height:50vh;overflow-y:auto"></div>
+    <div class="sh-actions">
+      <button class="btn bp blk" onclick="applyCompFilter()">Appliquer</button>
+      <button class="btn bo blk" onclick="resetCompFilter()">Réinitialiser</button>
     </div>
   </div>
 </div>
@@ -1665,11 +1693,66 @@ function viewCandidate(id) {
 // ------------------------------------------------------------
 // SWIPE CANDIDATS
 // ------------------------------------------------------------
+const COMPETENCES_TAXONOMY = {
+  'Soft skills': ['Écoute active', 'Résilience', 'Persuasion', 'Négociation', 'Aisance relationnelle', 'Gestion du stress', 'Organisation', 'Esprit de conquête'],
+  'Prospection': ['Cold calling', 'Cold emailing', 'Social selling', 'Prospection terrain', 'Prise de rendez-vous'],
+  'Vente': ['Découverte du besoin', 'Qualification', 'Argumentation', 'Traitement des objections', 'Closing', 'Négociation commerciale'],
+  'Développement': ['Upsell / Cross-sell', 'Fidélisation', 'Gestion de comptes clés', 'Développement de portefeuille'],
+  'Pilotage': ['Gestion de pipeline', 'Prévisions de vente (forecast)', 'Reporting commercial'],
+  'Méthodologies': ['BANT', 'MEDDIC', 'SPIN Selling', 'Challenger Sale', 'Solution Selling', 'Inbound Sales'],
+  'Outils CRM': ['Salesforce', 'HubSpot', 'Pipedrive', 'Zoho'],
+  'Outils de prospection': ['LinkedIn Sales Navigator', 'Lemlist', 'Apollo', 'Waalaxy', 'Outreach / Salesloft'],
+  'Autres outils': ['Aircall', 'Modjo / Gong', 'Notion'],
+  "Secteurs d'expérience": ['SaaS / Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance / Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile'],
+};
+let SELECTED_COMP_FILTER = [];
+function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
+function openCompFilterModal() {
+  const el = document.getElementById('comp-filter-accordion');
+  el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
+    <div class="comp-cat" id="filter-cat-${compCatId(cat)}">
+      <div class="comp-cat-hd" onclick="this.parentElement.classList.toggle('on')">
+        <span>${esc(cat)}</span>
+        <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="comp-cat-body">
+        ${items.map(item => `<span class="comp-pill${SELECTED_COMP_FILTER.includes(item)?' on':''}" onclick="toggleCompFilterItem('${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('comp-filter-ov').classList.add('on');
+}
+function closeCompFilterOv(e) {
+  if (e.target === document.getElementById('comp-filter-ov')) e.target.classList.remove('on');
+}
+function toggleCompFilterItem(item, el) {
+  el.classList.toggle('on');
+  if (SELECTED_COMP_FILTER.includes(item)) SELECTED_COMP_FILTER = SELECTED_COMP_FILTER.filter(i => i !== item);
+  else SELECTED_COMP_FILTER.push(item);
+}
+function updateCompFilterBadge() {
+  const badge = document.getElementById('comp-filter-badge');
+  if (!badge) return;
+  badge.style.display = SELECTED_COMP_FILTER.length ? 'inline-block' : 'none';
+  badge.textContent = SELECTED_COMP_FILTER.length;
+}
+function applyCompFilter() {
+  document.getElementById('comp-filter-ov').classList.remove('on');
+  updateCompFilterBadge();
+  loadCandidates();
+}
+function resetCompFilter() {
+  SELECTED_COMP_FILTER = [];
+  document.getElementById('comp-filter-ov').classList.remove('on');
+  updateCompFilterBadge();
+  loadCandidates();
+}
 async function loadCandidates() {
   DECK_IDX = 0;
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    CANDS = (await api('GET', '/candidats/deck?matching=' + encodeURIComponent(JSON.stringify(MATCHING))))
+    const params = new URLSearchParams({ matching: JSON.stringify(MATCHING) });
+    if (SELECTED_COMP_FILTER.length) params.set('competences', SELECTED_COMP_FILTER.join(','));
+    CANDS = (await api('GET', '/candidats/deck?' + params.toString()))
       .filter(c => !isSeenCandidate(c));
     renderDeck();
   } catch(e) { document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>'; }
@@ -1706,7 +1789,7 @@ function buildCandCard(c) {
         <div class="cand-adn-hd"><div><div class="cand-adn-score sf">${c.adn_score}</div><div class="cand-adn-lbl">ADN Commercial</div></div><div class="cand-adn-type sf">${c.adn_type}</div></div>
         <div class="cand-adn-bars">${c.axes.map(a=>`<div class="cadn-row"><div class="cadn-l">${a.l}</div><div class="cadn-tr"><div class="cadn-f" style="width:${a.v}%"></div></div><div class="cadn-v sf">${a.v}</div></div>`).join('')}</div>
       </div>
-      <div class="cand-skills">${c.skills.map(s=>`<span class="cand-skill">${s}</span>`).join('')}</div>
+      <div class="cand-skills">${c.skills.map(s=>`<span class="cand-skill">${s}</span>`).join('')}${Object.values(c.competences||{}).flat().slice(0,8).map(s=>`<span class="cand-skill" style="background:var(--bs);color:var(--b)">${s}</span>`).join('')}</div>
       ${candDocs(c)}
       <div class="cand-pitch">
         <div class="cand-pitch-hd"><div class="cand-pitch-t sf"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Simulation de pitch</div><div class="cand-pitch-score sf">${c.pitch_score}/100</div></div>

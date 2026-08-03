@@ -447,7 +447,7 @@ router.get('/profil', authMiddleware, async (req, res) => {
   try {
     const profil = await ensureCandidateProfile(req.user.id);
     const withUrls = await withFreshCvUrl(profil);
-    res.json({ ...withUrls, ville: profil.axes?.meta?.ville || '' });
+    res.json({ ...withUrls, ville: profil.axes?.meta?.ville || '', competences: profil.axes?.meta?.competences || {} });
   } catch (error) {
     publicError(res, error);
   }
@@ -689,20 +689,21 @@ router.put('/profil', authMiddleware, async (req, res) => {
     await ensureCandidateProfile(req.user.id);
 
     const current = await ensureCandidateProfile(req.user.id);
-    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label, ville } = req.body;
+    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label, ville, competences } = req.body;
     const nextAxes = axes === undefined
       ? current.axes
       : {
         ...(current.axes || {}),
         ...(axes || {}),
       };
-    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined) {
+    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined || competences !== undefined) {
       nextAxes.meta = {
         ...(current.axes?.meta || {}),
         ...(motivation !== undefined ? { motivation } : {}),
         ...(anonyme !== undefined ? { anonyme } : {}),
         ...(avatar_label !== undefined ? { avatar_label } : {}),
         ...(ville !== undefined ? { ville } : {}),
+        ...(competences !== undefined ? { competences } : {}),
       };
     }
 
@@ -749,6 +750,9 @@ router.get('/stats', authMiddleware, async (req, res) => {
 router.get('/deck', authMiddleware, async (req, res) => {
   try {
     const matching = req.query.matching ? JSON.parse(req.query.matching) : {};
+    const requestedCompetences = req.query.competences
+      ? String(req.query.competences).split(',').map((c) => c.trim()).filter(Boolean)
+      : [];
     const seenCandidateIds = await recruiterSeenCandidateIds(req.user.id);
     const { data, error } = await supabase
       .from('candidats')
@@ -760,7 +764,13 @@ router.get('/deck', authMiddleware, async (req, res) => {
     const candidates = dedupeBy(data, (candidat) => candidat.user_id || candidat.id)
       .filter((candidat) => candidat.user_id !== req.user.id)
       .filter((candidat) => !seenCandidateIds.includes(String(candidat.id)))
-      .filter((candidat) => !seenCandidateIds.includes(String(candidat.user_id)));
+      .filter((candidat) => !seenCandidateIds.includes(String(candidat.user_id)))
+      .filter((candidat) => {
+        if (!requestedCompetences.length) return true;
+        const competences = candidat.axes?.meta?.competences || {};
+        const flat = Object.values(competences).flat();
+        return requestedCompetences.some((c) => flat.includes(c));
+      });
 
     const deck = await Promise.all(candidates.map(async (candidat) => {
         const profile = await withFreshCvUrl(candidat);
@@ -801,6 +811,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
           motivation_url: profile.motivation_url || '',
           motivation_file_name: profile.axes?.meta?.motivation_file_name || '',
           skills: skills.length ? skills : ['Sales', 'B2B'],
+          competences: profile.axes?.meta?.competences || {},
           ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
           predict: [
             { v: `${compatibilityScore(axes, matching)}%`, l: 'Fit poste' },

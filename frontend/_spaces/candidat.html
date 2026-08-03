@@ -495,6 +495,21 @@ button,input,textarea,select{font-family:inherit}
 .profile-resource-actions button:disabled{opacity:.42;cursor:not-allowed}
 .profile-resource-actions .danger{color:var(--r);border-color:rgba(204,47,47,.26);background:var(--rs)}
 .profile-edit-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.comp-section{margin:16px 0}
+.comp-section-t{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--ink)}
+.comp-section-s{font-size:11.5px;color:var(--ink3);margin:2px 0 10px;line-height:1.4}
+.comp-cat{border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.comp-cat-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;cursor:pointer;background:var(--bg);font-size:12.5px;font-weight:800}
+.comp-cat-count{font-size:10.5px;color:var(--b);background:var(--bs);border-radius:999px;padding:2px 8px;font-weight:800}
+.comp-cat-chevron{transition:.2s;color:var(--ink3);flex-shrink:0}
+.comp-cat.on .comp-cat-chevron{transform:rotate(180deg)}
+.comp-cat-body{display:none;flex-wrap:wrap;gap:6px;padding:11px 13px}
+.comp-cat.on .comp-cat-body{display:flex}
+.comp-pill{padding:6px 12px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11.5px;font-weight:700;color:var(--ink3);cursor:pointer;transition:.15s}
+.comp-pill.on{background:var(--b);border-color:var(--b);color:#fff}
+.comp-display{display:flex;flex-wrap:wrap;gap:6px}
+.comp-display .comp-pill{cursor:default}
+.comp-display-empty{font-size:12px;color:var(--ink3)}
 .profile-edit-actions .save-btn{background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 10px 22px rgba(19,64,224,.28)}
 .phs-v{font-family:'Sora',sans-serif;font-size:22px;font-weight:900;color:var(--ink);line-height:1}
 #prof-status{font-size:14px;letter-spacing:0;line-height:1.2}
@@ -1505,6 +1520,11 @@ button,input,textarea,select{font-family:inherit}
           </div>
         </div>
       </div>
+      <div class="comp-section">
+        <div class="comp-section-t">Compétences</div>
+        <div class="comp-section-s">Cochez vos points forts dans chaque catégorie — rien n'est obligatoire.</div>
+        <div id="comp-accordion"></div>
+      </div>
       <div class="profile-edit-actions">
         <button class="btn upload-btn" type="button" onclick="toggleProfileEdit()">Annuler</button>
         <button class="btn save-btn" type="button" onclick="saveProfileEdit()">Enregistrer</button>
@@ -1520,6 +1540,10 @@ button,input,textarea,select{font-family:inherit}
     <div class="card-sec">
       <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
       <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
+    </div>
+    <div class="card-sec" id="prof-comp-card" style="display:none">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
+      <div class="comp-display" id="prof-comp-display"></div>
     </div>
     <div class="plan-banner" id="plan-banner">
       <div class="plan-info">
@@ -2618,6 +2642,7 @@ function renderProfile(p, a) {
   if (cvLabel) cvLabel.textContent = p.axes?.meta?.cv_file_name ? 'CV : ' + p.axes.meta.cv_file_name : 'Importer un nouveau CV';
   renderProfileCV(p);
   renderMotivationFile(p);
+  renderProfileCompetences(p.competences || {});
   const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
   CURRENT_PLAN = activeSubscriptionPlan(a);
   CURRENT_PLAN_LOADED = true;
@@ -2642,11 +2667,62 @@ function renderProfileAvatar(p, avatarLabel) {
   renderAvatarInto(document.getElementById('prof-av'), PROFILE_AVATAR_URL, avatarLabel);
   renderAvatarInto(document.getElementById('edit-avatar-preview'), PROFILE_AVATAR_URL, avatarLabel);
 }
+const COMPETENCES_TAXONOMY = {
+  'Soft skills': ['Écoute active', 'Résilience', 'Persuasion', 'Négociation', 'Aisance relationnelle', 'Gestion du stress', 'Organisation', 'Esprit de conquête'],
+  'Prospection': ['Cold calling', 'Cold emailing', 'Social selling', 'Prospection terrain', 'Prise de rendez-vous'],
+  'Vente': ['Découverte du besoin', 'Qualification', 'Argumentation', 'Traitement des objections', 'Closing', 'Négociation commerciale'],
+  'Développement': ['Upsell / Cross-sell', 'Fidélisation', 'Gestion de comptes clés', 'Développement de portefeuille'],
+  'Pilotage': ['Gestion de pipeline', 'Prévisions de vente (forecast)', 'Reporting commercial'],
+  'Méthodologies': ['BANT', 'MEDDIC', 'SPIN Selling', 'Challenger Sale', 'Solution Selling', 'Inbound Sales'],
+  'Outils CRM': ['Salesforce', 'HubSpot', 'Pipedrive', 'Zoho'],
+  'Outils de prospection': ['LinkedIn Sales Navigator', 'Lemlist', 'Apollo', 'Waalaxy', 'Outreach / Salesloft'],
+  'Autres outils': ['Aircall', 'Modjo / Gong', 'Notion'],
+  "Secteurs d'expérience": ['SaaS / Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance / Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile'],
+};
+let EDIT_COMPETENCES = {};
+function buildCompetencesAccordion(selected = {}) {
+  EDIT_COMPETENCES = Object.fromEntries(Object.keys(COMPETENCES_TAXONOMY).map(cat => [cat, [...(selected[cat] || [])]]));
+  const el = document.getElementById('comp-accordion');
+  if (!el) return;
+  el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
+    <div class="comp-cat" id="comp-cat-${compCatId(cat)}">
+      <div class="comp-cat-hd" onclick="toggleCompCat('${compCatId(cat)}')">
+        <span>${esc(cat)}</span>
+        <span style="display:flex;align-items:center;gap:7px">
+          <span class="comp-cat-count" id="comp-count-${compCatId(cat)}">${(selected[cat]||[]).length}</span>
+          <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="comp-cat-body">
+        ${items.map(item => `<span class="comp-pill${(selected[cat]||[]).includes(item)?' on':''}" onclick="toggleCompItem('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
+function toggleCompCat(id) { document.getElementById('comp-cat-' + id)?.classList.toggle('on'); }
+function toggleCompItem(cat, item, el) {
+  el.classList.toggle('on');
+  const list = EDIT_COMPETENCES[cat] || (EDIT_COMPETENCES[cat] = []);
+  if (list.includes(item)) EDIT_COMPETENCES[cat] = list.filter(i => i !== item);
+  else list.push(item);
+  const countEl = document.getElementById('comp-count-' + compCatId(cat));
+  if (countEl) countEl.textContent = EDIT_COMPETENCES[cat].length;
+}
+function renderProfileCompetences(competences = {}) {
+  const card = document.getElementById('prof-comp-card');
+  const display = document.getElementById('prof-comp-display');
+  if (!card || !display) return;
+  const all = Object.values(competences).flat().filter(Boolean);
+  if (!all.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  display.innerHTML = all.map(item => `<span class="comp-pill">${esc(item)}</span>`).join('');
+}
 function fillProfileEdit(p, avatarLabel) {
   document.getElementById('edit-prenom').value = p.prenom || '';
   document.getElementById('edit-nom').value = p.nom || '';
   document.getElementById('edit-ville').value = p.ville || '';
   renderAvatarInto(document.getElementById('edit-avatar-preview'), p.avatar_url || PROFILE_AVATAR_URL, avatarLabel);
+  buildCompetencesAccordion(p.competences || {});
 }
 function handleRankClick() {
   const rankEl = document.getElementById('prof-rank');
@@ -2660,11 +2736,12 @@ async function saveProfileEdit() {
   const nom = document.getElementById('edit-nom').value.trim();
   const ville = document.getElementById('edit-ville').value.trim();
   try {
-    const p = await api('PUT', '/candidats/profil', { prenom, nom, ville });
+    const p = await api('PUT', '/candidats/profil', { prenom, nom, ville, competences: EDIT_COMPETENCES });
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
     document.getElementById('prof-name').textContent = profileDisplayName(p);
     renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
+    renderProfileCompetences(EDIT_COMPETENCES);
     document.getElementById('profile-edit-panel').classList.remove('on');
     toast('Profil mis à jour');
   } catch(e) {
