@@ -224,7 +224,9 @@ function normalizeCandidate(candidature, context = {}) {
     name,
     role: candidat.titre || 'Commercial',
     score: context.match?.score_match || candidature.score_match || candidat.score_adn || 0,
+    score_adn: candidat.score_adn || 0,
     tags: axisEntries.slice(0, 3).map((axis) => axis.l),
+    axes_full: axisEntries,
   };
 }
 
