@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Connexion - SalesForge</title>
+<title>Connexion - Swip Sales</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -63,14 +63,14 @@ iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
 <body class="auth">
 <section id="boot-view" class="boot">
   <div class="mark">S</div>
-  <div class="boot-title">SalesForge</div>
+  <div class="boot-title">Swip Sales</div>
   <p class="boot-text">Reconnexion à votre espace...</p>
   <div class="boot-spin"></div>
 </section>
 <main id="login-view" class="card" style="display:none">
-  <a class="brand" href="salesforge_landing.html"><span class="mark">S</span><span class="logo">Sales<b>Forge</b></span></a>
+  <a class="brand" href="swipsales_landing.html"><span class="mark">S</span><span class="logo">Swip<b>Sales</b></span></a>
   <h1>Connexion</h1>
-  <p>Connecte-toi avec ton email et ton mot de passe pour acceder a ton espace SalesForge.</p>
+  <p>Connecte-toi avec ton email et ton mot de passe pour acceder a ton espace Swip Sales.</p>
   <div id="message" class="msg"></div>
   <form id="login-form">
     <div class="field">
@@ -91,20 +91,20 @@ iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
       Google
     </button>
   </div>
-  <a class="secondary" href="salesforge_start.html">Je n'ai pas de compte</a>
-  <a class="back" href="salesforge_landing.html">Retour a l'accueil</a>
+  <a class="secondary" href="swipsales_start.html">Je n'ai pas de compte</a>
+  <a class="back" href="swipsales_landing.html">Retour a l'accueil</a>
 </main>
 <section id="role-view" class="role-choice">
-  <a class="brand" href="salesforge_landing.html"><span class="mark">S</span><span class="logo">Sales<b>Forge</b></span></a>
+  <a class="brand" href="swipsales_landing.html"><span class="mark">S</span><span class="logo">Swip<b>Sales</b></span></a>
   <h1>Choisis ton espace</h1>
-  <p>Dis-nous si tu utilises SalesForge pour trouver des opportunites ou pour recruter.</p>
+  <p>Dis-nous si tu utilises Swip Sales pour trouver des opportunites ou pour recruter.</p>
   <div id="role-message" class="msg"></div>
   <div class="role-grid">
     <button class="role-btn" type="button" onclick="chooseRole('candidat')">Candidat</button>
     <button class="role-btn" type="button" onclick="chooseRole('recruteur')">Recruteur</button>
   </div>
 </section>
-<iframe id="app-frame" title="Espace SalesForge"></iframe>
+<iframe id="app-frame" title="Espace Swip Sales"></iframe>
  
 <script>
 const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -122,7 +122,7 @@ const loginSubmit = document.getElementById('login-submit');
 const forgotSubmit = document.getElementById('forgot-submit');
  
 function setPageTitle(title){
-  document.title = `${title} - SalesForge`;
+  document.title = `${title} - Swip Sales`;
 }
  
 let envConfigPromise = null;

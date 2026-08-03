@@ -84,7 +84,7 @@ function createCheckoutSession({ req, priceId, checkoutPlan, userId, plan, type,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [lineItem],
-    success_url: `${frontendUrl}/salesforge_app.html?payment=success`,
+    success_url: `${frontendUrl}/swipsales_app.html?payment=success`,
     cancel_url: `${frontendUrl}/pricing`,
     metadata: {
       plan,
@@ -103,7 +103,7 @@ router.get('/checkout', async (req, res) => {
     const plan = String(req.query.plan || '').toLowerCase();
 
     if (plan === 'freemium') {
-      return res.redirect(process.env.FREEMIUM_REDIRECT_URL || `${getFrontendUrl(req)}/salesforge_start.html?role=candidat`);
+      return res.redirect(process.env.FREEMIUM_REDIRECT_URL || `${getFrontendUrl(req)}/swipsales_start.html?role=candidat`);
     }
 
     const priceId = stripePrices[type]?.[period]?.[plan];

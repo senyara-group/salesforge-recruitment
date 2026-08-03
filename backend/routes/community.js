@@ -6,7 +6,7 @@ router.get('/stats', authMiddleware, (_req, res) => {
   res.json({
     count: 0,
     members: [],
-    desc: 'Communaute synchronisee avec la base SalesForge.',
+    desc: 'Communaute synchronisee avec la base Swip Sales.',
   });
 });
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Espace recruteur - SalesForge</title>
+<title>Espace recruteur - Swip Sales</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -834,7 +834,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <div class="app">
 <!-- TOPBAR -->
 <div class="topbar" id="topbar" style="display:none">
-  <div class="logo" onclick="go('dashboard')"><div class="logo-m">S</div><div class="logo-n sf">Sales<b>Forge</b></div><span class="logo-tag">Recruteur</span></div>
+  <div class="logo" onclick="go('dashboard')"><div class="logo-m">S</div><div class="logo-n sf">Swip<b>Sales</b></div><span class="logo-tag">Recruteur</span></div>
   <div class="top-r">
     <div class="ib notif-wrap">
       <div onclick="toggleNotifPanel()"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div class="nd" id="notif-dot" style="display:none">0</div></div>
@@ -850,7 +850,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <!-- AUTH -->
 <div id="p-auth" class="page">
   <div class="auth-logo sf">S</div>
-  <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">SalesForge Recruteur</h1>
+  <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">Swip Sales Recruteur</h1>
   <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Recrutez les meilleurs commerciaux.<br>ADN vérifié, matching IA, sans cabinet.</p>
   <div class="auth-tabs">
     <button class="auth-tab on" onclick="switchTab(this,'login')">Se connecter</button>
@@ -1185,7 +1185,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
         <div style="flex:1;min-width:0">
           <div class="chat-title" id="chat-title">Conversation</div>
-          <div class="chat-sub" id="chat-sub">Match SalesForge</div>
+          <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
         </div>
       </div>
       <div id="chat-body" class="chat-body"></div>
@@ -1580,7 +1580,7 @@ async function doForgot() {
   } catch(e) { showErr('auth-err', e.message); }
 }
 function goLanding() {
-  window.top.location.href = new URL('../salesforge_landing.html', window.location.href).href;
+  window.top.location.href = new URL('../swipsales_landing.html', window.location.href).href;
 }
 function doLogout() {
   TOKEN = null; USER = null;
@@ -2284,7 +2284,7 @@ function setMessageBadges(unreadCount) {
     const dot = document.getElementById(id);
     if (dot) dot.style.display = hasUnread ? 'block' : 'none';
   });
-  document.title = hasUnread ? 'Nouveaux messages - SalesForge' : 'Espace recruteur - SalesForge';
+  document.title = hasUnread ? 'Nouveaux messages - Swip Sales' : 'Espace recruteur - Swip Sales';
 }
 async function refreshMessageBadge() {
   if (!USER) return;
@@ -2327,7 +2327,7 @@ async function renderMessagesWelcome() {
     : `Cette messagerie s'ouvrira dès qu'un candidat vous like en retour ou postule à une de vos offres.`;
   return `<div class="msg-welcome">
       <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
-      <h2 class="sf">Bienvenue sur SalesForge recrutement</h2>
+      <h2 class="sf">Bienvenue sur Swip Sales</h2>
       <div class="msg-welcome-sub">Des commerciaux évalués, pas des CV.</div>
       <div class="msg-welcome-text">${text}</div>
       ${cta}
@@ -2338,7 +2338,7 @@ async function openThread(id) {
   if (!thread) return;
   ACTIVE_THREAD = thread;
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
-  document.getElementById('chat-sub').textContent = thread.prev || 'Match SalesForge';
+  document.getElementById('chat-sub').textContent = thread.prev || 'Match Swip Sales';
   document.getElementById('chat-panel').classList.add('on');
   document.getElementById('chat-placeholder')?.classList.add('hidden');
   const chatBody = document.getElementById('chat-body');
@@ -2432,7 +2432,7 @@ document.addEventListener('click', (e) => {
 });
 function updateTabTitle() {
   const unread = NOTIFICATIONS.filter(n => !n.read).length;
-  const base = 'Espace recruteur - SalesForge';
+  const base = 'Espace recruteur - Swip Sales';
   document.title = unread ? `(${unread}) ${base}` : base;
 }
 async function initNotifications() {
