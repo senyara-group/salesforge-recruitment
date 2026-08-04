@@ -505,9 +505,9 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard>.sec{padding:0}
   #p-dashboard .hscroll{margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
   #p-dashboard .cand-recue,#p-dashboard .alert-card{width:100%}
-  #p-swipe.page.on{display:grid !important;grid-template-columns:220px minmax(0,760px) 1fr;grid-template-rows:auto auto;grid-template-areas:"sidebar card spare" "sidebar actions spare";column-gap:24px;align-items:start;padding:24px 28px 96px}
+  #p-swipe.page.on{display:grid !important;grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto auto;grid-template-areas:"sidebar card" "sidebar actions";column-gap:24px;align-items:start;padding:24px 28px 96px}
   #p-swipe .swipe-hd{grid-area:sidebar;position:static;background:none;border:none;padding:0;top:auto}
-  #p-swipe .deck-area{grid-area:card;width:100%;height:min(660px,calc(100dvh - 260px));margin:0}
+  #p-swipe .deck-area{grid-area:card;width:100%;height:min(820px,calc(100dvh - 260px));margin:0}
   #p-swipe .deck-actions{grid-area:actions;width:100%;margin:0;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
   #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
   #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
@@ -530,7 +530,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
   #p-dashboard .dash-hero{grid-row:span 1}
   #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #p-swipe.page.on{grid-template-columns:260px minmax(0,900px) 1fr;padding-left:42px;padding-right:42px}
+  #p-swipe.page.on{grid-template-columns:260px minmax(0,1fr);padding-left:42px;padding-right:42px}
   #p-swipe .deck-area,#p-swipe .deck-actions{width:100%}
   #p-swipe .cand-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:11px;align-items:start}
   #p-swipe .cand-name,#p-swipe .cand-role,#p-swipe .cand-rank{grid-column:1/-1}
@@ -2072,13 +2072,13 @@ function openPipelineCandidate(candidatureId) {
   const fullProfile = document.getElementById('cov-full-profile');
   fullProfile.style.display = 'none';
   const hasMatch = Boolean(c.match_id);
-  const canContactWithoutMatch = ['pro', 'enterprise'].includes(CURRENT_PLAN);
+  const canContactWithoutMatch = CURRENT_PLAN !== 'solo';
 
   if (!hasMatch && !canContactWithoutMatch) {
     btn.textContent = 'Voir le profil du candidat';
     btn.onclick = () => toggleFullProfile(c);
     note.style.display = 'block';
-    note.textContent = "Ce candidat n'a pas encore matché avec votre offre. La messagerie directe sans match est réservée aux plans Partenaire et Enterprise.";
+    note.textContent = "Ce candidat n'a pas encore matché avec votre offre. La messagerie directe sans match n'est pas incluse dans le plan Entrepreneur / Indépendant — pour l'instant, vous pouvez consulter son profil ci-dessus.";
   } else {
     btn.textContent = c.discussed ? 'Ouvrir la conversation' : 'Contacter le candidat';
     btn.onclick = contactFromPipeline;
@@ -2301,10 +2301,12 @@ async function loadMessages() {
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     if (!THREADS.length) {
       list.classList.add('empty');
+      document.getElementById('chat-placeholder')?.classList.add('hidden');
       list.innerHTML = await renderMessagesWelcome();
       return;
     }
     list.classList.remove('empty');
+    document.getElementById('chat-placeholder')?.classList.remove('hidden');
     list.innerHTML = THREADS.map(t => `
       <div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')">
         <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
@@ -2529,19 +2531,17 @@ const PLANS = {
   month:[
     {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
     {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
-    {n:'Enterprise',f:'Recrutement à volume',p:349,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Passer Enterprise'},
-    {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Business inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
     {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
     {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
-    {n:'Enterprise',f:'Recrutement à volume',p:279,old:349,u:'/mois',h:'Facturé 3 348 €/an · -840 €',feats:['Offres illimitées','Tout Business inclus','Multi-utilisateurs (5 sièges)','Analytics de recrutement','Prédiction de rétention IA','Marque employeur premium','Account manager dédié'],cta:'Économiser 20%'},
-    {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Enterprise inclus','Sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Business inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ]
 };
 async function selectPlan(plan, billing) {
   try {
-    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro'}[plan] || plan;
+    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', partenaire:'pro'}[plan] || plan;
     const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
