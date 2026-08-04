@@ -13,7 +13,7 @@ function getFrom() {
 
   return {
     email,
-    name: process.env.BREVO_FROM_NAME || process.env.MAIL_FROM_NAME || 'SalesForge',
+    name: process.env.BREVO_FROM_NAME || process.env.MAIL_FROM_NAME || 'Swip Sales',
   };
 }
 
@@ -151,13 +151,13 @@ async function sendWithBrevoSmtp({ to, subject, htmlContent }) {
   let socket = await connectSocket(host, port, secure);
   let read = createSmtpReader(socket);
   await expectSmtp(socket, read, [220]);
-  await writeSmtp(socket, read, `EHLO ${process.env.BREVO_SMTP_HELO || 'salesforge.local'}`, [250]);
+  await writeSmtp(socket, read, `EHLO ${process.env.BREVO_SMTP_HELO || 'swipsales.local'}`, [250]);
 
   if (!secure) {
     await writeSmtp(socket, read, 'STARTTLS', [220]);
     socket = await upgradeToTls(socket, host);
     read = createSmtpReader(socket);
-    await writeSmtp(socket, read, `EHLO ${process.env.BREVO_SMTP_HELO || 'salesforge.local'}`, [250]);
+    await writeSmtp(socket, read, `EHLO ${process.env.BREVO_SMTP_HELO || 'swipsales.local'}`, [250]);
   }
 
   await writeSmtp(socket, read, 'AUTH LOGIN', [334]);
@@ -183,12 +183,12 @@ async function sendEmail(payload) {
 async function sendPasswordResetEmail({ to, resetUrl }) {
   await sendEmail({
     to,
-    subject: 'Reinitialisation de votre mot de passe SalesForge',
+    subject: 'Reinitialisation de votre mot de passe Swip Sales',
     textContent: `Cliquez sur ce lien pour reinitialiser votre mot de passe: ${resetUrl}`,
     htmlContent: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
         <h2>Reinitialisation du mot de passe</h2>
-        <p>Vous avez demande a reinitialiser votre mot de passe SalesForge.</p>
+        <p>Vous avez demande a reinitialiser votre mot de passe Swip Sales.</p>
         <p>
           <a href="${resetUrl}" style="display:inline-block;background:#1340E0;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">
             Choisir un nouveau mot de passe

@@ -176,7 +176,7 @@ router.get('/oauth/:provider', async (req, res) => {
     }
 
     const role = normalizeRequestedRole(req.query.role);
-    const redirectTo = new URL(process.env.OAUTH_REDIRECT_URL || `${getSiteUrl(req)}/salesforge_app.html`);
+    const redirectTo = new URL(process.env.OAUTH_REDIRECT_URL || `${getSiteUrl(req)}/swipsales_app.html`);
     if (role) redirectTo.searchParams.set('role', role);
 
     const { data, error } = await authClient.auth.signInWithOAuth({
@@ -209,7 +209,7 @@ async function signup(req, res) {
     email,
     password,
     options: {
-      emailRedirectTo: `${getSiteUrl(req)}/salesforge_app.html?confirmed=1`,
+      emailRedirectTo: `${getSiteUrl(req)}/swipsales_app.html?confirmed=1`,
     },
   });
   if (error) return res.status(400).json({ error });
@@ -284,7 +284,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 
   try {
-    const redirectTo = process.env.PASSWORD_RESET_REDIRECT_URL || `${getSiteUrl(req)}/salesforge_reset.html`;
+    const redirectTo = process.env.PASSWORD_RESET_REDIRECT_URL || `${getSiteUrl(req)}/swipsales_reset.html`;
     const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo });
 
     // Supabase ne renvoie pas d'erreur si l'email n'existe pas (comportement voulu, anti-enumeration)

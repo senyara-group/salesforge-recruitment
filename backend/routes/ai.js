@@ -52,7 +52,7 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
         { l: 'SalesTech', v: Math.max(55, score - 8) },
         { l: 'Ecoute', v: Math.max(55, score - 4) },
       ],
-      tags: ['SalesForge', 'ADN', 'B2B'],
+      tags: ['Swip Sales', 'ADN', 'B2B'],
     };
 
     const { error } = await supabase
@@ -100,7 +100,7 @@ router.get('/benchmark-salaire', authMiddleware, async (req, res) => {
     cible: 60000,
     mb: 50000,
     mh: 70000,
-    conseil: 'Benchmark indicatif base sur votre profil SalesForge.',
+    conseil: 'Benchmark indicatif base sur votre profil Swip Sales.',
   });
 });
 
