@@ -11,7 +11,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
     module_tag: 'Module du jour',
     module_title: 'SalesTech — CRM Avance',
     module_text: 'Module recommande depuis votre profil ADN.',
-    cert_title: candidat.score_adn ? 'Certifie SalesForge' : 'Certification a debloquer',
+    cert_title: candidat.score_adn ? 'Certifie Swip Sales' : 'Certification a debloquer',
     cert_sub: candidat.score_adn ? `Score ADN ${candidat.score_adn}/100` : 'Passez le test ADN',
     skills: (Array.isArray(axes) ? axes : []).map((axis) => ({
       l: axis.l,

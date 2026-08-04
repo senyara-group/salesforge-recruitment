@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, '../frontend')));
  
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/salesforge_landing.html'));
+  res.sendFile(path.join(__dirname, '../frontend/swipsales_landing.html'));
 });
  
 // Config publique pour le frontend (clé anonyme Supabase : conçue pour être publique, protégée par RLS)

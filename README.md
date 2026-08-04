@@ -1,4 +1,4 @@
-# SalesForge Recruitment
+# Swip Sales Recruitment
 
 ## Lancer le projet en local
 
@@ -49,12 +49,12 @@ Dans Vercel, verifier:
 
 - Root Directory: racine du repo, pas seulement `frontend`
 - Environment Variables: recopier les valeurs de `backend/.env.example`
-- `FRONTEND_URL=https://www.salesforgerecrutement.fr`
-- `OAUTH_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_app.html`
-- `PASSWORD_RESET_REDIRECT_URL=https://www.salesforgerecrutement.fr/salesforge_reset.html`
+- `FRONTEND_URL=https://www.swipsales.fr`
+- `OAUTH_REDIRECT_URL=https://www.swipsales.fr/swipsales_app.html`
+- `PASSWORD_RESET_REDIRECT_URL=https://www.swipsales.fr/swipsales_reset.html`
 
 ## Pages principales
 
-- `salesforge_landing.html`
-- `salesforge_start.html`
-- `salesforge_app.html`
+- `swipsales_landing.html`
+- `swipsales_start.html`
+- `swipsales_app.html`
