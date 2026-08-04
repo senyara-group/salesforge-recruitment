@@ -2,436 +2,597 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Swip Sales</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwipSales · Le recrutement commercial nouvelle génération</title>
+<meta name="description" content="SwipSales connecte les commerciaux évalués et les recruteurs par un matching mutuel. Vous ne postulez plus, on vient vous chercher.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#08152A;--ink3:#4E6080;--bg:#F7F9FC;--w:#fff;--bd:#E3E9F2;--b:#1549D8;--b2:#0F3BAD;--bs:#EBF0FD;--bm:#C5D3F8;--g:#0A9460;--gs:#E4F5EF}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-nav{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);padding:0 5%;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit}
-.logo-m{width:32px;height:32px;background:var(--b);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:16px}
-.logo-t{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.2px}
-.logo-t b{color:var(--b)}
-.nav-cta{display:flex;gap:8px}
-.btn{font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:10px}
-.btn-ghost{padding:9px 16px;font-size:13px;background:transparent;color:var(--ink3)}
-.btn-ghost:hover{background:var(--bg)}
-.btn-p{padding:9px 18px;font-size:13px;background:var(--b);color:#fff;box-shadow:0 2px 8px rgba(21,73,216,.2)}
-.btn-p:hover{background:var(--b2);transform:translateY(-1px)}
-.btn-o{padding:13px 26px;font-size:15px;background:transparent;color:var(--ink);border:1.5px solid var(--bd)}
-.btn-o:hover{border-color:var(--b);color:var(--b)}
-.btn-lg{padding:14px 28px;font-size:15px;background:var(--b);color:#fff;box-shadow:0 4px 14px rgba(21,73,216,.25)}
-.btn-lg:hover{background:var(--b2);transform:translateY(-1px)}
-
-.hero{padding:72px 5% 56px;background:linear-gradient(170deg,var(--bs) 0%,var(--bg) 60%)}
-.hero-in{max-width:1160px;margin:0 auto;text-align:center}
-.badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--bd);color:var(--b);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:20px}
-.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--g);animation:blink 2s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-h1{font-family:'Sora',sans-serif;font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;margin-bottom:16px}
-h1 em{font-style:normal;color:var(--b)}
-.hero-sub{font-size:clamp(15px,1.8vw,18px);color:var(--ink3);max-width:560px;line-height:1.75;margin:0 auto 28px}
-.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
-.hero-trust{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink3);font-weight:500;margin-bottom:52px}
-.ti{display:flex;align-items:center;gap:5px}
-.ck{width:16px;height:16px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center}
-.ck svg{width:10px;height:10px;stroke:var(--g);fill:none;stroke-width:3}
-
-.devices{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
-.device{background:#0D1B35;border-radius:22px;padding:5px;box-shadow:0 40px 80px -20px rgba(5,16,31,.3);transition:.4s;cursor:pointer}
-.device:hover{transform:translateY(-10px);box-shadow:0 60px 100px -20px rgba(5,16,31,.45)}
-.dev-screen{width:250px;height:530px;border-radius:18px;overflow:hidden;background:#fff}
-.dev-lbl{text-align:center;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-top:10px}
-@media(max-width:600px){.device:first-child{display:none}}
-
-.metrics{background:var(--ink);padding:50px 5%}
-.mg{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr);gap:24px;text-align:center}
-@media(min-width:768px){.mg{grid-template-columns:repeat(4,1fr)}}
-.mn{font-family:'Sora',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;margin-bottom:5px;letter-spacing:-1px}
-.mn b{color:#7BA8FF}
-.ml2{font-size:13px;color:rgba(255,255,255,.5);font-weight:500}
-
-.s{padding:80px 5%}
-.si{max-width:1160px;margin:0 auto}
-.tag{display:inline-block;font-size:11px;font-weight:700;color:var(--b);background:var(--bs);padding:5px 12px;border-radius:6px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px}
-.st{font-family:'Sora',sans-serif;font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:12px;line-height:1.15}
-.ss{font-size:16px;color:var(--ink3);line-height:1.75;max-width:580px;margin-bottom:44px}
-.center{text-align:center}.ss.center{margin:0 auto 44px}
-
-.fg{display:grid;gap:12px;grid-template-columns:1fr}
-@media(min-width:600px){.fg{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:960px){.fg{grid-template-columns:repeat(3,1fr)}}
-.fc{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:26px;transition:.2s}
-.fc:hover{border-color:var(--bm);box-shadow:0 8px 28px rgba(21,73,216,.07);transform:translateY(-3px)}
-.fc.hl{border-color:var(--bm);background:var(--bs)}
-.fci{width:44px;height:44px;border-radius:12px;background:var(--bs);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.fc.hl .fci{background:rgba(21,73,216,.1)}
-.fci svg{width:22px;height:22px;stroke:var(--b);fill:none;stroke-width:2}
-.fc h3{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:9px}
-.fc p{font-size:14px;color:var(--ink3);line-height:1.7}
-
-.testi-g{display:grid;gap:12px;grid-template-columns:1fr}
-@media(min-width:640px){.testi-g{grid-template-columns:repeat(2,1fr)}}
-.testi{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:26px}
-.testi-t{font-size:15px;line-height:1.75;font-weight:500;color:var(--ink);margin-bottom:18px}
-.testi-a{display:flex;align-items:center;gap:12px}
-.testi-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;flex-shrink:0}
-.testi-n{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;letter-spacing:-.2px}
-.testi-r{font-size:12px;color:#8A9AB5;margin-top:2px}
-
-.pricing-ctrl{text-align:center;margin-bottom:28px}
-.ptabs{display:inline-flex;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:4px;gap:4px;margin-bottom:14px}
-.ptab{padding:9px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:7px;color:#8A9AB5;transition:.15s}
-.ptab.on{background:var(--ink);color:#fff}
-.bsw{display:inline-flex;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:3px;gap:2px}
-.bopt{padding:8px 16px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;color:#8A9AB5;transition:.15s}
-.bopt.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.bopt-b{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px}
-.plans{display:grid;gap:12px;grid-template-columns:1fr;max-width:1100px;margin:0 auto}
-@media(min-width:600px){.plans{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1020px){.plans{grid-template-columns:repeat(4,1fr)}}
-.plan{background:#fff;border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:flex;flex-direction:column;position:relative}
-.plan.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
-.plan.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
-.pop-r{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--b);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:6px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
-.plan-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
-.plan-for{font-size:12px;color:var(--ink3);margin-bottom:14px}.plan.dk .plan-for{color:rgba(255,255,255,.55)}
-.plan-pr{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
-.plan-old{font-size:14px;color:#8A9AB5;text-decoration:line-through;margin-right:3px}
-.plan-p{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1}
-.plan-u{font-size:13px;color:var(--ink3);font-weight:500}.plan.dk .plan-u{color:rgba(255,255,255,.55)}
-.plan-h{font-size:11px;color:#8A9AB5;margin-bottom:16px;min-height:14px}.plan.dk .plan-h{color:rgba(255,255,255,.4)}
-.plan-feats{list-style:none;border-top:1px solid var(--bd);padding-top:14px;margin-bottom:16px;flex:1;display:flex;flex-direction:column;gap:7px}.plan.dk .plan-feats{border-top-color:rgba(255,255,255,.1)}
-.plan-feats li{font-size:13px;display:flex;gap:8px;align-items:flex-start;color:#2B3B52;line-height:1.5}.plan.dk .plan-feats li{color:rgba(255,255,255,.75)}
-.plan-feats li svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;stroke:var(--g);fill:none;stroke-width:2.5}.plan.dk .plan-feats li svg{stroke:#5EC99A}
-.plan-btn{padding:11px;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;border:1.5px solid var(--b);background:transparent;color:var(--b);transition:.15s;width:100%}
-.plan-btn:hover,.plan.pop .plan-btn{background:var(--b);color:#fff}
-.plan.dk .plan-btn{border-color:rgba(255,255,255,.3);color:#fff}.plan.dk .plan-btn:hover{background:#fff;color:var(--ink)}
-
-.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.faq-i{background:#fff;border:1px solid var(--bd);border-radius:12px;overflow:hidden}
-.faq-q{padding:16px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:14px;color:var(--ink);font-family:'Sora',sans-serif}
-.faq-q:hover{background:var(--bg)}
-.faq-q svg{width:18px;height:18px;stroke:#8A9AB5;fill:none;stroke-width:2;flex-shrink:0;transition:transform .2s}
-.faq-i.open .faq-q svg{transform:rotate(180deg);stroke:var(--b)}
-.faq-a{padding:0 20px 16px;font-size:13px;color:var(--ink3);line-height:1.75;display:none}.faq-i.open .faq-a{display:block}
-
-.cta-b{margin:0 5% 80px;border-radius:20px;background:linear-gradient(135deg,var(--ink) 0%,#1B4FE0 100%);padding:56px 5%;text-align:center;position:relative;overflow:hidden}
-.cta-b::before{content:'';position:absolute;top:-30%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(255,255,255,.07),transparent 65%);pointer-events:none}
-.cta-b h2{font-family:'Sora',sans-serif;font-size:clamp(24px,3.5vw,38px);font-weight:800;letter-spacing:-1px;color:#fff;margin-bottom:12px;position:relative}
-.cta-b p{font-size:16px;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 28px;line-height:1.7;position:relative}
-.cta-bb{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative}
-.btn-w{padding:14px 28px;font-size:15px;background:#fff;color:var(--ink);border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.15s}
-.btn-w:hover{background:var(--bg)}
-.btn-ob{padding:14px 28px;font-size:15px;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:10px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;text-decoration:none;transition:.15s}
-.btn-ob:hover{background:rgba(255,255,255,.1);border-color:#fff}
-
-footer{background:var(--ink);padding:50px 5% 24px}
-.fi{max-width:1160px;margin:0 auto}
-.ft{display:grid;grid-template-columns:1fr;gap:28px;margin-bottom:34px}
-@media(min-width:640px){.ft{grid-template-columns:2fr 1fr 1fr 1fr}}
-.fl3{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.fl3 b{color:#7BA8FF}
-.flm{width:27px;height:27px;background:var(--b);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800}
-.fd{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;max-width:260px}
-.fc2 h5{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.35);margin-bottom:12px}
-.fc2 ul{list-style:none;display:flex;flex-direction:column;gap:7px}
-.fc2 li{font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:.15s}.fc2 li:hover{color:#fff}
-.fc2 a{color:inherit;text-decoration:none}
-.fb{padding-top:22px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.fc3{font-size:12px;color:rgba(255,255,255,.3)}
-.socs{display:flex;gap:8px}
-.soc{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid rgba(255,255,255,.1)}
-.soc:hover{background:var(--b);border-color:var(--b)}
-.soc svg{width:16px;height:16px;fill:rgba(255,255,255,.6)}.soc:hover svg{fill:#fff}
-@media(max-width:520px){
-  nav{height:auto;min-height:58px;padding:10px 16px;gap:12px}
-  .logo-t{font-size:15px}
-  .nav-cta{gap:6px}
-  .btn-ghost,.btn-p{padding:8px 11px;font-size:12px}
-  .hero{padding:46px 16px 40px}
-  h1{letter-spacing:-.8px}
-  .hero-sub{line-height:1.65}
-  .hero-btns .btn{width:100%}
-  .hero-trust{gap:10px;margin-bottom:32px}
-  .devices{gap:14px}
-  .device{width:min(100%,292px)}
-  .dev-screen{width:100%;height:430px}
-  .metrics,.s,footer{padding-left:16px;padding-right:16px}
-  .s{padding-top:54px;padding-bottom:54px}
-  .mg{gap:16px}
-  .fc,.testi,.plan{padding:20px}
-  .pricing-ctrl{margin-bottom:20px}
-  .ptabs,.bsw{width:100%}
-  .ptab,.bopt{flex:1;padding-left:10px;padding-right:10px}
-  .cta-b{margin:0 16px 56px;padding:40px 18px;border-radius:16px}
-  .cta-bb .btn-w,.cta-bb .btn-ob{width:100%}
+:root{
+  --encre:#0B1424;
+  --encre2:#101C33;
+  --bleu:#2647E8;
+  --bleu-fonce:#16307E;
+  --bleu-clair:#7DA0FF;
+  --fond:#F5F7FC;
+  --texte:#16202E;
+  --texte-doux:#5A6B82;
+  --blanc:#FFFFFF;
+  --vert:#1E9E5A;
+  --radius:18px;
 }
-@media(min-width:1180px){
-  .plan{min-height:100%}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;color:var(--texte);background:var(--blanc);line-height:1.6;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+h1,h2,h3{line-height:1.08;letter-spacing:-0.03em}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--bleu);margin-bottom:14px}
+.dark .eyebrow{color:var(--bleu-clair)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:16px;padding:15px 28px;border-radius:12px;border:none;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;white-space:nowrap}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible{outline:3px solid var(--bleu-clair);outline-offset:2px}
+.btn-bleu{background:var(--bleu);color:#fff;box-shadow:0 10px 30px rgba(38,71,232,.35)}
+.btn-blanc{background:#fff;color:var(--encre)}
+.btn-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.35)}
+.btn-ghost:hover{border-color:#fff}
+
+/* ─── NAV ─── */
+nav{position:sticky;top:0;z-index:50;background:rgba(11,20,36,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:21px;letter-spacing:-0.02em}
+.logo img{width:30px}
+.logo span{color:var(--bleu-clair)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{color:rgba(255,255,255,.75);font-size:15px;font-weight:600;transition:color .15s}
+.nav-links a:hover{color:#fff}
+.nav-cta{padding:11px 20px;font-size:15px}
+@media(max-width:820px){.nav-links a:not(.btn){display:none}}
+
+/* ─── HERO ─── */
+.hero{background:var(--encre);color:#fff;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-30%;right:-25%;width:75%;height:160%;background:var(--bleu);transform:rotate(22deg);opacity:.9}
+.hero::after{content:"";position:absolute;top:0;right:-45%;width:70%;height:160%;background:var(--bleu-fonce);transform:rotate(22deg);opacity:.5}
+.hero-in{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:88px 0 96px}
+.hero h1{font-size:clamp(38px,5.4vw,62px);font-weight:900}
+.hero h1 em{font-style:normal;color:var(--bleu-clair);display:block}
+.hero p.lead{font-size:19px;color:rgba(255,255,255,.78);margin:22px 0 32px;max-width:520px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.hero-note{margin-top:18px;font-size:13.5px;color:rgba(255,255,255,.55)}
+
+/* pile de cartes swipe */
+.stack{position:relative;width:320px;height:440px;margin:0 auto}
+.card{position:absolute;inset:0;background:#fff;border-radius:22px;box-shadow:0 30px 60px rgba(0,0,0,.45);padding:26px;color:var(--texte);display:flex;flex-direction:column}
+.card.back1{transform:scale(.94) translateY(18px) rotate(-2deg);opacity:.65}
+.card.back2{transform:scale(.88) translateY(36px) rotate(2deg);opacity:.35}
+.card.front{animation:swipe 5.2s ease-in-out infinite}
+@keyframes swipe{
+  0%,55%{transform:translateX(0) rotate(0)}
+  70%{transform:translateX(14px) rotate(3deg)}
+  84%{transform:translateX(420px) rotate(16deg);opacity:1}
+  85%{opacity:0}
+  86%{transform:translateX(0) rotate(0);opacity:0}
+  100%{transform:translateX(0) rotate(0);opacity:1}
 }
+@media(prefers-reduced-motion:reduce){.card.front{animation:none}}
+.card-top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--bleu),var(--bleu-clair));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px}
+.card-top h3{font-size:18px}
+.card-top small{color:var(--texte-doux);font-size:13px;font-weight:600}
+.score{background:var(--fond);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.score-l{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--texte-doux);text-transform:uppercase;letter-spacing:.08em}
+.score-l b{color:var(--bleu);font-size:15px}
+.bar{height:8px;background:#E3E9F5;border-radius:99px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:87%;background:linear-gradient(90deg,var(--bleu),var(--bleu-clair));border-radius:99px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:12px;font-weight:700;color:var(--bleu-fonce);background:#E9EEFC;padding:6px 12px;border-radius:99px}
+.stamp{position:absolute;top:34px;right:22px;border:4px solid var(--vert);color:var(--vert);font-weight:900;font-size:26px;letter-spacing:.08em;padding:4px 14px;border-radius:10px;transform:rotate(12deg);opacity:0;animation:stamp 5.2s ease-in-out infinite}
+@keyframes stamp{0%,58%{opacity:0;transform:rotate(12deg) scale(1.4)}66%,82%{opacity:1;transform:rotate(12deg) scale(1)}86%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.stamp{animation:none;opacity:1;transform:rotate(12deg)}}
+.card-foot{margin-top:auto;display:flex;justify-content:center;gap:18px}
+.pill{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 20px rgba(0,0,0,.12);background:#fff}
+.pill.no{color:#E24A4A;border:2px solid #F3D2D2}
+.pill.super{color:var(--bleu);border:2px solid #D5DEFA}
+.pill.yes{color:var(--vert);border:2px solid #CDEBDA}
+@media(max-width:920px){
+  .hero-in{grid-template-columns:1fr;padding:64px 0 72px;text-align:center}
+  .hero p.lead{margin-inline:auto}
+  .hero-ctas{justify-content:center}
+  .stack{width:290px;height:410px;margin-top:10px}
+}
+
+/* ─── PREUVE ─── */
+.proof{background:var(--encre);color:#fff;border-top:1px solid rgba(255,255,255,.08);position:relative;z-index:2}
+.proof-in{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:34px 0;text-align:center}
+.proof b{font-size:30px;font-weight:900;letter-spacing:-0.02em;display:block}
+.proof span{font-size:13.5px;color:rgba(255,255,255,.6);font-weight:600}
+@media(max-width:700px){.proof-in{grid-template-columns:1fr;gap:18px;padding:28px 0}}
+
+/* ─── SECTIONS ─── */
+section{padding:92px 0}
+section.tight{padding:72px 0}
+.sec-head{max-width:640px;margin-bottom:52px}
+.sec-head.center{margin-inline:auto;text-align:center}
+.sec-head h2{font-size:clamp(29px,3.8vw,42px);font-weight:900}
+.sec-head p{color:var(--texte-doux);font-size:17.5px;margin-top:14px}
+.dark{background:var(--encre);color:#fff}
+.dark .sec-head p{color:rgba(255,255,255,.65)}
+.soft{background:var(--fond)}
+
+/* avant / après */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.v-col{border-radius:var(--radius);padding:34px}
+.v-old{background:#fff;border:1.5px solid #E4E9F3}
+.v-new{background:var(--encre);color:#fff;position:relative;overflow:hidden}
+.v-new::before{content:"";position:absolute;top:-40%;right:-35%;width:80%;height:180%;background:var(--bleu);transform:rotate(24deg);opacity:.25}
+.v-col h3{font-size:20px;margin-bottom:20px;position:relative}
+.v-old h3{color:var(--texte-doux)}
+.v-col ul{list-style:none;position:relative}
+.v-col li{padding:10px 0 10px 32px;position:relative;font-size:15.5px;border-bottom:1px solid rgba(120,140,170,.14)}
+.v-col li:last-child{border-bottom:none}
+.v-old li::before{content:"✕";position:absolute;left:0;color:#C24848;font-weight:800}
+.v-new li::before{content:"✓";position:absolute;left:0;color:var(--bleu-clair);font-weight:800}
+.v-old li{color:var(--texte-doux)}
+@media(max-width:820px){.versus{grid-template-columns:1fr}}
+
+/* progression */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;counter-reset:step}
+.stp{background:#fff;border:1.5px solid #E4E9F3;border-radius:16px;padding:24px 18px;position:relative;counter-increment:step}
+.stp::before{content:counter(step,decimal-leading-zero);font-size:28px;font-weight:900;color:#D8E0F2;letter-spacing:-0.03em;display:block;margin-bottom:10px}
+.stp h4{font-size:15.5px;margin-bottom:6px}
+.stp p{font-size:13.5px;color:var(--texte-doux);line-height:1.5}
+@media(max-width:960px){.steps{grid-template-columns:repeat(2,1fr)}.stp:last-child{grid-column:span 2}}
+@media(max-width:520px){.steps{grid-template-columns:1fr}.stp:last-child{grid-column:auto}}
+
+/* double valeur */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.duo-card{border-radius:var(--radius);padding:38px;position:relative;overflow:hidden}
+.duo-card.c{background:var(--encre);color:#fff}
+.duo-card.c::before{content:"";position:absolute;top:-45%;right:-40%;width:85%;height:190%;background:var(--bleu);transform:rotate(24deg);opacity:.3}
+.duo-card.r{background:#fff;border:1.5px solid #E4E9F3}
+.duo-card h3{font-size:24px;margin-bottom:8px;position:relative}
+.duo-card .sub{font-size:15px;margin-bottom:22px;position:relative;opacity:.75}
+.duo-card ul{list-style:none;position:relative;margin-bottom:26px}
+.duo-card li{padding:9px 0 9px 30px;position:relative;font-size:15.5px}
+.duo-card.c li::before{content:"✓";position:absolute;left:0;color:var(--bleu-clair);font-weight:800}
+.duo-card.r li::before{content:"✓";position:absolute;left:0;color:var(--bleu);font-weight:800}
+.duo-card .btn{position:relative}
+@media(max-width:820px){.duo{grid-template-columns:1fr}}
+
+/* ─── PRICING ─── */
+.controls{display:flex;flex-direction:column;align-items:center;gap:22px;margin-bottom:46px}
+.tabs{display:inline-flex;background:#E7ECF6;border-radius:14px;padding:5px}
+.tabs button{border:none;background:transparent;font-family:inherit;font-weight:700;font-size:15.5px;padding:11px 26px;border-radius:10px;cursor:pointer;color:var(--texte-doux);transition:all .15s}
+.tabs button.on{background:var(--encre);color:#fff}
+.bill{display:flex;align-items:center;gap:12px;font-size:14.5px;font-weight:600;color:var(--texte-doux)}
+.bill .save{background:#DFF3E8;color:var(--vert);font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px}
+.switch{width:52px;height:28px;background:#CBD5E6;border-radius:99px;border:none;cursor:pointer;position:relative;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.switch.on{background:var(--bleu)}
+.switch.on::after{transform:translateX(24px)}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+#plans-candidat{grid-template-columns:repeat(4,1fr)}
+.plan{background:#fff;border:1.5px solid #E4E9F3;border-radius:var(--radius);padding:32px 28px;display:flex;flex-direction:column;position:relative}
+.plan.star{border:2px solid var(--bleu);box-shadow:0 24px 50px rgba(38,71,232,.16);transform:scale(1.03)}
+.plan .badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--bleu);color:#fff;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:99px;white-space:nowrap}
+.plan h3{font-size:20px}
+.plan .who{font-size:13.5px;color:var(--texte-doux);font-weight:600;margin:4px 0 18px}
+.price{margin-bottom:6px}
+.price b{font-size:42px;font-weight:900;letter-spacing:-0.04em}
+.price span{font-size:15px;color:var(--texte-doux);font-weight:600}
+.price .was{font-size:17px;color:#A9B4C7;text-decoration:line-through;font-weight:700;margin-right:6px}
+.per{font-size:13px;color:var(--texte-doux);margin-bottom:22px;min-height:18px}
+.plan ul{list-style:none;margin-bottom:28px;flex:1}
+.plan li{padding:8px 0 8px 28px;position:relative;font-size:14.5px}
+.plan li::before{content:"✓";position:absolute;left:0;color:var(--bleu);font-weight:800}
+.plan li.plus{font-weight:700}
+.plan .btn{width:100%}
+.plan .btn.sec{background:#EEF2FB;color:var(--encre);box-shadow:none}
+@media(max-width:1080px){#plans-candidat{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:920px){.plans{grid-template-columns:1fr;max-width:440px;margin:0 auto}.plan.star{transform:none}}
+.pricing-note{text-align:center;margin-top:30px;font-size:13.5px;color:var(--texte-doux)}
+
+/* ─── FAQ ─── */
+.faq{max-width:760px;margin:0 auto}
+.faq details{background:#fff;border:1.5px solid #E4E9F3;border-radius:14px;margin-bottom:12px;overflow:hidden}
+.faq summary{padding:20px 24px;font-weight:700;font-size:16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:22px;font-weight:600;color:var(--bleu);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .a{padding:0 24px 20px;color:var(--texte-doux);font-size:15px}
+
+/* ─── CTA FINAL ─── */
+.final{background:var(--encre);color:#fff;position:relative;overflow:hidden;text-align:center}
+.final::before{content:"";position:absolute;top:-40%;left:-25%;width:70%;height:180%;background:var(--bleu);transform:rotate(-22deg);opacity:.25}
+.final .wrap{position:relative}
+.final h2{font-size:clamp(30px,4.4vw,48px);font-weight:900;max-width:720px;margin:0 auto 18px}
+.final p{color:rgba(255,255,255,.7);font-size:18px;max-width:560px;margin:0 auto 34px}
+.final .hero-ctas{justify-content:center}
+
+/* ─── FOOTER ─── */
+footer{background:#070E1B;color:rgba(255,255,255,.55);padding:44px 0;font-size:14px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.foot .logo{font-size:18px}
+.foot .logo img{width:24px}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap}
+.foot-links a:hover{color:#fff}
 </style>
 </head>
-<body>
+<body id="top">
 
 <nav>
-  <a class="logo" href="swipsales_landing.html">
-    <div class="logo-m">S</div>
-    <div class="logo-t">Swip<b>Sales</b></div>
-  </a>
-  <div class="nav-cta">
-    <a href="swipsales_app.html?login=1" class="btn btn-ghost">Connexion</a>
-    <a href="swipsales_start.html" class="btn btn-p">Commencer</a>
+  <div class="wrap nav-in">
+    <a href="#top" class="logo"><img src="data:image/png;base64,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" alt="SwipSales">Swip<span>Sales</span></a>
+    <div class="nav-links">
+      <a href="#comment">Comment ça marche</a>
+      <a href="#candidats">Candidats</a>
+      <a href="#recruteurs">Recruteurs</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="swipsales_app.html?login=1">Connexion</a>
+      <a href="#tarifs" class="btn btn-bleu nav-cta">Créer mon profil</a>
+    </div>
   </div>
 </nav>
 
-<section class="hero">
-  <div class="hero-in">
-    <div class="badge"><div class="badge-dot"></div>Plateforme spécialisée recrutement sales</div>
-    <h1>Les meilleurs closers<br>rencontrent les <em>bonnes</em><br>entreprises.</h1>
-    <p class="hero-sub">Swip Sales matche commerciaux et recruteurs via un scoring comportemental IA unique. Test ADN 10 étapes, swipe Tinder, simulation de pitch en direct.</p>
-    <div class="hero-btns">
-      <a href="swipsales_start.html?role=candidat" class="btn btn-lg">Je suis commercial</a>
-      <a href="swipsales_start.html?role=recruteur" class="btn btn-o">Je recrute</a>
-    </div>
-    <div class="hero-trust">
-      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Freemium candidats à vie</span>
-      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Essai 14j recruteurs</span>
-      <span class="ti"><div class="ck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>Sans engagement</span>
-    </div>
-    <div class="devices">
-      <div class="device" onclick="location='swipsales_start.html?role=candidat'">
-        <div class="dev-screen"><iframe src="swipsales_start.html?role=candidat" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
-        <div class="dev-lbl">Accès candidat</div>
+<!-- HERO : clarté en 5 secondes, rupture de posture -->
+<header class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="eyebrow" style="color:var(--bleu-clair)">Le recrutement commercial nouvelle génération</div>
+      <h1>Vous ne postulez plus.<em>On vient vous chercher.</em></h1>
+      <p class="lead">SwipSales connecte les commerciaux évalués et les entreprises qui recrutent, par un matching mutuel. Un score de vente plutôt qu'un CV, une conversation seulement quand l'intérêt est réciproque.</p>
+      <div class="hero-ctas">
+        <a href="#tarifs" class="btn btn-bleu" data-goal="candidat">Trouver mon prochain poste</a>
+        <a href="#recruteurs" class="btn btn-ghost" data-goal="recruteur">Je recrute des commerciaux</a>
       </div>
-      <div class="device" onclick="location='swipsales_start.html?role=recruteur'">
-        <div class="dev-screen"><iframe src="swipsales_start.html?role=recruteur" style="width:100%;height:100%;border:none;pointer-events:none" loading="lazy"></iframe></div>
-        <div class="dev-lbl">Accès recruteur</div>
+      <div class="hero-note">Gratuit pour démarrer. Sans carte bancaire.</div>
+    </div>
+    <div class="stack" aria-hidden="true">
+      <div class="card back2"></div>
+      <div class="card back1"></div>
+      <div class="card front">
+        <div class="stamp">MATCH</div>
+        <div class="card-top">
+          <div class="avatar">TM</div>
+          <div><h3>Thomas M.</h3><small>Account Executive · SaaS B2B</small></div>
+        </div>
+        <div class="score">
+          <div class="score-l"><span>Score ADN commercial</span><b>87 / 100</b></div>
+          <div class="bar"><i></i></div>
+        </div>
+        <div class="tags">
+          <span class="tag">Closing</span><span class="tag">MEDDIC</span><span class="tag">Négociation</span><span class="tag">Hunter</span>
+        </div>
+        <div class="card-foot">
+          <div class="pill no">✕</div>
+          <div class="pill super">★</div>
+          <div class="pill yes">✓</div>
+        </div>
       </div>
     </div>
   </div>
-</section>
+</header>
 
-<section class="metrics">
-  <div class="mg">
-    <div><div class="mn"><b>4 200+</b></div><div class="ml2">Commerciaux scorés</div></div>
-    <div><div class="mn">91%</div><div class="ml2">Pertinence des matchs</div></div>
-    <div><div class="mn">6 jours</div><div class="ml2">Délai moyen de placement</div></div>
-    <div><div class="mn"><b>3×</b></div><div class="ml2">Taux réponse vs LinkedIn</div></div>
-  </div>
-</section>
-
-<section class="s" id="features">
-  <div class="si">
-    <div class="center"><span class="tag">Fonctionnalités</span><h2 class="st">La seule plateforme pensée pour le sales</h2><p class="ss center">Six innovations qui rendent Swip Sales radicalement différent des cabinets traditionnels.</p></div>
-    <div class="fg">
-      <div class="fc hl"><div class="fci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><h3>Test ADN commercial 10 étapes</h3><p>Scénarios comportementaux, sliders, QCM culture sales, 2 simulations de pitch IA scorées, narration STAR. Score sur 8 axes, benchmarké sur 4 200 profils.</p></div>
-      <div class="fc hl"><div class="fci"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><h3>Swipe Tinder natif</h3><p>Interface swipe mobile-first. Like, passe ou Super-match. Contact direct dès le match mutuel. Zéro intermédiaire humain obligatoire.</p></div>
-      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><h3>Matching IA pondérable</h3><p>Le recruteur règle l'importance de chaque critère en temps réel sur 14 variables. Recalcul instantané des profils compatibles.</p></div>
-      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div><h3>Simulation de pitch IA</h3><p>L'IA joue le prospect difficile. Votre réponse scorée sur 3 axes en direct. Performance réelle, pas déclarée.</p></div>
-      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><h3>Profils vérifiés</h3><p>Les recruteurs consultent un profil structuré avec ADN commercial, ressources et historique de candidature, sans système de notes publiques.</p></div>
-      <div class="fc"><div class="fci"><svg viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Score ADN évolutif</h3><p>Chaque mission validée, formation complétée ou recommandation reçue améliore votre score et votre visibilité.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="s" style="background:#fff;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
-  <div class="si">
-    <div class="center"><span class="tag">Témoignages</span><h2 class="st">Ils recrutent différemment</h2></div>
-    <div class="testi-g">
-      <div class="testi"><p class="testi-t">"En 10 jours, j'ai signé avec une scale-up parisienne qui correspondait exactement à mes critères. Le test ADN m'a donné une lecture précise de ce que je vaux vraiment."</p><div class="testi-a"><div class="testi-av" style="background:#1549D8">AB</div><div><div class="testi-n">Alexandre B.</div><div class="testi-r">Closer Senior B2B · Paris</div></div></div></div>
-      <div class="testi"><p class="testi-t">"Notre taux de réponse est passé de 20% sur LinkedIn à 73% sur Swip Sales. Les candidats arrivent déjà qualifiés et scorés. On divise nos délais par trois."</p><div class="testi-a"><div class="testi-av" style="background:#0A9460">JM</div><div><div class="testi-n">Julie Morin</div><div class="testi-r">Head of Talent · TechCorp</div></div></div></div>
-      <div class="testi"><p class="testi-t">"Le moteur de matching pondérable change tout. Je règle mes critères selon le poste et vois en temps réel les profils compatibles. Fini le chasseur de têtes à 25%."</p><div class="testi-a"><div class="testi-av" style="background:#7C3AED">MF</div><div><div class="testi-n">Marc Fabre</div><div class="testi-r">CEO · Scale-up FinTech</div></div></div></div>
-      <div class="testi"><p class="testi-t">"La simulation de pitch est bluffante. En 5 minutes j'ai montré ce que des entretiens entiers cachaient. Les recruteurs me contactent avec des offres adaptées."</p><div class="testi-a"><div class="testi-av" style="background:#C2410C">SM</div><div><div class="testi-n">Sarah M.</div><div class="testi-r">BizDev 2.0 · Freelance</div></div></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="s" id="pricing">
-  <div class="si">
-    <div class="center"><span class="tag">Tarification</span><h2 class="st">Simple, transparent, flexible</h2><p class="ss center">Annuel moins cher. Mensuel sans engagement. Freemium candidats à vie.</p></div>
-    <div class="pricing-ctrl">
-      <div class="ptabs"><button class="ptab on" onclick="pt(this,'cand')">Candidats</button><button class="ptab" onclick="pt(this,'rec')">Recruteurs</button></div><br><br>
-      <div class="bsw"><button class="bopt" onclick="bt(this,'month')">Mensuel</button><button class="bopt on" onclick="bt(this,'year')">Annuel <span class="bopt-b">-20%</span></button></div>
-    </div>
-    <div class="plans" id="plans"></div>
-  </div>
-</section>
-
-<section class="s" id="faq" style="background:#fff;border-top:1px solid var(--bd)">
-  <div class="si">
-    <div class="center"><span class="tag">FAQ</span><h2 class="st">Questions fréquentes</h2></div>
-    <div class="faq">
-      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Comment fonctionne le test ADN commercial ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Le test se déroule en 10 étapes : 3 scénarios comportementaux (objection prix, relance prospect silencieux, gestion de crise client), 8 sliders d'auto-évaluation croisés avec vos scénarios pour détecter les biais, 5 questions de culture sales (BANT, SPIN, MQL, outils), 2 simulations de pitch IA scorées sur 3 axes, une narration libre analysée via le framework STAR, et vos préférences de mission. Durée : 15 à 20 minutes.</div></div>
-      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Le Freemium est-il vraiment gratuit à vie ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Oui, sans limite de durée ni carte bancaire. Les candidats Freemium accèdent au test ADN complet, au score IA global, à 5 swipes par mois et 2 contacts recruteurs mensuels.</div></div>
-      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Quelle différence entre mensuel et annuel ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">L'annuel vous fait Économiser exactement 20%. Candidat Premium : 15€/mois en annuel vs 19€/mois en mensuel, Économie 48€/an. Recruteur Business : 279€/mois vs 349€/mois, Économie 840€/an.</div></div>
-      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">Mon profil est-il visible par mon employeur actuel ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Non. Le mode confidentiel masque votre profil aux entreprises que vous listez. Vos informations personnelles ne sont dévoilées qu'après un match mutuel et votre accord explicite.</div></div>
-      <div class="faq-i" onclick="this.classList.toggle('open')"><div class="faq-q">L'essai recruteur nécessite-il une carte bancaire ?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Non. L'essai de 14 jours est accessible sans carte bancaire. Aucun prélèvement automatique ? l'issue de la période.</div></div>
-    </div>
-  </div>
-</section>
-
-<div class="cta-b">
-  <h2>Prêt à rencontrer votre prochain match ?</h2>
-  <p>Rejoignez les 4 200 commerciaux et 340 entreprises qui recrutent différemment.</p>
-  <div class="cta-bb">
-    <a href="swipsales_start.html?role=candidat" class="btn-w">Je suis commercial</a>
-    <a href="swipsales_start.html?role=recruteur" class="btn-ob">Je recrute</a>
+<!-- PREUVE SOCIALE : remplacer par les vrais chiffres dès disponibles -->
+<div class="proof">
+  <div class="wrap proof-in">
+    <!-- GUILLAUME : mettre à jour ces 3 chiffres avec les données réelles de la base -->
+    <div><b data-count>500+</b><span>commerciaux évalués</span></div>
+    <div><b data-count>100+</b><span>entreprises inscrites</span></div>
+    <div><b>&lt; 2 min</b><span>pour créer son profil</span></div>
   </div>
 </div>
 
-<footer>
-  <div class="fi">
-    <div class="ft">
-      <div><div class="fl3"><div class="flm">S</div>Swip<b>Sales</b></div><p class="fd">La première plateforme de recrutement sales par l'IA. Spécialisée closers, BizDev, AE et SalesTech.</p></div>
-      <div class="fc2"><h5>Produit</h5><ul><li>Fonctionnalités</li><li>Tarifs</li><li>Test ADN</li><li>API</li></ul></div>
-      <div class="fc2"><h5>Entreprise</h5><ul><li>À propos</li><li>Blog</li><li>Contact</li></ul></div>
-      <div class="fc2"><h5>Légal</h5><ul><li><a href="swipsales_legal.html#cgu">CGU</a></li><li><a href="swipsales_legal.html#cgv">CGV</a></li><li><a href="swipsales_legal.html#rgpd">RGPD</a></li></ul></div>
+<!-- AVANT / APRÈS : aversion à la perte -->
+<section class="soft" id="comment">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="eyebrow">La rupture</div>
+      <h2>Le CV ne dit pas si quelqu'un sait vendre</h2>
+      <p>Chaque semaine passée à trier des candidatures ou à postuler dans le vide est une semaine perdue. SwipSales remplace la pile de CV par un score, et la candidature à l'aveugle par le match mutuel.</p>
     </div>
-    <div class="fb">
-      <div class="fc3">© 2026 Swip Sales. Tous droits réservés.</div>
-      <div class="socs">
-        <a class="soc" href="https://www.linkedin.com/company/salesforge-recruitment/" target="_blank" rel="noopener" aria-label="LinkedIn Swip Sales"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></a>
+    <div class="versus">
+      <div class="v-col v-old">
+        <h3>Le recrutement classique</h3>
+        <ul>
+          <li>Des dizaines de CV qui ne disent rien de la capacité à closer</li>
+          <li>Des candidatures envoyées sans jamais de réponse</li>
+          <li>Des semaines d'entretiens pour découvrir le niveau réel</li>
+          <li>Des messages à froid subis par les candidats</li>
+        </ul>
+      </div>
+      <div class="v-col v-new">
+        <h3>Avec SwipSales</h3>
+        <ul>
+          <li>Un score ADN commercial visible avant le premier échange</li>
+          <li>Une conversation seulement si l'intérêt est réciproque</li>
+          <li>Le niveau réel évalué avant l'entretien, pas après</li>
+          <li>Les candidats choisis, jamais démarchés à froid</li>
+        </ul>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- PROGRESSION : sensation d'avancement -->
+<section class="tight">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="eyebrow">Comment ça marche</div>
+      <h2>Cinq étapes, une conversation</h2>
+    </div>
+    <div class="steps">
+      <div class="stp"><h4>Créez votre profil</h4><p>Deux minutes, import du CV compris.</p></div>
+      <div class="stp"><h4>Passez le test ADN</h4><p>Votre capacité réelle à vendre, mesurée.</p></div>
+      <div class="stp"><h4>Obtenez votre score</h4><p>Il parle pour vous auprès des recruteurs.</p></div>
+      <div class="stp"><h4>Matchez</h4><p>Swipez, likez, et laissez la réciprocité décider.</p></div>
+      <div class="stp"><h4>Échangez</h4><p>La messagerie s'ouvre au match. À vous de jouer.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- VALEUR CANDIDAT / RECRUTEUR : vendre la transformation -->
+<section class="soft" id="candidats">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="eyebrow">Pour qui</div>
+      <h2>Deux côtés, un même principe</h2>
+      <p>Personne n'écrit à quelqu'un qui ne s'est pas manifesté. C'est ce qui protège les candidats du spam et garantit aux recruteurs des échanges à forte intention.</p>
+    </div>
+    <div class="duo">
+      <div class="duo-card c">
+        <h3>Commerciaux</h3>
+        <div class="sub">Les bons profils ne cherchent pas. Ils sont trouvés.</div>
+        <ul>
+          <li>Votre score de vente parle avant votre CV</li>
+          <li>Découvrez qui s'intéresse à vous, sans postuler</li>
+          <li>Restez discret même en poste</li>
+          <li>Progressez avec les ressources SwipSales</li>
+        </ul>
+        <a href="#tarifs" class="btn btn-bleu" data-tab="candidat">Créer mon profil intelligent</a>
+      </div>
+      <div class="duo-card r" id="recruteurs">
+        <h3>Recruteurs</h3>
+        <div class="sub">Vous ne triez plus. Vous choisissez.</div>
+        <ul>
+          <li>Des commerciaux évalués, pas des piles de CV</li>
+          <li>Un matching réglable selon vos critères</li>
+          <li>Des candidats qui vous ont déjà choisi</li>
+          <li>Une offre en ligne en quelques minutes</li>
+        </ul>
+        <a href="#tarifs" class="btn btn-bleu" data-tab="recruteur">Trouver mes candidats compatibles</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="tarifs">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="eyebrow">Tarifs</div>
+      <h2>Commencez gratuitement, passez à la vitesse supérieure quand vous êtes prêt</h2>
+    </div>
+
+    <div class="controls">
+      <div class="tabs" role="tablist">
+        <button class="on" data-side="candidat" role="tab" aria-selected="true">Candidats</button>
+        <button data-side="recruteur" role="tab" aria-selected="false">Recruteurs</button>
+      </div>
+      <div class="bill">
+        <span>Mensuel</span>
+        <button class="switch on" id="billSwitch" aria-label="Basculer entre facturation mensuelle et annuelle"></button>
+        <span>Annuel</span>
+        <span class="save">-20%</span>
+      </div>
+    </div>
+
+    <!-- CANDIDATS -->
+    <div class="plans" id="plans-candidat">
+      <div class="plan">
+        <h3>Freemium</h3>
+        <div class="who">Découvrir la plateforme</div>
+        <div class="price"><b>0 €</b><span>/mois</span></div>
+        <div class="per">Gratuit à vie</div>
+        <ul>
+          <li>Test ADN commercial et score</li>
+          <li>Profil visible par les recruteurs</li>
+          <li>5 swipes / candidatures par mois</li>
+          <li>2 contacts recruteurs par mois</li>
+          <li>Import CV</li>
+          <li>Nombre de likes reçus visible</li>
+        </ul>
+        <a href="swipsales_start.html?role=candidat" class="btn sec">Commencer gratuitement</a>
+      </div>
+
+      <div class="plan star">
+        <div class="badge">Le plus populaire</div>
+        <h3>Premium</h3>
+        <div class="who">Commercial actif</div>
+        <div class="price" data-prices data-m="19" data-a="15"><span class="was">19 €</span><b>15 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 180 €/an · Économie 48 €" data-m="Sans engagement">Facturé 180 €/an · Économie 48 €</div>
+        <ul>
+          <li class="plus">Swipes et candidatures illimités</li>
+          <li class="plus">10 contacts recruteurs / mois</li>
+          <li>ADN détaillé 8 axes</li>
+          <li>Lettre de motivation écrite</li>
+          <li>Benchmark salarial précis</li>
+          <li>Préparation entretien</li>
+        </ul>
+        <a href="swipsales_start.html?role=candidat" class="btn btn-bleu">Chercher mon prochain match</a>
+      </div>
+
+      <div class="plan">
+        <h3>Gold</h3>
+        <div class="who">Top performer</div>
+        <div class="price" data-prices data-m="39" data-a="31"><span class="was">39 €</span><b>31 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 372 €/an · Économie 96 €" data-m="Sans engagement">Facturé 372 €/an · Économie 96 €</div>
+        <ul>
+          <li>Tout Premium inclus</li>
+          <li class="plus">Contacts recruteurs illimités</li>
+          <li class="plus">Mise en avant ×3</li>
+          <li>5 Super-likes / mois</li>
+          <li>Ressources avancées</li>
+          <li>Certification SwipSales</li>
+        </ul>
+        <a href="swipsales_start.html?role=candidat" class="btn sec">Passer Gold</a>
+      </div>
+
+      <div class="plan">
+        <h3>Platine</h3>
+        <div class="who">Closer Elite</div>
+        <div class="price" data-prices data-m="79" data-a="63"><span class="was">79 €</span><b>63 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 756 €/an · Économie 192 €" data-m="Sans engagement">Facturé 756 €/an · Économie 192 €</div>
+        <ul>
+          <li>Tout Gold inclus</li>
+          <li class="plus">Initier le contact avec les recruteurs</li>
+          <li>Score de compatibilité culturelle</li>
+          <li>Simulation d'entretien</li>
+          <li>Mise en relation garantie 30 jours</li>
+        </ul>
+        <a href="swipsales_start.html?role=candidat" class="btn sec">Passer au niveau Elite</a>
+      </div>
+    </div>
+
+    <!-- RECRUTEURS -->
+    <div class="plans" id="plans-recruteur" hidden>
+      <div class="plan">
+        <h3>Entrepreneur</h3>
+        <div class="who">Recrutement solo, une offre à la fois</div>
+        <div class="price" data-prices data-m="89" data-a="71"><span class="was">89 €</span><b>71 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 852 €/an · Économie 216 €" data-m="Sans engagement">Facturé 852 €/an · Économie 216 €</div>
+        <ul>
+          <li>1 offre active</li>
+          <li>Sourcing illimité</li>
+          <li>Matching réglable selon vos critères</li>
+          <li>ADN vérifié des candidats</li>
+          <li>Messagerie intégrée</li>
+        </ul>
+        <a href="swipsales_start.html?role=recruteur" class="btn sec">Publier ma première offre</a>
+      </div>
+
+      <div class="plan star">
+        <div class="badge">Le plus populaire</div>
+        <h3>Business</h3>
+        <div class="who">PME et scale-ups</div>
+        <div class="price" data-prices data-m="149" data-a="119"><span class="was">149 €</span><b>119 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 1 428 €/an · Économie 360 €" data-m="Sans engagement">Facturé 1 428 €/an · Économie 360 €</div>
+        <ul>
+          <li>Tout Entrepreneur inclus</li>
+          <li class="plus">3 offres actives simultanées</li>
+          <li>Pipeline Kanban</li>
+          <li>Matching réglable selon vos critères</li>
+          <li>Messagerie intégrée</li>
+        </ul>
+        <a href="swipsales_start.html?role=recruteur" class="btn btn-bleu">Recruter plus large</a>
+      </div>
+
+      <div class="plan">
+        <h3>Partenaire</h3>
+        <div class="who">Cabinets et RPO</div>
+        <div class="price" data-prices data-m="899" data-a="719"><span class="was">899 €</span><b>719 €</b><span>/mois</span></div>
+        <div class="per" data-per data-a="Facturé 8 628 €/an · Économie 2 160 €" data-m="Sur devis possible">Facturé 8 628 €/an · Économie 2 160 €</div>
+        <ul>
+          <li>Tout Business inclus</li>
+          <li class="plus">Offres et sièges illimités</li>
+          <li class="plus">Marque blanche</li>
+          <li>API et intégrations ATS</li>
+          <li>Facturation centralisée</li>
+          <li>SLA garanti</li>
+        </ul>
+        <a href="swipsales_start.html?role=recruteur" class="btn sec">Nous contacter</a>
+      </div>
+    </div>
+
+    <div class="pricing-note">Essai recruteur 14 jours, sans carte bancaire. Annulable à tout moment.</div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="soft tight">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="eyebrow">Questions fréquentes</div>
+      <h2>Tout ce qu'il faut savoir</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Qu'est-ce que le test ADN commercial ?</summary>
+        <div class="a">Un test qui évalue votre profil de vente réel : votre type de poste, votre style, vos réflexes face aux situations du métier. Le résultat est un score visible par les recruteurs, qui parle pour vous avant même le premier échange.</div>
+      </details>
+      <details>
+        <summary>Un recruteur peut-il me contacter sans mon accord ?</summary>
+        <div class="a">Non. Un recruteur ne peut écrire qu'à un candidat qui s'est manifesté, soit par un match mutuel, soit par une candidature volontaire. Pas de démarchage à froid, jamais.</div>
+      </details>
+      <details>
+        <summary>Je suis en poste, mon employeur peut-il voir mon profil ?</summary>
+        <div class="a">Votre profil n'est visible que dans le cadre du matching. Vous gardez la main sur ce que vous montrez et sur les offres auxquelles vous répondez.</div>
+      </details>
+      <details>
+        <summary>Que se passe-t-il à la fin de l'essai recruteur ?</summary>
+        <div class="a">L'essai de 14 jours donne accès à tout, sans carte bancaire. À la fin, vous choisissez la formule qui vous convient ou votre compte est simplement mis en pause. Aucun prélèvement surprise.</div>
+      </details>
+      <details>
+        <summary>Puis-je annuler mon abonnement ?</summary>
+        <div class="a">Oui, à tout moment, directement depuis votre compte. L'abonnement reste actif jusqu'à la fin de la période en cours.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="final">
+  <div class="wrap">
+    <h2>Chaque jour à recruter à l'ancienne est un jour perdu</h2>
+    <p>Créez votre profil ou publiez votre première offre. Dans deux minutes, vous y êtes.</p>
+    <div class="hero-ctas">
+      <a href="#tarifs" class="btn btn-blanc">Créer mon profil gratuit</a>
+      <a href="#tarifs" class="btn btn-ghost">Recruter avec SwipSales</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <a href="#top" class="logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJIAAACgCAYAAADnyTUoAAAVvUlEQVR42u2de7SWVbXGf+vjKgKiIkSKJShIIh4RtIuGR6NQUdGTHu+mQZmn9BxvXfRUdrGUk+OcGg1zpJZm5g0Rr6g5UhMztTQFRRRRBMREFARhs9k854+1GG63wP72t+Z61/t9+IyxBwNxr3euuZ53rvnONdecjjqApE5AN2AgUAGGAT028r+/A8wBWoBXgSbn3LpMcncDRgJHAKOA7YAdgD7AAmAFMCTMScBSYNvw628BC4HXgZuBu4AFuebSHlxJibM1sBuwV1iI4UBPYPug9C3aGWJVINJCYDkwE5gBPAa86JxblUju3kHeQ4E9grwfB7obDP8GMA94JszlcWC+c275h0R6bwG6ArsDnwTGAXuGRbBGM/AS8CfgQWCGc+7VSNl3CzIPCX/uWJDa1gRrdT9wFfBEqhekHrasQZLOkvSEpBYVj+WSLpPUuQbZx0n6k6RVKgeelXS+pEGbC3kqksZLmh4WMidekrS/JFel7FtImiBpqqS1KifelDRN0iRJWzYigXqGyT1cEoU/JWmnan0fST+U9LzqCzMk7d1IFuhwSc+USMH3S9qxSvmHSXpM9YsmSX+QtHs9k2iYpDtLptgbJXWvQvZeki6Q9LYaA/+UdE1dEUrSVsGJXlKnJBoTtoVGxBJJR9YDiUaWdCv4paQt2pG9e7BCTWpstEi6ytIZd8YkOhWYDGxTMn5f65w7sR3ZdwRuCLGszQW3AMc659bEDlSxiuhKuhy4soQk+hnw5XbkHw7cvpmRCOBI4DpJe2W3SJL6A1cDXyihoi51zp3dnj8UzrL6svliBXC8c+62LBZJ0q7hqKGMJLoJ+FY78p8SzPvmTCLw55g3B30Ua5EkDQXuAHYuKYlOcs6t3ojsXYEzgZ9abe8NgrXAV5xzvymESMES3Z6JRMvxKRaLN/LvzwBnbOwAMxyH3AAclWmx3gkL9gb+FH9lm3/fCRgK9Ad6ZZCvGTjKOTctKZHC1839BZLoNeAp4CF8GsgcYHmt6ROSjgWuK9D3eCEszkPAk8DDQBPQ4pxbshEZt8TnLg0CRgD/CXysQDLNBL7gnFuUhEiS+oRt43OJJzI/WI07gJnOuaVGX5djgCm8lzyWCnOC7Jfhc4jWOecUIfcO+DSbwcBx4esydQrQPcBhFqGBtpOpSLoucaBsuqQTJfWz1oqk7SUtTiz/zSGzoUeq1Q3rsK+kb4XUkZS4NviTphP4TkKB75X0+YTK7x6UkgoPSTq0aGcmvBxXJT4P/F1IdTYR+PBExwYvSzpJUiWxwn+cSMmvSTrN/K3t+PxGB2ueCudYsf7lBMJdE/b+1Eo+OVEW411ly0aU9HVJSxPMdZmkj8UKd30Cob5SkGLHSHo3gWKnSupZxkCQpBGSpiSY8221pCSvF+pI41zqFy3OdaqU3Um6z1iZSyV9T1KXskcWJf3UeO7rasq2lNRD0mxDQR6QNKRARe5i7IQulDS6XkLUkrol8Jtu77A/GPZbK9wjf+erSEVeYSj/gqIsqbEOeoQtyRJnd0SAgZJeN/w03qpgBQ4NtymscAB1Ckl9wotshfmStq324T8x/LzfOYPyfm+ouIuoc0jqa+ymTK7mof1DfCQWK1MGGduxRlaf+9fQIAgXMeYb6eXVdneZ8FVigbMymXGrY5xb2svxrkMyjZb0lpF+Jm3qQT0lvWDwkDtSR6s3Iv9YIyXNC5mfDQdJZxrp6O5NPWS8wQOWF/mZ30b+c4yUNJEGRQgLWFxWXSZfQAP4YHbgCQayTnbOzcmgIAccZjDUfcA1jUok51wTcCG+7E8MegNjNrQQHzUI4L0gqVemN22owXHImnoKOkbq648GVul/NmSRxgKx8Z4rnXPvZNLNIbRfgKs9vITPxtwccIvBGGMVbi63JtKBkYMuBH6d6e2qABMih2kBfuKca95MiPQgvrJdDIbhszY9kQKrYsuf3OicezOTUj6Cz22OwdMpfCNJ20n6SAl9pVnAtMhhugD7tLZIg/G3F2rFWuDajHoZYbAt3xaTV70REvUD7gTuLSL3qgb80WCMMa2JtA8Qk+U3C38NKBdi01xbgOnGJOoP3AqMxifuT5O0fcmINAN4N3KMf5HUeT2RPmPwNmfxLUL0eVzkMLMtnexwfHAl8KlW/3kkcFu4E1iW7W02vjBrDAYA/SohsXt45GAPZNRHv/ATg9fwd80st7NDNvDPI4EHJH2G8uDGyN/vC4yqAFsTV4r4zczb2iAgts7PExb+kaRtgKntWPj+wNQSkelx/EXOmg0bsG0lMCrmwuAcfMX6XNiC+MuCCwxI1Bn4OfDpKv737UpEpheAuZFjjKzgK9N3jhhkoXOuJaMiRhiMMceARJcDx3fg10pBJufcWuCVyGG6VcKEYog0K/Mb1Tny95vxFfRjSXRqDb9eFssUS6SuFTbeHKYjPlJOxPo284AXI3yim2okUWsy3SrphIw6jO2VMrqCbxwTg9wWKRYLnXPv1kCi7sEnmmAgQ1/gtxnTVzpnH6ABUGsC3nc66BO1h07AryThnLuiYB2ciy+3Uw0fZvPBmk5LPyRS7bgWX/Jwb2MyXVY0mcIZ6VU53sZGgmpU/hzgcHzxL+tt5leSLlSVzXbKYtY3dzJ1qXXBnHOLA5keNpapE/Bd4H/rhUwV/PFADNbVOZGGhi8nIsg0jjTHRGfUC5kqwHMGC1HP6IvvWBnjY6wMlun6hGTqVHYixQq4XeY5WFjE3Qwc1uXA1/EHtinIdHPKkoIWRFpDXFBvt8xzmGkwxnALQcLXzxGkuYUyAZgSCsKWkkjPBjLVip1rLsBkg7nA6sgxhlhtHSEva2IiMo0DbiojmSr4AugxWXID8S0IcuENPhggq2V7NnNoA5kmJSLT58I2t3XZiLQo/NSKfpm3tzfx14hiMADjguihPvVEfMMfaxxYNstUwSfux6RRWN1wrXXB1oXtOQa9gIMTyNaMb/H1w0Rkuq/1temsRAqZgY9HjjM+c4lgi4PjIxIRvcU59138eZY1RuHzwD9RCrMkab9QbLJWNEnaI6P8O4XiFYqcw4TEcloVuWiLl0phmSRtbVBca3LmOVjURZqbOlYj6dxEZHpZ0kFlINPdBrUFe2eUf3QoAhGD1ZI+WYCsZ0pakYBMK1Nb1Wom922DiXw1o/zdQx1viwq8XQqQ92CD7XhDWCHp8JxE2sPgjX4yR6W2VnO42mgxjixI3oNCwarGsUySOkt6InICLZK+mJFIxxgtxPNK0OprE2RKZZmOyLUQFl8Vc+Q7IOaQf7Bhsc27ijokTWiZmiR9J9dn9EqDCfx3Rqt0XGQoozWmFHWOGMj0RqIvuvOLXgQn6SajPXpUJiJ1kTTLcBF+WqDsB0j6ZyIyXZDjM9qiyd9f1peFy0CmScaO64EFyr630vRcK9YyBav0oJHgV2W0Sv8wXICFRZajke+59nwiMv1AUreiJjLe0M84NxOZTjJegMWSRhYo/5CEZLq+kN0iWCWrLoTrcsQ0glWybvx3TMFz2MW4GU1bMnUrYhKjJTUbCf22pHEZyDTI0Hm9JEeGg3xP4bsSkWmKpAFFTOLXhkIvy0QmiwaGv8vZ4EZSL0l3JiLT35MXSpVvAPhaPZMpZDbU2iV8raTTKQEKINPA1BM4wVjoHGQ6toaQxlp1pO3mh5apKsf798ZCr5B0csGLcKaqbwjYLOm0KsashGOl+4sqliWpd0Kf6cmklkm+leUsY6FXqeDmgJImBkvTHr5dxVidJP22Taxp7wIt07REZHokqT8oaZ9EyVhnF0ymC9sJVZyuKu7aa8N9f5dJ+kaB4Y1LEoYGuqYUflIiwYsm03Uxh83Bb2zexLZ4ZoFzSUWm76YW/Of1TiZJW0qa3ub5j7aX/hL8xclVxNeaiszLSkSmJkmHpRS6u2yaxm0w6Feg8gdI+kNIxvtze2dpIfHvmx2YyxIVeE0oEZkWS9oxdWzm/kRkmqwCcqZbzWVUNedOqq2p8JSC53Ke4RnpetycNCcrkCmVZfptkQtQxVzPUu357N8sWNZTFZ973xaTiogaNzSZJP1b5MIsl7R/wTKfaJRT1jq0sWNqofs0IplCnOgnVcad2sM8FXwTNgGZblLqEoSJfaYsZJJ0hvE8Zqjg8n3GZFonaUxRh6P3JCLTHSq4L6yki43n0CJp3wwvxInyN4gt8FBRCXHdE8aZHi2STJK6Srrc+gso0zZtWbziuKKEdg1Epk6SrjSU/11Je2YgktXtIEl6TEXdpg6n4o1Cph0lvWN5KJrJKvWR9LSB/M2FfoUWYJn6FziXo4M1scCaHL5Sq+Dr2wZzuFtF1nhIbJn+LmmvAufyDUPZpytThTsjf2m1iu4WHizT6UbxmLZ4rcAcoM5t8o9icXAmIvUICWx1lbHRegKTGoBMW8kXybDAxRmj9WMN1mK2pJ6NRqZFBZJpgtHB6OPK2F9kA2k0teCAnGdXk4xD94VaprBV/9Io32dExnXY3+Clvij3QejnlaaEy6KCyLSHbC6P5tzeOoWYUH3ElDYxkX0TkWmJpOMTy16Rz2uOxcPK2MdF0pcMAqxDyI2EZFoj6aTEso8z+ozeJaP+Byv+QseJkLkNqXPuYXzF/SXGQ3cBrkhMpj8DT0eO0RX4eMYleIn4nrz7ZidSKzIdRnw/kQ2R6dfr35gEcq8Ebo0dhsjulZFzEHBb5DDDs/tJbczsbkpTDyjZNidpuMHRyZ8y633PyK/o14tO8almUgPD0Yc1mpSgQKr8JcVY8i+TtHNGnW+h2otsSP7G9LBStWp3zr0atrknjYfuCvxA9v1SYluUAfQG9sqo9iZ8F84Y3e5SKiIFMi1IRCaAcyzJFHyMBw2G2jmjvtcR1/ixAvQqHZHqjUzADKAlcozc3bNj+93tVEoitSLTeIOvio2SyehWxBzgrcgxds2s7paGJVIg0yJ8K88kZAIuU3xBziZ8g+konzezqmPjYS2lJlIg0xLgaOD6BMN/Fd+xuneEfCuA+ZFy/COzmtfEDlB6IoXFagK+lIhM44HrJfWKETFShnW5VRw7QGf5IuSjNvBZOyv8+b69ENim1d8XA/c651YXQSZJp4S/Wte7Pgi4QdJJwQJubogmcmfgLiAmkX4ycF5Blmm1pC8lJNPXSNNavezYxmJr2zZyjELvtIdt7mTg+8ZD3wH8ssNesv/yi3URcjvbsakgrgI8GjnI6xl8pjXOuQuBCwxJdKxzbmkNv7sVMDjy+cMyE6lP7FdfhfhT9265Zu+c+7EBmW4PJFpRawwl0jUAf0ySE7FxrKUVA7M8KGcSeySZ7gCOiyARgUSx8386l/5CpZePR4YO5lbwCVoxXvsuFs5aBjJNj7RE67GfwRRezai+rYDtI35/FfB6BZ8h1xQx0LZFO9ybINNEqguuzQYmxZIoONqxBUdbyBuQ3B3oG/H7rwALKsBC4LVIYY4uwzesc+7KEBZY2Q6JDg1neRZfvbEn9/Nybm1AbF+YZ51zzRVgBfB85GCnSBpWEjJNBY7fCJn+BhzinHvR6HHbAf0ix/izc25VJv9oS+CoyGH+ClAJOTVPRQ7WHZhASeCcm7YBMs0G/t0595Lhow6wIFJGVe0T6WivAx6h1RebRd7P2OTFKmsjUxM+1WO8c26u8WMOiTUKxGdYxrokMWv2IvBMaxP3CYM6g02SRlMySPpsipxoSTtLejNSZ3MjD4tj5B8c8sVjcE1rZxF8zm7s29oVOK5sRHLOPWToE7XGZIOwx9+cc+9kUs1/ER8Ivb8tkdYYfLkBjFHG3q8Fvs2fAA40GGpBJvkHAbH3/ZYC972PSMHhvsFAxj2BMxqcRF2BXwAWW9IDmaZxvoE1mhYyWD+goKFG9ZgXBsY3KpG+bFi6MEf79zEG5WzWSdpvYw9wkm6wqiddqmu8dovQW3YtWU/NIH9fSTMNZJ+5SRdG0l6GRbAuaEAi/d6wWlv3DPJfYbS2E6t52KWGLRM+10Ak+pHhFfLvZ5D/P4xegufUTqfN9Q/sE3kXvDVeUMr238Utwj5GFdrW10QqulPSQYZF5yd25MFnGb5990naqo5J1M+4sMWNRZ4AhJfAqpjZs1VZo1YP39q4xMw9kvrVKYlmGFdF2bVA+Q+VtNRQ/kNrEeJo49IyjxReLT5uEQYGmS1xWYHyH2FQ1q817q4pEzbU/rFW5CJJx9QBiU6W9Irx3F8uoiBV6FBwgaFPp3CmOCRGqEkJil6tkm973q2EBOoh6WqlwdcKkH8HSbckkP30WMF6Bmc5Be4qRWndVudPsutp1hb/l1j2TpK+JunFBLJPMSnhLGmIpLcSKfifkk6LKeJgcXYm6YTQOSAFbpXUI6H8n5F0byLZX5W0vaWw/yrfdjwVnpN0tqShBRPoUPk+rakwU9KARH7QmHAU1ZxI9uWSPpVC8V81ioy2V0l+iqSjUh0hSNpbvpfIU4nn8raM21mEBMRvKb71Q3tolnRyR2RzHZzIJcC5BRmNR4ErgSfwFxQWdjRJvtXBYk98fvLh+DycIhz9yc658yJI0x0YgL8FuwfwWWAMxZQJvMg5d35KIm2Dz1sq8gxtHT7vejE+EewR4E3gzvAnwDJ8fs0OQeFbA5/ivTv5WxJ/rboj+DswdmO1BEI87bwwn9YXFAbiLyt2AYYCHwkvQZG4FDgn5KilIVJQQq9gKY4iL94NBBO+kEX/QKbOmeV6DDjaOffKJvT3ADCyhCG0mkgUs1f3DZ/vH+L9uK69pD5Jl5dU9p/FcMJFkGkAvkjoKD4EwNXAKZt6myV9HZ+mWyY0AxcBFxZmiTagmI8miqTWG66Sr+qxKV0dKWllyeReofcq4JUiKnzpZkqglpDw1q0d/XyhhCSaKWnfMh50niDfvXFzwRpJp1Whl90lzS+Z7NeWOq0nKO3JzYBEN0napwp9DJc0r0RyvyXpy3XhcUraMpj7NxqQQG9JOqNKPXy+ZCSaopJUjKnlNP0XCc+CisbNknavcu7HKL4hoBUeD/I46hmSxkr6ax0T6C+Svqcqij1I6l6iD4+58rn3jXOFXv5mylmS/lZHBHpO0rHV5uKUKBTyWPjw2YZGRXhjT5A0p6TkWStpqqTj1IFyM/I3NV7JKPciSb+RdJgyXAOPimxHEqon8OlwGn84cVVVLbA6ZBtc7JybXsN8tge+GH72DIfEqbEIeByYCtzjnFucU4GuBFaqL76E3n7h5H5EgY9/Bt9xaZpzbpbRfAYDo/FpK6PwaSB9I4ddhc90eApfXe8+YFaNnQoak0htFqEbcDCwP75s78fw5Zc74fNwailM0Yzv8rQMXwNqDjATn47ysHNuTeI5bQcMAj4a5jMCaO0Ab4tPf5nP+ztRPo3PcHg2/Nti59yysrotpf4kDH5Kv0CkHcJiDMdXStsVX9+7tVP5D3waB/gi6PPwlejeDj9vOOfWlnCeXVMTOjX+H94ZhE/oS4lOAAAAAElFTkSuQmCC" alt="">Swip<span>Sales</span></a>
+    <div class="foot-links">
+      <a href="swipsales_legal.html#cgu">CGU</a>
+      <a href="swipsales_legal.html#cgv">CGV</a>
+      <a href="swipsales_legal.html#rgpd">Confidentialité</a>
+      <a href="mailto:contact@swipsales.fr">Contact</a>
+    </div>
+    <div>© 2026 SwipSales</div>
   </div>
 </footer>
 
 <script>
-const API = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000/api'
-  : 'https://salesforge-recruitment-production.up.railway.app/api';
-
-async function loadProfile() {
-  const token = localStorage.getItem('sf_token');
-  if (!token) return;
-
-  try {
-    const res = await fetch(`${API}/candidats/profil`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!res.ok) throw new Error();
-
-    const data = await res.json();
-
-    const nameEl = document.getElementById('candidate-name');
-    const emailEl = document.getElementById('candidate-email');
-    const phoneEl = document.getElementById('candidate-phone');
-    const expEl = document.getElementById('candidate-experience');
-    const skillsEl = document.getElementById('candidate-skills');
-    const avatarEl = document.getElementById('candidate-avatar');
-
-    if (nameEl) nameEl.textContent = data.name || "Nom non renseigné";
-    if (emailEl) emailEl.textContent = data.email || "Email non renseigné";
-    if (phoneEl) phoneEl.textContent = data.phone || "Non renseigné";
-    if (expEl) expEl.textContent = data.experience || "Non renseignée";
-    if (skillsEl) skillsEl.textContent = data.skills || "Non renseignées";
-    if (avatarEl && data.avatarUrl) avatarEl.src = data.avatarUrl;
-
-  } catch (error) {
-    console.error(error);
-  }
+// Onglets candidat / recruteur
+const tabs = document.querySelectorAll('.tabs button');
+const grids = { candidat: document.getElementById('plans-candidat'), recruteur: document.getElementById('plans-recruteur') };
+function showSide(side){
+  tabs.forEach(b => { const on = b.dataset.side === side; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  grids.candidat.hidden = side !== 'candidat';
+  grids.recruteur.hidden = side !== 'recruteur';
 }
+tabs.forEach(b => b.addEventListener('click', () => showSide(b.dataset.side)));
+// Les CTA "data-tab" ouvrent le bon onglet en arrivant sur les tarifs
+document.querySelectorAll('[data-tab]').forEach(a => a.addEventListener('click', () => showSide(a.dataset.tab)));
 
-window.addEventListener('DOMContentLoaded', loadProfile);
-
-const D={
-  cand:{
-    month:[
-      {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'/mois',h:'Gratuit à vie',feats:['Test ADN 10 étapes','Score IA global','5 swipes / candidatures / mois','2 contacts recruteurs/mois','Import CV automatique','Lettre de motivation écrite'],cta:'Commencer gratuitement'},
-      {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Priorité dans les matchs'],cta:'Essai 14j gratuit',pop:true},
-      {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Suivi candidatures temps réel','QR code sur CV'],cta:'Passer Gold'},
-      {n:'Platine',f:'Closer Elite confirmé',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA hebdomadaire','Offres exclusives Platine','Certification Swip Sales','Mise en relation garantie'],cta:'Accéder au Platine',dk:true}
-    ],
-    year:[
-      {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'/mois',h:'Gratuit à vie',feats:['Test ADN 10 étapes','Score IA global','5 swipes / candidatures / mois','2 contacts recruteurs/mois','Import CV automatique','Lettre de motivation écrite'],cta:'Commencer gratuitement'},
-      {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 ?/an · Économie 48 ?',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Candidature auto à chaque swipe','Lettre audio et vidéo','Priorité dans les matchs'],cta:'Économiser 20%',pop:true},
-      {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · Économie 96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Suivi candidatures temps réel','QR code sur CV'],cta:'Économiser 20%'},
-      {n:'Platine',f:'Closer Elite confirmé',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Coach IA hebdomadaire','Offres exclusives Platine','Certification Swip Sales','Mise en relation garantie'],cta:'Économiser 20%',dk:true}
-    ]
-  },
-  rec:{
-    month:[
-      {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
-      {n:'Starter',f:'Besoins ponctuels',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Choisir Starter'},
-      {n:'Pro',f:'Recrutement continu',p:399,u:'/mois',h:'Sans engagement',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Essai gratuit 7j',pop:true},
-      {n:'Enterprise',f:'Équipes & Chasseurs',p:799,u:'/mois',h:'Engagement 12 mois',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Contacter les Sales',dk:true}
-    ],
-    year:[
-      {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · Économie 216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
-      {n:'Starter',f:'Besoins ponctuels',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · Économie 360 €',feats:['3 offres actives simultanées','Accès profils matchés uniquement','Pipeline de recrutement Kanban','1 message direct / profil','Support par email (48h)'],cta:'Économiser 20%'},
-      {n:'Pro',f:'Recrutement continu',p:319,old:399,u:'/mois',h:'Facturé 3 828 €/an · Économie 960 €',feats:['Offres illimitées','Recherche dans la CVthèque (50/m)','Filtres avancés par score ADN','Filtres par compétences réelles','Campagnes automatisées (SDR)','Support prioritaire (24h)'],cta:'Économiser 20%',pop:true},
-      {n:'Enterprise',f:'Équipes & Chasseurs',p:639,old:799,u:'/mois',h:'Facturé 7 668 €/an · Économie 1920 €',feats:['Tout Pro inclus','Sièges recruteurs illimités','Recherche CVthèque illimitée','Intégration ATS (Greenhouse, Lever)','Accès exclusif profils Platine','Multi-comptes entreprise'],cta:'Économiser 20%',dk:true}
-    ]
-  },
-  rec_old:{
-    month:[
-      {n:'Starter',f:'Petite équipe',p:149,u:'/mois',h:'Sans engagement',feats:['3 postes actifs','Matchs IA basiques','Filtres standards','Pipeline Kanban','Support email'],cta:'Commencer Starter'},
-      {n:'Scale',f:'Entreprise en croissance',p:399,u:'/mois',h:'Sans engagement',feats:['10 postes actifs','Accès CVthèque complet','Filtres ADN avancés','Lettres audio/vidéo','Support 24/7'],cta:'Essai 7j gratuit',pop:true},
-      {n:'Elite',f:'Chasse de tête & Grands comptes',p:899,u:'/mois',h:'Sans engagement',feats:['Postes illimités','IA prédictive sur-mesure','API + intégration ATS','CSM dédié · SLA 99,9%','Profils Platine exclusifs'],cta:"Contacter l'équipe",dk:true}
-    ],
-    year:[
-      {n:'Starter',f:'Petite équipe',p:119,old:149,u:'/mois',h:'Facturé à l\'année',feats:['3 postes actifs','Matchs IA basiques','Filtres standards','Pipeline Kanban','Support email'],cta:'Choisir Starter'},
-      {n:'Scale',f:'Entreprise en croissance',p:319,old:399,u:'/mois',h:'Facturé à l\'année',feats:['10 postes actifs','Accès CVthèque complet','Filtres ADN avancés','Lettres audio/vidéo','Support 24/7'],cta:'Économiser 20%',pop:true},
-      {n:'Elite',f:'Chasse de tête & Grands comptes',p:719,old:899,u:'/mois',h:'Facturé à l\'année',feats:['Postes illimités','IA prédictive sur-mesure','API + intégration ATS','CSM dédié · SLA 99,9%','Profils Platine exclusifs'],cta:"Contacter l'équipe"}
-    ]
-  }
-};
-let ct='cand',cb='year';
-
-function goToApp(type = ct){
-  window.location.href = type === 'rec'
-    ? 'swipsales_start.html?role=recruteur'
-    : 'swipsales_start.html?role=candidat';
+// Bascule mensuel / annuel (annuel par défaut)
+const sw = document.getElementById('billSwitch');
+let annuel = true;
+function renderBilling(){
+  document.querySelectorAll('[data-prices]').forEach(p => {
+    const b = p.querySelector('b'), was = p.querySelector('.was');
+    b.textContent = (annuel ? p.dataset.a : p.dataset.m) + ' €';
+    if (was) was.style.display = annuel ? '' : 'none';
+  });
+  document.querySelectorAll('[data-per]').forEach(el => { el.textContent = annuel ? el.dataset.a : el.dataset.m; });
+  sw.classList.toggle('on', annuel);
 }
-
-function planSlug(name){
-  const base = name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  if (base.startsWith('entrepreneur')) return 'solo';
-  return base
-    .replace('platine', 'platine')
-    .replace(/[^a-z]/g, '');
-}
-
-function startCheckout(type, period, planName){
-  const plan = planSlug(planName);
-  window.location.href = `${API}/stripe/checkout?type=${encodeURIComponent(type)}&period=${encodeURIComponent(period)}&plan=${encodeURIComponent(plan)}`;
-}
-
-function render(){
-  const g=document.getElementById('plans');
-  if(!g)return;
-  g.innerHTML=D[ct][cb].map(p=>`<div class="plan${p.pop?' pop':''}${p.dk?' dk':''}">
-    ${p.pop?'<div class="pop-r">Le plus populaire</div>':''}
-    <div class="plan-name">${p.n}</div><div class="plan-for">${p.f}</div>
-    <div class="plan-pr">${p.old?`<span class="plan-old">${p.old}€</span>`:''}<span class="plan-p">${typeof p.p==='number'?(p.p===0?'0€':p.p+'€'):p.p}</span><span class="plan-u">${p.u}</span></div>
-    <div class="plan-h">${p.h}</div>
-    <ul class="plan-feats">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-    <button class="plan-btn" onclick="startCheckout('${ct}','${cb}','${p.n}')">${p.cta}</button>
-  </div>`).join('');
-}
-
-function pt(b,t){
-  document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');
-  ct=t;
-  render();
-}
-
-function bt(b,t){
-  document.querySelectorAll('.bopt').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');
-  cb=t;
-  render();
-}
-
-render();
+sw.addEventListener('click', () => { annuel = !annuel; renderBilling(); });
+renderBilling();
 </script>
 </body>
 </html>
