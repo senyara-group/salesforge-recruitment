@@ -153,6 +153,13 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const usage = await markOfferSeenAndCount(candidat, offre_id);
     await markCandidateChoice({ ...candidat, swipes_meta: usage }, offre_id, action);
+
+    // Scénario 01, étape finale : sortie de la relance "vous n'avez pas encore swipé".
+    // Déclenché sur toute action (like/super/pass) — c'est bien l'acte de swiper qui compte ici.
+    getUserEmail(req.user.id).then((email) => {
+      trackBrevoEvent(email, 'swipe_effectue', { action }).catch(() => {});
+    }).catch(() => {});
+
     if (action === 'pass') return res.json({ match: false });
 
     const candidatureSent = true;
