@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
+const { ensureCandidateProfile, ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 function uniqueValues(values = []) {
   return [...new Set(values.filter(Boolean).map(String))];
@@ -176,6 +177,15 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
 
     if (error) return res.status(400).json({ error });
     res.json(data);
+
+    // Scénario 02 : sortie de la relance "aucune offre publiée".
+    if (data.statut === 'active') {
+      getUserEmail(req.user.id).then((email) => {
+        trackBrevoEvent(email, 'offre_publiee', { poste: data.titre }, {
+          OFFRE_PUBLIEE: true,
+        }).catch(() => {});
+      }).catch(() => {});
+    }
   } catch (error) {
     publicError(res, error);
   }
@@ -187,6 +197,7 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu, salaire });
 
+    let wasActive = false;
     if (statut === 'active') {
       const { data: existingOffer, error: existingError } = await supabase
         .from('offres')
@@ -196,9 +207,10 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
         .maybeSingle();
 
       if (existingError) return res.status(400).json({ error: existingError });
+      wasActive = Boolean(existingOffer && existingOffer.statut === 'active');
 
       // On ne revérifie la limite que si l'offre n'était pas déjà active (réactivation, pas simple édition)
-      if (existingOffer && existingOffer.statut !== 'active') {
+      if (!wasActive) {
         await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan, req.params.id);
       }
     }
@@ -213,6 +225,15 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
 
     if (error) return res.status(400).json({ error });
     res.json(data);
+
+    // Scénario 02 : même événement que la création, seulement lors du passage à "active".
+    if (statut === 'active' && !wasActive) {
+      getUserEmail(req.user.id).then((email) => {
+        trackBrevoEvent(email, 'offre_publiee', { poste: data.titre }, {
+          OFFRE_PUBLIEE: true,
+        }).catch(() => {});
+      }).catch(() => {});
+    }
   } catch (error) {
     publicError(res, error);
   }

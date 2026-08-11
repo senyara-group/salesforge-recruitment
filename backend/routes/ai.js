@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const supabase = require('../supabase');
-const { ensureCandidateProfile } = require('../utils/profiles');
+const { ensureCandidateProfile, getUserEmail } = require('../utils/profiles');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 router.post('/analyse', authMiddleware, async (req, res) => {
   try {
@@ -70,6 +71,14 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
 
     if (error) return res.status(400).json({ error });
     res.json(result);
+
+    // Scénario 01 : sortie de la relance "test non terminé", entrée dans l'email "Score obtenu".
+    getUserEmail(req.user.id).then((email) => {
+      trackBrevoEvent(email, 'test_adn_termine', { score: result.score }, {
+        SCORE_ADN: result.score,
+        TEST_ADN_TERMINE: true,
+      }).catch(() => {});
+    }).catch(() => {});
   } catch (error) {
     res.status(400).json({ error });
   }

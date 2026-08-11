@@ -3,6 +3,8 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
+const { getUserEmail } = require('../utils/profiles');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 const stripePrices = {
   cand: {
@@ -185,9 +187,16 @@ router.post('/webhook', async (req, res) => {
         statut: 'actif',
         periode: period,
       }, { onConflict: 'user_id' });
+
+      getUserEmail(userId).then((email) => {
+        trackBrevoEvent(email, 'abonnement_active', { plan }, {
+          ABONNEMENT_PLAN: plan,
+          ABONNEMENT_STATUT: 'actif',
+        }).catch(() => {});
+      }).catch(() => {});
     }
 
-    // Mise à jour abonnement (upgrade / downgrade / renouvellement)
+    // Mise à jour abonnement (upgrade / downgrade / renouvellement / résiliation programmée)
     if (event.type === 'customer.subscription.updated') {
       const sub = event.data.object;
       const userId = sub.metadata?.userId;
@@ -199,6 +208,17 @@ router.post('/webhook', async (req, res) => {
       }
 
       const statut = sub.status === 'active' ? 'actif' : 'inactif';
+      const dateFin = sub.cancel_at_period_end && sub.current_period_end
+        ? new Date(sub.current_period_end * 1000).toISOString()
+        : null;
+
+      // On lit l'état précédent pour ne déclencher l'événement de résiliation qu'une seule fois.
+      const { data: previous } = await supabase
+        .from('abonnements')
+        .select('resiliation_programmee')
+        .eq('user_id', userId)
+        .maybeSingle();
+      const wasAlreadyFlagged = Boolean(previous?.resiliation_programmee);
 
       await supabase.from('abonnements').upsert({
         user_id: userId,
@@ -206,7 +226,24 @@ router.post('/webhook', async (req, res) => {
         plan,
         statut,
         periode: sub.metadata?.period || 'month',
+        date_fin: dateFin,
+        resiliation_programmee: Boolean(sub.cancel_at_period_end),
       }, { onConflict: 'user_id' });
+
+      getUserEmail(userId).then((email) => {
+        trackBrevoEvent(email, 'abonnement_mis_a_jour', { plan, statut }, {
+          ABONNEMENT_PLAN: plan,
+          ABONNEMENT_STATUT: statut,
+          ABONNEMENT_DATE_FIN: dateFin || '',
+        }).catch(() => {});
+
+        // Scénario 04-D : entrée dans le suivi "avant fin d'abonnement" — une seule fois.
+        if (sub.cancel_at_period_end && !wasAlreadyFlagged) {
+          trackBrevoEvent(email, 'resiliation_enregistree', { date_fin: dateFin }, {
+            ABONNEMENT_DATE_FIN: dateFin || '',
+          }).catch(() => {});
+        }
+      }).catch(() => {});
     }
 
     // Annulation abonnement — repasse en freemium
@@ -225,7 +262,17 @@ router.post('/webhook', async (req, res) => {
         plan: 'freemium',
         statut: 'actif',
         periode: 'month',
+        date_fin: null,
+        resiliation_programmee: false,
       }, { onConflict: 'user_id' });
+
+      // Scénario 04-E : point de départ du délai de 30 jours avant réactivation à froid.
+      getUserEmail(userId).then((email) => {
+        trackBrevoEvent(email, 'abonnement_termine', {}, {
+          ABONNEMENT_PLAN: 'freemium',
+          ABONNEMENT_STATUT: 'termine',
+        }).catch(() => {});
+      }).catch(() => {});
     }
 
     res.json({ received: true });
