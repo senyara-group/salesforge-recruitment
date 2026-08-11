@@ -467,6 +467,8 @@ button,input,textarea,select{font-family:inherit}
 .ph-rank{display:inline-flex;align-items:center;background:var(--bs);color:var(--b);border:1px solid var(--bm);padding:4px 9px;border-radius:7px;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:8px}
 .ph-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .ph-badge{display:none;align-items:center;gap:5px;background:var(--gs);color:var(--g);border:1px solid rgba(6,148,88,.18);border-radius:7px;padding:4px 8px;font-size:10px;font-weight:800;text-transform:uppercase}
+.ph-badge.cta{display:inline-flex;background:#FFF4E5;color:#B45309;border-color:rgba(217,119,6,.3);cursor:pointer}
+.ph-badge.cta:hover{background:#FEECC8}
 .ph-badge.on{display:inline-flex}
 .ph-badge.link{cursor:pointer}
 .ph-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
@@ -1343,6 +1345,7 @@ button,input,textarea,select{font-family:inherit}
       </div></div>
       <div class="prefs-sec"><div class="prefs-l sf">Type de contrat</div><div class="prefs-chips">
         <button class="pc" onclick="tg(this,'contrat','cdi')">CDI</button>
+        <button class="pc" onclick="tg(this,'contrat','alternance')">Alternance</button>
         <button class="pc" onclick="tg(this,'contrat','mission_c')">Mission courte</button>
         <button class="pc" onclick="tg(this,'contrat','mission_l')">Mission longue</button>
         <button class="pc" onclick="tg(this,'contrat','freelance')">Freelance</button>
@@ -1516,7 +1519,9 @@ button,input,textarea,select{font-family:inherit}
         <div class="ph-rank link" id="prof-rank" onclick="handleRankClick()" style="cursor:pointer">—</div>
         <div class="ph-badges">
           <button class="ph-badge link" id="prof-cv-badge" onclick="openProfileCV()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CV intégré</button>
+          <button class="ph-badge cta" id="prof-cv-cta" onclick="document.getElementById('cv-file-prof').click()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter mon CV</button>
           <button class="ph-badge link" id="prof-motiv-badge" onclick="openMotivationFile()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Lettre intégrée</button>
+          <button class="ph-badge cta" id="prof-motiv-cta" onclick="document.getElementById('motiv-file-prof').click()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter ma lettre de motivation</button>
         </div>
       </div>
       <button class="profile-edit-btn" onclick="toggleProfileEdit()" aria-label="Modifier le profil"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
@@ -2890,13 +2895,16 @@ async function saveProfileEdit() {
 function renderProfileCV(p) {
   const name = p.axes?.meta?.cv_file_name;
   PROFILE_CV_URL = p.cv_url || '';
+  const has = Boolean(name || PROFILE_CV_URL);
   const badge = document.getElementById('prof-cv-badge');
-  badge.classList.toggle('on', Boolean(name || PROFILE_CV_URL));
+  badge.classList.toggle('on', has);
   badge.title = name || 'CV intégré';
+  const cta = document.getElementById('prof-cv-cta');
+  if (cta) cta.style.display = has ? 'none' : 'inline-flex';
   const label = document.getElementById('cv-menu-label');
   if (label) label.textContent = name ? 'CV : ' + name : 'CV non ajouté';
   const deleteBtn = document.getElementById('delete-cv-btn');
-  if (deleteBtn) deleteBtn.disabled = !Boolean(name || PROFILE_CV_URL);
+  if (deleteBtn) deleteBtn.disabled = !has;
 }
 function openProfileCV() {
   if (!PROFILE_CV_URL) return toast('CV indisponible');
@@ -2905,13 +2913,16 @@ function openProfileCV() {
 function renderMotivationFile(p) {
   const name = p.axes?.meta?.motivation_file_name;
   PROFILE_MOTIVATION_URL = p.motivation_url || '';
+  const has = Boolean(name || PROFILE_MOTIVATION_URL);
   const badge = document.getElementById('prof-motiv-badge');
-  badge.classList.toggle('on', Boolean(name || PROFILE_MOTIVATION_URL));
+  badge.classList.toggle('on', has);
   badge.title = name || 'Lettre intégrée';
+  const cta = document.getElementById('prof-motiv-cta');
+  if (cta) cta.style.display = has ? 'none' : 'inline-flex';
   const label = document.getElementById('motiv-menu-label');
   if (label) label.textContent = name ? 'Lettre : ' + name : 'Lettre de motivation non ajoutée';
   const deleteBtn = document.getElementById('delete-motivation-btn');
-  if (deleteBtn) deleteBtn.disabled = !Boolean(name || PROFILE_MOTIVATION_URL);
+  if (deleteBtn) deleteBtn.disabled = !has;
 }
 function openMotivationFile() {
   if (!PROFILE_MOTIVATION_URL) return toast('Lettre indisponible');
