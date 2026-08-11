@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { ensureCandidateProfile } = require('../utils/profiles');
+const { ensureCandidateProfile, getUserEmail } = require('../utils/profiles');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 const FREE_SWIPES_MONTHLY = 5;
 
@@ -128,11 +129,22 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const plan = await getSubscriptionPlan(req.user.id);
-    assertSwipeAllowed(candidat, plan);
+    try {
+      assertSwipeAllowed(candidat, plan);
+    } catch (limitError) {
+      if (limitError.status === 402) {
+        getUserEmail(req.user.id).then((email) => {
+          trackBrevoEvent(email, 'limite_swipes_atteinte', {}, {
+            SWIPES_USED: swipeUsage(candidat),
+          }).catch(() => {});
+        }).catch(() => {});
+      }
+      throw limitError;
+    }
 
     const { data: offre, error: offreError } = await supabase
       .from('offres')
-      .select('id, auto_candidature, recruteurs(id, matching, questions)')
+      .select('id, titre, auto_candidature, recruteurs(id, user_id, prenom, matching, questions)')
       .eq('id', offre_id)
       .maybeSingle();
 
@@ -145,6 +157,18 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const candidatureSent = true;
     if (candidatureSent) await upsertCandidature(candidat.id, offre_id, action);
+
+    // Scénario 02, étape 5 : notifie le recruteur d'une nouvelle candidature.
+    if (candidatureSent && offre.recruteurs?.user_id) {
+      getUserEmail(offre.recruteurs.user_id).then((recruiterEmail) => {
+        trackBrevoEvent(recruiterEmail, 'candidature_recue', {
+          poste: offre.titre,
+          candidat: [candidat.prenom, candidat.nom].filter(Boolean).join(' ') || 'Un candidat',
+          score: candidat.score_adn || 0,
+          type_profil: candidat.axes?.resultat?.type || '',
+        }).catch(() => {});
+      }).catch(() => {});
+    }
 
     const score = action === 'super' ? 95 : 85;
     const { data: existingMatch } = await supabase
@@ -187,6 +211,21 @@ router.post('/', authMiddleware, async (req, res) => {
       swipes_m: plan === 'freemium' ? FREE_SWIPES_MONTHLY : 999,
       ...match,
     });
+
+    // Scénario 04-A : entrée dans le suivi "match sans conversation", des deux côtés.
+    if (!existingMatch) {
+      getUserEmail(req.user.id).then((candidatEmail) => {
+        trackBrevoEvent(candidatEmail, 'match_cree', { entreprise: '', match_id: match.id }).catch(() => {});
+      }).catch(() => {});
+      if (offre.recruteurs?.user_id) {
+        getUserEmail(offre.recruteurs.user_id).then((recruiterEmail) => {
+          trackBrevoEvent(recruiterEmail, 'match_cree', {
+            candidat: [candidat.prenom, candidat.nom].filter(Boolean).join(' ') || 'Un candidat',
+            match_id: match.id,
+          }).catch(() => {});
+        }).catch(() => {});
+      }
+    }
   } catch (error) {
     res.status(error.status || 400).json({ error: error.message || error });
   }
