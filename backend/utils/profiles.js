@@ -11,6 +11,17 @@ async function getUserRole(userId) {
   return data?.role || null;
 }
 
+async function getUserEmail(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.email || null;
+}
+
 function assertRoleMatches(role, expectedRole) {
   if (role && role !== expectedRole) {
     const error = new Error(`Acces reserve aux profils ${expectedRole}s`);
@@ -91,6 +102,7 @@ async function ensureRoleProfile(userId, role) {
 
 module.exports = {
   getUserRole,
+  getUserEmail,
   assertRole,
   ensureCandidateProfile,
   ensureRecruiterProfile,

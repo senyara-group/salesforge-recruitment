@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
+const { ensureCandidateProfile, ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 function initials(text = '') {
   return text
@@ -346,6 +347,12 @@ router.post('/send', authMiddleware, async (req, res) => {
       storedMatchId = participants.canonicalMatchId;
     }
 
+    const { count: priorMessageCount } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('match_id', storedMatchId);
+    const isFirstMessage = !priorMessageCount;
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -370,6 +377,16 @@ router.post('/send', authMiddleware, async (req, res) => {
     }
 
     res.json(data);
+
+    // Scénario 04-A : sortie du suivi "match sans conversation", des deux côtés.
+    if (isFirstMessage && participants) {
+      getUserEmail(participants.candidateUserId).then((email) => {
+        trackBrevoEvent(email, 'premier_message_envoye', { match_id: storedMatchId }).catch(() => {});
+      }).catch(() => {});
+      getUserEmail(participants.recruiterUserId).then((email) => {
+        trackBrevoEvent(email, 'premier_message_envoye', { match_id: storedMatchId }).catch(() => {});
+      }).catch(() => {});
+    }
   } catch (error) {
     res.status(error.status || 400).json({ error: error.message || error });
   }

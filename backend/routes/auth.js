@@ -4,6 +4,8 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRoleProfile } = require('../utils/profiles');
+const { trackBrevoEvent, upsertBrevoContact } = require('../utils/brevoEvents');
+const { touchLastLogin } = require('../utils/engagementTracking');
 
 const authClient = createClient(
   process.env.SUPABASE_URL,
@@ -271,6 +273,14 @@ async function signup(req, res) {
     roleProfileCreated: !roleProfileError,
     roleProfile,
   });
+
+  // Scénario 01 (candidat) / 02 (recruteur) : événement d'entrée dans l'onboarding.
+  // Fire-and-forget : ne doit jamais retarder ni faire échouer la réponse à l'utilisateur.
+  const eventName = normalizedRole === 'recruteur' ? 'compte_recruteur_active' : 'compte_candidat_cree';
+  trackBrevoEvent(email, eventName, {}, {
+    PRENOM: prenom || '',
+    NOM: nom || '',
+  }).catch(() => {});
 }
 
 router.post('/signup', signup);
@@ -354,6 +364,11 @@ router.post('/login', async (req, res) => {
   }
 
   res.json({ token: data.session.access_token, user: data.user, profile });
+
+  // Scénarios 04-B/04-C : date de dernière connexion, utilisée pour la réactivation.
+  const table = profile?.role === 'recruteur' ? 'recruteurs' : 'candidats';
+  touchLastLogin(table, data.user.id).catch(() => {});
+  upsertBrevoContact(email, { DERNIERE_CONNEXION: new Date().toISOString() }).catch(() => {});
 });
 
 router.get('/me', authMiddleware, async (req, res) => {

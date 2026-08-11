@@ -3,8 +3,10 @@ const router = express.Router();
 const path = require('path');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { ensureRecruiterProfile } = require('../utils/profiles');
+const { ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
+const { trackBrevoEvent } = require('../utils/brevoEvents');
+const { recordCandidateLike, recordProfileView, countRecentLikes, countRecentProfileViews } = require('../utils/engagementTracking');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
@@ -547,6 +549,33 @@ router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, (_req, res) =
   });
 });
 
+// Scénario 03-C : consultation de profil candidat par un recruteur, sans match.
+// Appelé par le front à l'ouverture de la fiche candidat (openPipelineCandidate).
+router.post('/candidat-vu', authMiddleware, requireRecruiterPlan, async (req, res) => {
+  try {
+    const recruteur = await ensureRecruiterProfile(req.user.id);
+    const { candidat_id } = req.body;
+    if (!candidat_id) return res.status(400).json({ error: 'candidat_id requis' });
+
+    // Scénario 03-C : consultations de profil sans match, condition > 3 sur 7 jours.
+    recordProfileView(candidat_id, recruteur.id).then(async () => {
+      const { data: candidat } = await supabase
+        .from('candidats')
+        .select('user_id')
+        .eq('id', candidat_id)
+        .maybeSingle();
+      if (!candidat?.user_id) return;
+      const nb = await countRecentProfileViews(candidat_id, 7);
+      const email = await getUserEmail(candidat.user_id);
+      trackBrevoEvent(email, 'profil_consulte', { nb }, { NB_CONSULTATIONS_7J: nb }).catch(() => {});
+    }).catch(() => {});
+
+    res.json({ ok: true });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
@@ -588,11 +617,19 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
 
     const { data: candidat, error: candidatError } = await supabase
       .from('candidats')
-      .select('id, swipes_meta')
+      .select('id, user_id, prenom, nom, swipes_meta')
       .eq('id', candidat_id)
       .maybeSingle();
     if (candidatError) return res.status(400).json({ error: candidatError });
     if (!candidat) return res.status(404).json({ error: 'Candidat introuvable' });
+
+    // Scénario 03-A : compte les likes reçus par le candidat, pour la relance "likes non visibles".
+    recordCandidateLike(candidat.id, recruteur.id).then(async () => {
+      if (!candidat.user_id) return;
+      const nb = await countRecentLikes(candidat.id, 7);
+      const email = await getUserEmail(candidat.user_id);
+      trackBrevoEvent(email, 'like_recu', { nb }, { NB_LIKES_7J: nb }).catch(() => {});
+    }).catch(() => {});
 
     const candidateLikedOfferId = firstIntersection(candidat.swipes_meta?.liked_offer_ids || [], offreIds);
     const targetOfferId = candidateLikedOfferId || offreIds[0];
@@ -628,6 +665,21 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
 
     if (error) return res.status(400).json({ error });
     res.json({ match: true, ...match });
+
+    // Scénario 04-A : entrée dans le suivi "match sans conversation", des deux côtés.
+    if (!existingMatch) {
+      getUserEmail(req.user.id).then((recruiterEmail) => {
+        trackBrevoEvent(recruiterEmail, 'match_cree', {
+          candidat: [candidat.prenom, candidat.nom].filter(Boolean).join(' ') || 'Un candidat',
+          match_id: match.id,
+        }).catch(() => {});
+      }).catch(() => {});
+      if (candidat.user_id) {
+        getUserEmail(candidat.user_id).then((candidatEmail) => {
+          trackBrevoEvent(candidatEmail, 'match_cree', { match_id: match.id }).catch(() => {});
+        }).catch(() => {});
+      }
+    }
   } catch (error) {
     publicError(res, error);
   }
