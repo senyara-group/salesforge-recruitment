@@ -1,4 +1,5 @@
 const supabase = require('../supabase');
+const { trackBrevoEvent } = require('./brevoEvents');
 
 async function getUserRole(userId) {
   const { data, error } = await supabase
@@ -68,6 +69,13 @@ async function ensureCandidateProfile(userId, knownRole) {
     .single();
 
   if (error) throw error;
+
+  // Scénario 01 : point de création réel de la fiche candidat — couvre l'inscription
+  // email/mot de passe ET le retour OAuth (Google), qui passent tous deux par cette fonction.
+  getUserEmail(userId).then((email) => {
+    trackBrevoEvent(email, 'compte_candidat_cree').catch(() => {});
+  }).catch(() => {});
+
   return data;
 }
 
@@ -90,6 +98,13 @@ async function ensureRecruiterProfile(userId, knownRole) {
     .single();
 
   if (error) throw error;
+
+  // Scénario 02 : point de création réel de la fiche recruteur — couvre l'inscription
+  // email/mot de passe ET le retour OAuth (Google), qui passent tous deux par cette fonction.
+  getUserEmail(userId).then((email) => {
+    trackBrevoEvent(email, 'compte_recruteur_active').catch(() => {});
+  }).catch(() => {});
+
   return data;
 }
 
