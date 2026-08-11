@@ -43,7 +43,7 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
     const score = Math.max(55, Math.min(95, Math.round(65 + filledAnswers / 80)));
     const result = {
       score,
-      rank: 'sur 100 · profil synchronise',
+      rank: 'Profil synchronisé avec les recruteurs',
       type: score >= 85 ? 'Closer Strategique · Profil Elite' : 'Commercial B2B',
       desc: 'Score calcule depuis les reponses du test ADN et enregistre dans Supabase.',
       axes: [

@@ -459,7 +459,9 @@ button,input,textarea,select{font-family:inherit}
 .profile-edit-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
 .profile-edit-btn:hover{border-color:var(--b);background:var(--bs);color:var(--b)}
 .profile-edit-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
-.ph-av{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,var(--b),#2847D8);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:21px;font-weight:900;flex-shrink:0;overflow:hidden;color:#fff;box-shadow:0 12px 22px rgba(19,64,224,.18)}
+.ph-av{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,var(--b),#2847D8);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:21px;font-weight:900;flex-shrink:0;overflow:hidden;color:#fff;box-shadow:0 12px 22px rgba(19,64,224,.18);position:relative}
+.ph-av::after{content:'';position:absolute;inset:0;border-radius:18px;background:rgba(10,16,32,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E") no-repeat center/22px;opacity:0;transition:opacity .15s}
+.ph-av:hover::after{opacity:1}
 .ph-av img{width:100%;height:100%;object-fit:cover;display:block}
 .ph-kicker{font-size:10px;color:var(--b);font-weight:900;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
 .ph-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.5px;line-height:1.15;color:var(--ink)}
@@ -1511,7 +1513,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-profile" class="page">
   <div class="ph">
     <div class="ph-top">
-      <div class="ph-av sf" id="prof-av">YS</div>
+      <div class="ph-av sf" id="prof-av" onclick="document.getElementById('avatar-file-prof').click()" style="cursor:pointer" title="Cliquer pour changer la photo de profil">YS</div>
       <div class="ph-main">
         <div class="ph-kicker">Profil candidat</div>
         <div class="ph-name sf" id="prof-name">—</div>
@@ -2367,7 +2369,7 @@ function selectHuntFarm(key, btn) {
 }
 function renderProfileQuestion(qNum) {
   const profile = PROFILE_QUESTIONS[TEST_JOB_TYPE];
-  if (!profile) { ns(10); return; }
+  if (!profile) { submitADN(); return; }
   const q = profile['q' + qNum];
   document.getElementById('profileq' + qNum + '-text').textContent = q.text;
   document.getElementById('profileq' + qNum + '-opts').innerHTML = q.options.map((opt, i) =>
@@ -2424,7 +2426,15 @@ function pp(btn, pid, idx) {
 }
 function tg(btn, cat, val) { btn.classList.toggle('on'); if(!ADN.prefs[cat]) ADN.prefs[cat]=[]; if(btn.classList.contains('on')) ADN.prefs[cat].push(val); else ADN.prefs[cat]=ADN.prefs[cat].filter(v=>v!==val); }
 function tg1(btn, cat, val) { btn.parentElement.querySelectorAll('.pc').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); ADN.prefs[cat]=val; }
-function submitADN() { ns(10); }
+function submitADN() {
+  hideAllTestSteps();
+  const el = document.getElementById('ts10'); if (el) el.style.display = 'block';
+  document.getElementById('test-sl').textContent = 'Analyse en cours';
+  document.getElementById('test-st').textContent = 'Calcul de votre ADN Commercial';
+  document.getElementById('test-pf').style.width = '100%';
+  window.scrollTo(0, 0);
+  runAnalysis();
+}
 async function runAnalysis() {
   let w=0,step=0; const fill=document.getElementById('af'),status=document.getElementById('as');
   const iv=setInterval(()=>{ w+=Math.random()*7+2; if(w>=100) w=100; fill.style.width=w+'%'; const ns2=Math.min(Math.floor(w/15),ANA_MSGS.length-1); if(ns2!==step){step=ns2;status.textContent=ANA_MSGS[step];} if(w>=100){clearInterval(iv);submitToAPI();}},130);
