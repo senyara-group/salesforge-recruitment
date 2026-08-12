@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRoleProfile } = require('../utils/profiles');
-const { trackBrevoEvent, upsertBrevoContact } = require('../utils/brevoEvents');
+const { upsertBrevoContact } = require('../utils/brevoEvents');
 const { touchLastLogin } = require('../utils/engagementTracking');
 
 const authClient = createClient(
@@ -274,13 +274,10 @@ async function signup(req, res) {
     roleProfile,
   });
 
-  // Scénario 01 (candidat) / 02 (recruteur) : événement d'entrée dans l'onboarding.
-  // Fire-and-forget : ne doit jamais retarder ni faire échouer la réponse à l'utilisateur.
-  const eventName = normalizedRole === 'recruteur' ? 'compte_recruteur_active' : 'compte_candidat_cree';
-  trackBrevoEvent(email, eventName, {}, {
-    PRENOM: prenom || '',
-    NOM: nom || '',
-  }).catch(() => {});
+  // L'événement d'entrée en scénario 01/02 est déclenché dans profiles.js
+  // (ensureCandidateProfile/ensureRecruiterProfile), qui couvre aussi le chemin OAuth.
+  // Ici on complète juste les attributs connus à l'inscription email/mot de passe.
+  upsertBrevoContact(email, { PRENOM: prenom || '', NOM: nom || '' }).catch(() => {});
 }
 
 router.post('/signup', signup);
