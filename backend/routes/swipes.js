@@ -144,7 +144,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const { data: offre, error: offreError } = await supabase
       .from('offres')
-      .select('id, titre, auto_candidature, recruteurs(id, user_id, prenom, matching, questions)')
+      .select('id, titre, auto_candidature, recruteurs(id, user_id, matching, questions)')
       .eq('id', offre_id)
       .maybeSingle();
 

@@ -330,11 +330,14 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <a href="#recruteurs">Recruteurs</a>
       <a href="#candidats">Commerciaux</a>
       <a href="#tarifs">Tarifs</a>
-      <a href="#tarifs" class="btn b-bleu">Voir les tarifs</a>
+      <a href="#tarifs" class="btn b-bleu" id="nav-cta-btn">Voir les tarifs</a>
     </div>
   </div>
 </nav>
 
+<div id="session-banner" style="display:none;background:var(--encre);color:#fff;text-align:center;padding:11px 16px;font-size:13.5px;font-weight:600">
+  Tu es déjà connecté(e). <a href="swipsales_app.html" style="color:#fff;font-weight:800;text-decoration:underline;margin-left:6px">Accéder à mon espace →</a>
+</div>
 <header class="hero">
   <div class="wrap hero-in">
     <div>
@@ -851,6 +854,16 @@ function render(){
 }
 sw.addEventListener('click', () => { annuel = !annuel; render(); });
 render();
+
+// Si une session valide existe déjà (token en local), on le signale clairement
+// au lieu de laisser croire qu'il faut recréer un compte.
+try {
+  if (localStorage.getItem('sf_token')) {
+    document.getElementById('session-banner').style.display = 'block';
+    const navCta = document.getElementById('nav-cta-btn');
+    if (navCta) { navCta.textContent = 'Accéder à mon espace'; navCta.href = 'swipsales_app.html'; }
+  }
+} catch (e) {}
 </script>
 </body>
 </html>
