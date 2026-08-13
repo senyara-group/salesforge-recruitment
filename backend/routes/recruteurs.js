@@ -354,7 +354,7 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
     if (candidaturesError) return res.status(400).json({ error: candidaturesError });
 
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur / Indépendant', starter: 'Business', pro: 'Partenaire', enterprise: 'Enterprise' };
+    const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
     const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
     const { avatar_url } = await withFreshRecruiterAvatarUrl(recruteur);
     res.json({
@@ -631,7 +631,14 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
       trackBrevoEvent(email, 'like_recu', { nb }, { NB_LIKES_7J: nb }).catch(() => {});
     }).catch(() => {});
 
-    const candidateLikedOfferId = firstIntersection(candidat.swipes_meta?.liked_offer_ids || [], offreIds);
+    // Source de vérité fiable (table candidatures) plutôt que le tableau JSON
+    // swipes_meta.liked_offer_ids, sujet aux mêmes pertes d'écriture concurrentes.
+    const { data: existingCandidatures } = await supabase
+      .from('candidatures')
+      .select('offre_id')
+      .eq('candidat_id', candidat_id)
+      .in('offre_id', offreIds);
+    const candidateLikedOfferId = existingCandidatures?.[0]?.offre_id || null;
     const targetOfferId = candidateLikedOfferId || offreIds[0];
     await upsertCandidature(candidat_id, targetOfferId, action);
 

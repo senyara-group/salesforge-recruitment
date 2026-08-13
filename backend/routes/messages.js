@@ -146,11 +146,13 @@ async function checkContactLimit(senderId, receiverId) {
 
   const plan = abonnement?.plan || 'freemium';
 
-  // Gold et Platine = illimité
-  if (['gold', 'platine'].includes(plan)) return;
+  // Grille tarifaire actuelle : seul Freemium est limité (2 contacts/mois),
+  // Premium et Platine sont illimités ("Contacts recruteurs illimités" / "Initier
+  // le contact avec les recruteurs"). 'gold' était un ancien palier retiré de la
+  // page tarifs, plus jamais attribué — ne pas s'y fier pour détecter l'illimité.
+  if (plan !== 'freemium') return;
 
-  // Limite selon plan
-  const limit = plan === 'premium' ? 10 : 2;
+  const limit = 2;
   const month = new Date().toISOString().slice(0, 7);
   const meta = candidat.contacts_meta || {};
   const contacts = Array.isArray(meta.contacts) ? meta.contacts : [];
