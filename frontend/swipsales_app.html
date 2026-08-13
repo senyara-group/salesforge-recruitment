@@ -358,6 +358,7 @@ async function openRoleSpace(){
     localStorage.removeItem('sf_onboarding_role');
   } catch (error) {
     localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_pending_role');
     showLogin();
     showMessage('Votre session a expiré. Reconnectez-vous.');
   }
@@ -407,6 +408,7 @@ form.addEventListener('submit', async (event) => {
       return;
     }
     localStorage.setItem('sf_token', data.token);
+    localStorage.removeItem('sf_pending_role');
     history.replaceState(null, '', window.location.pathname);
     await openRoleSpace();
   } catch (error) {

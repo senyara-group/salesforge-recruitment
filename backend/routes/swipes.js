@@ -185,8 +185,19 @@ router.post('/', authMiddleware, async (req, res) => {
       .eq('offre_id', offre_id)
       .maybeSingle();
 
-    const likedCandidateIds = offre.recruteurs?.matching?.meta?.liked_candidate_ids || [];
-    const recruiterAlreadyLiked = includesId(likedCandidateIds, [candidat.id, candidat.user_id]);
+    // Source de vérité atomique (table dédiée, contrainte d'unicité) plutôt que le
+    // tableau JSON matching.meta.liked_candidate_ids, sujet à des écritures concurrentes
+    // qui pouvaient silencieusement perdre un like lors de swipes rapprochés.
+    let recruiterAlreadyLiked = false;
+    if (offre.recruteurs?.id) {
+      const { data: likeRow } = await supabase
+        .from('candidat_likes')
+        .select('id')
+        .eq('candidat_id', candidat.id)
+        .eq('recruteur_id', offre.recruteurs.id)
+        .maybeSingle();
+      recruiterAlreadyLiked = Boolean(likeRow);
+    }
     if (!existingMatch && !recruiterAlreadyLiked) {
       return res.json({
         match: false,
