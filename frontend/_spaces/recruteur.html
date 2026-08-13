@@ -156,7 +156,7 @@ button,input,textarea,select{font-family:inherit}
 .cand-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
 .cand-anon-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#fff;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;display:flex;align-items:center;gap:4px}
 .cand-anon-badge svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5}
-.cand-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.cand-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;touch-action:pan-y}
 .cand-body::-webkit-scrollbar{width:3px}.cand-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
 .cand-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;text-align:center}
 .cand-role{font-size:12px;color:var(--ink3);text-align:center;margin-top:-7px}
@@ -855,68 +855,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <!-- AUTH -->
 <div id="p-auth" class="page">
   <div class="auth-logo sf">S</div>
-  <h1 style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.8px;margin-bottom:8px">Swip Sales Recruteur</h1>
-  <p style="font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.65">Recrutez les meilleurs commerciaux.<br>ADN vérifié, matching IA, sans cabinet.</p>
-  <div class="auth-tabs">
-    <button class="auth-tab on" onclick="switchTab(this,'login')">Se connecter</button>
-    <button class="auth-tab" onclick="switchTab(this,'register')">Créer un compte</button>
-  </div>
-  <div id="auth-err" class="err"></div>
-  <div id="login-form">
-    <div class="auth-form">
-      <input class="fi" id="l-email" type="email" placeholder="Email professionnel" autocomplete="email">
-      <input class="fi" id="l-pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
-      <button class="btn bp blk" id="btn-login" onclick="doLogin()">Se connecter</button>
-    </div>
-    <p style="text-align:center;font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:12px" onclick="doForgot()">Mot de passe oublié ?</p>
-  </div>
-  <div id="register-form" style="display:none">
-    <div class="auth-form">
-      <div style="position:relative">
-        <input class="fi" id="r-entreprise" type="text" placeholder="Nom de l'entreprise" autocomplete="off" oninput="searchEntreprises(this.value)" onfocus="searchEntreprises(this.value)">
-        <div class="autocomplete-list" id="r-entreprise-list"></div>
-      </div>
-      <input class="fi" id="r-secteur" list="r-secteur-suggestions" type="text" placeholder="Secteur d'activité">
-      <datalist id="r-secteur-suggestions">
-        <option value="SaaS / Logiciel">
-        <option value="Tech / IT">
-        <option value="FinTech">
-        <option value="Assurance">
-        <option value="Banque">
-        <option value="Immobilier">
-        <option value="E-commerce">
-        <option value="Industrie">
-        <option value="Distribution / Retail">
-        <option value="Santé / MedTech">
-        <option value="RH / HR Tech">
-        <option value="Cybersécurité">
-        <option value="Conseil">
-        <option value="Marketing / Publicité">
-        <option value="Énergie">
-        <option value="Automobile">
-        <option value="Agroalimentaire">
-        <option value="Télécoms">
-        <option value="Éducation / EdTech">
-        <option value="Autre">
-      </datalist>
-      <input class="fi" id="r-prenom" type="text" placeholder="Votre prénom">
-      <input class="fi" id="r-nom" type="text" placeholder="Votre nom">
-      <input class="fi" id="r-email" type="email" placeholder="Email professionnel" autocomplete="email">
-      <input class="fi" id="r-pass" type="password" placeholder="Mot de passe (8 min.)" autocomplete="new-password">
-      <button class="btn bp blk" id="btn-reg" onclick="doRegister()">Créer mon compte recruteur</button>
-    </div>
-  </div>
-  <div class="or-div">ou continuer avec</div>
-  <button class="soc-btn" onclick="doOAuth('google')">
-    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Google
-  </button>
-  <div class="confirm-mail" id="confirm-mail">
-    <div class="confirm-ico">✓</div>
-    <h2>Confirmez votre email</h2>
-    <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
-    <button class="btn bp blk" onclick="showLoginAfterConfirm()">Se connecter</button>
-  </div>
+  <h1 style="font-family:'Sora',sans-serif;font-size:22px;font-weight:900;letter-spacing:-.8px;margin-bottom:10px">Session introuvable</h1>
+  <p style="font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.65">Redirection vers la connexion...</p>
+  <div class="spinner" style="margin:0 auto"></div>
+  <p style="font-size:12px;color:var(--mu);margin-top:20px"><a href="javascript:void(0)" onclick="goLanding()" style="color:var(--b);font-weight:700;text-decoration:none">Cliquez ici si la redirection ne se lance pas</a></p>
 </div>
 
 <!-- DASHBOARD -->
@@ -1207,6 +1149,13 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <div id="p-settings" class="page">
   <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Paramètres</div></div>
+    <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:14px">
+      <div style="padding:14px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--doux,#5C6C84);margin-bottom:8px">Mon compte</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bs2,#F3F5FA);border-radius:10px;font-size:13.5px;margin-bottom:10px" id="account-email-display">—</div>
+        <button type="button" class="btn bo" style="width:100%" onclick="requestPasswordReset()">Changer mon mot de passe</button>
+      </div>
+    </div>
     <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('post-offre')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Publier une offre</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('matching')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Moteur de matching</div></div>
@@ -1492,6 +1441,20 @@ function existingPageOrDashboard(page) {
 // ------------------------------------------------------------
 // NAVIGATION
 // ------------------------------------------------------------
+function renderAccountSettings() {
+  const el = document.getElementById('account-email-display');
+  if (el) el.textContent = USER?.email || 'Email indisponible';
+}
+async function requestPasswordReset() {
+  const email = USER?.email;
+  if (!email) { toast('Email introuvable'); return; }
+  try {
+    await api('POST', '/auth/forgot-password', { email });
+    toast('Email de réinitialisation envoyé à ' + email);
+  } catch (e) {
+    toast(e.message || 'Impossible d\'envoyer l\'email');
+  }
+}
 function go(p, options = {}) {
   p = existingPageOrDashboard(p);
   const ui = p !== 'auth';
@@ -1508,7 +1471,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans };
+  const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans, settings:renderAccountSettings };
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -1586,7 +1549,15 @@ async function doForgot() {
   } catch(e) { showErr('auth-err', e.message); }
 }
 function goLanding() {
-  window.top.location.href = new URL('../swipsales_landing.html', window.location.href).href;
+  // Cette page ne gère plus l'authentification elle-même : en cas de session
+  // manquante ou invalide, on redirige toujours vers le point d'entrée unique
+  // (le shell swipsales_app.html), jamais vers la page marketing.
+  const target = new URL('../swipsales_app.html?login=1', window.location.href).href;
+  if (window.top !== window) {
+    window.top.location.href = target;
+  } else {
+    window.location.href = target;
+  }
 }
 function doLogout() {
   TOKEN = null; USER = null;
@@ -1838,15 +1809,32 @@ function cltSwitch(btn, id) {
   document.getElementById(id).style.display = id.startsWith('text') ? 'block' : 'flex';
 }
 function attachDrag(card, cand) {
-  let sx=0,sy=0,cx=0,cy=0,on=false;
+  let sx=0,sy=0,cx=0,cy=0,on=false,pending=false,fromHeader=false;
   const top = () => document.querySelector('#deck-cards .swipe-card:last-child');
   const isInteractive = e => e.target.closest('.clt,.clm-play,.cand-letter-tabs,.cand-doc');
   const point = e => e.touches?.[0] || e.changedTouches?.[0] || e;
-  const s = e => { if (card !== top() || isInteractive(e)) return; if (e.cancelable) e.preventDefault(); on = true; const p = point(e); sx=p.clientX; sy=p.clientY; cx=0; cy=0; card.style.transition='none'; };
+  const s = e => {
+    if (card !== top() || isInteractive(e)) return;
+    const p = point(e);
+    sx=p.clientX; sy=p.clientY; cx=0; cy=0;
+    fromHeader = Boolean(e.target.closest('.cand-top'));
+    pending = true; on = false;
+    card.style.transition='none';
+  };
   const m = e => {
+    if (!pending && !on) return;
+    const p=point(e); cx=p.clientX-sx; cy=p.clientY-sy;
+    if (pending && !on) {
+      const horizontalIntent = Math.abs(cx) > 10 && Math.abs(cx) > Math.abs(cy);
+      const upFromHeaderIntent = fromHeader && cy < -10 && Math.abs(cy) > Math.abs(cx) * .7;
+      if (!horizontalIntent && !upFromHeaderIntent) {
+        if (Math.abs(cy) > 10 && Math.abs(cy) > Math.abs(cx)) { pending = false; return; }
+        return;
+      }
+      on = true; pending = false;
+    }
     if (!on) return;
     if (e.cancelable) e.preventDefault();
-    const p=point(e); cx=p.clientX-sx; cy=p.clientY-sy;
     const up = cy < -45 && Math.abs(cy) > Math.abs(cx) * .7;
     card.style.transform=`translate(${cx}px,${up?cy:cy*.35}px) rotate(${cx*.065}deg)`;
     const lk=card.querySelector('.sw-lbl.like'),ps=card.querySelector('.sw-lbl.pass'),su=card.querySelector('.sw-lbl.super');
@@ -1855,8 +1843,8 @@ function attachDrag(card, cand) {
     else if(cx<-40){ps.style.opacity=Math.min((-cx-40)/65,1);lk.style.opacity=0;su.style.opacity=0}
     else{lk.style.opacity=0;ps.style.opacity=0;su.style.opacity=0}
   };
-  const e2 = e => { if (!on) return; on=false; if (e.cancelable) e.preventDefault(); card.style.transition='transform .35s ease,opacity .3s ease'; const up = cy < -82 && Math.abs(cy) > Math.abs(cx) * .7; if(up)fly(card,'u',cand);else if(cx>82)fly(card,'r',cand);else if(cx<-82)fly(card,'l',cand);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
-  card.addEventListener('mousedown',s); card.addEventListener('touchstart',s,{passive:false});
+  const e2 = e => { pending=false; if (!on) return; on=false; if (e.cancelable) e.preventDefault(); card.style.transition='transform .35s ease,opacity .3s ease'; const up = cy < -82 && Math.abs(cy) > Math.abs(cx) * .7; if(up)fly(card,'u',cand);else if(cx>82)fly(card,'r',cand);else if(cx<-82)fly(card,'l',cand);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
+  card.addEventListener('mousedown',s); card.addEventListener('touchstart',s,{passive:true});
   window.addEventListener('mousemove',m); window.addEventListener('touchmove',m,{passive:false});
   window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2); window.addEventListener('touchcancel',e2);
 }
@@ -2070,6 +2058,7 @@ function openPipelineCandidate(candidatureId) {
   const c = PIPELINE_CARDS[candidatureId];
   if (!c) return;
   CURRENT_PIPELINE_CANDIDATE = c;
+  if (c.candidat_id) api('POST', '/recruteurs/candidat-vu', { candidat_id: c.candidat_id }).catch(() => {});
   document.getElementById('cov-av').textContent = c.av;
   document.getElementById('cov-av').style.background = c.bg;
   document.getElementById('cov-name').textContent = c.name;

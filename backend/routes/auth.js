@@ -286,6 +286,26 @@ async function signup(req, res) {
 router.post('/signup', signup);
 router.post('/register', signup);
 
+router.post('/resend-confirmation', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email requis' });
+  }
+
+  try {
+    const redirectTo = process.env.EMAIL_CONFIRM_REDIRECT_URL || `${getSiteUrl(req)}/swipsales_app.html`;
+    const { error } = await authClient.auth.resend({ type: 'signup', email, options: { emailRedirectTo: redirectTo } });
+
+    // Comportement anti-enumeration : ne pas confirmer si le compte existe ou est deja confirme
+    if (error && !String(error.message || '').toLowerCase().includes('already confirmed')) throw error;
+
+    res.json({ message: 'Si un compte existe et n\'est pas encore confirme, un email a ete renvoye' });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Email impossible a renvoyer' });
+  }
+});
+
 router.post('/forgot-password', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
 
