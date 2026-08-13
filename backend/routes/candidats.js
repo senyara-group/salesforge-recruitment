@@ -727,7 +727,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
     const [matchs, candidatures] = await Promise.all([
       supabase.from('matchs').select('id, created_at').eq('candidat_id', candidat.id),
-      supabase.from('candidatures').select('id, statut, lettre_type').eq('candidat_id', candidat.id),
+      supabase.from('candidatures').select('id, statut, lettre_type').eq('candidat_id', candidat.id)
+        .or('lettre_type.is.null,lettre_type.neq.recruteur_like'),
     ]);
 
     if (matchs.error) return res.status(400).json({ error: matchs.error });

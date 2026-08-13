@@ -93,7 +93,10 @@ async function ensureUserProfile(user, requestedRole = null) {
     throw error;
   }
 
-  const role = requested || normalizeRole(existing?.role, user.email);
+  // Le role d'un compte existant ne doit JAMAIS etre modifie implicitement par une
+  // valeur de contexte (ex: sf_pending_role perime cote client). Seule la creation
+  // initiale d'un compte, ou l'appel explicite a /auth/role, peut fixer le role.
+  const role = existing ? normalizeRole(existing.role, user.email) : requested;
 
   // Rien n'a change depuis la derniere fois : pas besoin de reecrire en base
   if (existing && existing.role === role && existing.email === user.email) {
