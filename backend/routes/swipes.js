@@ -178,12 +178,6 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const score = action === 'super' ? 95 : 85;
-    const { data: existingMatch } = await supabase
-      .from('matchs')
-      .select('id')
-      .eq('candidat_id', candidat.id)
-      .eq('offre_id', offre_id)
-      .maybeSingle();
 
     // Source de vérité atomique (table dédiée, contrainte d'unicité) plutôt que le
     // tableau JSON matching.meta.liked_candidate_ids, sujet à des écritures concurrentes
@@ -198,6 +192,14 @@ router.post('/', authMiddleware, async (req, res) => {
         .maybeSingle();
       recruiterAlreadyLiked = Boolean(likeRow);
     }
+
+    const { data: existingMatch } = await supabase
+      .from('matchs')
+      .select('id')
+      .eq('candidat_id', candidat.id)
+      .eq('offre_id', offre_id)
+      .maybeSingle();
+
     if (!existingMatch && !recruiterAlreadyLiked) {
       return res.json({
         match: false,
@@ -207,16 +209,17 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
-    const matchQuery = existingMatch
-      ? supabase.from('matchs').update({ score_match: score, score_compat: score }).eq('id', existingMatch.id)
-      : supabase.from('matchs').insert({
+    // Upsert atomique (contrainte d'unicité candidat_id+offre_id côté base) : si le
+    // recruteur crée le même match au même instant depuis /recruteurs/swipe, les deux
+    // requêtes convergent vers la même ligne au lieu que l'une échoue silencieusement.
+    const { data: match, error: matchError } = await supabase
+      .from('matchs')
+      .upsert({
         candidat_id: candidat.id,
         offre_id,
         score_match: score,
         score_compat: score,
-      });
-
-    const { data: match, error: matchError } = await matchQuery
+      }, { onConflict: 'candidat_id,offre_id' })
       .select('*')
       .single();
 

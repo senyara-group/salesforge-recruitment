@@ -645,7 +645,7 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
     const { data: existingMatches, error: existingError } = offreIds.length
       ? await supabase
         .from('matchs')
-        .select('id, created_at')
+        .select('id, offre_id, created_at')
         .eq('candidat_id', candidat_id)
         .in('offre_id', offreIds)
         .order('created_at', { ascending: false })
@@ -657,16 +657,17 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
       return res.json({ match: false, candidature_sent: true });
     }
 
-    const matchQuery = existingMatch
-      ? supabase.from('matchs').update({ score_match: score, score_compat: score }).eq('id', existingMatch.id)
-      : supabase.from('matchs').insert({
+    // Upsert atomique (contrainte d'unicité candidat_id+offre_id côté base) : si le
+    // candidat crée le même match au même instant depuis /swipes, les deux requêtes
+    // convergent vers la même ligne au lieu que l'une échoue silencieusement.
+    const { data: match, error } = await supabase
+      .from('matchs')
+      .upsert({
         candidat_id,
-        offre_id: candidateLikedOfferId,
+        offre_id: existingMatch?.offre_id || candidateLikedOfferId,
         score_match: score,
         score_compat: score,
-      });
-
-    const { data: match, error } = await matchQuery
+      }, { onConflict: 'candidat_id,offre_id' })
       .select('*')
       .single();
 
