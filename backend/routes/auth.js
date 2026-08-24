@@ -35,6 +35,10 @@ function normalizeRole(role, email = '') {
 }
 
 async function findUserProfile(user) {
+  // Recherche UNIQUEMENT par id (celui du token Supabase Auth actuel), jamais par
+  // email : un fallback par email pouvait retrouver une ancienne ligne orpheline
+  // (ex: après un nettoyage de base ne touchant pas la table users) dont l'id ne
+  // correspond plus à rien, cassant la création de profil en cascade.
   const byId = await supabase
     .from('users')
     .select('*')
@@ -42,19 +46,7 @@ async function findUserProfile(user) {
     .limit(1);
 
   if (byId.error) throw byId.error;
-  if (byId.data.length) return byId.data[0];
-
-  if (!user.email) return null;
-
-  const byEmail = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', user.email)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (byEmail.error) throw byEmail.error;
-  return byEmail.data[0] || null;
+  return byId.data[0] || null;
 }
 
 function normalizeRequestedRole(role) {
@@ -113,7 +105,24 @@ async function ensureUserProfile(user, requestedRole = null) {
     .select('*')
     .limit(1);
 
-  if (error) throw error;
+  if (error) {
+    // Conflit sur l'email (contrainte d'unicité) avec une ligne dont l'id ne
+    // correspond plus a l'utilisateur actuel : c'est une ligne orpheline (ex:
+    // ancien compte supprime cote Auth mais pas cote table users). On la
+    // supprime puis on retente une seule fois, plutot que de rester bloque.
+    const isEmailConflict = error.code === '23505' && /email/i.test(error.message || '');
+    if (isEmailConflict) {
+      await supabase.from('users').delete().eq('email', user.email).neq('id', user.id);
+      const retry = await supabase
+        .from('users')
+        .upsert({ id: user.id, email: user.email, role })
+        .select('*')
+        .limit(1);
+      if (retry.error) throw retry.error;
+      return retry.data[0] || { id: user.id, email: user.email, role };
+    }
+    throw error;
+  }
 
   return data[0] || { id: user.id, email: user.email, role };
 }
