@@ -1471,7 +1471,7 @@ button,input,textarea,select{font-family:inherit}
       <div class="ph-av sf" id="prof-av" onclick="document.getElementById('avatar-file-prof').click()" style="cursor:pointer" title="Cliquer pour changer la photo de profil">YS</div>
       <div class="ph-main">
         <div class="ph-kicker">Profil candidat</div>
-        <div class="ph-name sf" id="prof-name">—</div>
+        <div class="ph-name sf" id="prof-name"><span id="prof-name-text">—</span><span id="prof-certified-badge" style="display:none;align-items:center;gap:3px;margin-left:8px;padding:3px 9px;border-radius:99px;background:linear-gradient(135deg,#FFD86B,#F5A623);color:#5C3B00;font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:middle" title="Certifié Swip Sales"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline"><path d="M12 1l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 14.9 6.8 17.1l1-5.8L3.5 7.2l5.9-.9z"/></svg>Certifié</span></div>
         <div class="ph-title" id="prof-title">—</div>
         <div class="ph-rank link" id="prof-rank" onclick="handleRankClick()" style="cursor:pointer">—</div>
         <div class="ph-badges">
@@ -1500,6 +1500,11 @@ button,input,textarea,select{font-family:inherit}
         <label>Email de connexion</label>
         <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--fond,#F3F5FA);border-radius:10px;font-size:14px" id="account-email-display">—</div>
         <button type="button" class="btn upload-btn" style="margin-top:8px" onclick="requestPasswordReset()">Changer mon mot de passe</button>
+      </div>
+      <div class="profile-edit-field" style="margin-bottom:12px">
+        <label>Mon abonnement</label>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--fond,#F3F5FA);border-radius:10px;font-size:14px" id="subscription-status-display">—</div>
+        <button type="button" class="btn upload-btn" style="margin-top:8px;display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
       </div>
       <div class="profile-edit-field" style="position:relative;margin-bottom:12px">
         <label for="edit-ville">Ville</label>
@@ -2768,7 +2773,7 @@ function profileInitials(p = {}) {
 }
 async function loadProfile() {
   if (!USER) return;
-  document.getElementById('prof-name').textContent = profileDisplayName(USER);
+  document.getElementById('prof-name-text').textContent = profileDisplayName(USER);
   try {
     const [p, abo, stats] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/abonnements/current'), api('GET', '/candidats/stats')]);
     renderProfile({...p, ...stats}, abo);
@@ -2778,7 +2783,9 @@ function renderProfile(p, a) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
   const avatarLabel = profileInitials(p);
-  document.getElementById('prof-name').textContent = profileDisplayName(p);
+  document.getElementById('prof-name-text').textContent = profileDisplayName(p);
+  const certBadge = document.getElementById('prof-certified-badge');
+  if (certBadge) certBadge.style.display = p.certifie ? 'inline-flex' : 'none';
   renderProfileAvatar(p, avatarLabel);
   document.getElementById('prof-title').textContent = p.type_profil || '';
   document.getElementById('prof-title').style.display = p.type_profil ? '' : 'none';
@@ -2877,6 +2884,40 @@ function fillProfileEdit(p, avatarLabel) {
   if (emailEl) emailEl.textContent = USER?.email || p.email || 'Email indisponible';
   renderAvatarInto(document.getElementById('edit-avatar-preview'), p.avatar_url || PROFILE_AVATAR_URL, avatarLabel);
   buildCompetencesAccordion(p.competences || {});
+  loadSubscriptionStatus();
+}
+async function loadSubscriptionStatus() {
+  const statusEl = document.getElementById('subscription-status-display');
+  const cancelBtn = document.getElementById('cancel-subscription-btn');
+  if (!statusEl) return;
+  try {
+    const a = await api('GET', '/abonnements/current?t=' + Date.now());
+    const plan = String(a?.plan || 'freemium').toLowerCase();
+    if (plan === 'freemium') {
+      statusEl.textContent = 'Plan Freemium (gratuit)';
+      cancelBtn.style.display = 'none';
+    } else if (a.resiliation_programmee && a.date_fin) {
+      const d = new Date(a.date_fin).toLocaleDateString('fr-FR');
+      statusEl.textContent = `Plan ${plan} — résiliation prévue le ${d}`;
+      cancelBtn.style.display = 'none';
+    } else {
+      statusEl.textContent = `Plan ${plan} — actif`;
+      cancelBtn.style.display = 'block';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Impossible de charger votre abonnement';
+    cancelBtn.style.display = 'none';
+  }
+}
+async function cancelSubscription() {
+  if (!confirm('Résilier votre abonnement ? Il restera actif jusqu\'à la fin de la période déjà payée.')) return;
+  try {
+    await api('POST', '/stripe/cancel-subscription');
+    toast('Résiliation enregistrée');
+    loadSubscriptionStatus();
+  } catch (e) {
+    toast(e.message || 'Résiliation impossible');
+  }
 }
 async function requestPasswordReset() {
   const email = USER?.email;
@@ -2903,7 +2944,7 @@ async function saveProfileEdit() {
     const p = await api('PUT', '/candidats/profil', { prenom, nom, ville, competences: EDIT_COMPETENCES });
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
-    document.getElementById('prof-name').textContent = profileDisplayName(p);
+    document.getElementById('prof-name-text').textContent = profileDisplayName(p);
     renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
     renderProfileCompetences(EDIT_COMPETENCES);
     document.getElementById('profile-edit-panel').classList.remove('on');
@@ -3047,7 +3088,7 @@ async function deleteCandidateDocument(kind) {
 const PLANS = {
   month:[
     {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Passer Premium',pop:true},
     {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification Swip Sales','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
     {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
   ],

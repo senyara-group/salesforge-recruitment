@@ -94,6 +94,17 @@ function createCheckoutSession({ req, priceId, checkoutPlan, userId, plan, type,
       period,
       ...(userId ? { userId } : {}),
     },
+    // Sans ceci, les métadonnées ne vivent que sur la session ponctuelle : les
+    // webhooks customer.subscription.updated/deleted (mise à jour, résiliation)
+    // ne recevraient jamais userId et resteraient inopérants.
+    subscription_data: {
+      metadata: {
+        plan,
+        type,
+        period,
+        ...(userId ? { userId } : {}),
+      },
+    },
   });
 }
 
@@ -153,6 +164,49 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
     });
 
     res.json({ url: session.url });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Résilier l'abonnement — reste actif jusqu'à la fin de la période déjà payée
+router.post('/cancel-subscription', authMiddleware, async (req, res) => {
+  try {
+    const { data: abonnement, error: abonnementError } = await supabase
+      .from('abonnements')
+      .select('stripe_customer_id, plan, statut')
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    if (abonnementError) return res.status(400).json({ error: abonnementError });
+    if (!abonnement?.stripe_customer_id || abonnement.plan === 'freemium') {
+      return res.status(400).json({ error: 'Aucun abonnement payant actif à résilier' });
+    }
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: abonnement.stripe_customer_id,
+      status: 'active',
+      limit: 1,
+    });
+
+    const subscription = subscriptions.data[0];
+    if (!subscription) {
+      return res.status(400).json({ error: 'Aucun abonnement Stripe actif trouvé pour ce compte' });
+    }
+
+    const updated = await stripe.subscriptions.update(subscription.id, {
+      cancel_at_period_end: true,
+    });
+
+    // La base est mise à jour par le webhook customer.subscription.updated
+    // (source de vérité unique) ; on renvoie ici la date de fin pour un retour
+    // immédiat à l'utilisateur sans attendre le webhook.
+    res.json({
+      message: 'Résiliation enregistrée',
+      date_fin: updated.current_period_end
+        ? new Date(updated.current_period_end * 1000).toISOString()
+        : null,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
