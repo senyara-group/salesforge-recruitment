@@ -1156,6 +1156,13 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <button type="button" class="btn bo" style="width:100%" onclick="requestPasswordReset()">Changer mon mot de passe</button>
       </div>
     </div>
+    <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:14px">
+      <div style="padding:14px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--doux,#5C6C84);margin-bottom:8px">Mon abonnement</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bs2,#F3F5FA);border-radius:10px;font-size:13.5px;margin-bottom:10px" id="subscription-status-display">—</div>
+        <button type="button" class="btn bo" style="width:100%;display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
+      </div>
+    </div>
     <div style="background:var(--w);border:1px solid var(--bd);border-radius:12px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('post-offre')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Publier une offre</div></div>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="go('matching')"><div style="width:31px;height:31px;border-radius:8px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div style="flex:1;font-size:13px;font-weight:600">Moteur de matching</div></div>
@@ -1444,6 +1451,40 @@ function existingPageOrDashboard(page) {
 function renderAccountSettings() {
   const el = document.getElementById('account-email-display');
   if (el) el.textContent = USER?.email || 'Email indisponible';
+  loadSubscriptionStatus();
+}
+async function loadSubscriptionStatus() {
+  const statusEl = document.getElementById('subscription-status-display');
+  const cancelBtn = document.getElementById('cancel-subscription-btn');
+  if (!statusEl) return;
+  try {
+    const a = await api('GET', '/abonnements/current?t=' + Date.now());
+    const plan = String(a?.plan || 'freemium').toLowerCase();
+    if (plan === 'freemium') {
+      statusEl.textContent = 'Plan Freemium (gratuit)';
+      cancelBtn.style.display = 'none';
+    } else if (a.resiliation_programmee && a.date_fin) {
+      const d = new Date(a.date_fin).toLocaleDateString('fr-FR');
+      statusEl.textContent = `Plan ${plan} — résiliation prévue le ${d}`;
+      cancelBtn.style.display = 'none';
+    } else {
+      statusEl.textContent = `Plan ${plan} — actif`;
+      cancelBtn.style.display = 'block';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Impossible de charger votre abonnement';
+    cancelBtn.style.display = 'none';
+  }
+}
+async function cancelSubscription() {
+  if (!confirm('Résilier votre abonnement ? Il restera actif jusqu\'à la fin de la période déjà payée.')) return;
+  try {
+    const r = await api('POST', '/stripe/cancel-subscription');
+    toast('Résiliation enregistrée');
+    loadSubscriptionStatus();
+  } catch (e) {
+    toast(e.message || 'Résiliation impossible');
+  }
 }
 async function requestPasswordReset() {
   const email = USER?.email;
@@ -1763,7 +1804,7 @@ function buildCandCard(c) {
       <div class="cand-match-box"><div class="cand-match-n sf" style="color:${sc}">${c.m}</div><div class="cand-match-l">Match</div></div>
     </div>
     <div class="cand-body">
-      <div class="cand-name sf">${c.name}</div>
+      <div class="cand-name sf">${c.name}${c.certifie?'<span title="Certifié Swip Sales" style="display:inline-flex;align-items:center;gap:3px;margin-left:7px;padding:3px 9px;border-radius:99px;background:linear-gradient(135deg,#FFD86B,#F5A623);color:#5C3B00;font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:middle"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 14.9 6.8 17.1l1-5.8L3.5 7.2l5.9-.9z"/></svg>Certifié</span>':''}</div>
       <div class="cand-role">${c.role}</div>
       <div class="cand-rank"><span class="cand-rank-badge">${c.rank} · ${c.adn_type}</span></div>
       <div class="cand-adn-section">
@@ -2528,8 +2569,8 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
-    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Essai 14j gratuit'},
-    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Essai 14j gratuit',pop:true},
+    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Choisir Entrepreneur'},
+    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Choisir Business',pop:true},
     {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Business inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
