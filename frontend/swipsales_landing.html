@@ -51,7 +51,7 @@ nav{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.9);backdrop-fi
 .nav-l a{font-size:14.5px;font-weight:600;color:var(--doux);transition:color .15s}
 .nav-l a:hover{color:var(--encre)}
 .nav-l .btn{padding:10px 20px;font-size:14.5px;color:#fff}
-@media(max-width:860px){.nav-l a:not(.btn){display:none}.nav-l .btn{padding:10px 16px;font-size:14px}.nav-in{height:64px}}
+@media(max-width:860px){.nav-l a:not(.btn):not(#nav-login-link){display:none}.nav-l .btn{padding:10px 16px;font-size:14px}.nav-in{height:64px}#nav-login-link{font-size:13px;padding:8px 12px}}
 .hero{position:relative;background:linear-gradient(180deg,#fff 0%,var(--fond) 100%);overflow:hidden}
 .hero::after{content:"";position:absolute;bottom:-120px;left:50%;transform:translateX(-50%);width:1400px;height:320px;background:radial-gradient(closest-side,rgba(38,71,232,.10),transparent)}
 .hero-in{position:relative;z-index:2;display:grid;grid-template-columns:1.02fr .98fr;gap:44px;align-items:center;padding:76px 0 90px}
@@ -330,6 +330,7 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <a href="#recruteurs">Recruteurs</a>
       <a href="#candidats">Commerciaux</a>
       <a href="#tarifs">Tarifs</a>
+      <a href="swipsales_app.html?login=1" id="nav-login-link">Se connecter</a>
       <a href="#tarifs" class="btn b-bleu" id="nav-cta-btn">Voir les tarifs</a>
     </div>
   </div>

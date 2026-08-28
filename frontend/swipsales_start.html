@@ -145,6 +145,7 @@ const resendBtn = document.getElementById('resend-btn');
 // Traduction des erreurs backend en messages clairs et actionnables — identique à app.html.
 function frError(text){
   const msg = String(text || '').toLowerCase();
+  if (msg.includes('adresses jetables')) return text;
   if (msg.includes('user already registered')) {
     return 'Un compte existe déjà avec cet email. <a href="swipsales_app.html?login=1" style="color:inherit;font-weight:800;text-decoration:underline">Se connecter</a> à la place.';
   }
@@ -219,6 +220,13 @@ form.addEventListener('submit', async (event) => {
   const entreprise = document.getElementById('entreprise').value.trim();
   const secteur = document.getElementById('secteur').value.trim();
 
+  const DISPOSABLE_DOMAINS = ['yopmail.com','yopmail.fr','yopmail.net','mailinator.com','mailinator.net','guerrillamail.com','guerrillamail.net','guerrillamail.org','guerrillamail.biz','10minutemail.com','10minutemail.net','temp-mail.org','tempmail.com','tempmail.net','throwawaymail.com','trashmail.com','trashmail.net','sharklasers.com','getnada.com','fakeinbox.com','dispostable.com','maildrop.cc','moakt.com','discard.email','discardmail.com','mintemail.com','mytemp.email','tempinbox.com','emailondeck.com','spamgourmet.com','mailnesia.com','mohmal.com'];
+  const emailDomain = email.split('@')[1]?.toLowerCase().trim();
+  if (emailDomain && DISPOSABLE_DOMAINS.includes(emailDomain)) {
+    showMessage('Merci d\'utiliser une adresse email personnelle ou professionnelle (les adresses jetables ne sont pas acceptées)', 'error');
+    return;
+  }
+
   if (password.length < 8) {
     showMessage('password');
     return;
@@ -234,6 +242,14 @@ form.addEventListener('submit', async (event) => {
     if (!res.ok) {
       const error = data.error?.message || data.error || 'Creation impossible';
       showMessage(error);
+      return;
+    }
+    if (data.token) {
+      // Confirmation email désactivée côté Supabase : le compte est déjà actif,
+      // pas besoin de passer par l'écran d'attente — connexion immédiate.
+      localStorage.setItem('sf_token', data.token);
+      localStorage.removeItem('sf_pending_role');
+      window.location.href = 'swipsales_app.html';
       return;
     }
     localStorage.removeItem('sf_token');
