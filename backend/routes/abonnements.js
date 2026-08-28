@@ -30,7 +30,17 @@ router.get('/current', authMiddleware, async (req, res) => {
 
     if (error) return res.status(400).json({ error });
     const abonnement = data[0] || { plan: 'freemium', statut: 'actif', periode: 'month' };
-    const profileSwipesUsed = await getCandidateSwipeUsage(req.user.id);
+
+    // Le calcul des swipes n'a de sens que pour un compte candidat : un compte
+    // recruteur n'a pas de fiche candidats, et une erreur ici (ex: état de
+    // données incohérent) ne doit jamais empêcher l'affichage de l'abonnement.
+    let profileSwipesUsed = 0;
+    try {
+      profileSwipesUsed = await getCandidateSwipeUsage(req.user.id);
+    } catch (swipeError) {
+      console.warn('getCandidateSwipeUsage a echoue (ignore, compte probablement recruteur):', swipeError.message || swipeError);
+    }
+
     const swipesUsed = Math.max(Number(abonnement.swipes_u || 0), profileSwipesUsed);
     res.json({
       ...abonnement,

@@ -28,6 +28,29 @@ function inferRoleFromEmail(email = '') {
   return email.toLowerCase().includes('recruteur') ? 'recruteur' : 'candidat';
 }
 
+// Domaines d'emails jetables/temporaires refusés à l'inscription — évite les
+// comptes non joignables (impossible de renvoyer un mot de passe oublié, etc.)
+// sans dépendre d'une confirmation email qui posait ses propres problèmes de
+// délivrabilité (cf. blocages constatés côté serveurs d'entreprise stricts).
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'yopmail.com', 'yopmail.fr', 'yopmail.net',
+  'mailinator.com', 'mailinator.net',
+  'guerrillamail.com', 'guerrillamail.net', 'guerrillamail.org', 'guerrillamail.biz',
+  '10minutemail.com', '10minutemail.net',
+  'temp-mail.org', 'tempmail.com', 'tempmail.net',
+  'throwawaymail.com', 'trashmail.com', 'trashmail.net',
+  'sharklasers.com', 'getnada.com', 'fakeinbox.com',
+  'dispostable.com', 'maildrop.cc', 'moakt.com',
+  'discard.email', 'discardmail.com', 'mintemail.com',
+  'mytemp.email', 'tempinbox.com', 'emailondeck.com',
+  'spamgourmet.com', 'mailnesia.com', 'mohmal.com',
+]);
+
+function isDisposableEmail(email = '') {
+  const domain = String(email).split('@')[1]?.toLowerCase().trim();
+  return domain ? DISPOSABLE_EMAIL_DOMAINS.has(domain) : false;
+}
+
 function normalizeRole(role, email = '') {
   if (role === 'recruteur' || role === 'recruteurs') return 'recruteur';
   if (role === 'candidat' || role === 'candidats') return 'candidat';
@@ -213,6 +236,10 @@ async function signup(req, res) {
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email et mot de passe sont requis' });
+  }
+
+  if (isDisposableEmail(email)) {
+    return res.status(400).json({ error: 'Merci d\'utiliser une adresse email personnelle ou professionnelle (les adresses jetables ne sont pas acceptées)' });
   }
 
   if (String(password).length < 8) {
