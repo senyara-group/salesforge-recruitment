@@ -160,7 +160,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
+    const { titre, type, lieu, salaire, description, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu, salaire });
 
     // Vérification limite offres actives selon le plan
@@ -169,7 +169,7 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { data, error } = await supabase
       .from('offres')
       .insert({
-        titre, type, lieu, salaire, tags, statut, auto_candidature,
+        titre, type, lieu, salaire, description, tags, statut, auto_candidature,
         recruteur_id: recruteur.id,
       })
       .select('*')
@@ -194,7 +194,7 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
 router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { titre, type, lieu, salaire, tags, statut, auto_candidature } = req.body;
+    const { titre, type, lieu, salaire, description, tags, statut, auto_candidature } = req.body;
     validateOfferPayload({ titre, type, lieu, salaire });
 
     let wasActive = false;
@@ -217,7 +217,7 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
 
     const { data, error } = await supabase
       .from('offres')
-      .update({ titre, type, lieu, salaire, tags, statut, auto_candidature })
+      .update({ titre, type, lieu, salaire, description, tags, statut, auto_candidature })
       .eq('id', req.params.id)
       .eq('recruteur_id', recruteur.id)
       .select('*')
