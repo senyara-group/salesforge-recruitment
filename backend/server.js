@@ -1,3 +1,4 @@
+require('./instrument');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -47,6 +48,11 @@ app.use('/api/coaching', require('./routes/coaching'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/ai', require('./routes/ai'));
+ 
+// Doit etre place APRES toutes les routes, mais avant tout autre gestionnaire
+// d'erreurs personnalise : capture les erreurs non gerees et les envoie a Sentry.
+const Sentry = require('@sentry/node');
+Sentry.setupExpressErrorHandler(app);
  
 const PORT = process.env.PORT || 3000;
  
