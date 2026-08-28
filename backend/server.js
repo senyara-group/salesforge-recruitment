@@ -49,6 +49,11 @@ app.use('/api/community', require('./routes/community'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/ai', require('./routes/ai'));
  
+// Route de test temporaire — a retirer une fois l'apparition confirmee dans Sentry
+app.get('/api/debug-sentry', (req, res) => {
+  throw new Error('Test Sentry SwipSales - a retirer une fois confirme');
+});
+ 
 // Doit etre place APRES toutes les routes, mais avant tout autre gestionnaire
 // d'erreurs personnalise : capture les erreurs non gerees et les envoie a Sentry.
 const Sentry = require('@sentry/node');
