@@ -60,7 +60,11 @@ nav{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.9);backdrop-fi
 .hero h1 em{font-style:normal;color:var(--bleu)}
 .hero .lead{font-size:clamp(16px,2.2vw,19px);color:var(--doux);margin:22px 0 30px;max-width:min(500px,100%)}
 .hero-ctas{display:flex;gap:13px;flex-wrap:wrap}
-@media(max-width:420px){.hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn{width:100%}}
+.nav-btn-sm{padding:10px 20px;font-size:14px;box-shadow:none}
+#nav-login-link{color:var(--encre)}
+.cta-with-badge{position:relative;display:inline-flex}
+.free-badge{position:absolute;top:-11px;right:-9px;background:var(--vert,#0A9A5C);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.01em;padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.15);border:2px solid #fff;white-space:nowrap}
+@media(max-width:420px){.hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn{width:100%}.cta-with-badge{display:flex}}
 .brandline{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 @media(max-width:920px){.brandline{justify-content:center}}
 .brandline .mk{width:40px;height:40px;background:var(--encre);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -330,8 +334,8 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <a href="#recruteurs">Recruteurs</a>
       <a href="#candidats">Commerciaux</a>
       <a href="#tarifs">Tarifs</a>
-      <a href="swipsales_app.html?login=1" id="nav-login-link">Se connecter</a>
-      <a href="#tarifs" class="btn b-bleu" id="nav-cta-btn">Voir les tarifs</a>
+      <a href="swipsales_app.html?login=1" class="btn b-line nav-btn-sm" id="nav-login-link">Se connecter</a>
+      <a href="#tarifs" class="btn b-bleu nav-btn-sm" id="nav-cta-btn">Voir les tarifs</a>
     </div>
   </div>
 </nav>
@@ -351,7 +355,10 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <p class="lead">Chaque commercial passe un test qui mesure sa capacité réelle à vendre. Vous découvrez des profils scorés, vous matchez, vous échangez. Sans trier un seul CV.</p>
       <div class="hero-ctas">
         <a href="#tarifs" class="btn b-bleu">Publier mon offre</a>
-        <a href="#candidats" class="btn b-line">Je suis commercial</a>
+        <span class="cta-with-badge">
+          <a href="#candidats" class="btn b-line">Je suis commercial</a>
+          <span class="free-badge">Inscription gratuite</span>
+        </span>
       </div>
       <div class="micro">Offre en ligne en 5 minutes. Sans engagement, résiliable à tout moment.</div>
     </div>
@@ -806,7 +813,10 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
     <p>Pendant que vous lisez ceci, vos concurrents recrutent. Votre offre peut être en ligne ce soir, les premiers profils dans votre pile demain matin.</p>
     <div class="hero-ctas">
       <a href="swipsales_start.html?role=recruteur" class="btn b-blanc">Publier mon offre</a>
-      <a href="swipsales_start.html?role=candidat" class="btn b-bleu">Créer mon profil commercial</a>
+      <span class="cta-with-badge">
+        <a href="swipsales_start.html?role=candidat" class="btn b-bleu">Créer mon profil commercial</a>
+        <span class="free-badge">Inscription gratuite</span>
+      </span>
     </div>
     <div class="micro">Sans engagement. Résiliable à tout moment. Profil candidat gratuit à vie.</div>
   </div>
