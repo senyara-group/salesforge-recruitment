@@ -2166,8 +2166,6 @@ function buildCard(o) {
       <div class="card-title sf">${o.titre}</div>
       <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${o.lieu}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${o.dur}</span></div>
       <div class="card-salary"><div class="card-sal-v sf">${o.sal}</div><div class="card-bench-note">${o.bn}</div></div>
-      <div class="compat-bar"><div class="compat-row"><span class="compat-lbl sf">Compatibilité culturelle</span><span class="compat-score sf" style="color:${cc}">${o.compat.s}%</span></div><div class="compat-axes">${o.compat.ax.map(a=>`<div class="cx"><div class="cx-l">${a.l}</div><div class="cx-bar"><div class="cx-fill" style="width:${a.v}%;background:${cc}"></div></div><div class="cx-v" style="color:${cc}">${a.v}</div></div>`).join('')}</div></div>
-      <div class="card-ai"><div style="margin-bottom:6px"><span class="chip chip-b"><span class="chip-dot"></span>Analyse IA</span></div><div class="card-ai-text">${o.ai}</div><div class="card-ai-axes">${o.axes.map(a=>`<div class="max"><div class="max-l">${a.l}</div><div class="max-bar"><div class="max-fill" style="width:${a.v}%"></div></div><div class="max-v sf">${a.v}</div></div>`).join('')}</div></div>
     </div>`;
   attachDrag(d, o); return d;
 }
