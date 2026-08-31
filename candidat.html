@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <script
@@ -1947,7 +1947,6 @@ function normOffre(o, mySkills = []) {
   const { score, matched } = computeCompat(offerTags, mySkills);
   return {
     id:o.id, titre:o.titre || 'Offre', co, ci:o.ci || initials(co), cc:o.cc || '#1340E0',
-    logoUrl: o.logoUrl || o.recruteurs?.avatar_url || '',
     sz:o.sz || o.recruteurs?.secteur || 'Recruteur Swip Sales',
     lieu:o.lieu || 'A definir', type:o.type || 'CDI', g:o.g || 'g1',
     m:score, matchedTags:matched, sal:o.sal || o.salaire || 'Salaire a definir', bn:o.bn || 'Donnee recruteur',
@@ -2212,7 +2211,7 @@ function buildCard(o) {
       <div class="card-badge-row"><span class="card-type-badge">${o.type}</span>${o.tags.slice(0, 3).map(t=>`<span class="card-top-tag">${t}</span>`).join('')}</div>
       <div class="card-match-box" style="color:${cc}"><div class="card-match-n sf" style="color:${cc}">${o.m}%</div><div class="card-match-l">Compatibilité</div></div>
       <div class="card-co">
-        <div class="card-co-avatar sf" style="background:${o.cc}">${o.logoUrl ? `<img src="${esc(o.logoUrl)}" alt="${esc(o.co)}" style="width:100%;height:100%;object-fit:cover;border-radius:9px">` : esc(o.ci)}</div>
+        <div class="card-co-avatar sf" style="background:${o.cc}">${esc(o.ci)}</div>
         <div><div class="card-co-n sf">${esc(o.co)}</div><div class="card-co-s">${esc(o.sz)}</div></div>
       </div>
     </div>
