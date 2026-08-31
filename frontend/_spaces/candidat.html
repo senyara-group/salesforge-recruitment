@@ -231,7 +231,8 @@ button,input,textarea,select{font-family:inherit}
 .card-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:12px;padding:7px 12px;text-align:center;box-shadow:var(--sh-md),0 0 0 1px rgba(255,255,255,.6)}
 .card-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
 .card-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
-.card-co{position:absolute;bottom:12px;left:15px;color:#fff}
+.card-co{position:absolute;bottom:12px;left:15px;color:#fff;display:flex;align-items:center;gap:9px}
+.card-co-avatar{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .card-co-n{font-family:'Sora',sans-serif;font-size:14px;font-weight:900}
 .card-co-s{font-size:11px;color:rgba(255,255,255,.68);margin-top:1px}
 .card-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;touch-action:pan-y}
@@ -242,6 +243,11 @@ button,input,textarea,select{font-family:inherit}
 .card-salary{padding:9px 11px;background:var(--gs);border-radius:10px;border:1px solid rgba(6,148,88,.12)}
 .card-sal-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--g)}
 .card-bench-note{font-size:11px;color:var(--g);opacity:.8;margin-top:2px}
+.card-skills{display:flex;flex-wrap:wrap;gap:5px}
+.card-skill{font-size:11px;font-weight:600;background:var(--bg);color:var(--ink3);padding:4px 9px;border-radius:13px;border:1px solid var(--bd)}
+.card-skill.has-it{background:var(--bs);color:var(--b);border-color:transparent;font-weight:800}
+.card-desc-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:4px}
+.card-desc{font-size:13px;line-height:1.5;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card-tags{display:flex;flex-wrap:wrap;gap:5px}
 .card-tag{font-size:11px;font-weight:600;background:var(--bg);color:var(--ink2);padding:4px 9px;border-radius:13px;border:1px solid var(--bd)}
 .compat-bar{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:10px;padding:10px 12px}
@@ -1659,6 +1665,32 @@ const API = location.protocol === 'file:' || location.hostname === 'localhost' |
 let TOKEN = localStorage.getItem('sf_token');
 let USER  = JSON.parse(localStorage.getItem('sf_user') || 'null');
 let OFFRES = [], OFFRES_F = [], DECK_IDX = 0, BILLING = 'year';
+let MY_SKILLS_FLAT = null; // cache : liste plate en minuscules des compétences du candidat, pour calculer la compatibilité offre par offre
+async function getMySkillsFlat() {
+  if (MY_SKILLS_FLAT) return MY_SKILLS_FLAT;
+  try {
+    const p = await api('GET', '/candidats/profil');
+    const comp = p.competences || {};
+    MY_SKILLS_FLAT = Object.values(comp).flat().filter(Boolean).map(s => String(s).toLowerCase());
+  } catch (e) {
+    MY_SKILLS_FLAT = [];
+  }
+  return MY_SKILLS_FLAT;
+}
+// Recoupement approximatif : le vocabulaire des tags d'offre (liste fermée de 7) ne
+// correspond pas mot pour mot à la taxonomie riche des compétences candidat (70+ items) —
+// on matche par inclusion partielle plutôt que par égalité stricte (ex: "SaaS" ⊂ "SaaS / Tech").
+function computeCompat(offerTags, mySkills) {
+  const matched = new Set();
+  (offerTags || []).forEach(tag => {
+    const t = String(tag).toLowerCase();
+    const hit = (mySkills || []).some(s => s.includes(t) || t.includes(s));
+    if (hit) matched.add(tag);
+  });
+  const total = (offerTags || []).length || 1;
+  const score = Math.round((matched.size / total) * 100);
+  return { score, matched };
+}
 let ALL_CANDS = [], ALL_MATCHS = [];
 let THREADS = [];
 let ACTIVE_THREAD = null;
@@ -1908,19 +1940,20 @@ function asAxesList(axes) {
   const source = axes?.resultat?.axes || axes || {};
   return Array.isArray(source) ? source : Object.entries(source).filter(([,v]) => typeof v === 'number').map(([l,v]) => ({l,v}));
 }
-function normOffre(o) {
+function normOffre(o, mySkills = []) {
   const co = o.co || o.recruteurs?.entreprise || 'Entreprise';
   const axes = asAxesList(o.axes);
-  const score = o.m || Math.min(98, Math.max(60, Math.round((axes[0]?.v || 80) + 5)));
   const offerTags = Array.isArray(o.tags) && o.tags.length ? o.tags : ['Closing', 'Cold Calling', 'SaaS', 'Outbound', 'HubSpot', 'Salesforce', 'Négociation'];
+  const { score, matched } = computeCompat(offerTags, mySkills);
   return {
     id:o.id, titre:o.titre || 'Offre', co, ci:o.ci || initials(co), cc:o.cc || '#1340E0',
+    logoUrl: o.logoUrl || o.recruteurs?.avatar_url || '',
     sz:o.sz || o.recruteurs?.secteur || 'Recruteur Swip Sales',
     lieu:o.lieu || 'A definir', type:o.type || 'CDI', g:o.g || 'g1',
-    m:score, sal:o.sal || o.salaire || 'Salaire a definir', bn:o.bn || 'Donnee recruteur',
+    m:score, matchedTags:matched, sal:o.sal || o.salaire || 'Salaire a definir', bn:o.bn || 'Donnee recruteur',
+    description: o.description || '',
     tags:offerTags, ai:o.ai || 'Offre synchronisee depuis Supabase.',
     axes: axes.length ? axes : [{l:'Fit',v:score},{l:'Drive',v:80},{l:'Closing',v:75}],
-    compat:o.compat || {s:score, ax:[{l:'Culture',v:score},{l:'Rythme',v:score},{l:'Ambition',v:score},{l:'Valeurs',v:score}]},
     auto:Boolean(o.auto_candidature ?? o.auto), dur:o.dur || o.type || 'CDI', excl:Boolean(o.excl)
   };
 }
@@ -2151,7 +2184,8 @@ async function loadOffres() {
   DECK_IDX = 0;
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    OFFRES = (await api('GET', '/offres/deck')).map(normOffre).filter(o => !isOfferLocallySeen(o));
+    const mySkills = await getMySkillsFlat();
+    OFFRES = (await api('GET', '/offres/deck')).map(o => normOffre(o, mySkills)).filter(o => !isOfferLocallySeen(o));
     applyFilter('all');
   } catch(e) { document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>'; }
 }
@@ -2170,18 +2204,24 @@ function renderDeck() {
 }
 function buildCard(o) {
   const d = document.createElement('div'); d.className = 'swipe-card';
-  const cc = o.compat.s >= 90 ? 'var(--pu)' : o.compat.s >= 80 ? 'var(--b)' : 'var(--a)';
+  const cc = o.m >= 90 ? 'var(--pu)' : o.m >= 80 ? 'var(--b)' : 'var(--a)';
+  const shownTags = o.tags.slice(0, 5);
   d.innerHTML = `
     <div class="sw-lbl like">Match</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
     <div class="card-top"><div class="card-bg ${o.g}"></div><div class="card-fade"></div>
       <div class="card-badge-row"><span class="card-type-badge">${o.type}</span>${o.tags.slice(0, 3).map(t=>`<span class="card-top-tag">${t}</span>`).join('')}</div>
-      <div class="card-match-box"><div class="card-match-n sf">${o.m}</div><div class="card-match-l">Match</div></div>
-      <div class="card-co"><div class="card-co-n sf">${o.co}</div><div class="card-co-s">${o.sz}</div></div>
+      <div class="card-match-box" style="color:${cc}"><div class="card-match-n sf" style="color:${cc}">${o.m}%</div><div class="card-match-l">Compatibilité</div></div>
+      <div class="card-co">
+        <div class="card-co-avatar sf" style="background:${o.cc}">${o.logoUrl ? `<img src="${esc(o.logoUrl)}" alt="${esc(o.co)}" style="width:100%;height:100%;object-fit:cover;border-radius:9px">` : esc(o.ci)}</div>
+        <div><div class="card-co-n sf">${esc(o.co)}</div><div class="card-co-s">${esc(o.sz)}</div></div>
+      </div>
     </div>
     <div class="card-body">
-      <div class="card-title sf">${o.titre}</div>
-      <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${o.lieu}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${o.dur}</span></div>
-      <div class="card-salary"><div class="card-sal-v sf">${o.sal}</div><div class="card-bench-note">${o.bn}</div></div>
+      <div class="card-title sf">${esc(o.titre)}</div>
+      <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(o.lieu)}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${esc(o.dur)}</span></div>
+      <div class="card-salary"><div class="card-sal-v sf">${esc(o.sal)}</div><div class="card-bench-note">${esc(o.bn)}</div></div>
+      ${shownTags.length ? `<div class="card-skills">${shownTags.map(t=>`<span class="card-skill${o.matchedTags?.has(t)?' has-it':''}">${o.matchedTags?.has(t)?'✓ ':''}${esc(t)}</span>`).join('')}</div>` : ''}
+      ${o.description ? `<div class="card-desc-block"><div class="card-desc-lbl">Le poste</div><div class="card-desc">${esc(o.description)}</div></div>` : ''}
     </div>`;
   attachDrag(d, o); return d;
 }
