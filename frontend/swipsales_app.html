@@ -194,6 +194,12 @@ function showRoleMessage(text){
 }
  
 function socialLogin(provider){
+  // Cette page ne connait pas encore le role (login, pas inscription) : on part
+  // toujours d'un etat propre, sinon un role reste perime d'une tentative
+  // precedente et abandonnee (ex: inscription commencee puis annulee) pourrait
+  // etre repris ici et attribuer le mauvais role a un nouveau compte cree via
+  // Google. Seule swipsales_start.html doit fixer un role avant de partir vers Google.
+  localStorage.removeItem('sf_pending_role');
   window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}`;
 }
  
