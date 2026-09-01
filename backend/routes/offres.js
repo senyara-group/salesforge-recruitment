@@ -95,7 +95,7 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
-    .select('*, recruteurs(entreprise, secteur, avatar_url)');
+    .select('*, recruteurs(entreprise, secteur)');
 
   if (error) return res.status(400).json({ error });
   res.json(data);
@@ -122,7 +122,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
 
     const { data, error } = await supabase
       .from('offres')
-      .select('*, recruteurs(entreprise, secteur, avatar_url)');
+      .select('*, recruteurs(entreprise, secteur)');
 
     if (error) return res.status(400).json({ error });
     res.json((data || []).filter((offre) => !seenOfferIds.includes(String(offre.id))));
@@ -149,7 +149,7 @@ router.get('/mine', authMiddleware, requireRecruiterPlan, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
-    .select('*, recruteurs(entreprise, secteur, avatar_url)')
+    .select('*, recruteurs(entreprise, secteur)')
     .eq('id', req.params.id)
     .single();
 
