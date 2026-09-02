@@ -246,8 +246,10 @@ button,input,textarea,select{font-family:inherit}
 .card-skills{display:flex;flex-wrap:wrap;gap:5px}
 .card-skill{font-size:11px;font-weight:600;background:var(--bg);color:var(--ink3);padding:4px 9px;border-radius:13px;border:1px solid var(--bd)}
 .card-skill.has-it{background:var(--bs);color:var(--b);border-color:transparent;font-weight:800}
-.card-desc-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:4px}
-.card-desc{font-size:13px;line-height:1.5;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-desc-block{padding:11px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:10px}
+.card-desc-lbl{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
+.card-desc-lbl svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.card-desc{font-size:13px;line-height:1.6;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card-tags{display:flex;flex-wrap:wrap;gap:5px}
 .card-tag{font-size:11px;font-weight:600;background:var(--bg);color:var(--ink2);padding:4px 9px;border-radius:13px;border:1px solid var(--bd)}
 .compat-bar{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:10px;padding:10px 12px}
@@ -2221,7 +2223,7 @@ function buildCard(o) {
       <div class="card-meta"><span class="cmi"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(o.lieu)}</span><span class="cmi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${esc(o.dur)}</span></div>
       <div class="card-salary"><div class="card-sal-v sf">${esc(o.sal)}</div><div class="card-bench-note">${esc(o.bn)}</div></div>
       ${shownTags.length ? `<div class="card-skills">${shownTags.map(t=>`<span class="card-skill${o.matchedTags?.has(t)?' has-it':''}">${o.matchedTags?.has(t)?'✓ ':''}${esc(t)}</span>`).join('')}</div>` : ''}
-      ${o.description ? `<div class="card-desc-block"><div class="card-desc-lbl">Le poste</div><div class="card-desc">${esc(o.description)}</div></div>` : ''}
+      ${o.description ? `<div class="card-desc-block"><div class="card-desc-lbl"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>Le poste</div><div class="card-desc">${esc(o.description)}</div></div>` : ''}
     </div>`;
   attachDrag(d, o); return d;
 }
