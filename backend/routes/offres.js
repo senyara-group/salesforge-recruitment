@@ -6,6 +6,37 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getUserEmail } = require
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
 
+const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
+
+// Le logo recruteur n'est pas une simple colonne : c'est un chemin de stockage
+// (avatar_meta) qui doit etre transforme en URL signee via l'API Supabase Storage.
+// On groupe cette conversion par chemin unique (un seul recruteur peut avoir
+// plusieurs offres) plutot que de refaire l'appel pour chaque offre.
+async function attachRecruiterLogos(offres) {
+  const uniquePaths = new Map(); // path -> bucket
+  offres.forEach((o) => {
+    const path = o.recruteurs?.avatar_meta?.avatar_path;
+    if (path && !uniquePaths.has(path)) {
+      uniquePaths.set(path, o.recruteurs?.avatar_meta?.avatar_bucket || AVATAR_BUCKET);
+    }
+  });
+
+  if (!uniquePaths.size) return offres;
+
+  const urlByPath = {};
+  await Promise.all([...uniquePaths.entries()].map(async ([path, bucket]) => {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24);
+    if (!error && data?.signedUrl) urlByPath[path] = data.signedUrl;
+  }));
+
+  return offres.map((o) => {
+    const path = o.recruteurs?.avatar_meta?.avatar_path;
+    return path && urlByPath[path]
+      ? { ...o, recruteurs: { ...o.recruteurs, avatar_url: urlByPath[path] } }
+      : o;
+  });
+}
+
 function uniqueValues(values = []) {
   return [...new Set(values.filter(Boolean).map(String))];
 }
@@ -95,10 +126,10 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
-    .select('*, recruteurs(entreprise, secteur)');
+    .select('*, recruteurs(entreprise, secteur, avatar_meta)');
 
   if (error) return res.status(400).json({ error });
-  res.json(data);
+  res.json(await attachRecruiterLogos(data || []));
 });
 
 router.get('/deck', authMiddleware, async (req, res) => {
@@ -122,10 +153,11 @@ router.get('/deck', authMiddleware, async (req, res) => {
 
     const { data, error } = await supabase
       .from('offres')
-      .select('*, recruteurs(entreprise, secteur)');
+      .select('*, recruteurs(entreprise, secteur, avatar_meta)');
 
     if (error) return res.status(400).json({ error });
-    res.json((data || []).filter((offre) => !seenOfferIds.includes(String(offre.id))));
+    const withLogos = await attachRecruiterLogos(data || []);
+    res.json(withLogos.filter((offre) => !seenOfferIds.includes(String(offre.id))));
   } catch (error) {
     res.status(400).json({ error: error.message || error });
   }
@@ -149,12 +181,13 @@ router.get('/mine', authMiddleware, requireRecruiterPlan, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
-    .select('*, recruteurs(entreprise, secteur)')
+    .select('*, recruteurs(entreprise, secteur, avatar_meta)')
     .eq('id', req.params.id)
     .single();
 
   if (error) return res.status(400).json({ error });
-  res.json(data);
+  const [withLogo] = await attachRecruiterLogos([data]);
+  res.json(withLogo);
 });
 
 router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {

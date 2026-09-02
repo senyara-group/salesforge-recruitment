@@ -3002,6 +3002,10 @@ async function saveProfileEdit() {
     renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
     renderProfileCompetences(EDIT_COMPETENCES);
     document.getElementById('profile-edit-panel').classList.remove('on');
+    // Sans ça, le score de compatibilité sur les offres restait calculé avec
+    // l'ancienne liste de compétences (vide au premier chargement de session),
+    // même après avoir renseigné son profil.
+    MY_SKILLS_FLAT = null;
     toast('Profil mis à jour');
   } catch(e) {
     toast(e.message || 'Erreur profil');
