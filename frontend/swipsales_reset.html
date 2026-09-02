@@ -3,127 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Commencer - Swip Sales</title>
+<title>Nouveau mot de passe - Swip Sales</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#F6F8FC;--w:#fff;--ink:#08152A;--muted:#506070;--bd:#E2E8F2;--b:#1449D8;--b2:#0F3BAD;--bs:#ECF1FD;--d:#C0333A;--g:#0A9460}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;display:grid;place-items:center;padding:22px}
-body.recruteur-theme{background:linear-gradient(160deg,#0F3BAD 0%,#1449D8 48%,#ECF1FD 100%)}
-.card{width:min(440px,100%);background:var(--w);border:1px solid var(--bd);border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(8,21,42,.08)}
-body.recruteur-theme .card{background:#1449D8;border-color:rgba(255,255,255,.22);box-shadow:0 28px 80px rgba(8,21,42,.25);color:#fff}
-.brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;margin-bottom:24px}
-.mark{width:34px;height:34px;border-radius:9px;background:var(--b);color:#fff;display:grid;place-items:center;font-family:'Sora',sans-serif;font-weight:800}
-body.recruteur-theme .mark{background:#fff;color:var(--b)}
+.card{width:min(430px,100%);background:var(--w);border:1px solid var(--bd);border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(8,21,42,.08)}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;margin-bottom:26px}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--b);color:#fff;display:grid;place-items:center;font-family:'Sora',sans-serif;font-weight:800;overflow:hidden}
+.mark img{width:62%;height:62%;object-fit:contain}
 .logo{font-family:'Sora',sans-serif;font-weight:800;letter-spacing:-.3px}.logo b{color:var(--b)}
-body.recruteur-theme .logo b{color:#fff}
 h1{font-family:'Sora',sans-serif;font-size:25px;line-height:1.15;letter-spacing:-.7px;margin-bottom:8px}
-p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:20px}
-body.recruteur-theme p,body.recruteur-theme label{color:rgba(255,255,255,.78)}
-.role{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.role button{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:12px 10px;font:inherit;font-weight:800;cursor:pointer;color:var(--muted)}
-body.recruteur-theme .role button{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.32);color:rgba(255,255,255,.78)}
-.role button.on{border-color:var(--b);color:var(--b)}
-#role-candidat.on{background:#fff}
-#role-recruteur.on{background:var(--b);color:#fff}
-body.recruteur-theme #role-candidat.on{background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.32)}
-body.recruteur-theme #role-recruteur.on{background:#fff;color:var(--b);border-color:#fff}
+p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:22px}
 .field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.recruiter-fields{display:none}
-.recruiter-fields.on{display:block}
 label{font-size:12px;font-weight:700;color:var(--muted)}
 input{width:100%;border:1px solid var(--bd);border-radius:11px;padding:13px 14px;font:inherit;color:var(--ink);outline:none;background:#fff}
 input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
 .btn{width:100%;border:0;border-radius:11px;padding:13px 16px;font:inherit;font-weight:800;cursor:pointer;background:var(--b);color:#fff;margin-top:6px}
 .btn:hover{background:var(--b2)}
-body.recruteur-theme .btn{background:#fff;color:var(--b)}
-body.recruteur-theme .btn:hover{background:#ECF1FD}
-.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;font-weight:800;margin:16px 0}
-.or::before,.or::after{content:'';height:1px;background:var(--bd);flex:1}
-body.recruteur-theme .or{color:rgba(255,255,255,.72)}
-body.recruteur-theme .or::before,body.recruteur-theme .or::after{background:rgba(255,255,255,.28)}
-.socials{display:grid;gap:8px}
-.social{width:100%;border:1px solid var(--bd);border-radius:11px;padding:12px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
-.social svg{width:18px;height:18px;flex-shrink:0}
-.social .icon-badge{width:22px;height:22px;border-radius:6px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.social .icon-badge svg{width:16px;height:16px}
-.social:hover{background:var(--bg)}
-body.recruteur-theme .social{border-color:rgba(255,255,255,.36);background:rgba(255,255,255,.12);color:#fff}
-body.recruteur-theme .social:hover{background:rgba(255,255,255,.2)}
-.secondary{display:block;text-align:center;margin-top:14px;color:var(--b);font-weight:700;text-decoration:none;font-size:13px}
-.back{display:block;text-align:center;margin-top:14px;color:var(--muted);text-decoration:none;font-size:13px}
-body.recruteur-theme .secondary,body.recruteur-theme .back{color:#fff}
+.btn:disabled{opacity:.6;cursor:default}
+.back{display:block;text-align:center;margin-top:18px;color:var(--muted);text-decoration:none;font-size:13px}
 .msg{display:none;border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.45;margin-bottom:14px}
 .msg.error{display:block;background:#FBEAEA;color:var(--d);border:1px solid #F2C4C7}
-.msg.ok{display:block;background:#E4F5EF;color:var(--g);border:1px solid #BFE6D4}
-.confirm-mail{display:none;text-align:center}
-.confirm-mail.on{display:block}
-.confirm-ico{width:58px;height:58px;border-radius:18px;background:var(--bs);color:var(--b);display:grid;place-items:center;margin:0 auto 18px;font-family:'Sora',sans-serif;font-weight:900;font-size:26px}
-.confirm-mail h2{font-family:'Sora',sans-serif;font-size:23px;letter-spacing:-.6px;margin-bottom:8px}
-.confirm-mail p{margin-bottom:18px}
+.msg.success{display:block;background:#ECFDF3;color:#067647;border:1px solid #ABEFC6}
+.state-ico{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;margin:0 auto 18px;font-size:24px}
+.state-ico.ok{background:#ECFDF3;color:#067647}
+.state-ico.err{background:#FBEAEA;color:var(--d)}
+.state{display:none;text-align:center}
+.state.on{display:block}
 @media (max-width:380px){
   body{padding:14px}
   .card{padding:22px 18px;border-radius:16px}
   h1{font-size:22px}
-  .role{grid-template-columns:1fr}
-}
-@media (max-height:720px){
-  body{place-items:start center}
 }
 </style>
 </head>
 <body>
-<main class="card" id="start-card">
-  <a class="brand" href="swipsales_landing.html"><span class="mark" style="display:grid;place-items:center"><img src="data:image/png;base64,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" alt="SwipSales" style="width:62%;height:62%;object-fit:contain"></span><span class="logo">Swip<b>Sales</b></span></a>
-  <h1>Commencer</h1>
-  <p>Choisis ton profil, puis cree ton compte Swip Sales.</p>
-
-  <div class="role" aria-label="Choix du profil">
-    <button id="role-candidat" type="button" onclick="setRole('candidat')">Candidat</button>
-    <button id="role-recruteur" type="button" onclick="setRole('recruteur')">Recruteur</button>
-  </div>
-
+<main class="card" id="form-view">
+  <a class="brand" href="swipsales_landing.html">
+    <span class="mark"><img src="data:image/png;base64,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" alt="SwipSales"></span>
+    <span class="logo">Swip<b>Sales</b></span>
+  </a>
+  <h1>Nouveau mot de passe</h1>
+  <p>Choisis un nouveau mot de passe pour ton compte Swip Sales.</p>
   <div id="message" class="msg"></div>
-
-  <form id="start-form">
+  <form id="reset-form">
     <div class="field">
-      <label for="email">Mail</label>
-      <input id="email" type="email" autocomplete="email" required>
+      <label for="password">Nouveau mot de passe</label>
+      <input id="password" type="password" autocomplete="new-password" required minlength="8">
     </div>
     <div class="field">
-      <label for="password">Mot de passe</label>
-      <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="password-confirm">Confirmer le mot de passe</label>
+      <input id="password-confirm" type="password" autocomplete="new-password" required minlength="8">
     </div>
-    <div id="recruiter-fields" class="recruiter-fields">
-      <div class="field">
-        <label for="entreprise">Nom de l'entreprise</label>
-        <input id="entreprise" type="text" autocomplete="organization">
-      </div>
-      <div class="field">
-        <label for="secteur">Secteur</label>
-        <input id="secteur" type="text" placeholder="Ex : SaaS, FinTech, Industrie">
-      </div>
-    </div>
-    <button class="btn" type="submit">Creer mon compte</button>
+    <button class="btn" id="reset-submit" type="submit">Mettre à jour mon mot de passe</button>
   </form>
-
-  <div class="or">ou continuer avec</div>
-  <div class="socials">
-    <button class="social" type="button" onclick="socialLogin('google')">
-      <span class="icon-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></span>
-      Connexion Google
-    </button>
-  </div>
-
-  <a class="secondary" href="swipsales_app.html?login=1">J'ai déjà un compte</a>
-  <a class="back" href="swipsales_landing.html">Retour a l'accueil</a>
 </main>
-<section class="card confirm-mail" id="confirm-mail">
-  <div class="confirm-ico">✓</div>
-  <h2>Confirmez votre email</h2>
-  <p>Un mail vous a été envoyé. Veuillez le confirmer, puis revenez ici pour pouvoir vous connecter.</p>
-  <a class="btn" href="swipsales_app.html?login=1">Se connecter</a>
-  <a class="back" href="swipsales_landing.html">Retour a l'accueil</a>
+
+<section class="card state" id="success-view">
+  <div class="state-ico ok">✓</div>
+  <h1 style="text-align:center">Mot de passe mis à jour</h1>
+  <p style="text-align:center">Tu peux maintenant te connecter avec ton nouveau mot de passe.</p>
+  <a class="btn" style="display:block;text-align:center;text-decoration:none" href="swipsales_app.html?login=1">Se connecter</a>
+</section>
+
+<section class="card state" id="invalid-view">
+  <div class="state-ico err">!</div>
+  <h1 style="text-align:center">Lien invalide ou expiré</h1>
+  <p style="text-align:center">Ce lien de réinitialisation n'est plus valide. Demande un nouveau lien depuis la page de connexion.</p>
+  <a class="back" href="swipsales_app.html?login=1">Retour à la connexion</a>
 </section>
 
 <script>
@@ -131,71 +80,78 @@ const API = location.protocol === 'file:' || location.hostname === 'localhost' |
   ? 'http://localhost:3000/api'
   : 'https://salesforge-recruitment-production.up.railway.app/api';
 
-let selectedRole = 'candidat';
-const form = document.getElementById('start-form');
+const formView = document.getElementById('form-view');
+const successView = document.getElementById('success-view');
+const invalidView = document.getElementById('invalid-view');
 const message = document.getElementById('message');
-const startCard = document.getElementById('start-card');
-const confirmMail = document.getElementById('confirm-mail');
+const form = document.getElementById('reset-form');
+const submitBtn = document.getElementById('reset-submit');
 
-function setRole(role){
-  selectedRole = role;
-  document.body.classList.toggle('recruteur-theme', role === 'recruteur');
-  document.getElementById('role-candidat').classList.toggle('on', role === 'candidat');
-  document.getElementById('role-recruteur').classList.toggle('on', role === 'recruteur');
-  document.getElementById('recruiter-fields').classList.toggle('on', role === 'recruteur');
-  document.getElementById('entreprise').required = role === 'recruteur';
-  document.getElementById('secteur').required = role === 'recruteur';
-}
-
-function showMessage(text, type = 'error'){
-  message.className = `msg ${type}`;
+function showMessage(text){
+  message.className = 'msg error';
   message.textContent = text;
 }
 
-function showConfirmMail(){
-  startCard.style.display = 'none';
-  confirmMail.classList.add('on');
+function showState(view){
+  formView.style.display = 'none';
+  successView.classList.remove('on');
+  invalidView.classList.remove('on');
+  view.classList.add('on');
 }
 
-function socialLogin(provider){
-  localStorage.setItem('sf_pending_role', selectedRole);
-  window.location.href = `${API}/auth/oauth/${encodeURIComponent(provider)}?role=${encodeURIComponent(selectedRole)}`;
+// Supabase place le token de récupération dans le fragment de l'URL
+// (#access_token=...&type=recovery), pas dans les paramètres classiques.
+function getRecoveryToken(){
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const token = hashParams.get('access_token');
+  const type = hashParams.get('type');
+  if (token && (type === 'recovery' || !type)) return token;
+  return null;
+}
+
+const RECOVERY_TOKEN = getRecoveryToken();
+
+if (!RECOVERY_TOKEN) {
+  showState(invalidView);
+} else {
+  history.replaceState(null, '', window.location.pathname);
 }
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const entreprise = document.getElementById('entreprise').value.trim();
-  const secteur = document.getElementById('secteur').value.trim();
+  const passwordConfirm = document.getElementById('password-confirm').value;
 
   if (password.length < 8) {
-    showMessage('Mot de passe : 8 caracteres minimum');
+    showMessage('Mot de passe : 8 caractères minimum.');
+    return;
+  }
+  if (password !== passwordConfirm) {
+    showMessage('Les deux mots de passe ne correspondent pas.');
     return;
   }
 
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Mise à jour...';
   try {
-    const res = await fetch(`${API}/auth/signup`, {
+    const res = await fetch(`${API}/auth/reset-password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role: selectedRole, entreprise, secteur })
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${RECOVERY_TOKEN}`
+      },
+      body: JSON.stringify({ password })
     });
     const data = await res.json();
-    if (!res.ok) {
-      const error = data.error?.message || data.error || 'Creation impossible';
-      showMessage(error);
-      return;
-    }
-    localStorage.removeItem('sf_token');
-    localStorage.removeItem('sf_onboarding_role');
-    showConfirmMail();
+    if (!res.ok) throw new Error(data.error?.message || data.error || 'Mot de passe impossible à mettre à jour');
+    showState(successView);
   } catch (error) {
-    showMessage('Creation impossible. Verifie que le serveur est lance.');
+    showMessage(error.message || 'Une erreur est survenue.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Mettre à jour mon mot de passe';
   }
 });
-
-const requestedRole = new URLSearchParams(window.location.search).get('role');
-setRole(requestedRole === 'recruteur' ? 'recruteur' : 'candidat');
 </script>
 </body>
 </html>
