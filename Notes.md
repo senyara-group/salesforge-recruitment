@@ -79,12 +79,11 @@ Ces 8 items sont marqués d'un badge "Bientôt disponible" dans la liste de fonc
 ### Garde-fous techniques à respecter pour toute nouvelle fonctionnalité payante candidat
 - Le flag d'abonnement candidat ne doit **jamais** apparaître dans la logique de matching/ranking/droits de candidature — isolé strictement au déblocage de contenu/évaluation
 - Rien côté recruteur ne doit exposer le statut d'abonné d'un candidat ni s'en servir comme critère de tri (⚠️ violé par le badge `certifie`, corrigé le 2026-09-03 — voir ci-dessus)
-- RGPD : le scoring comportemental (test ADN) est une donnée sensible en contexte recrutement → consentement explicite requis, finalité déclarée, export/suppression possibles, **pas de décision automatisée de rejet sans intervention humaine** (⚠️ pas encore implémenté, à faire)
+- RGPD : le scoring comportemental (test ADN) est une donnée sensible en contexte recrutement → consentement explicite requis, finalité déclarée, export/suppression possibles, **pas de décision automatisée de rejet sans intervention humaine** (✅ construit le 2026-09-04, voir section RGPD dédiée ci-dessous)
 - Facturation : libellés orientés "accompagnement de carrière", jamais "premium plateforme"
 
 ### En attente
 - CGU/CGV/RGPD (`frontend/swipsales_legal.html`) existent déjà et sont liées depuis le footer de la landing, mais portent un avertissement "modèle à personnaliser, à faire relire par un professionnel du droit avant mise en production" — à faire valider par un juriste si ce n'est pas déjà fait
-- Volet RGPD (consentement, export/suppression, pas de rejet auto) pas encore traité
 - **Bug pricing recruteur "Partenaire" — code corrigé le 2026-09-03, reste des actions manuelles côté Stripe (checklist ci-dessous).** Le palier "Partenaire" (899€/719€ affichés, marque blanche/API ATS/SLA) mappait vers le slug Stripe `pro` (399€/319€) au lieu de `enterprise` — n'importe quel recruteur cliquant "Nous contacter" sur Partenaire était donc facturé au tarif Pro. Confirmé par Yannis : le prix affiché (899/719) est le bon, c'est Stripe qu'il faut mettre à jour, pas le site.
   - ✅ Fait : `frontend/_spaces/recruteur.html` → `selectPlan()` mappe maintenant `partenaire → 'enterprise'` (au lieu de `'pro'`). `backend/routes/stripe.js` avait déjà un emplacement `enterprise` prêt (`STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR`), aucun changement nécessaire côté backend.
   - ✅ Vérifié en base : 0 ligne `abonnements` avec `plan = 'enterprise'` — aucun abonné actif trouvé sur l'ancien tarif (mais la base peut être désynchronisée d'un abonnement Stripe réel, donc à revérifier directement dans Stripe avant de désactiver quoi que ce soit).
@@ -94,7 +93,43 @@ Ces 8 items sont marqués d'un badge "Bientôt disponible" dans la liste de fonc
     3. Avant de désactiver les anciens Price : vérifier directement dans Stripe (pas seulement en base) qu'aucun abonnement actif ne les utilise encore.
     4. Désactiver (pas supprimer) les deux anciens Price une fois confirmé qu'ils sont inutilisés.
     5. Revenir ici mettre à jour cette note avec les nouveaux `price_id` une fois créés.
-- Orphelin trouvé : un fichier `candidat.html` à la racine du repo (3236 lignes, ajouté en même temps que la refonte `frontend/_spaces/candidat.html`) n'est référencé nulle part dans `backend/server.js`. Probablement un commit accidentel (double copie) — à vérifier et supprimer si confirmé inutile.
+
+---
+
+## RGPD — scoring comportemental candidat (construit le 2026-09-04)
+
+Suite de la même consultation juriste que la contrainte tarifaire ci-dessus. Méthode suivie : audit de l'existant avant toute construction, aucun texte légal rédigé comme définitif, questions posées à Guillaume sur les points ambigus (schéma de la table de consentement, stratégie de suppression, délai de suppression, traitement de la donnée envoyée à Brevo) avant de coder.
+
+### Ce qui a été audité avant de construire
+- **Consentement** : recherche de "consentement" dans tout le code — rien, pas même une case CGU à l'inscription (`frontend/swipsales_start.html` n'a aucune case à cocher). Chantier entièrement neuf, pas seulement pour le test ADN.
+- **Finalité déclarée** : `backend/routes/ai.js` envoie le score comme **attribut de contact persistant** à Brevo (`SCORE_ADN`), pas juste un événement ponctuel — techniquement segmentable dans des campagnes email. Décision de Guillaume : on garde tel quel, le texte de consentement le dit honnêtement plutôt que de prétendre "jamais que le matching". Trouvé au passage (non traité, hors scope du test ADN) : `frontend/swipsales_legal.html` Article 4 ("Destinataires des données") ne mentionne pas Brevo alors que des données personnelles y transitent en continu — à corriger séparément.
+  - Aussi noté pour info : le calcul du score (`POST /ai/score-adn`) est aujourd'hui un placeholder (`65 + longueur des réponses / 80`, plafonné à 95), pas une vraie analyse comportementale. Ne change rien légalement mais évite de survendre "analyse IA poussée" dans un texte.
+- **Export/suppression** : aucune route `DELETE` sur le compte, aucun export existant, seule la résiliation Stripe (qui n'arrête que la facturation). Confirmé par recherche large dans `backend/routes/`.
+- **Décision automatisée de rejet (Article 22 RGPD) : rien trouvé — bonne nouvelle.** Vérifié sous plusieurs angles : `GET /candidats/deck` (ce que voit le recruteur) sélectionne tous les candidats et trie par score sans jamais filtrer ; `compatibilityScore()` est un pourcentage affiché, jamais un filtre ; aucune candidature n'est auto-rejetée (statut par défaut toujours `envoyee`) ; recherche de `reject|seuil|threshold` dans tout `backend/` sans résultat pertinent. Le recruteur voit toujours tout le monde et décide lui-même (swipe pass/like/super = décision humaine).
+
+### Ce qui a été construit
+1. **Table `consentements`** (append-only, une ligne par action de consentement, jamais d'update) — schéma dans `backend/supabase_rgpd_consentement.sql`. **⚠️ À exécuter manuellement dans le Supabase SQL Editor avant de merger/déployer** — la table n'existe pas encore, les nouvelles routes plus bas échoueront tant que ce n'est pas fait (même principe que `supabase_swipe_message_fixes.sql`, pas de migration automatique dans ce projet).
+2. **Écran de consentement avant le test ADN** (`frontend/_spaces/candidat.html`, div `#test-consent-gate` dans `#p-test`) : case à cocher non pré-cochée, "Refuser" (retour à l'accueil, utilisation normale de SwipSales inchangée) ou "Accepter et commencer". Intercepté au niveau du routeur `go()` (fonction `prepareTestPage`), donc couvre toutes les façons d'arriver sur la page test (clic direct, lien profil, hash URL, `?start=test`). **Texte marqué BROUILLON dans le code — à valider par Yannis/un juriste avant prod.**
+3. **Garde-fou côté serveur** dans `backend/routes/ai.js` (`POST /ai/score-adn`) : revérifie qu'un consentement `accepte=true` existe avant de calculer/enregistrer le score, indépendamment de l'écran frontend (qui pourrait être contourné par un appel API direct).
+4. **Endpoints** (`backend/routes/candidats.js`) :
+   - `GET /candidats/consentement/:type` et `POST /candidats/consentement` — lire/écrire le consentement.
+   - `GET /candidats/export` — export JSON (profil, résultat et réponses du test ADN, compétences, candidatures, matchs, historique de consentements).
+   - `DELETE /candidats/compte` — suppression de compte, confirmation `{confirmation:'SUPPRIMER'}` revérifiée côté serveur.
+5. **Boutons dans les paramètres candidat** (`frontend/_spaces/candidat.html`, panneau `profile-edit-panel`, section "Mes données (RGPD)") : "Exporter mes données (JSON)" et "Supprimer mon compte" (confirmation par saisie du mot "SUPPRIMER" dans un `prompt()`, pas un simple clic).
+
+### Décisions prises avec Guillaume (à connaître si on retouche ce chantier)
+- **Score → Brevo** : gardé tel quel (voir ci-dessus), le texte de consentement le divulgue.
+- **Stockage du consentement** : table dédiée plutôt que JSONB sur `candidats`, pour un historique complet non écrasable.
+- **Suppression liée (matchs/candidatures/messages)** : anonymiser plutôt que supprimer les lignes, pour ne pas casser l'affichage des conversations/matchs passés côté recruteur. Concrètement : la ligne `candidats` est vidée de ses données personnelles (nom, prénom, titre, CV, score, réponses au test) mais **conservée** (garde son `id`) ; idem pour `users` (email remplacé par un placeholder, ligne conservée) puisque `messages.sender_id`/`receiver_id` référencent `users.id` directement. Les fichiers réels (CV, lettre, photo) sont eux vraiment supprimés du storage. L'identité Supabase Auth est vraiment supprimée (`auth.admin.deleteUser`) — connexion définitivement impossible. Le contenu des messages déjà envoyés n'est pas effacé (pour ne pas casser l'affichage du fil de discussion côté recruteur) ; à revoir si ça pose un problème.
+- **Délai de suppression** : immédiat après confirmation, pas de délai de grâce ni de traitement différé.
+- Les lignes `consentements` d'un compte supprimé sont conservées (preuve qu'un consentement a bien été obtenu à l'époque), même si le reste est anonymisé.
+- Comportement à connaître : un candidat qui avait déjà passé le test **avant** ce chantier (score déjà en base) sera lui aussi bloqué par l'écran de consentement la première fois qu'il retourne sur la page test après le déploiement — c'est voulu (régularise rétroactivement le consentement pour des données déjà collectées), mais ça vaut le coup de le savoir si quelqu'un s'étonne de revoir cet écran.
+
+### Reste à faire / à valider avant merge
+- Exécuter `backend/supabase_rgpd_consentement.sql` dans Supabase (obligatoire, sinon les nouvelles routes échouent).
+- Faire valider le texte de l'écran de consentement (`#test-consent-gate` dans `candidat.html`) par Yannis/un juriste.
+- Décider si `frontend/swipsales_legal.html` Article 4 doit être mis à jour pour mentionner Brevo comme destinataire (trouvé pendant cet audit, pas corrigé — nécessite aussi un texte juridique, donc pas fait sans validation).
+- Tester en conditions réelles une fois la table créée : consentement → test → export → suppression de compte, notamment que `auth.admin.deleteUser` fonctionne bien avec la clé de service utilisée en production.
 
 ---
 

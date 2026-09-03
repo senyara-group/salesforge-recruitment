@@ -38,6 +38,23 @@ router.post('/analyse', authMiddleware, async (req, res) => {
 router.post('/score-adn', authMiddleware, async (req, res) => {
   try {
     const candidat = await ensureCandidateProfile(req.user.id);
+
+    // RGPD : le test produit un score comportemental (donnée sensible en contexte
+    // recrutement) — vérifié ici aussi, pas seulement côté frontend, pour ne pas
+    // dépendre uniquement d'un écran qu'un appel API direct pourrait contourner.
+    const { data: consentement, error: consentementError } = await supabase
+      .from('consentements')
+      .select('accepte')
+      .eq('user_id', req.user.id)
+      .eq('type', 'test_adn')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (consentementError) return res.status(400).json({ error: consentementError });
+    if (!consentement?.accepte) {
+      return res.status(403).json({ error: 'Consentement requis avant de passer le test ADN' });
+    }
+
     const { reponses = {} } = req.body;
     const filledAnswers = JSON.stringify(reponses).length;
     const score = Math.max(55, Math.min(95, Math.round(65 + filledAnswers / 80)));

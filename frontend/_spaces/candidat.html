@@ -1204,12 +1204,35 @@ button,input,textarea,select{font-family:inherit}
 
 <!-- TEST ADN -->
 <div id="p-test" class="page">
-  <div class="test-sticky">
+  <!-- Écran de consentement RGPD avant le test ADN. Texte marqué BROUILLON : à valider
+       par Yannis/un juriste avant mise en prod (voir Notes.md, section RGPD). -->
+  <div id="test-consent-gate" class="test-body" style="display:none">
+    <div class="qt sf">Avant de commencer : votre accord</div>
+    <div class="qh">Le test ADN commercial analyse vos réponses à des mises en situation de vente pour produire un score et un profil comportemental. C'est une donnée sensible en contexte de recrutement : on a besoin de votre accord explicite avant de la collecter.</div>
+    <div style="background:var(--fond,#F3F5FA);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+      <div style="font-weight:800;margin-bottom:6px">Ce qui est collecté</div>
+      <div style="margin-bottom:14px">Vos réponses aux mises en situation du test, et le score / profil qui en résulte.</div>
+      <div style="font-weight:800;margin-bottom:6px">Pourquoi</div>
+      <div style="margin-bottom:14px">Uniquement pour le matching avec les recruteurs sur SwipSales : afficher votre profil, calculer un score de compatibilité avec les offres. Ces données sont aussi transmises à Brevo, notre outil d'emailing, pour personnaliser les emails liés à votre progression (ex: vous prévenir que votre score est prêt).</div>
+      <div style="font-weight:800;margin-bottom:6px">Qui peut le voir</div>
+      <div>Les recruteurs avec qui vous avez un match ou une candidature. Votre abonnement (gratuit ou payant) n'a aucune influence sur cette visibilité.</div>
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.5;margin-bottom:18px;cursor:pointer">
+      <input type="checkbox" id="test-consent-checkbox" style="margin-top:3px;flex-shrink:0" onchange="document.getElementById('test-consent-accept').disabled = !this.checked">
+      <span>J'ai lu ce qui précède et j'accepte que SwipSales collecte mes réponses au test ADN et le score qui en résulte, pour les finalités décrites ci-dessus.</span>
+    </label>
+    <div class="step-nav">
+      <button class="btn bo" onclick="declineTestConsent()">Refuser</button>
+      <button class="btn bp" id="test-consent-accept" onclick="acceptTestConsent()" disabled>Accepter et commencer</button>
+    </div>
+    <div class="qh" style="margin-top:14px">Vous pouvez refuser : vous continuez à utiliser SwipSales normalement (swipes, candidatures, messagerie), simplement sans passer ce test.</div>
+  </div>
+  <div class="test-sticky" id="test-sticky">
     <div class="test-sl" id="test-sl">Étape 1 sur 10</div>
     <div class="test-st sf" id="test-st">Scénario comportemental</div>
     <div class="test-pb"><div class="test-pf" id="test-pf" style="width:10%"></div></div>
   </div>
-  <div class="test-body">
+  <div class="test-body" id="test-body">
     <!-- STEP 1 -->
     <div id="ts1">
       <div class="qt sf">Objection prix — votre réflexe naturel ?</div>
@@ -1536,6 +1559,11 @@ button,input,textarea,select{font-family:inherit}
         <label>Mon abonnement</label>
         <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--fond,#F3F5FA);border-radius:10px;font-size:14px" id="subscription-status-display">—</div>
         <button type="button" class="btn upload-btn" style="margin-top:8px;display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
+      </div>
+      <div class="profile-edit-field" style="margin-bottom:12px">
+        <label>Mes données (RGPD)</label>
+        <button type="button" class="btn upload-btn" style="margin-top:8px" onclick="exportMyData()">Exporter mes données (JSON)</button>
+        <button type="button" class="btn upload-btn" style="margin-top:8px;color:var(--r,#CC2F2F);border-color:rgba(204,47,47,.26);background:var(--rs,#FDEDED)" onclick="deleteAccount()">Supprimer mon compte</button>
       </div>
       <div class="profile-edit-field" style="position:relative;margin-bottom:12px">
         <label for="edit-ville">Ville</label>
@@ -1981,7 +2009,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans, test:prepareTestPage};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2361,6 +2389,37 @@ function renderCands(c) {
 // ------------------------------------------------------------
 // TEST ADN
 // ------------------------------------------------------------
+// RGPD : version du texte de consentement affiché avant le test. L'incrémenter
+// (v2, v3...) si le texte change, pour redemander l'accord à tout le monde.
+const TEST_ADN_CONSENT_VERSION = 'v1';
+let TEST_ADN_CONSENT_STATUS = null; // null = pas encore vérifié, true/false = connu
+async function prepareTestPage() {
+  const gate = document.getElementById('test-consent-gate');
+  const sticky = document.getElementById('test-sticky');
+  const body = document.getElementById('test-body');
+  function showTest() { gate.style.display='none'; sticky.style.display=''; body.style.display=''; }
+  function showGate() { gate.style.display='block'; sticky.style.display='none'; body.style.display='none'; window.scrollTo(0,0); }
+  if (TEST_ADN_CONSENT_STATUS === true) { showTest(); return; }
+  try {
+    const r = await api('GET', '/candidats/consentement/test_adn');
+    TEST_ADN_CONSENT_STATUS = Boolean(r && r.accepte && r.version === TEST_ADN_CONSENT_VERSION);
+  } catch(e) { TEST_ADN_CONSENT_STATUS = false; }
+  if (TEST_ADN_CONSENT_STATUS) showTest(); else showGate();
+}
+async function acceptTestConsent() {
+  try {
+    await api('POST', '/candidats/consentement', { type: 'test_adn', version: TEST_ADN_CONSENT_VERSION, accepte: true });
+    TEST_ADN_CONSENT_STATUS = true;
+    document.getElementById('test-consent-gate').style.display = 'none';
+    document.getElementById('test-sticky').style.display = '';
+    document.getElementById('test-body').style.display = '';
+  } catch(e) { toast('Erreur — réessayez'); }
+}
+function declineTestConsent() {
+  api('POST', '/candidats/consentement', { type: 'test_adn', version: TEST_ADN_CONSENT_VERSION, accepte: false }).catch(() => {});
+  toast('Pas de souci, vous pouvez continuer à utiliser SwipSales normalement');
+  go('home');
+}
 const CUSTOM_TEST_STEPS = ['ts-job', 'ts-huntfarm', 'ts-profileq1', 'ts-profileq2'];
 function hideAllTestSteps() {
   for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
@@ -3001,6 +3060,35 @@ async function requestPasswordReset() {
     toast('Email de réinitialisation envoyé à ' + email);
   } catch (e) {
     toast(e.message || 'Impossible d\'envoyer l\'email');
+  }
+}
+async function exportMyData() {
+  try {
+    const data = await api('GET', '/candidats/export');
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'swipsales-mes-donnees.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Export téléchargé');
+  } catch (e) {
+    toast(e.message || 'Erreur export');
+  }
+}
+async function deleteAccount() {
+  const typed = prompt('Cette action supprime définitivement votre compte et vos données SwipSales. Elle est irréversible.\n\nPour confirmer, tapez SUPPRIMER en majuscules :');
+  if (typed === null) return;
+  if (typed !== 'SUPPRIMER') { toast('Suppression annulée'); return; }
+  try {
+    await api('DELETE', '/candidats/compte', { confirmation: 'SUPPRIMER' });
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_user');
+    localStorage.removeItem('sf_profile');
+    toast('Compte supprimé');
+    setTimeout(() => { window.location.href = 'swipsales_landing.html'; }, 800);
+  } catch (e) {
+    toast(e.message || 'Erreur — réessayez ou contactez le support');
   }
 }
 function handleRankClick() {

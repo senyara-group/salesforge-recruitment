@@ -836,4 +836,141 @@ router.get('/deck', authMiddleware, async (req, res) => {
   }
 });
 
+// ------------------------------------------------------------
+// RGPD : consentement, export, suppression de compte
+// ------------------------------------------------------------
+
+// Dernier consentement enregistré pour ce type (le plus récent fait foi).
+router.get('/consentement/:type', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('consentements')
+      .select('type, version, accepte, created_at')
+      .eq('user_id', req.user.id)
+      .eq('type', req.params.type)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) return res.status(400).json({ error });
+    res.json(data || { type: req.params.type, accepte: false });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Chaque appel crée une nouvelle ligne (jamais d'update) : preuve horodatée de
+// quelle version du texte a été acceptée ou refusée, conservée même si le texte
+// change ensuite. Voir backend/supabase_rgpd_consentement.sql pour le schéma.
+router.post('/consentement', authMiddleware, async (req, res) => {
+  try {
+    const { type, version, accepte } = req.body || {};
+    if (!type || !version || typeof accepte !== 'boolean') {
+      return res.status(400).json({ error: 'type, version et accepte (booleen) sont requis' });
+    }
+
+    const { data, error } = await supabase
+      .from('consentements')
+      .insert({ user_id: req.user.id, type, version, accepte })
+      .select('type, version, accepte, created_at')
+      .single();
+
+    if (error) return res.status(400).json({ error });
+    res.json(data);
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Export RGPD (droit à la portabilité) : uniquement les données du candidat connecté.
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+
+    const [userRow, candidatures, matchs, consentements] = await Promise.all([
+      supabase.from('users').select('id, email, role, created_at').eq('id', req.user.id).maybeSingle(),
+      supabase.from('candidatures').select('id, offre_id, statut, lettre_type, created_at').eq('candidat_id', candidat.id),
+      supabase.from('matchs').select('id, offre_id, score_match, score_compat, created_at').eq('candidat_id', candidat.id),
+      supabase.from('consentements').select('type, version, accepte, created_at').eq('user_id', req.user.id).order('created_at', { ascending: true }),
+    ]);
+
+    if (userRow.error) return res.status(400).json({ error: userRow.error });
+    if (candidatures.error) return res.status(400).json({ error: candidatures.error });
+    if (matchs.error) return res.status(400).json({ error: matchs.error });
+    if (consentements.error) return res.status(400).json({ error: consentements.error });
+
+    res.json({
+      export_genere_le: new Date().toISOString(),
+      compte: userRow.data,
+      profil: {
+        nom: candidat.nom || '',
+        prenom: candidat.prenom || '',
+        titre: candidat.titre || '',
+        ville: candidat.axes?.meta?.ville || '',
+        score_adn: candidat.score_adn ?? null,
+        resultat_test_adn: candidat.axes?.resultat || null,
+        reponses_test_adn: candidat.axes?.questionnaire || null,
+        competences: candidat.axes?.meta?.competences || {},
+      },
+      candidatures: candidatures.data,
+      matchs: matchs.data,
+      consentements: consentements.data,
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Suppression de compte (droit à l'effacement). Confirmation explicite requise
+// côté client ET revérifiée ici. Stratégie : anonymiser plutôt que supprimer les
+// lignes candidats/users (matchs, candidatures et messages passés les référencent
+// par id — les supprimer casserait l'affichage côté recruteur), supprimer pour de
+// vrai les fichiers uploadés (CV, lettre, photo), et supprimer réellement
+// l'identité Supabase Auth pour que la connexion soit définitivement impossible.
+router.delete('/compte', authMiddleware, async (req, res) => {
+  try {
+    const { confirmation } = req.body || {};
+    if (confirmation !== 'SUPPRIMER') {
+      return res.status(400).json({ error: 'Confirmation manquante ou invalide' });
+    }
+
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const meta = candidat.axes?.meta || {};
+
+    await Promise.all([
+      removeStorageFile(meta.cv_bucket || CV_BUCKET, meta.cv_path),
+      removeStorageFile(meta.motivation_bucket || CV_BUCKET, meta.motivation_path),
+      removeStorageFile(meta.avatar_bucket || AVATAR_BUCKET, meta.avatar_path),
+    ]);
+
+    const { error: candidatError } = await supabase
+      .from('candidats')
+      .update({
+        nom: null,
+        prenom: null,
+        titre: null,
+        cv_url: null,
+        score_adn: null,
+        axes: {},
+        swipes_meta: {},
+        contacts_meta: {},
+      })
+      .eq('user_id', req.user.id);
+    if (candidatError) return res.status(400).json({ error: candidatError });
+
+    const { error: userError } = await supabase
+      .from('users')
+      .update({ email: `supprime-${req.user.id}@deleted.invalid` })
+      .eq('id', req.user.id);
+    if (userError) return res.status(400).json({ error: userError });
+
+    const { error: authError } = await supabase.auth.admin.deleteUser(req.user.id);
+    if (authError) return res.status(400).json({ error: authError.message || authError });
+
+    res.json({ message: 'Compte supprimé' });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 module.exports = router;
