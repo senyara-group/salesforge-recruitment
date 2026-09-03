@@ -53,8 +53,19 @@ Yannis a consulté un juriste : **il est interdit de faire payer un candidat pou
 ### Doit rester gratuit et identique pour tous, sans exception (fait ✅)
 Swipes, candidatures, accès aux offres, messagerie avec les recruteurs, visibilité auprès des entreprises, ordre d'apparition dans les résultats recruteur.
 → Toute logique de limite liée au plan (`abonnements.plan`) a été retirée de `backend/routes/swipes.js` et `backend/routes/messages.js`.
+→ **(2026-09-03)** Deux résidus trouvés et corrigés en creusant la même contrainte :
+  - `backend/routes/abonnements.js` (`GET /current`) renvoyait encore `swipes_m: plan==='freemium'?5:999`, ce qui affichait "X/5 swipes" aux candidats gratuits dans `candidat.html` alors que la limite n'existe plus côté backend. Corrigé → toujours `999`.
+  - `backend/routes/candidats.js` calculait un badge `certifie` basé sur le plan payant (`gold`/`platine`) et l'exposait **au recruteur** dans le deck de swipe (`frontend/_spaces/recruteur.html`, badge doré "Certifié Swip Sales" sur la carte candidat). C'était une violation directe du garde-fou ci-dessous (l'abonnement candidat influençait ce que voit un recruteur). Retiré : `certifie` renvoie toujours `false` pour l'instant, badge recruteur supprimé, en attendant une éventuelle version conforme.
 
-### Peut rester payant — services autonomes, valeur hors plateforme (à construire, rien n'existe encore côté code)
+### Nouvelle structure tarifaire candidat (fait ✅ — 2026-09-03)
+Landing page (`frontend/swipsales_landing.html`) et page pricing in-app (`frontend/_spaces/candidat.html`, section `PLANS`) alignées sur 3 paliers :
+- **Compte candidat** (slug `freemium`, inchangé) — gratuit à vie, swipes/candidatures/messagerie illimités pour tous
+- **Carrière** (slug `carriere`, ex-`premium` — même prix 19€/15€, même Stripe Price ID réutilisé)
+- **Carrière Coaching** (slug `carriere_coaching`, ex-`platine` — même prix 79€/63€, même Stripe Price ID réutilisé)
+- **Gold supprimé** (0 abonné actif au moment du retrait, vérifié en base avant suppression)
+- 1 seul abonné actif migré `premium`→`carriere` en base (`abonnements`), aucun abonné actif `platine`/`gold` à migrer
+
+### Peut rester payant — services autonomes, valeur hors plateforme (rien n'existe encore côté code, marqué "Bientôt disponible" dans l'UI)
 - Test ADN approfondi (60-80 items) + restitution PDF téléchargeable
 - Re-passage / suivi tous les 6 mois avec historique
 - Benchmark métier anonymisé par typologie de poste
@@ -63,15 +74,19 @@ Swipes, candidatures, accès aux offres, messagerie avec les recruteurs, visibil
 - Certification SwipSales — atteste des compétences uniquement, **jamais** un placement ou une visibilité recruteur promis
 - Optimisation CV/pitch spécifique profils commerciaux
 
+Ces 8 items sont marqués d'un badge "Bientôt disponible" dans la liste de fonctionnalités des paliers Carrière / Carrière Coaching, sur la landing page ET dans `candidat.html`. **À prioriser ensemble pour savoir ce qui se construit en premier.**
+
 ### Garde-fous techniques à respecter pour toute nouvelle fonctionnalité payante candidat
 - Le flag d'abonnement candidat ne doit **jamais** apparaître dans la logique de matching/ranking/droits de candidature — isolé strictement au déblocage de contenu/évaluation
-- Rien côté recruteur ne doit exposer le statut d'abonné d'un candidat ni s'en servir comme critère de tri
+- Rien côté recruteur ne doit exposer le statut d'abonné d'un candidat ni s'en servir comme critère de tri (⚠️ violé par le badge `certifie`, corrigé le 2026-09-03 — voir ci-dessus)
 - RGPD : le scoring comportemental (test ADN) est une donnée sensible en contexte recrutement → consentement explicite requis, finalité déclarée, export/suppression possibles, **pas de décision automatisée de rejet sans intervention humaine** (⚠️ pas encore implémenté, à faire)
 - Facturation : libellés orientés "accompagnement de carrière", jamais "premium plateforme"
 
 ### En attente
-- Yannis doit envoyer la nouvelle landing page / structure tarifaire candidat avant de retoucher `frontend/_spaces/candidat.html` (section `PLANS`) et la page pricing
+- CGU/CGV/RGPD (`frontend/swipsales_legal.html`) existent déjà et sont liées depuis le footer de la landing, mais portent un avertissement "modèle à personnaliser, à faire relire par un professionnel du droit avant mise en production" — à faire valider par un juriste si ce n'est pas déjà fait
 - Volet RGPD (consentement, export/suppression, pas de rejet auto) pas encore traité
+- **Bug pricing recruteur trouvé en vérifiant la cohérence des noms de paliers (2026-09-03, PAS corrigé — hors scope de cette session)** : `frontend/_spaces/recruteur.html` affiche un palier "Partenaire" à 899€/719€ (marque blanche, API ATS, SLA...) mais son bouton le mappe vers le slug Stripe `pro`, dont le prix réel (`checkoutPlans`/`STRIPE_PRICE_RECRUTEUR_PRO_*` dans `backend/routes/stripe.js`) est 399€/319€ — le même que le palier "Pro" affiché sur la landing page. Le mapping `partenaire → 'pro'` dans `selectPlan()` (ligne ~2613) est probablement censé être `partenaire → 'enterprise'` (la fonction `planKey()` juste en dessous, ligne ~2625, connaît déjà `enterprise`, ce que `selectPlan` n'a pas). À trancher avec Guillaume/Yannis avant toute correction : c'est un écart de prix affiché vs. prix facturé, potentiellement déjà en prod.
+- Orphelin trouvé : un fichier `candidat.html` à la racine du repo (3236 lignes, ajouté en même temps que la refonte `frontend/_spaces/candidat.html`) n'est référencé nulle part dans `backend/server.js`. Probablement un commit accidentel (double copie) — à vérifier et supprimer si confirmé inutile.
 
 ---
 

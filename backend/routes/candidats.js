@@ -447,17 +447,13 @@ router.get('/profil', authMiddleware, async (req, res) => {
   try {
     const profil = await ensureCandidateProfile(req.user.id);
     const withUrls = await withFreshCvUrl(profil);
-    const { data: abonnement } = await supabase
-      .from('abonnements')
-      .select('plan, statut')
-      .eq('user_id', req.user.id)
-      .maybeSingle();
-    const plan = abonnement?.statut === 'actif' ? String(abonnement.plan || 'freemium').toLowerCase() : 'freemium';
     res.json({
       ...withUrls,
       ville: profil.axes?.meta?.ville || '',
       competences: profil.axes?.meta?.competences || {},
-      certifie: plan === 'gold' || plan === 'platine',
+      // Contrainte légale : le statut d'abonnement candidat ne doit jamais influencer
+      // ce qui est visible ou signalé côté recruteur. Retiré du plan payant (voir Notes.md).
+      certifie: false,
     });
   } catch (error) {
     publicError(res, error);
@@ -784,21 +780,6 @@ router.get('/deck', authMiddleware, async (req, res) => {
         return requestedCompetences.some((c) => flat.includes(c));
       });
 
-    // Badge "Certifié Swip Sales" : avantage du plan Gold (et Platine, qui l'inclut).
-    // Récupéré en une seule requête groupée plutôt qu'un aller-retour par candidat.
-    const candidateUserIds = candidates.map((c) => c.user_id).filter(Boolean);
-    const { data: abonnementsData } = candidateUserIds.length
-      ? await supabase
-        .from('abonnements')
-        .select('user_id, plan, statut')
-        .in('user_id', candidateUserIds)
-      : { data: [] };
-    const certifiedUserIds = new Set(
-      (abonnementsData || [])
-        .filter((a) => a.statut === 'actif' && ['gold', 'platine'].includes(String(a.plan || '').toLowerCase()))
-        .map((a) => a.user_id)
-    );
-
     const deck = await Promise.all(candidates.map(async (candidat) => {
         const profile = await withFreshCvUrl(candidat);
         const axes = normalizeAxes(profile.axes);
@@ -819,7 +800,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
           initiales: initials,
           role: profile.titre || 'Commercial',
           anon,
-          certifie: certifiedUserIds.has(profile.user_id),
+          certifie: false,
           avatar_url: anon ? '' : (profile.avatar_url || ''),
           m: compatibilityScore(axes, matching),
           adn_score: profile.score_adn || 0,
