@@ -590,6 +590,7 @@ button,input,textarea,select{font-family:inherit}
 .plan-card.dk .pc-fs{border-top-color:rgba(255,255,255,.1)}
 .pc-fs li{font-size:12px;display:flex;gap:6px;align-items:flex-start;color:var(--ink2);line-height:1.5}.plan-card.dk .pc-fs li{color:rgba(255,255,255,.7)}
 .pc-fs li svg{width:13px;height:13px;flex-shrink:0;margin-top:2px;stroke:var(--g);fill:none;stroke-width:2.5}.plan-card.dk .pc-fs li svg{stroke:#5EFFA5}
+.pc-soon{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);background:var(--bg2,rgba(0,0,0,.05));border:1px solid var(--bd);padding:1px 6px;border-radius:99px;white-space:nowrap;vertical-align:middle}.plan-card.dk .pc-soon{color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
 .pc-btn{padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--b);background:transparent;color:var(--b);transition:.15s;width:100%;font-family:'Sora',sans-serif}
 .pc-btn:hover,.plan-card.pop .pc-btn{background:var(--b);color:#fff}
 .pc-btn:disabled{cursor:default;background:var(--gs)!important;border-color:var(--g)!important;color:var(--g)!important}
@@ -1609,7 +1610,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-pricing" class="page">
   <div class="pricing-hd">
     <h2 class="sf">Choisissez votre formule</h2>
-    <p>Freemium à vie. Premium dès 15 €/mois en annuel.</p>
+    <p>Candidater est gratuit à vie, pour tous. Carrière dès 15 €/mois en annuel.</p>
     <div class="bill-toggle">
       <button class="bill-opt" onclick="setBill(this,'month')">Mensuel</button>
       <button class="bill-opt on" onclick="setBill(this,'year')">Annuel <span class="bill-save">-20%</span></button>
@@ -2184,7 +2185,7 @@ async function shareCert() {
 }
 async function joinCommunity() {
   // ------------------------------------------------------------
-  toast('Accès communauté — disponible en Gold');
+  toast('Communauté — bientôt disponible');
 }
 
 // ------------------------------------------------------------
@@ -2870,11 +2871,11 @@ function renderProfile(p, a) {
   renderProfileCV(p);
   renderMotivationFile(p);
   renderProfileCompetences(p.competences || {});
-  const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
+  const names={freemium:'Compte candidat',carriere:'Carrière',carriere_coaching:'Carrière Coaching'};
   CURRENT_PLAN = activeSubscriptionPlan(a);
   CURRENT_PLAN_LOADED = true;
-  document.getElementById('plan-n').textContent=names[a.plan]||'Freemium';
-  document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
+  document.getElementById('plan-n').textContent=names[a.plan]||'Compte candidat';
+  document.getElementById('plan-d').textContent='Swipes et candidatures illimités';
   fillProfileEdit(p, avatarLabel);
 }
 function renderAvatarInto(el, url, label) {
@@ -2965,15 +2966,16 @@ async function loadSubscriptionStatus() {
   try {
     const a = await api('GET', '/abonnements/current?t=' + Date.now());
     const plan = String(a?.plan || 'freemium').toLowerCase();
+    const planLabel = {freemium:'Compte candidat',carriere:'Carrière',carriere_coaching:'Carrière Coaching'}[plan] || plan;
     if (plan === 'freemium') {
-      statusEl.textContent = 'Plan Freemium (gratuit)';
+      statusEl.textContent = 'Compte candidat (gratuit)';
       cancelBtn.style.display = 'none';
     } else if (a.resiliation_programmee && a.date_fin) {
       const d = new Date(a.date_fin).toLocaleDateString('fr-FR');
-      statusEl.textContent = `Plan ${plan} — résiliation prévue le ${d}`;
+      statusEl.textContent = `Plan ${planLabel} — résiliation prévue le ${d}`;
       cancelBtn.style.display = 'none';
     } else {
-      statusEl.textContent = `Plan ${plan} — actif`;
+      statusEl.textContent = `Plan ${planLabel} — actif`;
       cancelBtn.style.display = 'block';
     }
   } catch (e) {
@@ -3161,27 +3163,27 @@ async function deleteCandidateDocument(kind) {
 // ------------------------------------------------------------
 // PRICING
 // ------------------------------------------------------------
+const SOON = '<span class="pc-soon">Bientôt disponible</span>';
 const PLANS = {
   month:[
-    {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Passer Premium',pop:true},
-    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification Swip Sales','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
-    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
+    {n:'Compte candidat',slug:'freemium',f:'La base, identique pour tous, à vie',p:0,u:'',h:'Gratuit à vie, sans exception',feats:['Test ADN commercial, format court','Profil visible par tous les recruteurs','Import CV','Swipes, candidatures et messagerie : mêmes conditions pour tous'],cta:'Créer mon profil'},
+    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 60 à 80 items '+SOON,'Restitution PDF téléchargeable '+SOON,'Ebooks : négociation salariale, plan de commissionnement, 90 premiers jours '+SOON,'Optimisation de votre CV et de votre pitch '+SOON],cta:'Faire mon bilan',pop:true},
+    {n:'Carrière Coaching',slug:'carriere_coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Nouvelle évaluation tous les 6 mois, historique '+SOON,'Benchmark anonymisé par typologie de poste '+SOON,'Chatbot de coaching entretien et pitch '+SOON,'Certification SwipSales, badge LinkedIn '+SOON],cta:'Suivre ma progression',dk:true}
   ],
   year:[
-    {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
-    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification Swip Sales','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
-    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
+    {n:'Compte candidat',slug:'freemium',f:'La base, identique pour tous, à vie',p:0,u:'',h:'Gratuit à vie, sans exception',feats:['Test ADN commercial, format court','Profil visible par tous les recruteurs','Import CV','Swipes, candidatures et messagerie : mêmes conditions pour tous'],cta:'Créer mon profil'},
+    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 60 à 80 items '+SOON,'Restitution PDF téléchargeable '+SOON,'Ebooks : négociation salariale, plan de commissionnement, 90 premiers jours '+SOON,'Optimisation de votre CV et de votre pitch '+SOON],cta:'Économiser 20%',pop:true},
+    {n:'Carrière Coaching',slug:'carriere_coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Carrière inclus','Nouvelle évaluation tous les 6 mois, historique '+SOON,'Benchmark anonymisé par typologie de poste '+SOON,'Chatbot de coaching entretien et pitch '+SOON,'Certification SwipSales, badge LinkedIn '+SOON],cta:'Économiser 20%',dk:true}
   ]
 };
+function planSlug(p) { return p.slug || String(p.n || '').toLowerCase(); }
 function activeSubscriptionPlan(abonnement) {
   const plan = String(abonnement?.plan || 'freemium').toLowerCase();
   const status = String(abonnement?.statut || abonnement?.status || 'actif').toLowerCase();
   return ['actif', 'active', 'trialing'].includes(status) ? plan : 'freemium';
 }
 async function selectPlan(plan, billing) {
-  if (plan === 'freemium') { toast('Vous êtes déjà en Freemium'); return; }
+  if (plan === 'freemium') { toast('Vous êtes déjà sur le compte candidat'); return; }
   try {
     const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'cand' });
     // Envoyer l'URL au parent pour éviter le problème iframe
@@ -3209,7 +3211,7 @@ function isCurrentPlan(plan) {
 function renderPlans() {
   if (!CURRENT_PLAN_LOADED && TOKEN) loadCurrentPlan().then(renderPlans);
   document.getElementById('plans-row').innerHTML=PLANS[BILLING].map(p=>{
-    const active = isCurrentPlan(p.n);
+    const active = isCurrentPlan(planSlug(p));
     return `
     <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
       ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
@@ -3219,7 +3221,7 @@ function renderPlans() {
       </div>
       <div class="pc-h">${p.h}</div>
       <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${active?'Offre active':p.cta}</button>
+      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${planSlug(p)}','${BILLING}')">${active?'Offre active':p.cta}</button>
     </div>`;
   }).join('');
 }
