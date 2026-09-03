@@ -2610,7 +2610,7 @@ const PLANS = {
 };
 async function selectPlan(plan, billing) {
   try {
-    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', partenaire:'pro'}[plan] || plan;
+    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', partenaire:'enterprise'}[plan] || plan;
     const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
