@@ -5,7 +5,6 @@ const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, getUserEmail } = require('../utils/profiles');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
 
-const FREE_SWIPES_MONTHLY = 5;
 
 function appendUnique(values = [], value) {
   return [...new Set([...values.map(String), String(value)])];
@@ -19,27 +18,6 @@ function swipeUsage(candidat) {
   const month = currentMonthKey();
   const meta = candidat.swipes_meta || {};
   return meta.swipes_month === month ? Number(meta.swipes_used || 0) : 0;
-}
-
-async function getSubscriptionPlan(userId) {
-  const { data, error } = await supabase
-    .from('abonnements')
-    .select('plan')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error) throw error;
-  return data[0]?.plan || 'freemium';
-}
-
-function assertSwipeAllowed(candidat, plan) {
-  if (plan !== 'freemium') return;
-  if (swipeUsage(candidat) >= FREE_SWIPES_MONTHLY) {
-    const error = new Error('Limite Freemium atteinte : passez a un plan payant pour continuer a swiper');
-    error.status = 402;
-    throw error;
-  }
 }
 
 async function markOfferSeenAndCount(candidat, offreId) {
@@ -128,20 +106,6 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Action de swipe invalide' });
     }
 
-    const plan = await getSubscriptionPlan(req.user.id);
-    try {
-      assertSwipeAllowed(candidat, plan);
-    } catch (limitError) {
-      if (limitError.status === 402) {
-        getUserEmail(req.user.id).then((email) => {
-          trackBrevoEvent(email, 'limite_swipes_atteinte', {}, {
-            SWIPES_USED: swipeUsage(candidat),
-          }).catch(() => {});
-        }).catch(() => {});
-      }
-      throw limitError;
-    }
-
     const { data: offre, error: offreError } = await supabase
       .from('offres')
       .select('id, titre, auto_candidature, recruteurs(id, user_id, matching, questions)')
@@ -205,7 +169,7 @@ router.post('/', authMiddleware, async (req, res) => {
         match: false,
         candidature_sent: candidatureSent,
         swipes_u: usage.swipes_used,
-        swipes_m: plan === 'freemium' ? FREE_SWIPES_MONTHLY : 999,
+        swipes_m: 999,
       });
     }
 
@@ -229,7 +193,7 @@ router.post('/', authMiddleware, async (req, res) => {
       candidature_sent: candidatureSent,
       questions: offre.recruteurs?.questions || [],
       swipes_u: usage.swipes_used,
-      swipes_m: plan === 'freemium' ? FREE_SWIPES_MONTHLY : 999,
+      swipes_m: 999,
       ...match,
     });
 
