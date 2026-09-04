@@ -52,6 +52,26 @@
 
   function init() {
     enhance(document);
+    var desktop = window.matchMedia('(min-width: 1024px)');
+    var resetTransientNavigation = function () {
+      var focusedPanel = document.activeElement && document.activeElement.closest
+        ? document.activeElement.closest('.notif-panel.on')
+        : null;
+      document.querySelectorAll('.notif-panel.on, .autocomplete-list.on').forEach(function (node) {
+        node.classList.remove('on');
+      });
+      document.documentElement.classList.remove('menu-open');
+      document.body.classList.remove('menu-open', 'nav-open');
+      document.documentElement.style.removeProperty('overflow');
+      document.body.style.removeProperty('overflow');
+      if (focusedPanel) {
+        var wrapper = focusedPanel.closest('.notif-wrap');
+        var trigger = wrapper && wrapper.querySelector('[onclick]');
+        if (trigger) trigger.focus({ preventScroll: true });
+      }
+    };
+    if (desktop.addEventListener) desktop.addEventListener('change', resetTransientNavigation);
+    else desktop.addListener(resetTransientNavigation);
     new MutationObserver(function (records) {
       records.forEach(function (record) {
         record.addedNodes.forEach(function (node) {

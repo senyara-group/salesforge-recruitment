@@ -105,7 +105,16 @@ body.auth .shell, body.product-gateway .shell {
 .fp.on { box-shadow: 0 1px 3px rgba(22, 70, 216, .18); }
 .swipe-card, .deck-wrap { box-shadow: var(--sh-lg); }
 .deck-actions { border-color: var(--bd); }
-.overlay { background: rgba(15, 23, 42, .48); backdrop-filter: blur(2px); }
+.overlay {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.overlay.on {
+  background: rgba(15, 23, 42, .52);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -171,6 +180,8 @@ body.auth .shell, body.product-gateway .shell {
   .deck-actions { bottom: 0; }
   .notif-panel { width: 380px; }
   .overlay { left: 220px; width: calc(100% - 220px) !important; }
+  .overlay:not(.on) { visibility: hidden; }
+  .overlay.on { visibility: visible; }
 
   #p-profile, #p-settings, #p-post-offre, #p-matching, #p-pipeline,
   #p-offres, #p-candidatures, #p-test, #p-coaching, #p-pricing,
@@ -210,6 +221,7 @@ body.auth .shell, body.product-gateway .shell {
 }
 
 @media (max-width: 719px) {
+  html, body { max-width: 100%; overflow-x: clip; }
   .app { box-shadow: none; }
   .topbar { padding: 10px 14px; }
   .sec { padding: 16px; }
@@ -219,4 +231,9 @@ body.auth .shell, body.product-gateway .shell {
   .bn span { font-size: 9.5px; }
   .btn, .fp, .ib, .bn { touch-action: manipulation; }
   .bottom-sheet { max-height: calc(100dvh - 24px); overflow-y: auto; }
+  .filter-row, .hscroll, .pipe-cols, .plans-row {
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .form-row, .form-grid, .settings-grid { grid-template-columns: minmax(0, 1fr) !important; }
 }
