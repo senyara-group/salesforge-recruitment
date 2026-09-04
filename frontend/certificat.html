@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certification SwipSales</title>
+<meta name="description" content="Certification SwipSales — profil commercial évalué.">
+<meta property="og:title" content="Certifié SwipSales">
+<meta property="og:description" content="Profil commercial évalué et certifié par SwipSales.">
+<meta property="og:type" content="profile">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --encre:#0B1424; --bleu:#2647E8; --bleu-c:#7DA0FF;
+  --bleu-pale:#EDF1FE; --fond:#F6F8FD; --texte:#1A2536; --doux:#5C6C84;
+  --ligne:#E3E9F4; --vert:#17A05C; --r:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;color:var(--texte);background:var(--fond);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#fff;border-radius:24px;padding:44px 38px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 60px rgba(11,20,36,.12)}
+.logo{font-family:"Space Grotesk",Inter,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.04em;color:var(--encre);margin-bottom:28px}
+.logo span{color:var(--bleu)}
+.badge{width:88px;height:88px;margin:0 auto 20px;border-radius:50%;background:linear-gradient(135deg,#FFD86B,#F5A623);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(245,166,35,.35)}
+.badge svg{width:44px;height:44px;stroke:#5C3B00;stroke-width:2.5;fill:none}
+h1{font-family:"Space Grotesk",Inter,sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px}
+.score{font-size:15px;color:var(--doux);margin-bottom:24px}
+.score b{color:var(--bleu);font-size:17px}
+.eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--bleu);background:var(--bleu-pale);padding:6px 14px;border-radius:99px;margin-bottom:18px}
+.cta{display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:14.5px;padding:13px 26px;border-radius:12px;background:var(--bleu);color:#fff;text-decoration:none;box-shadow:0 10px 24px rgba(38,71,232,.3)}
+.err{color:var(--doux);font-size:14.5px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Swip<span>Sales</span></div>
+  <div id="content">
+    <p class="err">Chargement…</p>
+  </div>
+</div>
+<script>
+const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : 'https://salesforge-recruitment-production.up.railway.app/api';
+
+async function load() {
+  const id = new URLSearchParams(location.search).get('id');
+  const el = document.getElementById('content');
+  if (!id) { el.innerHTML = '<p class="err">Lien de certification invalide.</p>'; return; }
+  try {
+    const r = await fetch(API + '/candidats/' + encodeURIComponent(id) + '/certificat-public');
+    if (!r.ok) throw new Error('not found');
+    const d = await r.json();
+    el.innerHTML = `
+      <span class="eyebrow">Certification SwipSales</span>
+      <div class="badge"><svg viewBox="0 0 24 24"><path d="M12 1l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 14.9 6.8 17.1l1-5.8L3.5 7.2l5.9-.9z"/></svg></div>
+      <h1>${escapeHtml(d.prenom)} est certifié·e SwipSales</h1>
+      <p class="score">Score ADN commercial : <b>${d.score} / 100</b></p>
+      <a class="cta" href="swipsales_landing.html">Découvrir SwipSales</a>
+    `;
+  } catch (e) {
+    el.innerHTML = '<p class="err">Certificat introuvable ou partage désactivé.</p>';
+  }
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+load();
+</script>
+</body>
+</html>

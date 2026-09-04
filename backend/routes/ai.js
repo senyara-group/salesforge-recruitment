@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const supabase = require('../supabase');
-const { ensureCandidateProfile, getUserEmail } = require('../utils/profiles');
+const { ensureCandidateProfile, getUserEmail, getCandidatePlan } = require('../utils/profiles');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
+
+const RETAKE_COOLDOWN_MONTHS = 6;
+const RETAKE_COOLDOWN_MS = RETAKE_COOLDOWN_MONTHS * 30 * 24 * 60 * 60 * 1000;
 
 router.post('/analyse', authMiddleware, async (req, res) => {
   try {
@@ -55,6 +58,41 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Consentement requis avant de passer le test ADN' });
     }
 
+    // Le premier passage est libre pour tous (test ADN gratuit, contrainte légale).
+    // Un repassage (score déjà existant) nécessite Carrière Coaching, avec un délai
+    // de 6 mois entre deux évaluations — c'est la fonctionnalité payante "ré-évaluation
+    // semestrielle avec historique", jamais l'accès au test lui-même qui reste gratuit.
+    if (candidat.score_adn != null) {
+      const plan = await getCandidatePlan(req.user.id);
+      if (plan !== 'carriere_coaching') {
+        return res.status(403).json({
+          error: 'PLAN_REQUIRED',
+          message: 'Repasser le test ADN nécessite l\'abonnement Carrière Coaching',
+        });
+      }
+
+      const { data: lastEval, error: lastEvalError } = await supabase
+        .from('evaluations_adn')
+        .select('created_at')
+        .eq('user_id', req.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastEvalError) return res.status(400).json({ error: lastEvalError });
+
+      if (lastEval) {
+        const elapsed = Date.now() - new Date(lastEval.created_at).getTime();
+        if (elapsed < RETAKE_COOLDOWN_MS) {
+          const nextEligibleAt = new Date(new Date(lastEval.created_at).getTime() + RETAKE_COOLDOWN_MS).toISOString();
+          return res.status(403).json({
+            error: 'RETAKE_TOO_SOON',
+            message: 'Prochaine évaluation disponible le ' + new Date(nextEligibleAt).toLocaleDateString('fr-FR'),
+            next_eligible_at: nextEligibleAt,
+          });
+        }
+      }
+    }
+
     const { reponses = {} } = req.body;
     const filledAnswers = JSON.stringify(reponses).length;
     const score = Math.max(55, Math.min(95, Math.round(65 + filledAnswers / 80)));
@@ -73,10 +111,16 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
       tags: ['Swip Sales', 'ADN', 'B2B'],
     };
 
+    // Typologie de poste choisie pendant le test — colonne dédiée (au lieu de rester
+    // enterrée dans axes.questionnaire sans jamais être relue) pour permettre le
+    // benchmark anonymisé par typologie de poste.
+    const typePoste = reponses?.job_profile?.poste || null;
+
     const { error } = await supabase
       .from('candidats')
       .update({
         score_adn: result.score,
+        type_poste: typePoste,
         axes: {
           ...(candidat.axes || {}),
           questionnaire: reponses,
@@ -87,6 +131,18 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
       .eq('user_id', req.user.id);
 
     if (error) return res.status(400).json({ error });
+
+    // Historique append-only : chaque passage garde une trace, même si
+    // candidats.axes.resultat (utilisé par le deck recruteur) ne garde que le dernier.
+    // Ne doit jamais faire échouer la réponse : le score est déjà enregistré ci-dessus.
+    const { error: evalError } = await supabase.from('evaluations_adn').insert({
+      user_id: req.user.id,
+      score: result.score,
+      resultat: result,
+      reponses,
+    });
+    if (evalError) console.warn('evaluations_adn insert echoue (table pas encore creee ?):', evalError.message || evalError);
+
     res.json(result);
 
     // Scénario 01 : sortie de la relance "test non terminé", entrée dans l'email "Score obtenu".
