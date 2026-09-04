@@ -1123,15 +1123,21 @@ button,input,textarea,select{font-family:inherit}
 
 <!-- COACHING -->
 <div id="p-coaching" class="page">
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Bilan de carrière</div></div>
+  <div class="sec" style="padding-bottom:0">
+    <div class="sec-hd"><div class="sec-t sf">Coaching</div></div>
+    <div class="tab-seg" id="coaching-page-tabs">
+      <button class="tsb on" onclick="selectCoachingTab(this,'bilan')">Bilan de carrière</button>
+      <button class="tsb" onclick="selectCoachingTab(this,'chat')">Chatbot</button>
+      <button class="tsb" onclick="selectCoachingTab(this,'ressources')">Ebooks</button>
+    </div>
+  </div>
+  <div class="sec" id="coaching-tab-bilan">
     <div style="background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
-      Questionnaire ADN approfondi (74 items) : une restitution complète de votre profil commercial, à télécharger et garder pour vous. Palier Carrière.
+      Questionnaire ADN approfondi (74 items, contre 10 pour le test rapide de l'accueil) : une restitution complète de votre profil commercial, à télécharger et garder pour vous. Palier Carrière.
       <button class="btn bp bsm" style="margin-top:10px" onclick="go('bilan')">Faire mon bilan</button>
     </div>
   </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Chatbot de coaching</div></div>
+  <div class="sec" id="coaching-tab-chat" style="display:none">
     <div id="coaching-locked" style="display:none;background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
       Le chatbot de coaching (entretiens, objections, pitch) fait partie de l'abonnement Carrière Coaching.
       <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière Coaching</button>
@@ -1147,8 +1153,7 @@ button,input,textarea,select{font-family:inherit}
       </div>
     </div>
   </div>
-  <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Ressources</div></div>
+  <div class="sec" id="coaching-tab-ressources" style="display:none">
     <div id="ressources-locked" style="display:none;background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
       15 ebooks commerciaux (prospection, closing, négociation, carrière) font partie de l'abonnement Carrière.
       <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière</button>
@@ -1636,7 +1641,6 @@ button,input,textarea,select{font-family:inherit}
           <div class="profile-resource-actions">
             <button type="button" onclick="document.getElementById('cv-file-prof').click()">Remplacer</button>
             <button type="button" onclick="openProfileCV()">Ouvrir</button>
-            <button type="button" onclick="optimiserCv()">Optimiser</button>
             <button class="danger" id="delete-cv-btn" type="button" onclick="deleteCandidateDocument('cv')">Supprimer</button>
           </div>
         </div>
@@ -1649,12 +1653,6 @@ button,input,textarea,select{font-family:inherit}
             <button class="danger" id="delete-motivation-btn" type="button" onclick="deleteCandidateDocument('motivation')">Supprimer</button>
           </div>
         </div>
-      </div>
-      <div class="profile-edit-field" style="margin-bottom:12px">
-        <label>Optimiser mon pitch (Carrière)</label>
-        <textarea id="pitch-optimiser-input" rows="3" placeholder="Collez votre pitch commercial ou votre accroche de candidature…" style="width:100%;margin-top:8px;border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
-        <button type="button" class="btn upload-btn" style="margin-top:8px" onclick="optimiserPitch()">Analyser mon pitch</button>
-        <div id="optimisation-result" style="display:none;margin-top:10px;background:var(--fond,#F3F5FA);border-radius:10px;padding:14px;font-size:13px;line-height:1.65;white-space:pre-wrap"></div>
       </div>
       <div class="comp-section">
         <div class="comp-section-t">Compétences</div>
@@ -1674,6 +1672,19 @@ button,input,textarea,select{font-family:inherit}
   </div>
   <div class="sec">
     <div class="card-sec">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Optimisation CV & pitch</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
+      <div id="optim-locked" style="display:none;background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+        L'analyse IA de votre CV et de votre pitch fait partie de l'abonnement Carrière.
+        <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière</button>
+      </div>
+      <div id="optim-panel" style="display:none">
+        <button type="button" class="btn upload-btn" onclick="optimiserCv()">Analyser mon CV</button>
+        <textarea id="pitch-optimiser-input" rows="3" placeholder="Collez votre pitch commercial ou votre accroche de candidature…" style="width:100%;margin-top:10px;border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        <button type="button" class="btn upload-btn" style="margin-top:8px" onclick="optimiserPitch()">Analyser mon pitch</button>
+        <div id="optimisation-result" style="display:none;margin-top:10px;background:var(--fond,#F3F5FA);border-radius:10px;padding:14px;font-size:13px;line-height:1.65;white-space:pre-wrap"></div>
+      </div>
+    </div>
+    <div class="card-sec">
       <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
       <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
     </div>
@@ -1690,7 +1701,7 @@ button,input,textarea,select{font-family:inherit}
       <button onclick="go('pricing')">Upgrader</button>
     </div>
     <div class="menu-list">
-      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ressources</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Coaching</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
       <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
@@ -1719,7 +1730,7 @@ button,input,textarea,select{font-family:inherit}
 <nav class="bnav" id="bnav" style="display:none">
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
-  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
+  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Coaching</span></button>
   <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
 </nav>
@@ -2245,6 +2256,13 @@ async function snooze() {
 // ------------------------------------------------------------
 let COACHING_MODULES = [];
 let COACHING_CURRENT_MODULE = null;
+function selectCoachingTab(btn, tab) {
+  document.querySelectorAll('#coaching-page-tabs .tsb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  ['bilan', 'chat', 'ressources'].forEach(t => {
+    document.getElementById('coaching-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
 async function loadCoaching() {
   const locked = document.getElementById('coaching-locked');
   const widget = document.getElementById('coaching-chat');
@@ -3426,6 +3444,12 @@ function renderProfile(p, a) {
   CURRENT_PLAN_LOADED = true;
   document.getElementById('plan-n').textContent=names[a.plan]||'Compte candidat';
   document.getElementById('plan-d').textContent='Swipes et candidatures illimités';
+  const optimLocked = document.getElementById('optim-locked'), optimPanel = document.getElementById('optim-panel');
+  if (optimLocked && optimPanel) {
+    const hasAccess = CURRENT_PLAN !== 'freemium';
+    optimLocked.style.display = hasAccess ? 'none' : 'block';
+    optimPanel.style.display = hasAccess ? 'block' : 'none';
+  }
   fillProfileEdit(p, avatarLabel);
 }
 function renderAvatarInto(el, url, label) {
