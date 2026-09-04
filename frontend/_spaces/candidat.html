@@ -1124,49 +1124,76 @@ button,input,textarea,select{font-family:inherit}
 <!-- COACHING -->
 <div id="p-coaching" class="page">
   <div class="sec">
+    <div class="sec-hd"><div class="sec-t sf">Bilan de carrière</div></div>
+    <div style="background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+      Questionnaire ADN approfondi (74 items) : une restitution complète de votre profil commercial, à télécharger et garder pour vous. Palier Carrière.
+      <button class="btn bp bsm" style="margin-top:10px" onclick="go('bilan')">Faire mon bilan</button>
+    </div>
+  </div>
+  <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Chatbot de coaching</div></div>
     <div id="coaching-locked" style="display:none;background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
       Le chatbot de coaching (entretiens, objections, pitch) fait partie de l'abonnement Carrière Coaching.
       <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière Coaching</button>
     </div>
-    <div id="coaching-chat" style="display:none;border:1.5px solid var(--bd);border-radius:14px;overflow:hidden">
-      <div class="pitch-chat" id="coaching-chat-messages" style="min-height:180px;max-height:360px;overflow-y:auto"></div>
-      <div style="display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--bd)">
-        <input id="coaching-chat-input" placeholder="Entraînez-vous à un entretien, une objection, une négociation…" style="flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter'){event.preventDefault();sendCoachingMessage();}">
-        <button class="btn bp bsm" id="coaching-chat-send" onclick="sendCoachingMessage()">Envoyer</button>
+    <div id="coaching-chat" style="display:none">
+      <div id="coaching-module-tabs" class="tab-seg" style="margin-bottom:12px"></div>
+      <div style="border:1.5px solid var(--bd);border-radius:14px;overflow:hidden">
+        <div class="pitch-chat" id="coaching-chat-messages" style="min-height:180px;max-height:360px;overflow-y:auto"></div>
+        <div style="display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--bd)">
+          <input id="coaching-chat-input" placeholder="Répondez ici…" style="flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter'){event.preventDefault();sendCoachingMessage();}">
+          <button class="btn bp bsm" id="coaching-chat-send" onclick="sendCoachingMessage()">Envoyer</button>
+        </div>
       </div>
     </div>
   </div>
   <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Ressources</div></div>
-    <div class="doc-list">
-      <a class="doc-item" href="../documents/SwipSales_01_Traiter_les_objections.pdf" target="_blank" rel="noopener">
-        <div class="doc-num" style="background:#1340E0"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
-        <div class="doc-info"><div class="doc-title">Traiter les objections</div><div class="doc-meta">Désamorcer les réticences client et reprendre la main dans l'échange</div></div>
-        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
-      </a>
-      <a class="doc-item" href="../documents/SwipSales_02_200_questions.pdf" target="_blank" rel="noopener">
-        <div class="doc-num" style="background:#8B5CF6"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="doc-info"><div class="doc-title">200 questions qui font vendre</div><div class="doc-meta">Une banque de questions de découverte prêtes à l'emploi</div></div>
-        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
-      </a>
-      <a class="doc-item" href="../documents/SwipSales_03_Neuro-vente.pdf" target="_blank" rel="noopener">
-        <div class="doc-num" style="background:#EC4899"><svg viewBox="0 0 24 24"><path d="M9.5 2a2.5 2.5 0 00-2.5 2.5v.35a3 3 0 00-2 2.65v.5a2.5 2.5 0 00-1 4.9 3 3 0 002.7 3.6 2.5 2.5 0 002.4 3H10V2z"/><path d="M14.5 2a2.5 2.5 0 012.5 2.5v.35a3 3 0 012 2.65v.5a2.5 2.5 0 011 4.9 3 3 0 01-2.7 3.6 2.5 2.5 0 01-2.4 3H14V2z"/></svg></div>
-        <div class="doc-info"><div class="doc-title">Neuro-vente</div><div class="doc-meta">Comprendre les biais de décision pour mieux convaincre</div></div>
-        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
-      </a>
-      <a class="doc-item" href="../documents/SwipSales_04_Business_Development.pdf" target="_blank" rel="noopener">
-        <div class="doc-num" style="background:#059669"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-        <div class="doc-info"><div class="doc-title">Business Development</div><div class="doc-meta">Structurer sa prospection et générer un pipeline solide</div></div>
-        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
-      </a>
-      <a class="doc-item" href="../documents/SwipSales_05_Account_Executive.pdf" target="_blank" rel="noopener">
-        <div class="doc-num" style="background:#D97706"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-        <div class="doc-info"><div class="doc-title">Account Executive</div><div class="doc-meta">Piloter un cycle de vente complet, de la démo au closing</div></div>
-        <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
-      </a>
+    <div id="ressources-locked" style="display:none;background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+      15 ebooks commerciaux (prospection, closing, négociation, carrière) font partie de l'abonnement Carrière.
+      <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière</button>
+    </div>
+    <div id="ressources-list"></div>
+  </div>
+</div>
+
+<!-- BILAN DE CARRIÈRE : questionnaire ADN approfondi (74 items, palier Carrière) -->
+<div id="p-bilan" class="page">
+  <div id="bilan-locked" style="display:none;margin:16px" class="sec">
+    <div style="background:var(--fond,#F3F5FA);border-radius:14px;padding:18px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+      Le bilan de carrière approfondi fait partie de l'abonnement Carrière.
+      <button class="btn bp bsm" style="margin-top:10px" onclick="go('pricing')">Voir Carrière</button>
     </div>
   </div>
+  <div id="bilan-consent-gate" class="test-body" style="display:none">
+    <div class="qt sf">Avant de commencer : votre accord</div>
+    <div class="qh">Le questionnaire approfondi est un bilan professionnel personnel : 74 questions sur votre style de vente, votre résistance au refus, votre façon de conclure, votre rapport à la rémunération variable, votre méthode et votre écoute client. C'est une donnée sensible en contexte de recrutement : on a besoin de votre accord explicite avant de la collecter.</div>
+    <div style="background:var(--fond,#F3F5FA);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13.5px;line-height:1.6;color:var(--ink2,#333)">
+      <div style="font-weight:800;margin-bottom:6px">Ce qui est collecté</div>
+      <div style="margin-bottom:14px">Vos réponses aux 74 items, et la restitution (scores par bloc, style de closing, axes de progression) qui en résulte.</div>
+      <div style="font-weight:800;margin-bottom:6px">Pourquoi</div>
+      <div style="margin-bottom:14px">Uniquement pour produire votre bilan professionnel personnel, que vous conservez et téléchargez. Ce résultat n'influence jamais le matching, ni votre visibilité auprès des recruteurs, ni vos droits de candidature.</div>
+      <div style="font-weight:800;margin-bottom:6px">Qui peut le voir</div>
+      <div>Vous seul·e. Vos réponses individuelles à ce questionnaire ne sont jamais visibles par un recruteur — stockées séparément de votre profil, sans lien possible avec les résultats affichés aux recruteurs.</div>
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.5;margin-bottom:18px;cursor:pointer">
+      <input type="checkbox" id="bilan-consent-checkbox" style="margin-top:3px;flex-shrink:0" onchange="document.getElementById('bilan-consent-accept').disabled = !this.checked">
+      <span>J'ai lu ce qui précède et j'accepte que SwipSales collecte mes réponses au questionnaire approfondi et la restitution qui en résulte, pour la finalité décrite ci-dessus.</span>
+    </label>
+    <div class="step-nav">
+      <button class="btn bo" onclick="declineBilanConsent()">Refuser</button>
+      <button class="btn bp" id="bilan-consent-accept" onclick="acceptBilanConsent()" disabled>Accepter et commencer</button>
+    </div>
+  </div>
+  <div id="bilan-flow" style="display:none">
+    <div class="test-sticky" id="bilan-sticky">
+      <div class="test-sl" id="bilan-sl">Étape 1 sur 8</div>
+      <div class="test-st sf" id="bilan-st">Filtres de départ</div>
+      <div class="test-pb"><div class="test-pf" id="bilan-pf" style="width:12%"></div></div>
+    </div>
+    <div class="test-body" id="bilan-body"></div>
+  </div>
+  <div id="bilan-result" class="test-body" style="display:none"></div>
 </div>
 
 <!-- SWIPE -->
@@ -1914,7 +1941,7 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
-const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','pricing'];
+const APP_PAGES = ['home','swipe','coaching','candidatures','test','bilan','messages','profile','pricing'];
 function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
 function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
@@ -2048,7 +2075,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans, test:prepareTestPage};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans, test:prepareTestPage, bilan:prepareBilanPage};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2216,25 +2243,362 @@ async function snooze() {
 // ------------------------------------------------------------
 // COACHING
 // ------------------------------------------------------------
+let COACHING_MODULES = [];
+let COACHING_CURRENT_MODULE = null;
 async function loadCoaching() {
   const locked = document.getElementById('coaching-locked');
   const widget = document.getElementById('coaching-chat');
-  if (!locked || !widget) return;
+  if (locked && widget) {
+    try {
+      const r = await api('GET', '/coaching/modules');
+      COACHING_MODULES = r.modules || [];
+      locked.style.display = 'none';
+      widget.style.display = 'block';
+      renderCoachingModuleTabs();
+      if (!COACHING_CURRENT_MODULE && COACHING_MODULES[0]) selectCoachingModule(COACHING_MODULES[0].id);
+    } catch (e) {
+      widget.style.display = 'none';
+      locked.style.display = 'block';
+    }
+  }
+  loadRessources();
+}
+function renderCoachingModuleTabs() {
+  const tabs = document.getElementById('coaching-module-tabs');
+  if (!tabs) return;
+  tabs.innerHTML = COACHING_MODULES.map(m => `<button class="tsb${m.id === COACHING_CURRENT_MODULE ? ' on' : ''}" onclick="selectCoachingModule('${m.id}')">${esc(m.titre)}</button>`).join('');
+}
+async function selectCoachingModule(id) {
+  COACHING_CURRENT_MODULE = id;
+  renderCoachingModuleTabs();
+  const el = document.getElementById('coaching-chat-messages');
+  el.innerHTML = '<div class="bbl th">Chargement…</div>';
   try {
-    const r = await api('GET', '/coaching/chat');
-    locked.style.display = 'none';
-    widget.style.display = 'block';
+    const r = await api('GET', '/coaching/chat?module=' + encodeURIComponent(id));
     renderCoachingMessages(r.messages || []);
   } catch (e) {
-    widget.style.display = 'none';
+    renderCoachingMessages([]);
+  }
+}
+const RESSOURCES_CATEGORY_ORDER = ['Vendre', 'Prospecter', 'Maîtriser', 'Sa carrière'];
+const RESSOURCES_CATEGORY_COLORS = { 'Vendre':'#1340E0', 'Prospecter':'#059669', 'Maîtriser':'#8B5CF6', 'Sa carrière':'#D97706' };
+async function loadRessources() {
+  const locked = document.getElementById('ressources-locked');
+  const list = document.getElementById('ressources-list');
+  if (!locked || !list) return;
+  try {
+    const r = await api('GET', '/candidats/ressources');
+    locked.style.display = 'none';
+    renderRessources(r.ressources || []);
+  } catch (e) {
+    list.innerHTML = '';
     locked.style.display = 'block';
   }
+}
+function renderRessources(ressources) {
+  const list = document.getElementById('ressources-list');
+  if (!list) return;
+  const byCategory = {};
+  ressources.forEach(r => { (byCategory[r.categorie] = byCategory[r.categorie] || []).push(r); });
+  list.innerHTML = RESSOURCES_CATEGORY_ORDER.filter(cat => byCategory[cat]).map(cat => `
+    <div class="doc-cat-title" style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);margin:16px 0 8px">${esc(cat)}</div>
+    <div class="doc-list">
+      ${byCategory[cat].map(r => `
+        <a class="doc-item" href="${r.url || '#'}" target="_blank" rel="noopener" ${r.url ? '' : 'onclick="return false"'}>
+          <div class="doc-num" style="background:${RESSOURCES_CATEGORY_COLORS[cat] || '#1340E0'}"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+          <div class="doc-info"><div class="doc-title">${esc(r.titre)}</div><div class="doc-meta">${esc(r.description)}</div></div>
+          <div class="doc-open"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg></div>
+        </a>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ------------------------------------------------------------
+// BILAN DE CARRIÈRE — questionnaire ADN approfondi (74 items, palier Carrière)
+// Contenu fourni par Yannis (document de spécification, 2026-09). Distinct du
+// test ADN court/gratuit : consentement séparé (finalité "bilan professionnel
+// personnel"), résultats stockés dans une table à part, jamais lus par le matching.
+// ------------------------------------------------------------
+const BILAN_CONSENT_VERSION = 'v1';
+const BILAN_JOB_TYPES = [
+  {id:'sdr', label:'SDR ou BDR'}, {id:'bizdev', label:'Business Developer'}, {id:'ae', label:'Account Executive'},
+  {id:'terrain', label:'Commercial terrain'}, {id:'kam', label:'Key Account Manager'}, {id:'manager', label:'Manager commercial'}
+];
+const BILAN_STYLES = [{id:'chasseur',label:'Chasseur'},{id:'eleveur',label:'Éleveur'},{id:'cycle',label:'Cycle complet'}];
+const BILAN_BLOCKS = [
+  {id:'b1', titre:'Profil chasseur ou éleveur', items:[
+    {id:'03', texte:"J'éprouve plus de satisfaction à décrocher un nouveau client qu'à développer un compte existant."},
+    {id:'04', texte:"Reprendre un portefeuille déjà constitué me motive davantage que partir d'une page blanche."},
+    {id:'05', texte:"Je suis à l'aise pour contacter quelqu'un qui ne me connaît pas du tout."},
+    {id:'06', texte:"Je préfère approfondir une relation existante plutôt que d'en créer une nouvelle."},
+    {id:'07', texte:"Une semaine sans nouveau prospect dans mon pipeline me met mal à l'aise."},
+    {id:'08', texte:"Je consacre plus de temps à fidéliser qu'à prospecter."},
+    {id:'09', texte:"L'incertitude d'un premier rendez-vous me stimule."},
+    {id:'10', texte:"Je connais précisément l'historique et les enjeux de chacun de mes clients."},
+    {id:'11', texte:"J'ouvre volontiers des comptes sur des secteurs que je ne connais pas."},
+    {id:'12', texte:"Mon meilleur souvenir professionnel concerne une relation client construite dans la durée."},
+    {id:'13', texte:"Je relance un prospect froid sans hésiter, même après plusieurs refus."},
+    {id:'14', texte:"Je préfère un portefeuille de peu de comptes bien travaillés à beaucoup de comptes superficiels."},
+  ]},
+  {id:'b2', titre:'Résistance au refus', items:[
+    {id:'15', texte:"Après un refus, j'enchaîne sur le contact suivant sans temps mort."},
+    {id:'16', texte:"Un non me reste en tête plusieurs heures après l'appel."},
+    {id:'17', texte:"Je considère qu'un refus m'apporte une information utile."},
+    {id:'18', texte:"Après plusieurs refus d'affilée, je réduis mon rythme de prospection."},
+    {id:'19', texte:"Je distingue clairement le rejet de mon offre du rejet de ma personne."},
+    {id:'20', texte:"Il m'arrive de repousser un appel difficile à plus tard."},
+    {id:'21', texte:"Je demande souvent au prospect les raisons de son refus."},
+    {id:'22', texte:"Un mois sans signature remet en cause ma confiance en mes compétences."},
+    {id:'23', texte:"Je tiens mes objectifs d'activité même les semaines où rien n'aboutit."},
+    {id:'24', texte:"Je préfère éviter les prospects que je pressens réticents."},
+    {id:'25', texte:"Je relance un dossier perdu plusieurs mois plus tard si le contexte a changé."},
+    {id:'26', texte:"Après une journée difficile, j'ai du mal à reprendre le téléphone le lendemain matin."},
+  ]},
+  {id:'b3', titre:'Style de closing', items:[
+    {id:'27', texte:"Je demande explicitement la signature plutôt que d'attendre que le client la propose."},
+    {id:'28', texte:"Je préfère laisser le client revenir vers moi de lui-même."},
+    {id:'29', texte:"Je pose des questions de validation tout au long de l'entretien, pas seulement à la fin."},
+    {id:'30', texte:"Je me sens mal à l'aise au moment d'annoncer le prix."},
+    {id:'31', texte:"Après avoir posé ma question de closing, je laisse le silence s'installer."},
+    {id:'32', texte:"Je préfère envoyer une proposition écrite plutôt que de conclure en rendez-vous."},
+    {id:'33', texte:"Je propose systématiquement une prochaine étape datée à la fin de chaque échange."},
+    {id:'34', texte:"Je baisse mon prix dès que le client exprime une réticence budgétaire."},
+    {id:'35', texte:"Je cherche à faire dire au client lui-même ce que la solution lui apporterait."},
+    {id:'36', texte:"J'accepte facilement un « je vais réfléchir » sans creuser davantage."},
+    {id:'37', texte:"J'obtiens une contrepartie chaque fois que je fais une concession."},
+    {id:'38', texte:"Il m'arrive de conclure avant d'avoir identifié le vrai décideur."},
+  ]},
+  {id:'b4', titre:'Motivation au variable', items:[
+    {id:'39', texte:"Un variable déplafonné me motive davantage qu'un fixe plus élevé."},
+    {id:'40', texte:"Je préfère la sécurité d'un salaire stable, même moins élevé au total."},
+    {id:'41', texte:"Je connais précisément mon niveau d'atteinte d'objectif à tout moment du mois."},
+    {id:'42', texte:"Un objectif ambitieux me stimule plus qu'il ne m'inquiète."},
+    {id:'43', texte:"L'incertitude sur ma rémunération du mois me pèse."},
+    {id:'44', texte:"Je lis attentivement mon plan de commissionnement avant de signer un contrat."},
+    {id:'45', texte:"Je me fixe des objectifs personnels au-delà de ceux de mon entreprise."},
+    {id:'46', texte:"Je préfère un variable simple à comprendre, même moins avantageux."},
+    {id:'47', texte:"Un mois exceptionnel me motive plus qu'une régularité constante."},
+    {id:'48', texte:"Je serais mal à l'aise dans un poste rémunéré uniquement à la commission."},
+  ]},
+  {id:'b5', titre:'Méthode et pilotage', items:[
+    {id:'49', texte:"Je bloque des créneaux fixes de prospection dans ma semaine."},
+    {id:'50', texte:"Je découvre en fin de mois où j'en suis réellement de mes objectifs."},
+    {id:'51', texte:"Chaque affaire de mon pipeline a une prochaine action datée."},
+    {id:'52', texte:"Je mets à jour mon CRM immédiatement après chaque échange."},
+    {id:'53', texte:"Il m'arrive d'oublier de relancer un prospect intéressé."},
+    {id:'54', texte:"Je connais mon taux de transformation entre rendez-vous et signature."},
+    {id:'55', texte:"Je prépare chaque rendez-vous important en amont, par écrit."},
+    {id:'56', texte:"Je traite mes dossiers dans l'ordre où ils arrivent, sans priorisation."},
+    {id:'57', texte:"Je fais un point hebdomadaire sur l'état de mon pipeline."},
+    {id:'58', texte:"J'identifie le circuit de décision dès les premiers échanges."},
+  ]},
+  {id:'b6', titre:'Écoute et relation', items:[
+    {id:'59', texte:"En rendez-vous, mon interlocuteur parle plus que moi."},
+    {id:'60', texte:"Je présente ma solution avant d'avoir compris le besoin précis."},
+    {id:'61', texte:"Je reformule ce que dit le client pour vérifier ma compréhension."},
+    {id:'62', texte:"Je pose des questions sur les conséquences chiffrées du problème."},
+    {id:'63', texte:"J'ai tendance à combler les silences dans la conversation."},
+    {id:'64', texte:"Je m'intéresse aux enjeux personnels de mon interlocuteur, pas seulement à ceux de l'entreprise."},
+    {id:'65', texte:"Je prends des notes détaillées pendant mes rendez-vous."},
+    {id:'66', texte:"Je réponds à une objection avant d'avoir compris ce qu'elle cache vraiment."},
+    {id:'67', texte:"Je sais dire à un prospect que ma solution ne lui convient pas."},
+    {id:'68', texte:"Je reprends les mots exacts du client dans ma proposition."},
+  ]},
+];
+const BILAN_B7 = [
+  {id:'69', texte:"Sur quelle étape du cycle de vente vous sentez-vous le moins à l'aise ?", type:'choice', options:['Prospection','Découverte','Argumentation','Traitement des objections','Closing','Développement du compte']},
+  {id:'70', texte:'Quelle compétence aimeriez-vous travailler en priorité cette année ?', type:'text'},
+  {id:'71', texte:'Quel type d’accompagnement vous aiderait le plus ?', type:'choice', options:['Formation structurée','Entraînement pratique','Retour sur mes échanges réels','Échange avec des pairs']},
+  {id:'72', texte:'À quelle fréquence prenez-vous du recul sur vos échecs commerciaux ?', type:'scale'},
+  {id:'73', texte:'Avez-vous déjà été formé formellement à une méthode de vente ?', type:'text', placeholder:'Oui, laquelle — ou Non'},
+  {id:'74', texte:'Qu’est-ce qui vous ferait le plus progresser selon vous ?', type:'text'},
+];
+
+let BILAN_STEP = 0; // 0 = B0, 1-6 = B1..B6, 7 = B7
+let BILAN_REPONSES = { b0:{}, b1:{}, b2:{}, b3:{}, b4:{}, b5:{}, b6:{}, b7:{} };
+let BILAN_CONSENT_STATUS = null;
+
+async function prepareBilanPage() {
+  const gate = document.getElementById('bilan-consent-gate');
+  const locked = document.getElementById('bilan-locked');
+  const flow = document.getElementById('bilan-flow');
+  const result = document.getElementById('bilan-result');
+  function hideAll() { gate.style.display='none'; locked.style.display='none'; flow.style.display='none'; result.style.display='none'; }
+
+  // Vérifie le plan d'abord (évite de faire passer le consentement à quelqu'un qui
+  // n'a de toute façon pas accès à la fonctionnalité).
+  let plan = 'freemium';
+  try { const abo = await api('GET', '/abonnements/current'); plan = String(abo?.plan || 'freemium').toLowerCase(); } catch(e) {}
+  if (plan !== 'carriere' && plan !== 'carriere_coaching') {
+    hideAll(); locked.style.display = 'block'; window.scrollTo(0,0);
+    return;
+  }
+
+  // Bilan déjà passé ? On affiche directement le résultat plutôt que de repartir
+  // du questionnaire (pas de restriction de repassage documentée pour ce palier).
+  try {
+    const existing = await api('GET', '/bilan-carriere');
+    if (existing) { hideAll(); renderBilanResult(existing); result.style.display = 'block'; window.scrollTo(0,0); return; }
+  } catch (e) {}
+
+  if (BILAN_CONSENT_STATUS !== true) {
+    try {
+      const r = await api('GET', '/bilan-carriere/consentement');
+      BILAN_CONSENT_STATUS = Boolean(r && r.accepte && r.version === BILAN_CONSENT_VERSION);
+    } catch (e) { BILAN_CONSENT_STATUS = false; }
+  }
+  if (!BILAN_CONSENT_STATUS) { hideAll(); gate.style.display = 'block'; window.scrollTo(0,0); return; }
+
+  hideAll(); flow.style.display = 'block'; window.scrollTo(0,0);
+  BILAN_STEP = 0; BILAN_REPONSES = { b0:{}, b1:{}, b2:{}, b3:{}, b4:{}, b5:{}, b6:{}, b7:{} };
+  renderBilanStep();
+}
+async function acceptBilanConsent() {
+  try {
+    await api('POST', '/candidats/consentement', { type:'bilan_carriere', version: BILAN_CONSENT_VERSION, accepte: true });
+  } catch(e) {}
+  BILAN_CONSENT_STATUS = true;
+  document.getElementById('bilan-consent-gate').style.display = 'none';
+  document.getElementById('bilan-flow').style.display = 'block';
+  BILAN_STEP = 0;
+  renderBilanStep();
+}
+function declineBilanConsent() {
+  api('POST', '/candidats/consentement', { type:'bilan_carriere', version: BILAN_CONSENT_VERSION, accepte: false }).catch(()=>{});
+  go('coaching');
+}
+function bilanTotalSteps() { return 1 + BILAN_BLOCKS.length + 1; } // B0 + 6 blocs + B7
+function renderBilanStep() {
+  const body = document.getElementById('bilan-body');
+  const sl = document.getElementById('bilan-sl');
+  const st = document.getElementById('bilan-st');
+  const pf = document.getElementById('bilan-pf');
+  const total = bilanTotalSteps();
+  sl.textContent = `Étape ${BILAN_STEP+1} sur ${total}`;
+  pf.style.width = Math.round(((BILAN_STEP+1)/total)*100) + '%';
+  window.scrollTo(0,0);
+
+  if (BILAN_STEP === 0) {
+    st.textContent = 'Filtres de départ';
+    body.innerHTML = `
+      <div class="qt sf">Sur quel type de poste vous positionnez-vous aujourd'hui ?</div>
+      <div class="opts">${BILAN_JOB_TYPES.map(j => `<button class="opt${BILAN_REPONSES.b0.poste===j.id?' sel':''}" onclick="setBilanB0('poste','${j.id}')"><span class="ot">${esc(j.label)}</span></button>`).join('')}</div>
+      <div class="qt sf" style="margin-top:22px">Quel style de vente vous correspond le mieux ?</div>
+      <div class="opts">${BILAN_STYLES.map(s => `<button class="opt${BILAN_REPONSES.b0.style===s.id?' sel':''}" onclick="setBilanB0('style','${s.id}')"><span class="ot">${esc(s.label)}</span></button>`).join('')}</div>
+      <div class="step-nav"><span></span><button class="btn bp" id="bilan-next" onclick="bilanNext()" ${BILAN_REPONSES.b0.poste&&BILAN_REPONSES.b0.style?'':'disabled'}>Continuer</button></div>
+    `;
+  } else if (BILAN_STEP >= 1 && BILAN_STEP <= BILAN_BLOCKS.length) {
+    const bloc = BILAN_BLOCKS[BILAN_STEP-1];
+    st.textContent = bloc.titre;
+    body.innerHTML = `
+      <div class="qh">Pour chaque affirmation, indiquez votre degré d'accord de 1 (pas du tout d'accord) à 5 (tout à fait d'accord).</div>
+      ${bloc.items.map(it => `
+        <div class="bilan-item" style="padding:12px 0;border-bottom:1px solid var(--bd)">
+          <div style="font-size:13.5px;margin-bottom:8px">${esc(it.texte)}</div>
+          <div style="display:flex;gap:8px">
+            ${[1,2,3,4,5].map(v => `<button class="opt bilan-scale${BILAN_REPONSES[bloc.id][it.id]===v?' sel':''}" style="flex:1;padding:8px 0;text-align:center" onclick="setBilanItem('${bloc.id}','${it.id}',${v})">${v}</button>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+      <div class="step-nav">
+        <button class="btn bo" onclick="bilanPrev()">Retour</button>
+        <button class="btn bp" id="bilan-next" onclick="bilanNext()" ${bilanBlocComplete(bloc)?'':'disabled'}>Continuer</button>
+      </div>
+    `;
+  } else {
+    st.textContent = 'Axes de progression';
+    body.innerHTML = `
+      <div class="qh">Dernière étape, non scorée : elle alimente directement votre restitution.</div>
+      ${BILAN_B7.map(it => {
+        if (it.type === 'choice') {
+          return `<div class="qt sf" style="margin-top:16px">${esc(it.texte)}</div><div class="opts">${it.options.map(o => `<button class="opt${BILAN_REPONSES.b7[it.id]===o?' sel':''}" onclick="setBilanItem('b7','${it.id}','${esc(o)}')"><span class="ot">${esc(o)}</span></button>`).join('')}</div>`;
+        }
+        if (it.type === 'scale') {
+          return `<div class="qt sf" style="margin-top:16px">${esc(it.texte)}</div><div style="display:flex;gap:8px">${[1,2,3,4,5].map(v => `<button class="opt bilan-scale${BILAN_REPONSES.b7[it.id]===v?' sel':''}" style="flex:1;padding:8px 0;text-align:center" onclick="setBilanItem('b7','${it.id}',${v})">${v}</button>`).join('')}</div>`;
+        }
+        return `<div class="qt sf" style="margin-top:16px">${esc(it.texte)}</div><textarea rows="2" placeholder="${esc(it.placeholder||'')}" oninput="BILAN_REPONSES.b7['${it.id}']=this.value" style="width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit">${esc(BILAN_REPONSES.b7[it.id]||'')}</textarea>`;
+      }).join('')}
+      <div class="step-nav">
+        <button class="btn bo" onclick="bilanPrev()">Retour</button>
+        <button class="btn bp" id="bilan-next" onclick="submitBilan()">Terminer et voir mon bilan</button>
+      </div>
+    `;
+  }
+}
+function bilanBlocComplete(bloc) { return bloc.items.every(it => BILAN_REPONSES[bloc.id][it.id]); }
+function setBilanB0(key, val) { BILAN_REPONSES.b0[key] = val; renderBilanStep(); }
+function setBilanItem(bloc, itemId, val) { BILAN_REPONSES[bloc][itemId] = val; renderBilanStep(); }
+function bilanNext() { if (BILAN_STEP < bilanTotalSteps()-1) { BILAN_STEP++; renderBilanStep(); } }
+function bilanPrev() { if (BILAN_STEP > 0) { BILAN_STEP--; renderBilanStep(); } }
+async function submitBilan() {
+  const btn = document.getElementById('bilan-next');
+  if (btn) { btn.disabled = true; btn.textContent = 'Analyse en cours…'; }
+  try {
+    const r = await api('POST', '/bilan-carriere', { reponses: BILAN_REPONSES });
+    document.getElementById('bilan-flow').style.display = 'none';
+    renderBilanResult(r);
+    document.getElementById('bilan-result').style.display = 'block';
+    window.scrollTo(0,0);
+  } catch (e) {
+    toast(e.message || 'Erreur — vérifiez que tous les blocs sont complets');
+    if (btn) { btn.disabled = false; btn.textContent = 'Terminer et voir mon bilan'; }
+  }
+}
+function renderBilanResult(data) {
+  const el = document.getElementById('bilan-result');
+  const s = data.scores || {};
+  const r = data.restitution || {};
+  const blockLabels = {b2:'Résistance au refus',b3:'Style de closing',b4:'Motivation au variable',b5:'Méthode et pilotage',b6:'Écoute et relation'};
+  el.innerHTML = `
+    <div class="qt sf">${esc(r.identite || 'Votre bilan de carrière')}</div>
+    <div class="qh" style="margin-bottom:16px">Positionnement : <strong>${esc(s.axe_chasseur_eleveur || '')}</strong> — ${esc(r.axe_chasseur_eleveur || '')}</div>
+    ${r.alerte_incoherence ? `<div style="background:#FEF3C7;border-radius:10px;padding:12px;font-size:12.5px;margin-bottom:16px">${esc(r.alerte_incoherence)}</div>` : ''}
+    <div style="background:var(--fond,#F3F5FA);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:800;margin-bottom:10px">Vos cinq axes</div>
+      ${Object.entries(blockLabels).map(([b,label]) => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px"><span>${esc(label)}</span><strong>${s[b]}/100</strong></div>`).join('')}
+    </div>
+    <div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:6px">${esc(r.closing_style_nom||'')}</div><div style="font-size:13px;color:var(--ink2,#333)">${esc(r.closing_description||'')}</div></div>
+    <div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:6px">Votre rapport au variable</div><div style="font-size:13px;color:var(--ink2,#333)">${esc(r.variable_description||'')}</div></div>
+    <div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:6px">Axes de progression</div>${(r.axes_progression||[]).map(a=>`<div style="font-size:13px;padding:4px 0">• ${esc(a)}</div>`).join('')}</div>
+    <div style="margin-bottom:20px"><div style="font-weight:800;margin-bottom:6px">Dès cette semaine</div>${(r.actions_semaine||[]).map(a=>`<div style="font-size:13px;padding:4px 0">• ${esc(a)}</div>`).join('')}</div>
+    <div class="step-nav">
+      <button class="btn bo" onclick="go('coaching')">Retour aux ressources</button>
+      <button class="btn bp" onclick="exportBilanPdf()">Exporter en PDF</button>
+    </div>
+    <div id="bilan-benchmark-status" style="margin-top:12px;font-size:12.5px;color:var(--ink3)"></div>
+    <button class="btn upload-btn" style="margin-top:8px" onclick="openBilanBenchmark()">Voir le benchmark (Carrière Coaching)</button>
+  `;
+}
+async function exportBilanPdf() {
+  try {
+    const r = await fetch(API + '/bilan-carriere/export-pdf', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.error?.message || d.error || 'Export impossible'); }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'swipsales-bilan-carriere.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) { toast(e.message || 'Erreur export PDF'); }
+}
+async function openBilanBenchmark() {
+  const st = document.getElementById('bilan-benchmark-status');
+  if (!st) return;
+  st.textContent = 'Chargement…';
+  try {
+    const d = await api('GET', '/bilan-carriere/benchmark');
+    if (!d.assez_de_donnees) { st.textContent = d.message; return; }
+    const blockLabels = {b2:'Résistance au refus',b3:'Style de closing',b4:'Motivation au variable',b5:'Méthode et pilotage',b6:'Écoute et relation'};
+    st.textContent = `Sur ${d.echantillon} profils "${d.type_poste}" : ` + Object.entries(blockLabels).map(([b,l]) => `${l} moy. ${d.moyennes[b]} (vous : ${d.vos_scores[b]})`).join(' · ');
+  } catch (e) { st.textContent = e.message || 'Fonctionnalité Carrière Coaching requise'; }
 }
 function renderCoachingMessages(messages) {
   const el = document.getElementById('coaching-chat-messages');
   if (!el) return;
   if (!messages.length) {
-    el.innerHTML = '<div class="bbl th">Bonjour ! Je suis votre coach SwipSales. Entraînons-nous à un entretien, une objection ou une négociation salariale — que voulez-vous travailler ?</div>';
+    const mod = COACHING_MODULES.find(m => m.id === COACHING_CURRENT_MODULE);
+    el.innerHTML = `<div class="bbl th">${esc(mod?.intro || 'Bonjour ! Que voulez-vous travailler ?')}</div>`;
   } else {
     el.innerHTML = messages.map(m => `<div class="bbl ${m.role === 'user' ? 'yo' : 'th'}">${esc(m.content)}</div>`).join('');
   }
@@ -2245,14 +2609,14 @@ async function sendCoachingMessage() {
   const sendBtn = document.getElementById('coaching-chat-send');
   const el = document.getElementById('coaching-chat-messages');
   const message = input.value.trim();
-  if (!message) return;
+  if (!message || !COACHING_CURRENT_MODULE) return;
   input.value = '';
   sendBtn.disabled = true;
   el.insertAdjacentHTML('beforeend', `<div class="bbl yo">${esc(message)}</div>`);
   el.insertAdjacentHTML('beforeend', '<div class="bbl th" id="coaching-typing">…</div>');
   el.scrollTop = el.scrollHeight;
   try {
-    const r = await api('POST', '/coaching/chat', { message });
+    const r = await api('POST', '/coaching/chat', { module: COACHING_CURRENT_MODULE, message });
     document.getElementById('coaching-typing')?.remove();
     el.insertAdjacentHTML('beforeend', `<div class="bbl th">${esc(r.reply)}</div>`);
   } catch (e) {
@@ -3507,12 +3871,12 @@ const SOON = '<span class="pc-soon">Bientôt disponible</span>';
 const PLANS = {
   month:[
     {n:'Compte candidat',slug:'freemium',f:'La base, identique pour tous, à vie',p:0,u:'',h:'Gratuit à vie, sans exception',feats:['Test ADN commercial, format court','Profil visible par tous les recruteurs','Import CV','Swipes, candidatures et messagerie : mêmes conditions pour tous'],cta:'Créer mon profil'},
-    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 60 à 80 items '+SOON,'Restitution PDF téléchargeable','Ebooks : négociation salariale, plan de commissionnement, 90 premiers jours '+SOON,'Optimisation de votre CV et de votre pitch'],cta:'Faire mon bilan',pop:true},
+    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux (vente, prospection, carrière)','Optimisation de votre CV et de votre pitch'],cta:'Faire mon bilan',pop:true},
     {n:'Carrière Coaching',slug:'carriere_coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Nouvelle évaluation tous les 6 mois, historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching entretien et pitch','Certification SwipSales, badge LinkedIn'],cta:'Suivre ma progression',dk:true}
   ],
   year:[
     {n:'Compte candidat',slug:'freemium',f:'La base, identique pour tous, à vie',p:0,u:'',h:'Gratuit à vie, sans exception',feats:['Test ADN commercial, format court','Profil visible par tous les recruteurs','Import CV','Swipes, candidatures et messagerie : mêmes conditions pour tous'],cta:'Créer mon profil'},
-    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 60 à 80 items '+SOON,'Restitution PDF téléchargeable','Ebooks : négociation salariale, plan de commissionnement, 90 premiers jours '+SOON,'Optimisation de votre CV et de votre pitch'],cta:'Économiser 20%',pop:true},
+    {n:'Carrière',slug:'carriere',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux (vente, prospection, carrière)','Optimisation de votre CV et de votre pitch'],cta:'Économiser 20%',pop:true},
     {n:'Carrière Coaching',slug:'carriere_coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Carrière inclus','Nouvelle évaluation tous les 6 mois, historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching entretien et pitch','Certification SwipSales, badge LinkedIn'],cta:'Économiser 20%',dk:true}
   ]
 };

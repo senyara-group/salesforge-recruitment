@@ -15,6 +15,27 @@ const CERTIFICATION_SCORE_THRESHOLD = 80;
 
 const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
+const EBOOKS_BUCKET = process.env.EBOOKS_BUCKET || 'ebooks';
+
+// Catalogue des ebooks (palier Carrière). Fichiers déjà uploadés dans le bucket
+// privé Supabase Storage "ebooks" — voir Notes.md pour l'origine des fichiers.
+const EBOOK_CATALOG = [
+  { file: 'SwipSales_01_Traiter_les_objections.pdf', titre: 'Traiter les objections', desc: '120 objections décodées et retournées', categorie: 'Vendre' },
+  { file: 'SwipSales_02_200_questions.pdf', titre: '200 questions qui font vendre', desc: 'Découverte, qualification, closing', categorie: 'Vendre' },
+  { file: 'SwipSales_03_Neuro-vente.pdf', titre: 'Neuro-vente', desc: 'Comment le cerveau décide d\'acheter', categorie: 'Vendre' },
+  { file: 'SwipSales_04_Business_Development.pdf', titre: 'Business Development', desc: 'Prospection et construction du pipeline', categorie: 'Prospecter' },
+  { file: 'SwipSales_05_Account_Executive.pdf', titre: 'Account Executive', desc: 'Le cycle de vente complet', categorie: 'Vendre' },
+  { file: 'SwipSales_06_Le_premier_contact.pdf', titre: 'Le premier contact', desc: 'Cold call, cold email et séquences', categorie: 'Prospecter' },
+  { file: 'SwipSales_07_Social_selling.pdf', titre: 'Social selling', desc: 'LinkedIn, du profil au rendez-vous', categorie: 'Prospecter' },
+  { file: 'SwipSales_08_Decrocher_le_poste.pdf', titre: 'Décrocher le poste', desc: 'Entretien commercial et négociation salariale', categorie: 'Sa carrière' },
+  { file: 'SwipSales_09_Piloter_son_activite.pdf', titre: 'Piloter son activité', desc: 'Pipeline, priorités, CRM et forecast', categorie: 'Sa carrière' },
+  { file: 'SwipSales_10_Tenir_dans_la_duree.pdf', titre: 'Tenir dans la durée', desc: 'Refus, pression du chiffre et progression', categorie: 'Sa carrière' },
+  { file: 'SwipSales_11_Negocier_sans_ceder.pdf', titre: 'Négocier sans céder', desc: 'Concessions, contreparties, acheteurs pros', categorie: 'Vendre' },
+  { file: 'SwipSales_12_Vendre_a_distance.pdf', titre: 'Vendre à distance', desc: 'Visio, démonstration et closing à distance', categorie: 'Maîtriser' },
+  { file: 'SwipSales_13_La_vente_complexe.pdf', titre: 'La vente complexe', desc: 'Grands comptes, comité d\'achat, cycles longs', categorie: 'Maîtriser' },
+  { file: 'SwipSales_14_Ecrire_pour_vendre.pdf', titre: 'Écrire pour vendre', desc: 'Proposition, compte rendu, relances écrites', categorie: 'Maîtriser' },
+  { file: 'SwipSales_15_Comprendre_son_variable.pdf', titre: 'Comprendre son variable', desc: 'Plan de commissionnement et négociation', categorie: 'Sa carrière' },
+];
 const MAX_CV_BYTES = Number(process.env.MAX_CV_UPLOAD_MB || 8) * 1024 * 1024;
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
 const CV_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
@@ -986,6 +1007,27 @@ router.delete('/compte', authMiddleware, async (req, res) => {
 // ------------------------------------------------------------
 // Carrière / Carrière Coaching — historique, export PDF, benchmark, certification
 // ------------------------------------------------------------
+
+// Bibliothèque de ressources (ebooks) — palier Carrière. Service autonome, distinct
+// du placement (voir LISEZ-MOI fourni avec les fichiers) : ne conditionne jamais
+// l'accès aux offres, swipes ou candidatures.
+router.get('/ressources', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+  try {
+    const ressources = await Promise.all(EBOOK_CATALOG.map(async (ebook, index) => {
+      const { data } = await supabase.storage.from(EBOOKS_BUCKET).createSignedUrl(ebook.file, 60 * 30);
+      return {
+        id: index,
+        titre: ebook.titre,
+        description: ebook.desc,
+        categorie: ebook.categorie,
+        url: data?.signedUrl || null,
+      };
+    }));
+    res.json({ ressources });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
 
 // Historique des évaluations (palier Carrière Coaching : ré-évaluation semestrielle).
 router.get('/evaluations', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
