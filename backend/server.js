@@ -45,6 +45,7 @@ app.use('/api/swipes', require('./routes/swipes'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/abonnements', require('./routes/abonnements'));
 app.use('/api/coaching', require('./routes/coaching'));
+app.use('/api/bilan-carriere', require('./routes/bilanCarriere'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/ai', require('./routes/ai'));
