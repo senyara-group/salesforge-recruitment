@@ -2601,13 +2601,13 @@ const PLANS = {
     {n:'Entrepreneur',slug:'solo',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Choisir Entrepreneur'},
     {n:'Starter',slug:'starter',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Choisir Starter',pop:true},
     {n:'Pro',slug:'pro',f:'Recrutement continu',p:399,u:'/mois',h:'Sans engagement',feats:['Tout Starter inclus','Offres illimitées','Super swipe en tête de pile candidat','Alertes en temps réel sur les nouveaux profils compatibles','Support prioritaire (24h)'],cta:'Choisir Pro'},
-    {n:'Partenaire',slug:null,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Partenaire',slug:null,hidden:true,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
     {n:'Entrepreneur',slug:'solo',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
     {n:'Starter',slug:'starter',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
     {n:'Pro',slug:'pro',f:'Recrutement continu',p:319,old:399,u:'/mois',h:'Facturé 3 828 €/an · -960 €',feats:['Tout Starter inclus','Offres illimitées','Super swipe en tête de pile candidat','Alertes en temps réel sur les nouveaux profils compatibles','Support prioritaire (24h)'],cta:'Économiser 20%'},
-    {n:'Partenaire',slug:null,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Partenaire',slug:null,hidden:true,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ]
 };
 async function selectPlan(plan, billing) {
@@ -2638,7 +2638,9 @@ async function loadCurrentPlan() {
   }
 }
 function renderPlans() {
-  document.getElementById('plans-row').innerHTML = PLANS[BILLING].map(p => {
+  // Palier "hidden" : prêt côté code (Partenaire, sur devis) mais pas encore affiché
+  // — décision Guillaume 2026-09-05, retirer le filtre pour le réactiver.
+  document.getElementById('plans-row').innerHTML = PLANS[BILLING].filter(p => !p.hidden).map(p => {
     const active = isCurrentPlan(p);
     return `
     <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
