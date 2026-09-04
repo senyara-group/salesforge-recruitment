@@ -206,7 +206,8 @@ async function upsertCandidature(candidatId, offreId, action, source = 'recruteu
 }
 
 function normalizeCandidate(candidature, context = {}) {
-  const candidat = candidature.candidats || {};
+  const snapshotProfile = candidature.snapshot?.profile || {};
+  const candidat = Object.keys(snapshotProfile).length ? { ...(candidature.candidats || {}), ...snapshotProfile } : (candidature.candidats || {});
   const axes = candidat.axes?.resultat?.axes || candidat.axes || {};
   const axisEntries = Array.isArray(axes)
     ? axes
@@ -221,6 +222,11 @@ function normalizeCandidate(candidature, context = {}) {
     match_id: context.match?.id || null,
     match_ids: context.matchIds || [],
     discussed: Boolean(context.discussed),
+    statut: candidature.statut || 'envoyee',
+    offre_id: candidature.offre_id,
+    offre_title: candidature.offres?.titre || 'Offre',
+    cv_snapshot: candidature.snapshot?.cv || null,
+    internal_note: candidature.internal_note || '',
     av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
     bg: '#1340E0',
     name,
@@ -311,7 +317,7 @@ router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => 
   try {
     const current = await ensureRecruiterProfile(req.user.id);
 
-    const { entreprise, secteur, plan, questions, matching } = req.body;
+    const { entreprise, secteur, questions, matching } = req.body;
     const nextMatching = matching === undefined
       ? current.matching
       : mergeMatching(current.matching, matching);
@@ -321,7 +327,6 @@ router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => 
       .update(definedOnly({
         entreprise,
         secteur,
-        plan,
         questions,
         matching: nextMatching,
       }))
@@ -348,12 +353,13 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
     const offreIds = offres.map((offre) => offre.id);
 
     const { data: candidatures, error: candidaturesError } = offreIds.length
-      ? await supabase.from('candidatures').select('id, statut, created_at').in('offre_id', offreIds)
+      ? await supabase.from('candidatures').select('id, statut, created_at').in('offre_id', offreIds).or('lettre_type.is.null,lettre_type.neq.recruteur_like')
       : { data: [], error: null };
 
     if (candidaturesError) return res.status(400).json({ error: candidaturesError });
 
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const activeOfferCount = offres.filter((offre) => offre.statut === 'active').length;
     const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
     const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
     const { avatar_url } = await withFreshRecruiterAvatarUrl(recruteur);
@@ -362,8 +368,8 @@ router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => 
       recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
       chauds: candidatures.filter((c) => c.statut === 'repondu' || c.statut === 'entretien').length,
       pipeline: candidatures.length,
-      offres: offres.length,
-      plan_label: `Plan ${planName} · ${offres.length} offres actives`,
+      offres: activeOfferCount,
+      plan_label: `Plan ${planName} · ${activeOfferCount} offre${activeOfferCount > 1 ? 's' : ''} active${activeOfferCount > 1 ? 's' : ''}`,
       entreprise: recruteur.entreprise || '',
       avatar_url,
     });
@@ -417,8 +423,9 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
     const { data, error } = offreIds.length
       ? await supabase
         .from('candidatures')
-        .select('id, statut, candidat_id, offre_id, candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
+        .select('id, statut, snapshot, internal_note, candidat_id, offre_id, offres(id,titre), candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
         .in('offre_id', offreIds)
+        .or('lettre_type.is.null,lettre_type.neq.recruteur_like')
       : { data: [], error: null };
     if (error) return res.status(400).json({ error });
 
@@ -453,14 +460,27 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
       matchesByCandidate.get(candidateKey).push(match);
     });
 
-    const pipeline = { nouveau: [], contacte: [] };
+    await Promise.all((data || []).map(async (candidature) => {
+      const cv = candidature.snapshot?.cv;
+      if (!cv?.path) return;
+      const { data: signed, error } = await supabase.storage.from(cv.bucket || 'candidate-cvs').createSignedUrl(cv.path, 60 * 60);
+      if (!error && signed?.signedUrl) candidature.snapshot.cv.url = signed.signedUrl;
+    }));
+
+    const pipeline = { nouveau: [], vu: [], contacte: [], entretien: [], offre: [], termine: [] };
     data.forEach((candidature) => {
       const candidateKey = String(candidature.candidat_id);
       const candidateMatches = matchesByCandidate.get(candidateKey) || [];
       const match = matchesByPair.get(`${candidature.offre_id}:${candidature.candidat_id}`) || candidateMatches[0] || null;
       const candidateMatchIds = candidateMatches.map((item) => item.id);
       const discussed = candidateMatchIds.some((id) => discussedMatchIds.has(String(id)));
-      pipeline[discussed ? 'contacte' : 'nouveau'].push(normalizeCandidate(candidature, {
+      const status = candidature.statut || 'envoyee';
+      const stage = ['envoyee', 'nouveau'].includes(status) ? 'nouveau'
+        : status === 'vu' ? 'vu'
+          : ['contacte', 'repondu'].includes(status) ? 'contacte'
+            : status === 'entretien' ? 'entretien'
+              : status === 'offre' ? 'offre' : 'termine';
+      pipeline[stage].push(normalizeCandidate(candidature, {
         match,
         matchIds: candidateMatchIds,
         discussed,
@@ -554,8 +574,18 @@ router.put('/pipeline/move', authMiddleware, requireRecruiterPlan, (_req, res) =
 router.post('/candidat-vu', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { candidat_id } = req.body;
-    if (!candidat_id) return res.status(400).json({ error: 'candidat_id requis' });
+    const { candidat_id, candidature_id } = req.body;
+    if (!candidat_id || !candidature_id) return res.status(400).json({ error: 'candidat_id et candidature_id requis' });
+    const { data: ownedApplication, error: ownedError } = await supabase.from('candidatures')
+      .select('id,statut,offres(recruteur_id)').eq('id', candidature_id).eq('candidat_id', candidat_id).maybeSingle();
+    if (ownedError) throw ownedError;
+    if (!ownedApplication || String(ownedApplication.offres?.recruteur_id) !== String(recruteur.id)) {
+      return res.status(403).json({ error: 'Candidature non autorisee' });
+    }
+    if (['envoyee', 'nouveau'].includes(ownedApplication.statut)) {
+      await supabase.from('candidatures').update({ statut: 'vu', updated_at: new Date().toISOString() })
+        .eq('id', ownedApplication.id).in('statut', ['envoyee', 'nouveau']);
+    }
 
     // Scénario 03-C : consultations de profil sans match, condition > 3 sur 7 jours.
     recordProfileView(candidat_id, recruteur.id).then(async () => {
@@ -611,7 +641,8 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
     const { data: offres } = await supabase
       .from('offres')
       .select('id')
-      .eq('recruteur_id', recruteur.id);
+      .eq('recruteur_id', recruteur.id)
+      .or('statut.eq.active,statut.is.null');
     const offreIds = (offres || []).map((row) => row.id);
     if (!offreIds.length) return res.status(400).json({ error: 'Publiez une offre avant de matcher un candidat' });
 
@@ -639,8 +670,6 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
       .eq('candidat_id', candidat_id)
       .in('offre_id', offreIds);
     const candidateLikedOfferId = existingCandidatures?.[0]?.offre_id || null;
-    const targetOfferId = candidateLikedOfferId || offreIds[0];
-    await upsertCandidature(candidat_id, targetOfferId, action);
 
     const { data: existingMatches, error: existingError } = offreIds.length
       ? await supabase
@@ -654,7 +683,7 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
 
     const existingMatch = existingMatches?.[0];
     if (!existingMatch && !candidateLikedOfferId) {
-      return res.json({ match: false, candidature_sent: true });
+      return res.json({ match: false, interest_recorded: true });
     }
 
     // Upsert atomique (contrainte d'unicité candidat_id+offre_id côté base) : si le

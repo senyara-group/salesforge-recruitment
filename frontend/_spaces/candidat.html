@@ -1083,6 +1083,18 @@ button,input,textarea,select{font-family:inherit}
     <div class="page-kicker">Tableau de bord</div>
     <h1 class="sf page-title">Votre activité</h1>
     <p class="page-intro">Suivez vos démarches et concentrez-vous sur la prochaine action utile.</p>
+    <div class="priority-tools" aria-label="Outils prioritaires">
+      <article class="priority-card priority-card-live" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
+        <div class="priority-icon" aria-hidden="true">CV</div>
+        <div class="priority-copy"><div class="feature-status feature-status-live" id="home-cv-feature-state">CV IA</div><h2 class="sf">Améliorer mon CV</h2><p>Analysez les points forts et obtenez des reformulations sans inventer votre parcours.</p><span class="priority-document" id="home-cv-status">Aucun CV importé</span></div>
+        <span class="priority-action">Ouvrir CV IA</span>
+      </article>
+      <article class="priority-card priority-card-live" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
+        <div class="priority-icon" aria-hidden="true">IA</div>
+        <div class="priority-copy"><div class="feature-status feature-status-live" id="home-coach-feature-state">Coach IA</div><h2 class="sf">Préparer mes échanges</h2><p>Travaillez un entretien, votre pitch ou une situation commerciale.</p><span class="priority-document" id="home-coach-status">Démarrer une conversation</span></div>
+        <span class="priority-action">Ouvrir le coach</span>
+      </article>
+    </div>
     <div class="photo-nudge" id="photo-nudge" style="display:none">
       <div class="photo-nudge-ico"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
       <div class="photo-nudge-txt">
@@ -1131,8 +1143,11 @@ button,input,textarea,select{font-family:inherit}
       <article class="tool-row" onclick="go('test')">
         <div class="tool-icon">ADN</div><div class="tool-copy"><div class="tool-eyebrow">Évaluation</div><h2 class="sf">Test ADN Commercial</h2><p>Identifiez votre profil et vos axes commerciaux à partir du questionnaire existant.</p></div><span class="tool-action">Accéder au test</span>
       </article>
-      <article class="tool-row" onclick="go('profile');setTimeout(toggleProfileEdit,0)">
-        <div class="tool-icon">CV</div><div class="tool-copy"><div class="tool-eyebrow">Documents</div><h2 class="sf">CV et candidature</h2><p>Importez ou remplacez les documents présentés aux recruteurs.</p></div><span class="tool-action">Gérer mes documents</span>
+      <article class="tool-row" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
+        <div class="tool-icon">CV</div><div class="tool-copy"><div class="tool-eyebrow">Import assisté</div><h2 class="sf">Mon CV</h2><p>Importez le document original et complétez plus rapidement les informations de base de votre profil.</p></div><span class="tool-action">Gérer mon CV</span>
+      </article>
+      <article class="tool-row" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
+        <div class="tool-icon">IA</div><div class="tool-copy"><div class="tool-eyebrow">Entraînement</div><h2 class="sf">Coach IA</h2><p>Préparez un entretien, améliorez votre pitch ou simulez une situation commerciale.</p></div><span class="tool-action">Ouvrir le coach</span>
       </article>
     </div>
     <div class="section-divider"><div><div class="sec-t sf">Bibliothèque pratique</div><p>Des guides directement consultables, sans quitter votre parcours.</p></div></div>
@@ -1599,6 +1614,43 @@ button,input,textarea,select{font-family:inherit}
   </div>
 </div>
 
+<!-- CV IA -->
+<div id="p-cv" class="page">
+  <div class="sec cv-layout">
+    <div class="page-heading"><div><div class="page-kicker">Candidature</div><h1 class="page-title sf">CV IA</h1><p class="page-intro">Vérifiez le texte extrait, ciblez un poste puis obtenez des recommandations et une version améliorable, sans ajout de faits absents.</p></div><span class="ai-availability" id="cv-ai-availability">Vérification du service…</span></div>
+    <section class="cv-workspace" aria-labelledby="cv-workspace-title">
+      <div class="cv-workspace-icon" aria-hidden="true">CV</div>
+      <div class="cv-workspace-copy"><div class="feature-status feature-status-live" id="cv-tool-state">À compléter</div><h2 class="sf" id="cv-workspace-title">Votre document</h2><p id="cv-tool-name">Aucun CV importé</p><small>PDF, DOC ou DOCX · 8 Mo maximum · document original conservé</small></div>
+      <div class="cv-workspace-actions"><button class="btn bp" type="button" onclick="document.getElementById('cv-file-tool').click()" id="cv-tool-upload">Importer mon CV</button><button class="btn bo" type="button" id="cv-tool-use" onclick="loadStoredCvText()" disabled>Utiliser ce CV</button><button class="btn bo" type="button" id="cv-tool-open" onclick="openProfileCV()" disabled>Original</button><input type="file" id="cv-file-tool" hidden accept=".pdf,.doc,.docx" onchange="updateCVForAnalysis(this)"></div>
+    </section>
+    <section class="ai-form-card" aria-labelledby="cv-analysis-title">
+      <div class="section-divider"><div><div class="sec-t sf" id="cv-analysis-title">Préparer l’analyse</div><p>Corrigez l’extraction si nécessaire. Pour un PDF scanné ou illisible, collez directement le texte.</p></div></div>
+      <label class="form-label" for="cv-source-text">Texte du CV</label><textarea class="form-textarea ai-source-text" id="cv-source-text" rows="12" maxlength="30000" placeholder="Collez ici le contenu de votre CV…"></textarea>
+      <div class="ai-fields"><label><span class="form-label">Poste visé</span><input class="form-input" id="cv-target-role" maxlength="160" placeholder="Ex. Account Executive B2B"></label><label><span class="form-label">Offre ciblée <small>(facultatif)</small></span><textarea class="form-textarea" id="cv-offer-text" rows="5" maxlength="20000" placeholder="Collez le descriptif de l’offre…"></textarea></label></div>
+      <div class="form-feedback" id="cv-analysis-feedback" role="status"></div><button class="btn bp" id="cv-analyse-btn" type="button" onclick="analyseCVWithAI()">Analyser mon CV</button>
+    </section>
+    <section class="ai-results" id="cv-results" hidden aria-live="polite">
+      <div class="ai-result-grid"><article><h2 class="sf">Points forts</h2><ul id="cv-strengths"></ul></article><article><h2 class="sf">À clarifier</h2><ul id="cv-clarifications"></ul></article><article><h2 class="sf">Priorités</h2><ol id="cv-priorities"></ol></article><article><h2 class="sf">Questions à compléter</h2><ul id="cv-questions"></ul></article></div>
+      <article class="rewrite-card"><h2 class="sf">Propositions de reformulation</h2><div id="cv-rewrites"></div></article>
+      <article class="improved-cv-card"><div><h2 class="sf">Version améliorée</h2><p>Relisez et modifiez cette proposition. Elle ne remplacera jamais automatiquement le CV de votre profil.</p></div><textarea class="form-textarea" id="cv-improved-text" rows="18" maxlength="40000"></textarea><div class="cv-export-actions"><button class="btn bp" type="button" onclick="saveImprovedCV()">Enregistrer mes modifications</button><button class="btn bo" type="button" onclick="copyImprovedCV()">Copier</button><button class="btn bo" type="button" onclick="downloadImprovedCV()">Télécharger en .txt</button></div></article>
+    </section>
+  </div>
+</div>
+
+<!-- COACH IA -->
+<div id="p-coach" class="page">
+  <div class="sec coach-layout">
+    <div class="page-heading"><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach IA</h1><p class="page-intro">Un outil de préparation qui pose des questions et vous aide à progresser. Il ne s’agit pas d’un recruteur réel.</p></div><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div>
+    <div class="coach-shell">
+      <aside class="coach-history"><div class="coach-history-head"><h2 class="sf">Conversations</h2><button class="btn bo bsm" type="button" onclick="showCoachSetup()">Nouvelle</button></div><div id="coach-history-list" class="coach-history-list"><div class="loading-state"><div class="spinner"></div></div></div></aside>
+      <section class="coach-main">
+        <div id="coach-setup" class="coach-setup"><h2 class="sf">Choisissez votre entraînement</h2><div class="coach-starters"><button type="button" onclick="selectCoachMode(this,'interview')"><strong>Préparer un entretien</strong><span>Anticiper les questions et structurer ses réponses.</span></button><button type="button" onclick="selectCoachMode(this,'pitch')"><strong>Améliorer son pitch</strong><span>Travailler un discours clair, crédible et concis.</span></button><button type="button" onclick="selectCoachMode(this,'simulation')"><strong>Situation commerciale</strong><span>Jouer une mise en situation puis recevoir un débrief.</span></button></div><fieldset class="coach-context"><legend>Contexte à partager avec le coach</legend><label><input type="checkbox" id="coach-use-profile"> Mon profil SwipSales</label><label><input type="checkbox" id="coach-use-cv"> Le texte du CV affiché dans CV IA</label><label for="coach-offer-text">Offre ciblée <small>(facultatif)</small></label><textarea class="form-textarea" id="coach-offer-text" rows="5" maxlength="20000" placeholder="Cette offre ne sera partagée que pour cette conversation."></textarea></fieldset><div class="form-feedback" id="coach-setup-feedback" role="status"></div><button class="btn bp" id="coach-start-btn" type="button" onclick="createCoachConversation()" disabled>Commencer</button></div>
+        <div id="coach-conversation" class="coach-conversation" hidden><div class="coach-conversation-head"><div><span id="coach-phase" class="feature-status">Coaching</span><h2 class="sf" id="coach-title">Conversation</h2></div><button class="btn bo bsm cv-delete" type="button" onclick="deleteCoachConversation()">Supprimer</button></div><div id="coach-messages" class="coach-messages" role="log" aria-live="polite"></div><div class="coach-error" id="coach-error" hidden><span id="coach-error-text"></span><button class="btn bo bsm" type="button" onclick="retryCoachMessage()">Réessayer</button></div><form class="coach-composer" onsubmit="sendCoachMessage(event)"><label class="sr-only" for="coach-input">Votre message</label><textarea id="coach-input" class="form-textarea" rows="2" maxlength="4000" placeholder="Écrivez votre réponse…" onkeydown="coachComposerKey(event)"></textarea><button class="btn bp" id="coach-send-btn" type="submit">Envoyer</button></form></div>
+      </section>
+    </div>
+  </div>
+</div>
+
 <!-- COMPTE -->
 <div id="p-account" class="page">
   <div class="sec account-layout">
@@ -1627,8 +1679,10 @@ button,input,textarea,select{font-family:inherit}
 <!-- BOTTOM NAV -->
 <nav class="bnav" id="bnav" style="display:none">
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
+  <button class="bn bn-secondary" id="nav-cv" onclick="go('cv')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg><span>CV IA</span></button>
+  <button class="bn bn-secondary" id="nav-coach" onclick="go('coach')"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg><span>Coach IA</span></button>
   <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Opportunités</span></button>
-  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
+  <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Outils</span></button>
   <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
   <button class="bn bn-secondary" id="nav-account" onclick="go('account')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg><span>Compte</span></button>
@@ -1719,6 +1773,7 @@ let NOTIFICATIONS = [];
 let CANDIDAT_ID = null;
 let NOTIF_CHANNEL_MSG = null;
 let NOTIF_CHANNEL_MATCH = null;
+let NOTIF_CHANNEL_APPLICATION = null;
 
 let supabaseClient = null;
 
@@ -1849,9 +1904,14 @@ function adn(axes) {
     `<div class="adn-row"><div class="adn-l">${l}</div><div class="adn-tr"><div class="adn-f" style="width:${v}%"></div></div><div class="adn-s sf" style="color:${v<80?'var(--a)':'var(--b)'}">${v}</div></div>`
   ).join('');
 }
-function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
+function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',nouveau:'chip-g',contacte:'chip-a',repondu:'chip-a',entretien:'chip-pu',offre:'chip-g',embauche:'chip-g',refusee:'chip-r',retiree:'chip-r'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
-const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','account','pricing'];
+const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','cv','coach','account','pricing'];
+let AI_AVAILABLE = false;
+let ACTIVE_CV_ANALYSIS_ID = '';
+let COACH_MODE = '';
+let ACTIVE_CONVERSATION_ID = '';
+let COACH_SENDING = false;
 function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
 function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
@@ -1985,7 +2045,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, cv:loadCVTool, coach:loadCoach, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2105,8 +2165,9 @@ async function loadHome() {
       api('GET', '/candidats/stats'),
       api('GET', '/candidatures?limit=3')
     ]);
-    renderHomeScore(profil); renderHomeKPIs(stats);
+    renderHomeScore(profil); renderProfileCV(profil); renderHomeKPIs(stats);
     renderHomeCands(cands);
+    loadAIHighlights();
     const nudge = document.getElementById('photo-nudge');
     if (nudge) nudge.style.display = profil.avatar_url ? 'none' : 'flex';
   } catch(e) {
@@ -2241,7 +2302,7 @@ function buildCard(o) {
   const cc = o.m >= 90 ? 'var(--pu)' : o.m >= 80 ? 'var(--b)' : 'var(--a)';
   const shownTags = o.tags.slice(0, 5);
   d.innerHTML = `
-    <div class="sw-lbl like">Match</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
+    <div class="sw-lbl like">Postuler</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Candidature prioritaire</div>
     <div class="card-top"><div class="card-bg ${o.g}"></div><div class="card-fade"></div>
       <div class="card-badge-row"><span class="card-type-badge">${o.type}</span>${o.tags.slice(0, 3).map(t=>`<span class="card-top-tag">${t}</span>`).join('')}</div>
       <div class="card-match-box" style="color:${cc}"><div class="card-match-n sf" style="color:${cc}">${o.m}%</div><div class="card-match-l">Compatibilité</div></div>
@@ -2321,6 +2382,7 @@ async function doSwipe(action, offre, attempt = 1) {
   try {
     const r = await api('POST', '/swipes', { offre_id: offre.id, action });
     if (r.match) showMatch(offre, r);
+    else if (r.candidature_sent) toast(action === 'super' ? 'Candidature prioritaire envoyée' : 'Candidature envoyée');
   } catch(e) {
     if (e.message?.includes('Limite Freemium')) {
       toast('Limite de 5 swipes atteinte — passez à un plan payant');
@@ -2370,8 +2432,13 @@ function renderCands(c) {
     return;
   }
   document.getElementById('cands-list').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div><span class="chip ${cChip(x.statut)}">${x.sl}</span><div style="font-size:11px;color:var(--mu);text-align:right;margin-top:3px">${x.date}</div></div></div>`
+    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${x.sl}</span><div class="candidate-date">${x.date}</div>${x.can_withdraw?`<button class="link-danger" type="button" onclick="withdrawApplication('${x.id}')">Retirer</button>`:''}</div></div>`
   ).join('');
+}
+async function withdrawApplication(id) {
+  if (!confirm('Retirer cette candidature ? Le recruteur verra qu’elle a été retirée.')) return;
+  try { await api('DELETE', '/candidatures/' + encodeURIComponent(id)); toast('Candidature retirée'); await loadCandidatures(); }
+  catch (error) { toast(error.message || 'Retrait impossible'); }
 }
 
 // ------------------------------------------------------------
@@ -2633,7 +2700,7 @@ async function loadMessages() {
     list.classList.remove('empty');
     document.getElementById('chat-placeholder')?.classList.remove('hidden');
     list.innerHTML = THREADS.map(t=>
-      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
+      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-context">${esc(t.context || 'Offre')}</div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
     ).join('');
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
@@ -2652,7 +2719,7 @@ async function renderMessagesWelcome() {
   return `<div class="msg-welcome">
       <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
       <h2 class="sf">Bienvenue sur Swip Sales</h2>
-      <div class="msg-welcome-sub">Ici, vous ne postulez pas. On vient vous chercher.</div>
+      <div class="msg-welcome-sub">Vos échanges commencent après un intérêt mutuel ou une prise de contact du recruteur.</div>
       <div class="msg-welcome-text">${text}</div>
       ${cta}
     </div>`;
@@ -2665,7 +2732,7 @@ async function openThread(id, surface = 'messages') {
   ACTIVE_THREAD.surface = surface;
   const prefix = 'chat';
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
-  document.getElementById('chat-sub').textContent = thread.prev || 'Conversation Swip Sales';
+  document.getElementById('chat-sub').textContent = thread.context || thread.prev || 'Conversation Swip Sales';
   document.getElementById(prefix + '-panel').classList.add('on');
   document.getElementById('chat-placeholder')?.classList.add('hidden');
   document.getElementById(prefix + '-body').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
@@ -2773,6 +2840,7 @@ async function initNotifications() {
     if (!supabaseClient) { setTimeout(waitForClient, 400); return; }
     if (NOTIF_CHANNEL_MSG) NOTIF_CHANNEL_MSG.unsubscribe();
     if (NOTIF_CHANNEL_MATCH) NOTIF_CHANNEL_MATCH.unsubscribe();
+    if (NOTIF_CHANNEL_APPLICATION) NOTIF_CHANNEL_APPLICATION.unsubscribe();
 
     NOTIF_CHANNEL_MSG = supabaseClient
       .channel('notif-messages-' + USER.id)
@@ -2789,6 +2857,16 @@ async function initNotifications() {
       .channel('notif-matchs-' + CANDIDAT_ID)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matchs', filter: `candidat_id=eq.${CANDIDAT_ID}` }, () => {
         pushNotification({ type: 'match', icon: '🔥', title: 'Nouveau match !', text: 'Un recruteur a matché avec vous', page: 'messages' });
+      })
+      .subscribe();
+
+    NOTIF_CHANNEL_APPLICATION = supabaseClient
+      .channel('notif-candidatures-' + CANDIDAT_ID)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'candidatures', filter: `candidat_id=eq.${CANDIDAT_ID}` }, (payload) => {
+        if (payload.old?.statut === payload.new?.statut) return;
+        const labels = { vu:'Votre profil a été consulté',contacte:'Un recruteur souhaite échanger',repondu:'Votre réponse a été reçue',entretien:'Un entretien est proposé',offre:'Une proposition vous a été envoyée',embauche:'Votre candidature est retenue',refusee:'La candidature est clôturée' };
+        pushNotification({ type:'candidature', icon:'📌', title:'Candidature mise à jour', text:labels[payload.new?.statut] || 'Le statut de votre candidature a changé', page:'candidatures' });
+        if (document.getElementById('p-candidatures')?.classList.contains('on')) loadCandidatures();
       })
       .subscribe();
   };
@@ -3061,6 +3139,40 @@ function renderProfileCV(p) {
   if (label) label.textContent = name ? 'CV : ' + name : 'CV non ajouté';
   const deleteBtn = document.getElementById('delete-cv-btn');
   if (deleteBtn) deleteBtn.disabled = !has;
+  const homeStatus = document.getElementById('home-cv-status');
+  if (homeStatus) homeStatus.textContent = has ? (name || 'CV importé') : 'Aucun CV importé';
+  const toolState = document.getElementById('cv-tool-state');
+  if (toolState) {
+    toolState.textContent = has ? 'Document importé' : 'À compléter';
+    toolState.classList.toggle('feature-status-live', has);
+  }
+  const toolName = document.getElementById('cv-tool-name');
+  if (toolName) toolName.textContent = name || (has ? 'CV importé' : 'Aucun CV importé');
+  const toolUpload = document.getElementById('cv-tool-upload');
+  if (toolUpload) toolUpload.textContent = has ? 'Remplacer mon CV' : 'Importer mon CV';
+  const toolOpen = document.getElementById('cv-tool-open');
+  if (toolOpen) toolOpen.disabled = !PROFILE_CV_URL;
+  const toolUse = document.getElementById('cv-tool-use');
+  if (toolUse) toolUse.disabled = !has;
+  const toolDelete = document.getElementById('cv-tool-delete');
+  if (toolDelete) toolDelete.disabled = !has;
+}
+async function loadAIHighlights() {
+  try {
+    const config = await api('GET', '/assistant/config');
+    AI_AVAILABLE = Boolean(config.configured);
+    const [analysisResult, conversationResult] = await Promise.allSettled([api('GET', '/assistant/cv-analyses'), api('GET', '/assistant/conversations')]);
+    const analyses = analysisResult.status === 'fulfilled' ? analysisResult.value : [];
+    const conversations = conversationResult.status === 'fulfilled' ? conversationResult.value : [];
+    const cv = document.getElementById('home-cv-status');
+    const coach = document.getElementById('home-coach-status');
+    if (cv && analyses[0]) cv.textContent = 'Dernière analyse : ' + new Date(analyses[0].updated_at).toLocaleDateString('fr-FR');
+    if (coach && conversations[0]) coach.textContent = 'Reprendre : ' + conversations[0].title;
+    if (!AI_AVAILABLE) {
+      document.getElementById('home-cv-feature-state').textContent = 'Configuration requise';
+      document.getElementById('home-coach-feature-state').textContent = 'Configuration requise';
+    }
+  } catch (_error) {}
 }
 function openProfileCV() {
   if (!PROFILE_CV_URL) return toast('CV indisponible');
@@ -3175,6 +3287,216 @@ async function deleteCandidateDocument(kind) {
   } catch(e) {
     toast(e.message || 'Suppression impossible');
   }
+}
+
+// ------------------------------------------------------------
+// CV IA
+// ------------------------------------------------------------
+function setAiAvailability(id, configured) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = configured ? 'Service disponible' : 'Configuration IA requise';
+  el.classList.toggle('on', configured);
+}
+function setFeedback(id, message, error = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message || '';
+  el.classList.toggle('is-error', error);
+}
+async function loadCVTool() {
+  try {
+    const [profile, config] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/assistant/config')]);
+    AI_AVAILABLE = Boolean(config.configured);
+    renderProfileCV(profile);
+    setAiAvailability('cv-ai-availability', AI_AVAILABLE);
+    document.getElementById('cv-analyse-btn').disabled = !AI_AVAILABLE;
+    if (!AI_AVAILABLE) setFeedback('cv-analysis-feedback', 'Le fournisseur IA n’est pas configuré. Vous pouvez préparer le texte, mais pas lancer l’analyse.', true);
+    try { const analyses = await api('GET', '/assistant/cv-analyses'); if (analyses[0]) renderCVAnalysis(analyses[0]); }
+    catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Historique des analyses indisponible', true); }
+  } catch (error) {
+    setFeedback('cv-analysis-feedback', error.message || 'Chargement impossible', true);
+  }
+}
+async function updateCVForAnalysis(input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  const error = validateCVFile(file);
+  if (error) { setFeedback('cv-analysis-feedback', error, true); input.value = ''; return; }
+  setBtn('cv-tool-upload', true, 'Importer mon CV');
+  try {
+    const data = await uploadCandidateCV(file);
+    renderProfileCV({ cv_url: data.cv_url, axes: { meta: { cv_file_name: data.cv_file_name || file.name } } });
+    document.getElementById('cv-source-text').value = data.cv_text || '';
+    setFeedback('cv-analysis-feedback', data.cv_text?.length >= 40 ? 'Texte extrait : vérifiez-le avant l’analyse.' : 'Le document semble scanné ou illisible. Collez son texte pour continuer.', !data.cv_text?.length);
+    toast('CV original conservé sur votre profil');
+  } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Import impossible', true); }
+  finally { input.value = ''; setBtn('cv-tool-upload', false, 'Remplacer mon CV'); }
+}
+async function loadStoredCvText() {
+  setFeedback('cv-analysis-feedback', 'Extraction du document…');
+  try {
+    const data = await api('GET', '/candidats/cv-text');
+    document.getElementById('cv-source-text').value = data.text || '';
+    setFeedback('cv-analysis-feedback', data.readable ? 'Texte extrait : vérifiez-le avant l’analyse.' : data.message, !data.readable);
+    document.getElementById('cv-source-text').focus();
+  } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Extraction impossible', true); }
+}
+function renderList(id, values, emptyText) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  const items = Array.isArray(values) && values.length ? values : [emptyText];
+  items.forEach((value) => { const li = document.createElement('li'); li.textContent = value; el.appendChild(li); });
+}
+function renderCVAnalysis(record) {
+  const result = record.analysis || {};
+  ACTIVE_CV_ANALYSIS_ID = record.id;
+  renderList('cv-strengths', result.strengths, 'Aucun point fort explicite identifié.');
+  renderList('cv-clarifications', result.clarifications, 'Aucun élément signalé.');
+  renderList('cv-priorities', result.priorities, 'Aucune priorité signalée.');
+  renderList('cv-questions', result.questions, 'Aucune question complémentaire.');
+  const rewrites = document.getElementById('cv-rewrites');
+  rewrites.innerHTML = '';
+  (result.rewrites || []).forEach((rewrite) => {
+    const item = document.createElement('div'); item.className = 'rewrite-item';
+    const before = document.createElement('p'); before.textContent = rewrite.original || '';
+    const after = document.createElement('strong'); after.textContent = rewrite.suggestion || '';
+    const reason = document.createElement('small'); reason.textContent = rewrite.reason || '';
+    item.append(before, after, reason); rewrites.appendChild(item);
+  });
+  if (!rewrites.children.length) rewrites.textContent = 'Aucune reformulation proposée.';
+  document.getElementById('cv-improved-text').value = record.improved_text || result.improved_cv || '';
+  document.getElementById('cv-results').hidden = false;
+}
+async function analyseCVWithAI() {
+  const source = document.getElementById('cv-source-text').value.trim();
+  if (source.length < 40) return setFeedback('cv-analysis-feedback', 'Ajoutez au moins 40 caractères de contenu CV.', true);
+  setBtn('cv-analyse-btn', true, 'Analyser mon CV'); setFeedback('cv-analysis-feedback', 'Analyse en cours…');
+  try {
+    const data = await api('POST', '/assistant/cv-analyses', { source_text: source, target_role: document.getElementById('cv-target-role').value, offer_text: document.getElementById('cv-offer-text').value });
+    renderCVAnalysis(data); setFeedback('cv-analysis-feedback', 'Analyse terminée. Relisez chaque proposition avant usage.');
+    document.getElementById('cv-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Analyse impossible', true); }
+  finally { setBtn('cv-analyse-btn', false, 'Analyser mon CV'); }
+}
+async function saveImprovedCV() {
+  if (!ACTIVE_CV_ANALYSIS_ID) return toast('Aucune analyse à enregistrer');
+  try {
+    await api('PUT', '/assistant/cv-analyses/' + ACTIVE_CV_ANALYSIS_ID, { improved_text: document.getElementById('cv-improved-text').value });
+    toast('Version améliorée enregistrée');
+  } catch (error) { toast(error.message || 'Enregistrement impossible'); }
+}
+async function copyImprovedCV() {
+  const text = document.getElementById('cv-improved-text').value;
+  if (!text) return toast('Aucun texte à copier');
+  try { await navigator.clipboard.writeText(text); toast('CV copié'); }
+  catch (_error) { toast('Copie impossible dans ce navigateur'); }
+}
+function downloadImprovedCV() {
+  const text = document.getElementById('cv-improved-text').value;
+  if (!text) return toast('Aucun texte à télécharger');
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a'); link.href = url; link.download = 'cv-ameliore-swipsales.txt'; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ------------------------------------------------------------
+// COACH IA
+// ------------------------------------------------------------
+async function loadCoach() {
+  try {
+    const config = await api('GET', '/assistant/config');
+    AI_AVAILABLE = Boolean(config.configured); setAiAvailability('coach-ai-availability', AI_AVAILABLE);
+    if (!AI_AVAILABLE) setFeedback('coach-setup-feedback', 'Le fournisseur IA n’est pas configuré. Aucune réponse simulée ne sera affichée.', true);
+    try { renderCoachHistory(await api('GET', '/assistant/conversations')); }
+    catch (error) { document.getElementById('coach-history-list').innerHTML = '<div class="empty-state">' + esc(error.message || 'Historique indisponible') + '</div>'; }
+  } catch (error) {
+    setFeedback('coach-setup-feedback', error.message || 'Coach indisponible', true);
+    document.getElementById('coach-history-list').innerHTML = '<div class="empty-state">Historique indisponible</div>';
+  }
+}
+function renderCoachHistory(items) {
+  const list = document.getElementById('coach-history-list'); list.innerHTML = '';
+  if (!items.length) { list.innerHTML = '<div class="empty-state">Aucune conversation</div>'; return; }
+  items.forEach((conversation) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'coach-history-item';
+    const title = document.createElement('strong'); title.textContent = conversation.title;
+    const date = document.createElement('span'); date.textContent = new Date(conversation.updated_at).toLocaleDateString('fr-FR');
+    button.append(title, date); button.onclick = () => openCoachConversation(conversation.id); list.appendChild(button);
+  });
+}
+function showCoachSetup() {
+  ACTIVE_CONVERSATION_ID = ''; COACH_MODE = '';
+  document.getElementById('coach-conversation').hidden = true; document.getElementById('coach-setup').hidden = false;
+  document.querySelectorAll('.coach-starters button').forEach((button) => button.classList.remove('on'));
+  document.getElementById('coach-start-btn').disabled = true;
+}
+function selectCoachMode(button, mode) {
+  COACH_MODE = mode; document.querySelectorAll('.coach-starters button').forEach((item) => item.classList.remove('on')); button.classList.add('on');
+  document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE;
+}
+const COACH_OPENERS = { interview: 'Aide-moi à préparer un entretien. Commence par me poser la question la plus utile pour cadrer la préparation.', pitch: 'Aide-moi à améliorer mon pitch. Commence par me demander le contexte et le public visé.', simulation: 'Je veux m’entraîner à une situation commerciale. Aide-moi d’abord à choisir et cadrer le scénario.' };
+async function createCoachConversation() {
+  if (!COACH_MODE || !AI_AVAILABLE) return;
+  const useCv = document.getElementById('coach-use-cv').checked;
+  const cvText = document.getElementById('cv-source-text').value.trim();
+  if (useCv && !cvText) return setFeedback('coach-setup-feedback', 'Ouvrez CV IA et ajoutez ou collez le texte à partager.', true);
+  setBtn('coach-start-btn', true, 'Commencer');
+  try {
+    const conversation = await api('POST', '/assistant/conversations', { mode: COACH_MODE, use_profile: document.getElementById('coach-use-profile').checked, use_cv: useCv, cv_text: cvText, offer_text: document.getElementById('coach-offer-text').value });
+    ACTIVE_CONVERSATION_ID = conversation.id; showCoachConversation(conversation); await sendCoachContent(COACH_OPENERS[COACH_MODE]); await refreshCoachHistory();
+  } catch (error) { setFeedback('coach-setup-feedback', error.message || 'Création impossible', true); }
+  finally { setBtn('coach-start-btn', false, 'Commencer'); }
+}
+function showCoachConversation(conversation) {
+  document.getElementById('coach-setup').hidden = true; document.getElementById('coach-conversation').hidden = false;
+  document.getElementById('coach-title').textContent = conversation.title || 'Conversation'; renderCoachMessages(conversation.messages || []);
+}
+async function openCoachConversation(id) {
+  try { const conversation = await api('GET', '/assistant/conversations/' + id); ACTIVE_CONVERSATION_ID = id; COACH_MODE = conversation.mode; showCoachConversation(conversation); }
+  catch (error) { toast(error.message || 'Conversation indisponible'); }
+}
+function renderCoachMessages(messages) {
+  const list = document.getElementById('coach-messages'); list.innerHTML = '';
+  messages.forEach(appendCoachMessage);
+  if (!messages.length) list.innerHTML = '<div class="empty-state">La conversation va commencer…</div>';
+  list.scrollTop = list.scrollHeight;
+}
+function appendCoachMessage(message) {
+  const list = document.getElementById('coach-messages'); list.querySelector('.empty-state')?.remove();
+  const item = document.createElement('article'); item.className = 'coach-message ' + (message.role === 'user' ? 'is-user' : 'is-assistant');
+  const label = document.createElement('span'); label.textContent = message.role === 'user' ? 'Vous' : 'Coach IA';
+  const content = document.createElement('p'); content.textContent = message.content;
+  item.append(label, content); list.appendChild(item);
+  document.getElementById('coach-phase').textContent = message.phase === 'simulation' ? 'Mise en situation' : message.phase === 'debrief' ? 'Débrief' : 'Coaching';
+  list.scrollTop = list.scrollHeight;
+}
+function setCoachWaiting(waiting) {
+  COACH_SENDING = waiting; document.getElementById('coach-send-btn').disabled = waiting; document.getElementById('coach-input').disabled = waiting;
+  if (waiting) appendCoachMessage({ role: 'assistant', content: 'Réflexion en cours…', phase: 'coaching' });
+}
+async function sendCoachContent(content) {
+  document.getElementById('coach-error').hidden = true; appendCoachMessage({ role: 'user', content, phase: COACH_MODE === 'simulation' ? 'simulation' : 'coaching' }); setCoachWaiting(true);
+  try {
+    const message = await api('POST', '/assistant/conversations/' + ACTIVE_CONVERSATION_ID + '/messages', { content });
+    document.querySelector('#coach-messages .coach-message:last-child')?.remove(); appendCoachMessage(message);
+  } catch (error) {
+    document.querySelector('#coach-messages .coach-message:last-child')?.remove(); document.getElementById('coach-error-text').textContent = error.message || 'Réponse impossible'; document.getElementById('coach-error').hidden = false;
+  } finally { setCoachWaiting(false); document.getElementById('coach-input').focus(); }
+}
+async function sendCoachMessage(event) { event.preventDefault(); const input = document.getElementById('coach-input'); const content = input.value.trim(); if (!content || COACH_SENDING) return; input.value = ''; await sendCoachContent(content); }
+function coachComposerKey(event) { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.target.form.requestSubmit(); } }
+async function retryCoachMessage() {
+  if (!ACTIVE_CONVERSATION_ID || COACH_SENDING) return; document.getElementById('coach-error').hidden = true; setCoachWaiting(true);
+  try { const message = await api('POST', '/assistant/conversations/' + ACTIVE_CONVERSATION_ID + '/retry'); document.querySelector('#coach-messages .coach-message:last-child')?.remove(); appendCoachMessage(message); }
+  catch (error) { document.querySelector('#coach-messages .coach-message:last-child')?.remove(); document.getElementById('coach-error-text').textContent = error.message || 'Nouvelle tentative impossible'; document.getElementById('coach-error').hidden = false; }
+  finally { setCoachWaiting(false); }
+}
+async function refreshCoachHistory() { try { renderCoachHistory(await api('GET', '/assistant/conversations')); } catch (_error) {} }
+async function deleteCoachConversation() {
+  if (!ACTIVE_CONVERSATION_ID || !confirm('Supprimer cette conversation ?')) return;
+  try { await api('DELETE', '/assistant/conversations/' + ACTIVE_CONVERSATION_ID); showCoachSetup(); await refreshCoachHistory(); toast('Conversation supprimée'); }
+  catch (error) { toast(error.message || 'Suppression impossible'); }
 }
 
 // ------------------------------------------------------------

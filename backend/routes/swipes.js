@@ -4,6 +4,9 @@ const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, getUserEmail } = require('../utils/profiles');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
+const { buildCandidateSnapshot } = require('../utils/applicationWorkflow');
+
+const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
 
 
 function appendUnique(values = [], value) {
@@ -71,29 +74,43 @@ function includesId(values = [], ids = []) {
   return ids.filter(Boolean).some((id) => set.has(String(id)));
 }
 
-async function upsertCandidature(candidatId, offreId, action) {
+async function upsertCandidature(candidat, offreId, action) {
   const { data: existingCandidature } = await supabase
     .from('candidatures')
     .select('id')
-    .eq('candidat_id', candidatId)
+    .eq('candidat_id', candidat.id)
     .eq('offre_id', offreId)
     .maybeSingle();
+
+  if (existingCandidature) return { created: false, id: existingCandidature.id };
 
   const payload = {
     statut: 'envoyee',
     lettre_type: action === 'super' ? 'prioritaire' : 'candidate_like',
   };
 
-  const candidatureQuery = existingCandidature
-    ? supabase.from('candidatures').update(payload).eq('id', existingCandidature.id)
-    : supabase.from('candidatures').insert({
-      candidat_id: candidatId,
+  let snapshot;
+  if (!existingCandidature) {
+    const meta = candidat.axes?.meta || {};
+    let cvSnapshotPath = '';
+    if (meta.cv_path) {
+      cvSnapshotPath = `${candidat.user_id}/applications/${offreId}-${Date.now()}-${meta.cv_file_name || 'cv'}`;
+      const { error: copyError } = await supabase.storage.from(meta.cv_bucket || CV_BUCKET).copy(meta.cv_path, cvSnapshotPath);
+      if (copyError) throw new Error('Impossible de figer le CV transmis avec cette candidature');
+    }
+    snapshot = buildCandidateSnapshot(candidat, { ...meta, cv_snapshot_path: cvSnapshotPath });
+  }
+
+  const candidatureQuery = supabase.from('candidatures').insert({
+      candidat_id: candidat.id,
       offre_id: offreId,
+      snapshot,
       ...payload,
     });
 
-  const { error } = await candidatureQuery;
+  const { data, error } = await candidatureQuery.select('id').single();
   if (error) throw error;
+  return { created: true, id: data.id };
 }
 
 router.post('/', authMiddleware, async (req, res) => {
@@ -108,12 +125,13 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const { data: offre, error: offreError } = await supabase
       .from('offres')
-      .select('id, titre, auto_candidature, recruteurs(id, user_id, matching, questions)')
+      .select('id, titre, statut, auto_candidature, recruteurs(id, user_id, matching, questions)')
       .eq('id', offre_id)
       .maybeSingle();
 
     if (offreError) return res.status(400).json({ error: offreError });
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
+    if (offre.statut && offre.statut !== 'active') return res.status(409).json({ error: 'Cette offre n’accepte plus de candidatures' });
 
     const usage = await markOfferSeenAndCount(candidat, offre_id);
     await markCandidateChoice({ ...candidat, swipes_meta: usage }, offre_id, action);
@@ -127,10 +145,10 @@ router.post('/', authMiddleware, async (req, res) => {
     if (action === 'pass') return res.json({ match: false });
 
     const candidatureSent = true;
-    if (candidatureSent) await upsertCandidature(candidat.id, offre_id, action);
+    const candidatureResult = candidatureSent ? await upsertCandidature(candidat, offre_id, action) : null;
 
     // Scénario 02, étape 5 : notifie le recruteur d'une nouvelle candidature.
-    if (candidatureSent && offre.recruteurs?.user_id) {
+    if (candidatureResult?.created && offre.recruteurs?.user_id) {
       getUserEmail(offre.recruteurs.user_id).then((recruiterEmail) => {
         trackBrevoEvent(recruiterEmail, 'candidature_recue', {
           poste: offre.titre,
@@ -168,6 +186,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.json({
         match: false,
         candidature_sent: candidatureSent,
+        candidature_duplicate: !candidatureResult?.created,
         swipes_u: usage.swipes_used,
         swipes_m: 999,
       });
@@ -191,6 +210,7 @@ router.post('/', authMiddleware, async (req, res) => {
     res.json({
       match: true,
       candidature_sent: candidatureSent,
+      candidature_duplicate: !candidatureResult?.created,
       questions: offre.recruteurs?.questions || [],
       swipes_u: usage.swipes_used,
       swipes_m: 999,

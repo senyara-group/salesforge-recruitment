@@ -40,6 +40,26 @@ Les valeurs obligatoires pour l'authentification et les donnees sont:
 
 Les valeurs Stripe sont necessaires uniquement pour les paiements et les abonnements.
 
+## CV IA et Coach IA
+
+Les deux outils utilisent une API serveur compatible avec le format Chat Completions. Aucun appel fournisseur n'est effectue depuis le navigateur.
+
+1. Appliquer manuellement `backend/ai_features_migration.sql` et `backend/recruitment_integrity_migration.sql` au projet Supabase de developpement.
+2. Configurer `AI_API_KEY`, `AI_API_URL` et `AI_MODEL` dans `backend/.env`.
+3. Laisser `AI_CV_ACCESS_PLANS=*` et `AI_COACH_ACCESS_PLANS=*` pour autoriser tous les candidats, ou fournir une liste explicite de plans separes par des virgules.
+
+Sans clé ou modèle, les écrans restent consultables mais indiquent que le service IA n'est pas configuré et aucun résultat fictif n'est produit. Le choix commercial des plans autorisés reste donc centralisé dans la configuration, sans quota affiché comme une offre officielle.
+
+Pour tester :
+
+```powershell
+cd backend
+npm test
+npm run dev
+```
+
+Dans l'espace candidat, ouvrir `CV IA` pour importer, corriger, analyser et exporter le texte. Ouvrir `Coach IA` pour créer une conversation et choisir explicitement le profil, le CV ou une offre comme contexte.
+
 ## Deploiement Vercel
 
 Le projet peut etre deploye directement sur Vercel depuis la racine du repo.
