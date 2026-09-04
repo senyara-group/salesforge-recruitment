@@ -6,7 +6,7 @@ const PDFDocument = require('pdfkit');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const requireCandidatePlan = require('../middleware/requireCandidatePlan');
-const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan } = require('../utils/profiles');
+const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
@@ -1232,8 +1232,20 @@ Structure toujours ta réponse en 3 parties courtes :
 
 Reste concis (300 mots maximum), en français, orienté résultats commerciaux.`;
 
+// Quota partagé CV + pitch : 10 optimisations/mois cumulées (décision Guillaume
+// 2026-09-05), voir checkAndConsumeUsage dans utils/profiles.js.
+const OPTIMISATION_MONTHLY_LIMIT = 10;
+
 router.post('/optimiser-cv', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
   try {
+    const usage = await checkAndConsumeUsage(req.user.id, 'optimisation_cv_pitch', OPTIMISATION_MONTHLY_LIMIT);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'QUOTA_EXCEEDED',
+        message: `Limite de ${OPTIMISATION_MONTHLY_LIMIT} optimisations CV/pitch atteinte pour ce mois-ci. Ça repart à zéro le mois prochain.`,
+      });
+    }
+
     // Fichier envoyé directement (nouveau CV), sinon on relit le CV déjà enregistré
     // sur le profil — évite de forcer un nouvel upload juste pour l'analyser.
     const isMultipart = /multipart\/form-data/i.test(req.headers['content-type'] || '');
@@ -1273,6 +1285,14 @@ router.post('/optimiser-cv', authMiddleware, requireCandidatePlan('carriere'), a
 
 router.post('/optimiser-pitch', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
   try {
+    const usage = await checkAndConsumeUsage(req.user.id, 'optimisation_cv_pitch', OPTIMISATION_MONTHLY_LIMIT);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'QUOTA_EXCEEDED',
+        message: `Limite de ${OPTIMISATION_MONTHLY_LIMIT} optimisations CV/pitch atteinte pour ce mois-ci. Ça repart à zéro le mois prochain.`,
+      });
+    }
+
     const texte = String(req.body?.texte || '').trim();
     if (!texte || texte.length < 20) {
       return res.status(400).json({ error: 'Texte de pitch trop court à analyser' });

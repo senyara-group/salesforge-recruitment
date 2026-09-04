@@ -3582,7 +3582,7 @@ async function optimiserCv() {
       headers: { Authorization: 'Bearer ' + TOKEN },
     });
     const d = await r.json();
-    if (!r.ok) throw new Error(d.error?.message || d.error || 'Analyse impossible');
+    if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Analyse impossible');
     showOptimisationResult(d.suggestions);
   } catch (e) {
     showOptimisationResult(e.message || 'Erreur — vérifiez que vous avez un CV importé et l\'abonnement Carrière');

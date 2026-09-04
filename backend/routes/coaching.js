@@ -3,10 +3,11 @@ const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const requireCandidatePlan = require('../middleware/requireCandidatePlan');
-const { ensureCandidateProfile } = require('../utils/profiles');
+const { ensureCandidateProfile, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
 
 const CHAT_HISTORY_LIMIT = 20; // messages conservés par module (user+assistant confondus)
+const CHAT_MONTHLY_LIMIT = 100; // messages candidat/mois, tous modules confondus (décision Guillaume 2026-09-05)
 
 // Contrainte légale non négociable (voir Notes.md "Contrainte légale") : ce chatbot
 // ne doit jamais recommander d'offre ni mettre en relation avec un recruteur — il
@@ -121,10 +122,22 @@ router.post('/chat', authMiddleware, requireCandidatePlan('carriere_coaching'), 
   try {
     const moduleId = moduleParam(req, res);
     if (!moduleId) return;
-    const candidat = await ensureCandidateProfile(req.user.id);
     const message = String(req.body?.message || '').trim();
     if (!message) return res.status(400).json({ error: 'Message requis' });
     if (message.length > 2000) return res.status(400).json({ error: 'Message trop long (2000 caractères max)' });
+
+    const usage = await checkAndConsumeUsage(req.user.id, 'coaching_chat', CHAT_MONTHLY_LIMIT);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'QUOTA_EXCEEDED',
+        message: `Limite de ${CHAT_MONTHLY_LIMIT} messages atteinte pour ce mois-ci. Ça repart à zéro le mois prochain.`,
+      });
+    }
+
+    // Relu après checkAndConsumeUsage (qui vient d'écrire axes.meta.usage) pour ne
+    // pas écraser cette mise à jour avec une version périmée au moment de sauver
+    // l'historique de conversation plus bas.
+    const candidat = await ensureCandidateProfile(req.user.id);
 
     const allHistory = candidat.axes?.meta?.coaching_chat || {};
     const history = (allHistory[moduleId] || []).slice(-CHAT_HISTORY_LIMIT);
