@@ -85,15 +85,10 @@ Les 2 items restants sont toujours marqués "Bientôt disponible" dans `candidat
 
 ### En attente
 - CGU/CGV/RGPD (`frontend/swipsales_legal.html`) existent déjà et sont liées depuis le footer de la landing, mais portent un avertissement "modèle à personnaliser, à faire relire par un professionnel du droit avant mise en production" — à faire valider par un juriste si ce n'est pas déjà fait
-- **Bug pricing recruteur "Partenaire" — code corrigé le 2026-09-03, reste des actions manuelles côté Stripe (checklist ci-dessous).** Le palier "Partenaire" (899€/719€ affichés, marque blanche/API ATS/SLA) mappait vers le slug Stripe `pro` (399€/319€) au lieu de `enterprise` — n'importe quel recruteur cliquant "Nous contacter" sur Partenaire était donc facturé au tarif Pro. Confirmé par Yannis : le prix affiché (899/719) est le bon, c'est Stripe qu'il faut mettre à jour, pas le site.
-  - ✅ Fait : `frontend/_spaces/recruteur.html` → `selectPlan()` mappe maintenant `partenaire → 'enterprise'` (au lieu de `'pro'`). `backend/routes/stripe.js` avait déjà un emplacement `enterprise` prêt (`STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR`), aucun changement nécessaire côté backend.
-  - ✅ Vérifié en base : 0 ligne `abonnements` avec `plan = 'enterprise'` — aucun abonné actif trouvé sur l'ancien tarif (mais la base peut être désynchronisée d'un abonnement Stripe réel, donc à revérifier directement dans Stripe avant de désactiver quoi que ce soit).
-  - ⚠️ Non fait, nécessite un accès Stripe live que Claude Code n'a pas eu (seule une clé `sk_test_...` était disponible dans `backend/.env`) :
-    1. Créer 2 nouveaux Price sur le produit **`prod_V7SXNGxr2hGgcy`** (Recruteur Enterprise) dans le Dashboard Stripe **(mode Live)** : mensuel **899,00 €**, annuel **8 628,00 €** (= 719€/mois, cohérent avec le -20% appliqué ailleurs). Les anciens Price (`price_1U7DbwLlKeTp7RSEBp7hKy1v` mensuel, `price_1U7DbwLlKeTp7RSE5ZcfATBB` annuel, 799€/7668€) restent inchangés — un Price Stripe est immuable, on n'en modifie pas un existant.
-    2. Mettre à jour les variables d'environnement `STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH` et `STRIPE_PRICE_RECRUTEUR_ENTERPRISE_YEAR` sur Railway/Vercel (production) avec les deux nouveaux Price ID.
-    3. Avant de désactiver les anciens Price : vérifier directement dans Stripe (pas seulement en base) qu'aucun abonnement actif ne les utilise encore.
-    4. Désactiver (pas supprimer) les deux anciens Price une fois confirmé qu'ils sont inutilisés.
-    5. Revenir ici mettre à jour cette note avec les nouveaux `price_id` une fois créés.
+- **Pricing recruteur "Pro" vs "Partenaire" — tranché par Guillaume le 2026-09-05 : ce sont deux paliers distincts, pas un doublon à fusionner.** Historique : le palier "Partenaire" mappait par erreur vers le slug Stripe `pro` au lieu de `enterprise` (corrigé le 2026-09-03), ce qui a mené à découvrir que "Pro" (landing, 399€/319€, self-service) et "Partenaire" (app, 899€/719€, marque blanche/API/SLA) étaient en fait deux offres différentes, pas la même mal nommée.
+  - ✅ **Décision et implémentation (2026-09-05)** : Pro devient un vrai 4ᵉ... pardon, 3ᵉ palier self-service à 399€/319€ (slug `pro`, checkout Stripe automatique inchangé) sur la landing ET dans l'app. Partenaire devient un **4ᵉ palier "sur devis"**, sans prix affiché ni checkout automatique — bouton "Nous contacter" → `mailto:senechalyannis@gmail.com`, plus de risque de facturer le mauvais montant puisqu'il n'y a plus de facturation automatique du tout sur ce palier. `frontend/_spaces/recruteur.html` (4 cartes : Entrepreneur/Starter/Pro/Partenaire, renommé Business→Starter pour matcher la landing) et `frontend/swipsales_landing.html` (ajout de la 4ᵉ carte Partenaire) mis à jour en conséquence.
+  - ✅ Conséquence : la checklist Stripe qui suivait (créer 2 nouveaux Price 899€/8 628€ sur `prod_V7SXNGxr2hGgcy`, mettre à jour `STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR`) **devient obsolète/optionnelle** — Partenaire n'a plus besoin d'un Price Stripe précis puisqu'il n'y a plus de self-service. Si Yannis négocie un deal Partenaire, ça passera par une facturation manuelle ou un lien Stripe créé au cas par cas, pas par le flux `/stripe/create-checkout` du produit.
+  - Le slug `enterprise` (`STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR`) reste dans `backend/routes/stripe.js`, inutilisé par l'UI mais laissé au cas où — aucune urgence à le retirer.
 
 ---
 
@@ -189,20 +184,20 @@ Guillaume a demandé un état des lieux avant d'ouvrir les paiements candidat. R
   - ⚠️ Bug pendant l'implémentation, corrigé avant commit : `checkAndConsumeUsage` et la sauvegarde de l'historique de conversation écrivaient toutes les deux sur `candidats.axes` dans le même handler — l'ordre initial aurait fait écraser le compteur de quota par une version périmée. Corrigé en relisant le profil après la vérification de quota plutôt qu'avant.
   - Testé en conditions réelles sur une ligne existante (incrémenté 3 fois, refusé la 4ᵉ sur une limite de 3, état restauré après coup).
 
-### Trouvé, pas corrigé — à trancher avec Yannis
-**Incohérence "Pro" vs "Partenaire" (palier recruteur).** La landing page (`swipsales_landing.html`) affiche un 3ᵉ palier recruteur "Pro" à 399€/319€ (offres illimitées, alertes temps réel). L'app (`recruteur.html`) affiche à la même position "Partenaire" à 899€/719€ (marque blanche, API ATS, SLA garanti). Prix et fonctionnalités totalement différents pour ce qui est présenté comme le même rang de palier sur les deux pages — un recruteur qui s'inscrit depuis la landing en pensant payer 399€ tombe sur 899€ dans l'app. Ce n'est pas qu'un problème de nom (contrairement à Starter/Business, cosmétique) : ce sont deux offres différentes. Ni le prix ni le contenu ne matchent. Guillaume fait le point avec Yannis — à corriger une fois la décision prise (fusionner en un seul palier, ou en faire un vrai 4ᵉ palier distinct).
+### Incohérence "Pro" vs "Partenaire" — ✅ tranchée et corrigée le 2026-09-05
+Voir section "Contrainte légale" plus haut pour le détail de la décision et de l'implémentation (Pro self-service 399€/319€, Partenaire devient un 4ᵉ palier sur devis sans checkout automatique).
 
-Table de correspondance tarifs ↔ Stripe (établie pour cet audit — accès Stripe **test** uniquement, pas de visibilité sur les Price ID réels en production) :
+Table de correspondance tarifs ↔ Stripe (établie pour cet audit — accès Stripe **test** uniquement, pas de visibilité sur les Price ID réels en production), mise à jour après la correction :
 
 | Palier affiché | Prix | Slug | Variable d'env Railway | Dans `.env.example` |
 |---|---|---|---|---|
 | Compte candidat | 0€ | `freemium` | — | — |
-| Carrière | 19€/15€ | `carriere` | `STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH`/`_YEAR` | ✅ |
-| Carrière Coaching | 79€/63€ | `carriere_coaching` | `STRIPE_PRICE_CANDIDAT_PLATINE_MONTH`/`_YEAR` | ✅ |
+| Carrière | 19€/15€ | `carriere` | `STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH`/`_YEAR` | ✅ (Guillaume bloqué côté Stripe pour modifier ce prix — reste à 19€ pour l'instant, cf. Carrière Coaching envisagé à la baisse mais pas validé) |
+| Carrière Coaching | 79€/63€ | `carriere_coaching` | `STRIPE_PRICE_CANDIDAT_PLATINE_MONTH`/`_YEAR` | ✅ (baisse envisagée par Guillaume, pas encore validée) |
 | Entrepreneur | 89€/71€ | `solo` | `STRIPE_PRICE_RECRUTEUR_SOLO_MONTH`/`_YEAR` | ❌ absente du fichier exemple bien qu'utilisée dans `stripe.js` — à vérifier qu'elle existe bien sur Railway |
-| Starter (landing) / Business (app) | 149€/119€ | `starter` | `STRIPE_PRICE_RECRUTEUR_STARTER_MONTH`/`_YEAR` | ✅ |
-| Pro (landing uniquement) | 399€/319€ | `pro` | `STRIPE_PRICE_RECRUTEUR_PRO_MONTH`/`_YEAR` | ✅ |
-| Partenaire (app uniquement) | 899€/719€ | `enterprise` | `STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR` | ✅ (voir checklist "Bug pricing recruteur Partenaire" plus haut — statut des nouveaux Price 899/8628 côté Stripe live toujours pas confirmé) |
+| Starter | 149€/119€ | `starter` | `STRIPE_PRICE_RECRUTEUR_STARTER_MONTH`/`_YEAR` | ✅ (landing et app harmonisés sur "Starter", l'app disait "Business") |
+| Pro | 399€/319€ | `pro` | `STRIPE_PRICE_RECRUTEUR_PRO_MONTH`/`_YEAR` | ✅ — self-service sur la landing ET dans l'app désormais |
+| Partenaire | Sur devis | — (pas de checkout automatique) | — | Bouton "Nous contacter" (`mailto:senechalyannis@gmail.com`), plus de dépendance à un Price Stripe précis |
 
 ---
 
