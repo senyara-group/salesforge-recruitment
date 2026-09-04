@@ -16,7 +16,8 @@ function walk(dir) {
 
 function localTarget(file, rawUrl) {
   let url = rawUrl.split('#')[0].split('?')[0];
-  if (!url || /^(https?:|mailto:|tel:|javascript:|data:|#)/i.test(url)) return null;
+  // Dynamic template attributes are resolved at runtime and are not local files.
+  if (!url || url.includes('${') || /^(https?:|mailto:|tel:|javascript:|data:|#)/i.test(url)) return null;
   if (url.startsWith('/')) url = url.slice(1);
   const target = path.resolve(path.dirname(file), url);
   return target.startsWith(frontendRoot) ? target : null;
