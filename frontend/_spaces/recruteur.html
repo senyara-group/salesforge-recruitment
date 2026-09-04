@@ -2598,20 +2598,21 @@ async function sendThreadMessage(event) {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
-    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Choisir Entrepreneur'},
-    {n:'Business',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Choisir Business',pop:true},
-    {n:'Partenaire',f:'Cabinets et RPO',p:899,u:'/mois',h:'Sur devis possible',feats:['Tout Business inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Entrepreneur',slug:'solo',f:'Recrutement solo, une offre à la fois',p:89,u:'/mois',h:'Sans engagement',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Choisir Entrepreneur'},
+    {n:'Starter',slug:'starter',f:'PME et scale-ups',p:149,u:'/mois',h:'Sans engagement',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Choisir Starter',pop:true},
+    {n:'Pro',slug:'pro',f:'Recrutement continu',p:399,u:'/mois',h:'Sans engagement',feats:['Tout Starter inclus','Offres illimitées','Super swipe en tête de pile candidat','Alertes en temps réel sur les nouveaux profils compatibles','Support prioritaire (24h)'],cta:'Choisir Pro'},
+    {n:'Partenaire',slug:null,hidden:true,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ],
   year:[
-    {n:'Entrepreneur / Indépendant',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
-    {n:'Business',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
-    {n:'Partenaire',f:'Cabinets et RPO',p:719,old:899,u:'/mois',h:'Facturé 8 628 €/an · -2 160 €',feats:['Tout Business inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
+    {n:'Entrepreneur',slug:'solo',f:'Recrutement solo, une offre à la fois',p:71,old:89,u:'/mois',h:'Facturé 852 €/an · -216 €',feats:['1 offre active','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Messagerie intégrée'],cta:'Économiser 20%'},
+    {n:'Starter',slug:'starter',f:'PME et scale-ups',p:119,old:149,u:'/mois',h:'Facturé 1 428 €/an · -360 €',feats:['3 offres actives','Sourcing illimité','Matching IA 14 critères','ADN vérifié des candidats','Pipeline Kanban','Messagerie intégrée'],cta:'Économiser 20%',pop:true},
+    {n:'Pro',slug:'pro',f:'Recrutement continu',p:319,old:399,u:'/mois',h:'Facturé 3 828 €/an · -960 €',feats:['Tout Starter inclus','Offres illimitées','Super swipe en tête de pile candidat','Alertes en temps réel sur les nouveaux profils compatibles','Support prioritaire (24h)'],cta:'Économiser 20%'},
+    {n:'Partenaire',slug:null,hidden:true,f:'Cabinets et RPO',surDevis:true,h:'Sur devis',feats:['Tout Pro inclus','Offres et sièges illimités','Marque blanche','API et intégrations ATS','Facturation centralisée','SLA garanti','Formation équipe'],cta:'Nous contacter',dk:true}
   ]
 };
 async function selectPlan(plan, billing) {
   try {
-    const mapped = {'entrepreneur / indépendant':'solo', business:'starter', partenaire:'enterprise'}[plan] || plan;
-    const { url } = await api('POST', '/stripe/create-checkout', { plan: mapped, billing, type:'rec' });
+    const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
@@ -2620,12 +2621,13 @@ async function selectPlan(plan, billing) {
     }
   } catch(e) { toast('Erreur paiement'); }
 }
-function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
-function planKey(plan) {
-  return { 'entrepreneur / indépendant':'solo', business:'starter', enterprise:'enterprise', partenaire:'pro' }[String(plan || '').toLowerCase()] || String(plan || '').toLowerCase();
+// Palier "sur devis" : jamais de checkout Stripe automatique, contact manuel.
+function contactPartenaire() {
+  window.location.href = 'mailto:senechalyannis@gmail.com?subject=' + encodeURIComponent('SwipSales — palier Partenaire (sur devis)');
 }
-function isCurrentPlan(plan) {
-  return CURRENT_PLAN && planKey(plan) === CURRENT_PLAN;
+function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
+function isCurrentPlan(p) {
+  return CURRENT_PLAN && p.slug && p.slug === CURRENT_PLAN;
 }
 async function loadCurrentPlan() {
   try {
@@ -2636,16 +2638,18 @@ async function loadCurrentPlan() {
   }
 }
 function renderPlans() {
-  document.getElementById('plans-row').innerHTML = PLANS[BILLING].map(p => {
-    const active = isCurrentPlan(p.n);
+  // Palier "hidden" : prêt côté code (Partenaire, sur devis) mais pas encore affiché
+  // — décision Guillaume 2026-09-05, retirer le filtre pour le réactiver.
+  document.getElementById('plans-row').innerHTML = PLANS[BILLING].filter(p => !p.hidden).map(p => {
+    const active = isCurrentPlan(p);
     return `
     <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
       ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus choisi</div>':''}
       <div class="pc-name sf">${p.n}</div><div class="pc-f">${p.f}</div>
-      <div class="pc-pr">${p.old?`<span class="pc-old">${p.old}€</span>`:''}<span class="pc-p sf">${p.p}€</span><span class="pc-u">${p.u}</span></div>
+      <div class="pc-pr">${p.surDevis ? '<span class="pc-p sf">Sur devis</span>' : `${p.old?`<span class="pc-old">${p.old}€</span>`:''}<span class="pc-p sf">${p.p}€</span><span class="pc-u">${p.u}</span>`}</div>
       <div class="pc-h">${p.h}</div>
       <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${active?'Offre active':p.cta}</button>
+      <button class="pc-btn" ${active?'disabled':''} onclick="${p.surDevis ? 'contactPartenaire()' : `selectPlan('${p.slug}','${BILLING}')`}">${active?'Offre active':p.cta}</button>
     </div>`;
   }).join('');
 }

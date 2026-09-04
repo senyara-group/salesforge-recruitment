@@ -271,6 +271,12 @@ section{padding:clamp(56px,8vw,96px) 0}
 .switch.on{background:var(--bleu)}
 .switch.on::after{transform:translateX(23px)}
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+/* Palier Partenaire masqué pour l'instant (voir plans-recruteur plus bas) —
+   grille repassée à 3 colonnes. Restaurer ces 2 lignes en même temps que la
+   carte Partenaire pour repasser à 4 :
+#plans-recruteur{grid-template-columns:repeat(4,1fr)}
+@media(max-width:1080px) and (min-width:921px){#plans-recruteur{grid-template-columns:repeat(2,1fr)}}
+*/
 .plans[hidden]{display:none !important}
 [hidden]{display:none !important}
 .plan{background:#fff;border:1.5px solid var(--ligne);border-radius:20px;padding:clamp(26px,4vw,34px) clamp(20px,3vw,28px);display:flex;flex-direction:column;position:relative;transition:transform .2s,box-shadow .2s,border-color .2s}
@@ -726,6 +732,25 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
         </ul>
         <a href="swipsales_start.html?role=recruteur" class="btn b-bleu">Recruter efficacement</a><span class="mini">Sans limite de postes</span>
       </div>
+      <!-- Palier Partenaire (sur devis) : prêt mais volontairement masqué pour l'instant
+           — décision Guillaume 2026-09-05. Retirer ce commentaire + restaurer la grille
+           4 colonnes (#plans-recruteur, en haut du <style>) pour le réactiver. -->
+      <!--
+      <div class="plan rv">
+        <h3>Partenaire</h3>
+        <div class="who">Cabinets et RPO</div>
+        <div class="price"><b>Sur devis</b></div>
+        <div class="per">Marque blanche, API, SLA</div>
+        <ul>
+          <li>Tout Pro inclus</li>
+          <li class="plus">Offres et sièges illimités</li>
+          <li class="plus">Marque blanche</li>
+          <li>API et intégrations ATS</li>
+          <li>Facturation centralisée, SLA garanti</li>
+        </ul>
+        <a href="mailto:senechalyannis@gmail.com?subject=SwipSales%20%E2%80%94%20palier%20Partenaire" class="btn sec">Nous contacter</a><span class="mini">Réponse sous 48h</span>
+      </div>
+      -->
     </div>
 
     <div class="anchor rv" id="anchor-candidat" hidden>
