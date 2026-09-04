@@ -65,16 +65,17 @@ Landing page (`frontend/swipsales_landing.html`) et page pricing in-app (`fronte
 - **Gold supprimé** (0 abonné actif au moment du retrait, vérifié en base avant suppression)
 - 1 seul abonné actif migré `premium`→`carriere` en base (`abonnements`), aucun abonné actif `platine`/`gold` à migrer
 
-### Peut rester payant — services autonomes, valeur hors plateforme (rien n'existe encore côté code, marqué "Bientôt disponible" dans l'UI)
-- Test ADN approfondi (60-80 items) + restitution PDF téléchargeable
-- Re-passage / suivi tous les 6 mois avec historique
-- Benchmark métier anonymisé par typologie de poste
-- Chatbot coaching entretien — **ne doit jamais recommander d'offres ni faire de mise en relation**, coaching uniquement
-- Ebooks (négociation salariale, lecture d'un plan de commissionnement, 90 premiers jours)
-- Certification SwipSales — atteste des compétences uniquement, **jamais** un placement ou une visibilité recruteur promis
-- Optimisation CV/pitch spécifique profils commerciaux
+### Peut rester payant — services autonomes, valeur hors plateforme (2026-09-05 : 6 des 8 construits, voir détail ci-dessous)
+- ✅ Restitution PDF téléchargeable
+- ✅ Re-passage / suivi tous les 6 mois avec historique
+- ✅ Benchmark métier anonymisé par typologie de poste
+- ✅ Chatbot coaching entretien — **ne recommande jamais d'offres ni ne fait de mise en relation** (contrainte imposée par prompt système, voir section "Fonctionnalités Carrière" ci-dessous)
+- ✅ Certification SwipSales — atteste des compétences uniquement, **jamais** un placement ou une visibilité recruteur promis
+- ✅ Optimisation CV/pitch spécifique profils commerciaux
+- ⏳ Test ADN approfondi (60-80 items) — **contenu pas encore écrit**, en attente de Yannis/quelqu'un du métier (13 étapes/~20 items aujourd'hui, structure technique existante réutilisable)
+- ⏳ Ebooks (négociation salariale, lecture d'un plan de commissionnement, 90 premiers jours) — **contenu pas encore écrit**, même attente
 
-Ces 8 items sont marqués d'un badge "Bientôt disponible" dans la liste de fonctionnalités des paliers Carrière / Carrière Coaching, sur la landing page ET dans `candidat.html`. **À prioriser ensemble pour savoir ce qui se construit en premier.**
+Les 2 items restants sont toujours marqués "Bientôt disponible" dans `candidat.html`/`swipsales_landing.html` — le badge a été retiré des 6 autres, désormais réellement fonctionnels.
 
 ### Garde-fous techniques à respecter pour toute nouvelle fonctionnalité payante candidat
 - Le flag d'abonnement candidat ne doit **jamais** apparaître dans la logique de matching/ranking/droits de candidature — isolé strictement au déblocage de contenu/évaluation
@@ -93,6 +94,39 @@ Ces 8 items sont marqués d'un badge "Bientôt disponible" dans la liste de fonc
     3. Avant de désactiver les anciens Price : vérifier directement dans Stripe (pas seulement en base) qu'aucun abonnement actif ne les utilise encore.
     4. Désactiver (pas supprimer) les deux anciens Price une fois confirmé qu'ils sont inutilisés.
     5. Revenir ici mettre à jour cette note avec les nouveaux `price_id` une fois créés.
+
+---
+
+## Fonctionnalités Carrière / Carrière Coaching (construit le 2026-09-05)
+
+Avant de construire : exploration complète du code existant (audit détaillé, pas de reconstruction à l'aveugle). Plan validé avec Guillaume : Phase A (aucun blocage) puis Phase B (nécessitait une décision — fournisseur LLM et propriété du contenu à rédiger).
+
+### Décisions prises avec Guillaume
+- **Fournisseur LLM : Claude (API Anthropic)**, clé fournie et ajoutée à `backend/.env` (`ANTHROPIC_API_KEY`, gitignored) + placeholder dans `.env.example`. Modèle utilisé : alias `claude-sonnet-4-5` (configurable via `ANTHROPIC_MODEL`), testé et fonctionnel.
+- **Questionnaire ADN approfondi (60-80 items) et 3 nouveaux ebooks : contenu non rédigé par Claude Code**, en attente de Yannis/quelqu'un du métier — uniquement la structure technique existe (voir "Reste à faire" plus bas).
+
+### Ce qui a été construit
+- **Table `evaluations_adn`** (append-only, comme `consentements`) — `backend/supabase_evaluations_adn.sql`, **⚠️ à exécuter manuellement dans Supabase avant déploiement** (même principe que les précédents fichiers `.sql` du projet). Ajoute aussi une colonne `candidats.type_poste` (typologie de poste choisie pendant le test, auparavant enterrée sans être relue dans `axes.questionnaire.job_profile.poste`).
+- **`backend/middleware/requireCandidatePlan.js`** — garde-fou générique (factory, `requireCandidatePlan('carriere')` ou `('carriere_coaching')`) pour le déblocage de contenu payant candidat. Repose sur `getCandidatePlan()` (nouveau, `backend/utils/profiles.js`). **Ne jamais s'en servir dans la logique de matching/swipes/candidatures/messagerie** (contrainte légale ci-dessus).
+- **`POST /ai/score-adn`** (`backend/routes/ai.js`) : le premier passage reste libre pour tous (test gratuit). Un repassage (score déjà existant) nécessite Carrière Coaching + un délai de 6 mois depuis la dernière évaluation (vérifié en base, pas seulement côté frontend). Chaque passage insère désormais une ligne dans `evaluations_adn` en plus de mettre à jour `candidats.axes.resultat` (qui reste la "dernière" valeur, pour ne rien casser côté `GET /candidats/deck` recruteur).
+- **`backend/routes/candidats.js`**, nouveaux endpoints :
+  - `GET /evaluations` (Carrière Coaching) — historique + `peut_repasser`/`next_eligible_at`.
+  - `GET /export-pdf` (Carrière) — génère un PDF à la volée avec `pdfkit` (pas de stockage, pas de nettoyage à gérer) à partir du dernier résultat.
+  - `GET /benchmark` (Carrière Coaching) — moyenne anonymisée par `type_poste`, **seuil k≥5** : renvoie explicitement "pas assez de données" en dessous, jamais un chiffre qui identifierait 1-4 personnes précises. Suit le pattern d'agrégation déjà utilisé par `POST /recruteurs/matching-count`.
+  - `GET /profil` : `certifie` est maintenant un vrai booléen calculé (`plan === carriere_coaching` ET `score_adn ≥ 80`) — **mais uniquement ici**, sur le propre profil du candidat. `GET /deck` (recruteur) reste hardcodé à `certifie: false`, inchangé — ne jamais reconnecter cette valeur côté recruteur (c'est exactement ce qui avait été corrigé le 2026-09-03).
+  - `GET /certification` + `POST /certification/partage` — le partage public est **opt-in explicite** (désactivé par défaut), pas opt-out.
+  - `GET /:id/certificat-public` — endpoint public (sans auth), ne renvoie que prénom + score, 404 si non certifié ou partage désactivé. Nouvelle page statique `frontend/certificat.html` (pas d'intégration LinkedIn OAuth — volontairement retirée du projet par le passé — l'utilisateur poste lui-même le lien).
+  - `POST /optimiser-cv` (Carrière) — réutilise le CV déjà stocké si aucun fichier n'est envoyé dans la requête, sinon accepte un nouvel upload. Relecture par Claude, retour de suggestions structurées (jamais une réécriture automatique).
+  - `POST /optimiser-pitch` (Carrière) — même principe sur un texte libre collé par le candidat (pas de champ pitch existant à réutiliser, `axes.meta.motivation` existe côté backend mais n'était alimenté par aucune UI).
+- **`backend/routes/coaching.js`** (était un stub 30 lignes, quasi vide) : `GET/POST/DELETE /chat` (Carrière Coaching) — chatbot avec historique de conversation stocké dans `candidats.axes.meta.coaching_chat` (pas de nouvelle table). Prompt système strict : ne recommande jamais d'offre, ne met jamais en relation avec un recruteur, n'a accès à aucune donnée d'offre/recruteur réelle — uniquement de l'entraînement (entretiens, objections, négociation, pitch).
+- **Frontend `frontend/_spaces/candidat.html`** : écran de blocage avant repassage du test (même mécanisme que le consentement RGPD, intercepté dans `prepareTestPage()`) ; boutons Export PDF / Benchmark / Mon évolution sur l'écran de résultat ; section "Certification SwipSales" avec toggle de partage dans les paramètres ; boutons "Optimiser" sur le CV et nouveau champ pitch dans les paramètres ; widget de chat dans la page Ressources (`#p-coaching`, remplace l'ancien stub qui ne faisait rien).
+
+### Reste à faire / à valider
+- **Exécuter `backend/supabase_evaluations_adn.sql` dans Supabase avant tout déploiement** — sans ça, `evaluations_adn`/`type_poste` n'existent pas (le code dégrade proprement : `POST /ai/score-adn` logue juste un avertissement et continue de fonctionner pour le score lui-même, mais aucun historique ni benchmark ne fonctionnera).
+- Coût Anthropic à surveiller — pas de plafond/rate-limit ajouté côté candidat au-delà du gating par plan (Carrière Coaching pour le chat, Carrière pour l'optimisation CV/pitch). À voir si un quota mensuel devient nécessaire selon l'usage réel.
+- Questionnaire ADN approfondi (60-80 items) et les 3 ebooks : contenu à écrire par Yannis/quelqu'un du métier, badge "Bientôt disponible" conservé jusque-là.
+- Benchmark actuellement peu utile en pratique : seulement 9 candidats en base au 2026-09-05, 3 avec un score, répartis sur 6 typologies possibles — aucun bucket n'atteindra le seuil k≥5 avant un vrai volume d'utilisateurs.
+- Seuil de certification (`score_adn ≥ 80`) choisi arbitrairement par Claude Code faute de critère métier fourni — à valider/ajuster avec Yannis.
 
 ---
 

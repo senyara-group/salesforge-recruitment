@@ -23,6 +23,22 @@ async function getUserEmail(userId) {
   return data?.email || null;
 }
 
+// Plan candidat actif ('freemium' par défaut) — pour déblocage de contenu
+// "développement de carrière" uniquement. Ne JAMAIS s'en servir dans une logique
+// de matching/ranking/droits de candidature (contrainte légale, voir Notes.md).
+async function getCandidatePlan(userId) {
+  const { data, error } = await supabase
+    .from('abonnements')
+    .select('plan, statut')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+  const abonnement = data?.[0];
+  return abonnement?.statut === 'actif' ? (abonnement.plan || 'freemium') : 'freemium';
+}
+
 function assertRoleMatches(role, expectedRole) {
   if (role && role !== expectedRole) {
     const error = new Error(`Acces reserve aux profils ${expectedRole}s`);
