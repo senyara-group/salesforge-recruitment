@@ -1046,6 +1046,29 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:1600px){
   .app{max-width:1440px;margin:0 auto}
 }
+
+/* Passe de profondeur : cartes blanches flottantes avec ombre douce sur un fond
+   légèrement teinté, plutôt que des bordures fines sur fond blanc (aspect trop plat). */
+:root{
+  --sh-card:0 1px 2px rgba(19,64,224,.04),0 10px 24px -6px rgba(19,64,224,.10);
+  --sh-card-sm:0 1px 2px rgba(19,64,224,.04),0 4px 12px -2px rgba(19,64,224,.08);
+}
+.app{background:var(--bg)}
+.ph,.card-sec,.menu-list{border-color:rgba(220,228,240,.6);box-shadow:var(--sh-card)}
+.card-sec{margin-bottom:12px}
+.ph-stat,.kpi,.score-card{border-color:rgba(220,228,240,.5);box-shadow:var(--sh-card-sm)}
+.tr-item,.doc-item,.skill-item{border-color:rgba(220,228,240,.6);box-shadow:var(--sh-card-sm)}
+.plan-banner{position:relative;overflow:hidden;box-shadow:0 14px 28px -8px rgba(9,20,34,.35)}
+.plan-banner::before{content:'';position:absolute;top:-40%;right:-10%;width:220px;height:220px;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 65%);pointer-events:none}
+.ib{border-radius:11px;border-color:rgba(220,228,240,.7);box-shadow:0 1px 2px rgba(9,20,34,.04)}
+.ib:hover{border-color:var(--bm);color:var(--b);box-shadow:var(--sh-card-sm)}
+.topbar{box-shadow:none;border-bottom-color:rgba(220,228,240,.7)}
+.logo-m{border-radius:9px}
+.sec{padding:16px 18px 4px}
+/* Sur fond app désormais teinté, les segmented control redeviennent des pastilles
+   blanches flottantes plutôt que de se fondre dans le fond (même teinte que .app). */
+.tab-seg,.auth-tabs{background:var(--w);border-color:rgba(220,228,240,.7);box-shadow:var(--sh-card-sm)}
+.tsb.on,.auth-tab.on{background:var(--bs);color:var(--b);box-shadow:none}
 </style>
 </head>
 <body>
