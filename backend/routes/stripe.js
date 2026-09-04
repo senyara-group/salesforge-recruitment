@@ -8,15 +8,15 @@ const { trackBrevoEvent } = require('../utils/brevoEvents');
 
 const stripePrices = {
   cand: {
+    // 'carriere' et 'carriere_coaching' réutilisent les Price ID Stripe existants
+    // (Premium et Platine) : tarifs inchangés, seul le nom candidat a changé.
     month: {
-      premium: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH,
-      gold: process.env.STRIPE_PRICE_CANDIDAT_GOLD_MONTH,
-      platine: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_MONTH,
+      carriere: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH,
+      carriere_coaching: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_MONTH,
     },
     year: {
-      premium: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_YEAR,
-      gold: process.env.STRIPE_PRICE_CANDIDAT_GOLD_YEAR,
-      platine: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_YEAR,
+      carriere: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_YEAR,
+      carriere_coaching: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_YEAR,
     },
   },
   rec: {
@@ -38,14 +38,12 @@ const stripePrices = {
 const checkoutPlans = {
   cand: {
     month: {
-      premium: { name: 'Candidat Premium', amount: 1900 },
-      gold: { name: 'Candidat Gold', amount: 3900 },
-      platine: { name: 'Candidat Platine', amount: 7900 },
+      carriere: { name: 'Candidat Carrière', amount: 1900 },
+      carriere_coaching: { name: 'Candidat Carrière Coaching', amount: 7900 },
     },
     year: {
-      premium: { name: 'Candidat Premium annuel', amount: 1500 },
-      gold: { name: 'Candidat Gold annuel', amount: 3100 },
-      platine: { name: 'Candidat Platine annuel', amount: 6300 },
+      carriere: { name: 'Candidat Carrière annuel', amount: 1500 },
+      carriere_coaching: { name: 'Candidat Carrière Coaching annuel', amount: 6300 },
     },
   },
   rec: {

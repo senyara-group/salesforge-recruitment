@@ -2,12 +2,40 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const zlib = require('zlib');
+const PDFDocument = require('pdfkit');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
+const requireCandidatePlan = require('../middleware/requireCandidatePlan');
+const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
+const { askClaude } = require('../utils/anthropic');
+
+// Score à partir duquel le profil est éligible à la certification SwipSales
+// (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
+const CERTIFICATION_SCORE_THRESHOLD = 80;
 
 const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
+const EBOOKS_BUCKET = process.env.EBOOKS_BUCKET || 'ebooks';
+
+// Catalogue des ebooks (palier Carrière). Fichiers déjà uploadés dans le bucket
+// privé Supabase Storage "ebooks" — voir Notes.md pour l'origine des fichiers.
+const EBOOK_CATALOG = [
+  { file: 'SwipSales_01_Traiter_les_objections.pdf', titre: 'Traiter les objections', desc: '120 objections décodées et retournées', categorie: 'Vendre' },
+  { file: 'SwipSales_02_200_questions.pdf', titre: '200 questions qui font vendre', desc: 'Découverte, qualification, closing', categorie: 'Vendre' },
+  { file: 'SwipSales_03_Neuro-vente.pdf', titre: 'Neuro-vente', desc: 'Comment le cerveau décide d\'acheter', categorie: 'Vendre' },
+  { file: 'SwipSales_04_Business_Development.pdf', titre: 'Business Development', desc: 'Prospection et construction du pipeline', categorie: 'Prospecter' },
+  { file: 'SwipSales_05_Account_Executive.pdf', titre: 'Account Executive', desc: 'Le cycle de vente complet', categorie: 'Vendre' },
+  { file: 'SwipSales_06_Le_premier_contact.pdf', titre: 'Le premier contact', desc: 'Cold call, cold email et séquences', categorie: 'Prospecter' },
+  { file: 'SwipSales_07_Social_selling.pdf', titre: 'Social selling', desc: 'LinkedIn, du profil au rendez-vous', categorie: 'Prospecter' },
+  { file: 'SwipSales_08_Decrocher_le_poste.pdf', titre: 'Décrocher le poste', desc: 'Entretien commercial et négociation salariale', categorie: 'Sa carrière' },
+  { file: 'SwipSales_09_Piloter_son_activite.pdf', titre: 'Piloter son activité', desc: 'Pipeline, priorités, CRM et forecast', categorie: 'Sa carrière' },
+  { file: 'SwipSales_10_Tenir_dans_la_duree.pdf', titre: 'Tenir dans la durée', desc: 'Refus, pression du chiffre et progression', categorie: 'Sa carrière' },
+  { file: 'SwipSales_11_Negocier_sans_ceder.pdf', titre: 'Négocier sans céder', desc: 'Concessions, contreparties, acheteurs pros', categorie: 'Vendre' },
+  { file: 'SwipSales_12_Vendre_a_distance.pdf', titre: 'Vendre à distance', desc: 'Visio, démonstration et closing à distance', categorie: 'Maîtriser' },
+  { file: 'SwipSales_13_La_vente_complexe.pdf', titre: 'La vente complexe', desc: 'Grands comptes, comité d\'achat, cycles longs', categorie: 'Maîtriser' },
+  { file: 'SwipSales_14_Ecrire_pour_vendre.pdf', titre: 'Écrire pour vendre', desc: 'Proposition, compte rendu, relances écrites', categorie: 'Maîtriser' },
+  { file: 'SwipSales_15_Comprendre_son_variable.pdf', titre: 'Comprendre son variable', desc: 'Plan de commissionnement et négociation', categorie: 'Sa carrière' },
+];
 const MAX_CV_BYTES = Number(process.env.MAX_CV_UPLOAD_MB || 8) * 1024 * 1024;
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
 const CV_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
@@ -447,17 +475,16 @@ router.get('/profil', authMiddleware, async (req, res) => {
   try {
     const profil = await ensureCandidateProfile(req.user.id);
     const withUrls = await withFreshCvUrl(profil);
-    const { data: abonnement } = await supabase
-      .from('abonnements')
-      .select('plan, statut')
-      .eq('user_id', req.user.id)
-      .maybeSingle();
-    const plan = abonnement?.statut === 'actif' ? String(abonnement.plan || 'freemium').toLowerCase() : 'freemium';
+    // Certification SwipSales (palier Carrière Coaching) : visible UNIQUEMENT ici,
+    // sur le propre profil du candidat. Ne jamais recalculer/exposer cette valeur
+    // dans GET /deck (recruteur) — contrainte légale, voir Notes.md.
+    const plan = await getCandidatePlan(req.user.id);
+    const certifie = plan === 'carriere_coaching' && Number(profil.score_adn || 0) >= CERTIFICATION_SCORE_THRESHOLD;
     res.json({
       ...withUrls,
       ville: profil.axes?.meta?.ville || '',
       competences: profil.axes?.meta?.competences || {},
-      certifie: plan === 'gold' || plan === 'platine',
+      certifie,
     });
   } catch (error) {
     publicError(res, error);
@@ -784,21 +811,6 @@ router.get('/deck', authMiddleware, async (req, res) => {
         return requestedCompetences.some((c) => flat.includes(c));
       });
 
-    // Badge "Certifié Swip Sales" : avantage du plan Gold (et Platine, qui l'inclut).
-    // Récupéré en une seule requête groupée plutôt qu'un aller-retour par candidat.
-    const candidateUserIds = candidates.map((c) => c.user_id).filter(Boolean);
-    const { data: abonnementsData } = candidateUserIds.length
-      ? await supabase
-        .from('abonnements')
-        .select('user_id, plan, statut')
-        .in('user_id', candidateUserIds)
-      : { data: [] };
-    const certifiedUserIds = new Set(
-      (abonnementsData || [])
-        .filter((a) => a.statut === 'actif' && ['gold', 'platine'].includes(String(a.plan || '').toLowerCase()))
-        .map((a) => a.user_id)
-    );
-
     const deck = await Promise.all(candidates.map(async (candidat) => {
         const profile = await withFreshCvUrl(candidat);
         const axes = normalizeAxes(profile.axes);
@@ -819,7 +831,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
           initiales: initials,
           role: profile.titre || 'Commercial',
           anon,
-          certifie: certifiedUserIds.has(profile.user_id),
+          certifie: false,
           avatar_url: anon ? '' : (profile.avatar_url || ''),
           m: compatibilityScore(axes, matching),
           adn_score: profile.score_adn || 0,
@@ -852,6 +864,452 @@ router.get('/deck', authMiddleware, async (req, res) => {
     res.json(deck);
   } catch (error) {
     publicError(res, error);
+  }
+});
+
+// ------------------------------------------------------------
+// RGPD : consentement, export, suppression de compte
+// ------------------------------------------------------------
+
+// Dernier consentement enregistré pour ce type (le plus récent fait foi).
+router.get('/consentement/:type', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('consentements')
+      .select('type, version, accepte, created_at')
+      .eq('user_id', req.user.id)
+      .eq('type', req.params.type)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) return res.status(400).json({ error });
+    res.json(data || { type: req.params.type, accepte: false });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Chaque appel crée une nouvelle ligne (jamais d'update) : preuve horodatée de
+// quelle version du texte a été acceptée ou refusée, conservée même si le texte
+// change ensuite. Voir backend/supabase_rgpd_consentement.sql pour le schéma.
+router.post('/consentement', authMiddleware, async (req, res) => {
+  try {
+    const { type, version, accepte } = req.body || {};
+    if (!type || !version || typeof accepte !== 'boolean') {
+      return res.status(400).json({ error: 'type, version et accepte (booleen) sont requis' });
+    }
+
+    const { data, error } = await supabase
+      .from('consentements')
+      .insert({ user_id: req.user.id, type, version, accepte })
+      .select('type, version, accepte, created_at')
+      .single();
+
+    if (error) return res.status(400).json({ error });
+    res.json(data);
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Export RGPD (droit à la portabilité) : uniquement les données du candidat connecté.
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+
+    const [userRow, candidatures, matchs, consentements] = await Promise.all([
+      supabase.from('users').select('id, email, role, created_at').eq('id', req.user.id).maybeSingle(),
+      supabase.from('candidatures').select('id, offre_id, statut, lettre_type, created_at').eq('candidat_id', candidat.id),
+      supabase.from('matchs').select('id, offre_id, score_match, score_compat, created_at').eq('candidat_id', candidat.id),
+      supabase.from('consentements').select('type, version, accepte, created_at').eq('user_id', req.user.id).order('created_at', { ascending: true }),
+    ]);
+
+    if (userRow.error) return res.status(400).json({ error: userRow.error });
+    if (candidatures.error) return res.status(400).json({ error: candidatures.error });
+    if (matchs.error) return res.status(400).json({ error: matchs.error });
+    if (consentements.error) return res.status(400).json({ error: consentements.error });
+
+    res.json({
+      export_genere_le: new Date().toISOString(),
+      compte: userRow.data,
+      profil: {
+        nom: candidat.nom || '',
+        prenom: candidat.prenom || '',
+        titre: candidat.titre || '',
+        ville: candidat.axes?.meta?.ville || '',
+        score_adn: candidat.score_adn ?? null,
+        resultat_test_adn: candidat.axes?.resultat || null,
+        reponses_test_adn: candidat.axes?.questionnaire || null,
+        competences: candidat.axes?.meta?.competences || {},
+      },
+      candidatures: candidatures.data,
+      matchs: matchs.data,
+      consentements: consentements.data,
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Suppression de compte (droit à l'effacement). Confirmation explicite requise
+// côté client ET revérifiée ici. Stratégie : anonymiser plutôt que supprimer les
+// lignes candidats/users (matchs, candidatures et messages passés les référencent
+// par id — les supprimer casserait l'affichage côté recruteur), supprimer pour de
+// vrai les fichiers uploadés (CV, lettre, photo), et supprimer réellement
+// l'identité Supabase Auth pour que la connexion soit définitivement impossible.
+router.delete('/compte', authMiddleware, async (req, res) => {
+  try {
+    const { confirmation } = req.body || {};
+    if (confirmation !== 'SUPPRIMER') {
+      return res.status(400).json({ error: 'Confirmation manquante ou invalide' });
+    }
+
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const meta = candidat.axes?.meta || {};
+
+    await Promise.all([
+      removeStorageFile(meta.cv_bucket || CV_BUCKET, meta.cv_path),
+      removeStorageFile(meta.motivation_bucket || CV_BUCKET, meta.motivation_path),
+      removeStorageFile(meta.avatar_bucket || AVATAR_BUCKET, meta.avatar_path),
+    ]);
+
+    const { error: candidatError } = await supabase
+      .from('candidats')
+      .update({
+        nom: null,
+        prenom: null,
+        titre: null,
+        cv_url: null,
+        score_adn: null,
+        axes: {},
+        swipes_meta: {},
+        contacts_meta: {},
+      })
+      .eq('user_id', req.user.id);
+    if (candidatError) return res.status(400).json({ error: candidatError });
+
+    const { error: userError } = await supabase
+      .from('users')
+      .update({ email: `supprime-${req.user.id}@deleted.invalid` })
+      .eq('id', req.user.id);
+    if (userError) return res.status(400).json({ error: userError });
+
+    const { error: authError } = await supabase.auth.admin.deleteUser(req.user.id);
+    if (authError) return res.status(400).json({ error: authError.message || authError });
+
+    res.json({ message: 'Compte supprimé' });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// ------------------------------------------------------------
+// Carrière / Carrière Coaching — historique, export PDF, benchmark, certification
+// ------------------------------------------------------------
+
+// Bibliothèque de ressources (ebooks) — palier Carrière. Service autonome, distinct
+// du placement (voir LISEZ-MOI fourni avec les fichiers) : ne conditionne jamais
+// l'accès aux offres, swipes ou candidatures.
+router.get('/ressources', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+  try {
+    const ressources = await Promise.all(EBOOK_CATALOG.map(async (ebook, index) => {
+      const { data } = await supabase.storage.from(EBOOKS_BUCKET).createSignedUrl(ebook.file, 60 * 30);
+      return {
+        id: index,
+        titre: ebook.titre,
+        description: ebook.desc,
+        categorie: ebook.categorie,
+        url: data?.signedUrl || null,
+      };
+    }));
+    res.json({ ressources });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Historique des évaluations (palier Carrière Coaching : ré-évaluation semestrielle).
+router.get('/evaluations', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('evaluations_adn')
+      .select('score, resultat, created_at')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: true });
+    if (error) return res.status(400).json({ error });
+
+    const last = data[data.length - 1];
+    const nextEligibleAt = last
+      ? new Date(new Date(last.created_at).getTime() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    res.json({
+      evaluations: data,
+      next_eligible_at: nextEligibleAt,
+      peut_repasser: !nextEligibleAt || new Date(nextEligibleAt).getTime() <= Date.now(),
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Export PDF du dernier résultat (palier Carrière : "restitution PDF téléchargeable").
+router.get('/export-pdf', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const resultat = candidat.axes?.resultat;
+    if (!resultat) {
+      return res.status(400).json({ error: 'Aucun résultat de test ADN à exporter — passez le test ADN d\'abord' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="swipsales-resultat-adn.pdf"');
+
+    const doc = new PDFDocument({ margin: 50 });
+    doc.pipe(res);
+
+    doc.fontSize(22).text('SwipSales — Résultat du test ADN commercial', { align: 'left' });
+    doc.moveDown();
+    const nom = [candidat.prenom, candidat.nom].filter(Boolean).join(' ') || 'Candidat';
+    doc.fontSize(11).fillColor('#555').text(nom);
+    doc.text('Généré le ' + new Date().toLocaleDateString('fr-FR'));
+    doc.moveDown(1.5);
+
+    doc.fillColor('#000').fontSize(16).text('Score global : ' + resultat.score + ' / 100');
+    if (resultat.type) doc.fontSize(12).fillColor('#555').text(resultat.type);
+    doc.moveDown();
+
+    if (Array.isArray(resultat.axes) && resultat.axes.length) {
+      doc.fillColor('#000').fontSize(14).text('Axes');
+      doc.moveDown(0.5);
+      resultat.axes.forEach((axe) => {
+        doc.fontSize(11).text(`${axe.l} : ${axe.v} / 100`);
+      });
+      doc.moveDown();
+    }
+
+    if (resultat.desc) {
+      doc.fontSize(11).fillColor('#333').text(resultat.desc);
+    }
+
+    doc.moveDown(2);
+    doc.fontSize(9).fillColor('#999').text(
+      'Ce résultat est indicatif et sert au matching avec les recruteurs sur SwipSales. Il ne constitue pas une évaluation psychométrique certifiée.',
+      { width: 480 }
+    );
+
+    doc.end();
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Benchmark anonymisé par typologie de poste (palier Carrière Coaching). Ne renvoie
+// qu'une moyenne agrégée, jamais de données individuelles — et rien du tout si
+// l'échantillon est trop petit pour être anonyme (seuil k=5), plutôt qu'un chiffre
+// qui identifierait de fait 1-4 personnes précises.
+const BENCHMARK_MIN_SAMPLE = 5;
+router.get('/benchmark', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const typePoste = candidat.type_poste;
+    if (!typePoste) {
+      return res.status(400).json({ error: 'Passez le test ADN pour connaître votre typologie de poste' });
+    }
+
+    const { data, error } = await supabase
+      .from('candidats')
+      .select('score_adn, axes')
+      .eq('type_poste', typePoste)
+      .not('score_adn', 'is', null);
+    if (error) return res.status(400).json({ error });
+
+    if (data.length < BENCHMARK_MIN_SAMPLE) {
+      return res.json({
+        type_poste: typePoste,
+        assez_de_donnees: false,
+        echantillon: data.length,
+        message: 'Pas encore assez de candidats sur cette typologie de poste pour un benchmark anonyme et fiable.',
+      });
+    }
+
+    const scores = data.map((c) => Number(c.score_adn || 0));
+    const moyenne = Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length);
+    const sorted = [...scores].sort((a, b) => a - b);
+    const votrePosition = sorted.filter((s) => s <= candidat.score_adn).length;
+    const percentile = Math.round((votrePosition / sorted.length) * 100);
+
+    res.json({
+      type_poste: typePoste,
+      assez_de_donnees: true,
+      echantillon: data.length,
+      moyenne,
+      votre_score: candidat.score_adn,
+      percentile,
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Statut de certification (candidat-visible uniquement, voir GET /profil pour le
+// détail du garde-fou). Génère un lien de partage public minimal, sans OAuth
+// LinkedIn (retiré volontairement du projet par le passé) — l'utilisateur poste
+// lui-même le lien.
+router.get('/certification', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const certifie = Number(candidat.score_adn || 0) >= CERTIFICATION_SCORE_THRESHOLD;
+    const partagePublic = candidat.axes?.meta?.certificat_public === true;
+    res.json({
+      certifie,
+      score_requis: CERTIFICATION_SCORE_THRESHOLD,
+      score_actuel: candidat.score_adn || 0,
+      partage_active: partagePublic,
+      lien_partage: certifie && partagePublic ? `/certificat.html?id=${candidat.id}` : null,
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Active/désactive explicitement le partage public du badge — désactivé par défaut,
+// pas d'exposition publique tant que le candidat n'a pas cliqué lui-même.
+router.post('/certification/partage', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+  try {
+    const candidat = await ensureCandidateProfile(req.user.id);
+    const active = req.body?.actif === true;
+    const nextAxes = {
+      ...(candidat.axes || {}),
+      meta: { ...(candidat.axes?.meta || {}), certificat_public: active },
+    };
+    const { error } = await supabase.from('candidats').update({ axes: nextAxes }).eq('user_id', req.user.id);
+    if (error) return res.status(400).json({ error });
+    res.json({ partage_active: active, lien_partage: active ? `/certificat.html?id=${candidat.id}` : null });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Page publique de certification — volontairement minimale (score + prénom optionnel),
+// aucune autre donnée du profil. Pas d'authentification : c'est le lien que le
+// candidat partage lui-même (LinkedIn, etc.). 404 si le candidat n'est pas certifié
+// ou a désactivé le partage, pour ne jamais confirmer/infirmer l'existence d'un id.
+router.get('/:id/certificat-public', async (req, res) => {
+  try {
+    const { data: candidat, error } = await supabase
+      .from('candidats')
+      .select('id, prenom, score_adn, axes')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (error) return res.status(400).json({ error });
+
+    const partagePublic = candidat?.axes?.meta?.certificat_public === true; // opt-in explicite uniquement
+    const certifie = candidat && Number(candidat.score_adn || 0) >= CERTIFICATION_SCORE_THRESHOLD;
+    if (!candidat || !certifie || !partagePublic) {
+      return res.status(404).json({ error: 'Certificat introuvable' });
+    }
+
+    res.json({
+      prenom: candidat.prenom || 'Un commercial',
+      score: candidat.score_adn,
+      certifie: true,
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Optimisation CV/pitch (palier Carrière). Relecture par Claude, retour de
+// suggestions structurées — jamais une réécriture automatique du document.
+const CV_PITCH_SYSTEM_PROMPT = `Tu es un relecteur expert en CV et pitchs commerciaux (SDR, Account Executive, Key Account Manager, commercial terrain). Tu donnes un retour concret et actionnable pour un candidat SwipSales, jamais une réécriture complète — des suggestions ciblées.
+
+Structure toujours ta réponse en 3 parties courtes :
+1. Points forts (2-3 points max)
+2. Points à améliorer (2-4 points max, concrets et actionnables)
+3. Une suggestion de reformulation pour l'élément le plus faible
+
+Reste concis (300 mots maximum), en français, orienté résultats commerciaux.`;
+
+// Quota partagé CV + pitch : 10 optimisations/mois cumulées (décision Guillaume
+// 2026-09-05), voir checkAndConsumeUsage dans utils/profiles.js.
+const OPTIMISATION_MONTHLY_LIMIT = 10;
+
+router.post('/optimiser-cv', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+  try {
+    const usage = await checkAndConsumeUsage(req.user.id, 'optimisation_cv_pitch', OPTIMISATION_MONTHLY_LIMIT);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'QUOTA_EXCEEDED',
+        message: `Limite de ${OPTIMISATION_MONTHLY_LIMIT} optimisations CV/pitch atteinte pour ce mois-ci. Ça repart à zéro le mois prochain.`,
+      });
+    }
+
+    // Fichier envoyé directement (nouveau CV), sinon on relit le CV déjà enregistré
+    // sur le profil — évite de forcer un nouvel upload juste pour l'analyser.
+    const isMultipart = /multipart\/form-data/i.test(req.headers['content-type'] || '');
+    let text;
+    if (isMultipart) {
+      const file = await getMultipartFile(req, 'cv');
+      validateCvFile(file);
+      text = extractCvText(file);
+    } else {
+      const candidat = await ensureCandidateProfile(req.user.id);
+      const meta = candidat.axes?.meta || {};
+      if (!meta.cv_path) {
+        return res.status(400).json({ error: 'Aucun CV enregistré sur votre profil — importez-en un d\'abord' });
+      }
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from(meta.cv_bucket || CV_BUCKET)
+        .download(meta.cv_path);
+      if (downloadError) return res.status(400).json({ error: downloadError });
+      const buffer = Buffer.from(await fileData.arrayBuffer());
+      text = extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
+    }
+    if (!text || text.length < 50) {
+      return res.status(400).json({ error: 'Impossible d\'extraire assez de texte de ce CV pour l\'analyser' });
+    }
+
+    const suggestions = await askClaude({
+      system: CV_PITCH_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: `Voici le texte extrait d'un CV commercial :\n\n${text.slice(0, 6000)}` }],
+      maxTokens: 700,
+    });
+
+    res.json({ suggestions });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
+  }
+});
+
+router.post('/optimiser-pitch', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+  try {
+    const usage = await checkAndConsumeUsage(req.user.id, 'optimisation_cv_pitch', OPTIMISATION_MONTHLY_LIMIT);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'QUOTA_EXCEEDED',
+        message: `Limite de ${OPTIMISATION_MONTHLY_LIMIT} optimisations CV/pitch atteinte pour ce mois-ci. Ça repart à zéro le mois prochain.`,
+      });
+    }
+
+    const texte = String(req.body?.texte || '').trim();
+    if (!texte || texte.length < 20) {
+      return res.status(400).json({ error: 'Texte de pitch trop court à analyser' });
+    }
+    if (texte.length > 4000) {
+      return res.status(400).json({ error: 'Texte trop long (4000 caractères max)' });
+    }
+
+    const suggestions = await askClaude({
+      system: CV_PITCH_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: `Voici un pitch/lettre de motivation commercial à relire :\n\n${texte}` }],
+      maxTokens: 700,
+    });
+
+    res.json({ suggestions });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message || error });
   }
 });
 

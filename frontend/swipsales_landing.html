@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -271,6 +271,12 @@ section{padding:clamp(56px,8vw,96px) 0}
 .switch.on{background:var(--bleu)}
 .switch.on::after{transform:translateX(23px)}
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+/* Palier Partenaire masqué pour l'instant (voir plans-recruteur plus bas) —
+   grille repassée à 3 colonnes. Restaurer ces 2 lignes en même temps que la
+   carte Partenaire pour repasser à 4 :
+#plans-recruteur{grid-template-columns:repeat(4,1fr)}
+@media(max-width:1080px) and (min-width:921px){#plans-recruteur{grid-template-columns:repeat(2,1fr)}}
+*/
 .plans[hidden]{display:none !important}
 [hidden]{display:none !important}
 .plan{background:#fff;border:1.5px solid var(--ligne);border-radius:20px;padding:clamp(26px,4vw,34px) clamp(20px,3vw,28px);display:flex;flex-direction:column;position:relative;transition:transform .2s,box-shadow .2s,border-color .2s}
@@ -290,6 +296,7 @@ section{padding:clamp(56px,8vw,96px) 0}
 .plan li{padding:7px 0 7px 27px;position:relative;font-size:14px}
 .plan li::before{content:"✓";position:absolute;left:0;color:var(--bleu);font-weight:800}
 .plan li.plus{font-weight:700}
+.plan li .soon{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--doux);background:var(--fond);border:1px solid var(--ligne);padding:2px 7px;border-radius:99px;vertical-align:middle;white-space:nowrap}
 .plan .btn{width:100%;font-size:15px}
 .plan .btn.sec{background:var(--bleu-pale);color:var(--bleu-f);box-shadow:none}
 @media(max-width:920px){.plans{grid-template-columns:1fr;max-width:min(430px,100%);margin:0 auto}}
@@ -343,6 +350,7 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
 <div id="session-banner" style="display:none;background:var(--encre);color:#fff;text-align:center;padding:11px 16px;font-size:13.5px;font-weight:600">
   Tu es déjà connecté(e). <a href="swipsales_app.html" style="color:#fff;font-weight:800;text-decoration:underline;margin-left:6px">Accéder à mon espace →</a>
 </div>
+
 <header class="hero">
   <div class="wrap hero-in">
     <div>
@@ -588,13 +596,13 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <h2>Vous ne postulez plus. On vient vous chercher.</h2>
       <p>Les bons commerciaux n'ont pas le temps de chercher. Créez votre profil, passez le test, et laissez votre score parler pour vous.</p>
       <ul>
+        <li>Swipez et candidatez, gratuitement et pour toujours</li>
         <li>Votre capacité réelle à vendre, enfin visible</li>
         <li>Des opportunités pertinentes, jamais de spam : personne ne vous écrit sans votre intérêt</li>
-        <li>Découvrez qui vous a liké et échangez directement</li>
-        <li>Progressez avec les ressources SwipSales incluses</li>
+        <li>Un bilan approfondi et du coaching si vous voulez aller plus loin dans votre carrière</li>
       </ul>
       <a href="#tarifs" class="btn b-blanc" data-tab="candidat">Créer mon profil gratuit</a>
-      <div class="micro">Deux minutes. Import CV compris. Gratuit à vie.</div>
+      <div class="micro">Deux minutes. Import CV compris. Candidater restera toujours gratuit.</div>
     </div>
     <div class="viz rv">
       <div class="panel">
@@ -719,70 +727,87 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
           <li>Tout Starter inclus</li>
           <li class="plus">Offres illimitées</li>
           <li class="plus">Super swipe en tête de pile candidat</li>
-          <li class="plus">Accès prioritaire aux profils Elite</li>
+          <li class="plus">Alertes en temps réel sur les nouveaux profils compatibles</li>
           <li>Support prioritaire (24h)</li>
         </ul>
         <a href="swipsales_start.html?role=recruteur" class="btn b-bleu">Recruter efficacement</a><span class="mini">Sans limite de postes</span>
       </div>
+      <!-- Palier Partenaire (sur devis) : prêt mais volontairement masqué pour l'instant
+           — décision Guillaume 2026-09-05. Retirer ce commentaire + restaurer la grille
+           4 colonnes (#plans-recruteur, en haut du <style>) pour le réactiver. -->
+      <!--
+      <div class="plan rv">
+        <h3>Partenaire</h3>
+        <div class="who">Cabinets et RPO</div>
+        <div class="price"><b>Sur devis</b></div>
+        <div class="per">Marque blanche, API, SLA</div>
+        <ul>
+          <li>Tout Pro inclus</li>
+          <li class="plus">Offres et sièges illimités</li>
+          <li class="plus">Marque blanche</li>
+          <li>API et intégrations ATS</li>
+          <li>Facturation centralisée, SLA garanti</li>
+        </ul>
+        <a href="mailto:senechalyannis@gmail.com?subject=SwipSales%20%E2%80%94%20palier%20Partenaire" class="btn sec">Nous contacter</a><span class="mini">Réponse sous 48h</span>
+      </div>
+      -->
     </div>
 
     <div class="anchor rv" id="anchor-candidat" hidden>
-      <p>Votre profil et votre test ADN sont <strong>gratuits à vie</strong>. Les offres payantes servent à être vu davantage et à parler à plus de recruteurs. <strong>Vous ne payez que si vous voulez accélérer.</strong></p>
+      <p><strong>Candidater ne coûte jamais rien, pour personne.</strong> Swipes, candidatures, accès aux offres, messagerie et visibilité auprès des recruteurs sont gratuits, identiques et illimités pour tous les candidats, quel que soit votre abonnement. C'est une condition non négociable, précisée dans nos CGU. Ce que vous payez ici finance uniquement votre développement professionnel, jamais votre accès à l'emploi.</p>
+      <p style="margin-top:12px">Le chatbot de coaching vous entraîne à l'entretien et au pitch. Il ne recommande jamais d'offre et ne met jamais en relation avec un recruteur : c'est un outil de préparation, pas un raccourci de placement.</p>
     </div>
 
     <div class="plans" id="plans-candidat" hidden>
       <div class="plan rv">
-        <h3>Freemium</h3>
-        <div class="who">Découvrir la plateforme</div>
+        <h3>Compte candidat</h3>
+        <div class="who">La base, identique pour tous, à vie</div>
         <div class="price"><b>0 €</b><span>/mois</span></div>
-        <div class="per">Gratuit à vie</div>
+        <div class="per">Gratuit à vie, sans exception</div>
         <ul>
-          <li>Test ADN commercial et score</li>
-          <li>Profil visible par les recruteurs</li>
-          <li>5 swipes / candidatures par mois</li>
-          <li>2 contacts recruteurs par mois</li>
+          <li>Test ADN commercial, format court</li>
+          <li>Profil visible par tous les recruteurs</li>
           <li>Import CV</li>
-          <li>Nombre de likes reçus visible</li>
+          <li>Swipes, candidatures et messagerie : mêmes conditions pour tous</li>
         </ul>
-        <a href="swipsales_start.html?role=candidat" class="btn sec">Créer mon profil</a><span class="mini">Gratuit à vie</span>
+        <a href="swipsales_start.html?role=candidat" class="btn b-bleu">Créer mon profil</a><span class="mini">Gratuit à vie, sans exception</span>
       </div>
       <div class="plan star rv">
         <div class="badge">Le plus populaire</div>
-        <h3>Premium</h3>
-        <div class="who">Commercial actif</div>
+        <h3>Carrière</h3>
+        <div class="who">Le bilan qui vaut aussi hors plateforme</div>
         <div class="price" data-prices data-m="19" data-a="15"><span class="was">19 €</span><b>15 €</b><span>/mois</span></div>
         <div class="per" data-per data-a="Facturé 180 €/an · Économie 48 €" data-m="Sans engagement">Facturé 180 €/an · Économie 48 €</div>
         <ul>
-          <li class="plus">Swipes et candidatures illimités</li>
-          <li class="plus">Contacts recruteurs illimités</li>
-          <li class="plus">Voir qui a liké votre profil</li>
-          <li>Score ADN détaillé</li>
-          <li>Les 5 ressources SwipSales incluses</li>
-          <li>Priorité dans les matchs</li>
+          <li>Tout le compte candidat inclus</li>
+          <li class="plus">Questionnaire ADN approfondi, 74 items</li>
+          <li class="plus">Restitution PDF téléchargeable, à vous</li>
+          <li>15 ebooks commerciaux (vente, prospection, carrière)</li>
+          <li>Optimisation de votre CV et de votre pitch</li>
         </ul>
-        <a href="swipsales_start.html?role=candidat" class="btn b-bleu">Chercher mon prochain match</a><span class="mini">Résiliable à tout moment</span>
+        <a href="swipsales_start.html?role=candidat" class="btn sec">Faire mon bilan</a><span class="mini">Résiliable à tout moment</span>
       </div>
       <div class="plan rv">
-        <h3>Platine</h3>
-        <div class="who">Closer Elite</div>
+        <h3>Carrière Coaching</h3>
+        <div class="who">Suivi, benchmark et entraînement</div>
         <div class="price" data-prices data-m="79" data-a="63"><span class="was">79 €</span><b>63 €</b><span>/mois</span></div>
         <div class="per" data-per data-a="Facturé 756 €/an · Économie 192 €" data-m="Sans engagement">Facturé 756 €/an · Économie 192 €</div>
         <ul>
-          <li>Tout Premium inclus</li>
-          <li class="plus">Initier le contact avec les recruteurs</li>
-          <li class="plus">Super swipes illimités</li>
-          <li>Mise en avant maximale</li>
-          <li>Badge Elite sur votre profil</li>
+          <li>Tout Carrière inclus</li>
+          <li class="plus">Nouvelle évaluation tous les 6 mois, historique et courbe d’évolution</li>
+          <li class="plus">Benchmark anonymisé face à votre typologie de poste (SDR, AE, KAM, terrain)</li>
+          <li class="plus">Chatbot de coaching : entretiens, objections, pitch de vos résultats</li>
+          <li>Certification SwipSales, badge partageable sur LinkedIn</li>
         </ul>
-        <a href="swipsales_start.html?role=candidat" class="btn sec">Passer au niveau Elite</a><span class="mini">Contact direct recruteurs</span>
+        <a href="swipsales_start.html?role=candidat" class="btn sec">Suivre ma progression</a><span class="mini">Coaching uniquement, jamais d'offres</span>
       </div>
     </div>
 
     <div class="reassure">
+      <span><b>✓</b> Candidater est gratuit, pour tous, à vie</span>
       <span><b>✓</b> Sans engagement</span>
       <span><b>✓</b> Résiliable en un clic</span>
       <span><b>✓</b> Offre en ligne en 5 minutes</span>
-      <span><b>✓</b> Profil candidat gratuit à vie</span>
     </div>
   </div>
 </section>
@@ -800,7 +825,8 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
       <details><summary>Comment fonctionne le scoring ADN ?</summary><div class="a">Chaque candidat passe un test adapté à son métier et son style de vente, portant sur ses réflexes face à des situations réelles. Le résultat est un score sur 100, visible par les recruteurs, avec le détail par dimension.</div></details>
       <details><summary>Puis-je publier mes offres ?</summary><div class="a">Oui, dès l'offre Entrepreneur (1 offre active), 3 offres en Starter et illimité en Pro. Une offre se publie en quelques minutes et apparaît dans la pile des candidats correspondants.</div></details>
       <details><summary>Puis-je contacter directement les candidats ?</summary><div class="a">Vous pouvez écrire à tout candidat qui s'est manifesté : match mutuel ou candidature reçue. Le démarchage à froid n'existe pas sur SwipSales, c'est ce qui garantit que les candidats restent actifs et que vos messages sont lus.</div></details>
-      <details><summary>Y a-t-il une version gratuite ?</summary><div class="a">Côté candidat, oui : le profil est gratuit à vie, test ADN et score inclus. Côté recruteur, l'accès est payant dès le premier poste, à partir de 71 € par mois, sans engagement et résiliable à tout moment.</div></details>
+      <details><summary>Est-ce vraiment gratuit pour les candidats ?</summary><div class="a">Oui, et cette gratuité ne dépend jamais d'un abonnement : créer son profil, swiper, candidater, accéder aux offres et échanger avec les recruteurs sont gratuits, identiques et à vie pour tous les candidats. Les offres payantes financent uniquement un accompagnement de carrière, séparé du placement lui-même : bilan approfondi, coaching, contenus. Côté recruteur, l'accès est payant dès le premier poste, à partir de 71 € par mois, sans engagement et résiliable à tout moment.</div></details>
+      <details><summary>L'abonnement candidat influence-t-il mes chances d'être vu par un recruteur ?</summary><div class="a">Non. La visibilité de votre profil, votre ordre d'apparition et vos possibilités de contact sont strictement identiques pour tous les candidats, abonnés ou non. Un recruteur ne voit jamais si vous êtes abonné. Les offres payantes ne débloquent que des outils de développement personnel, jamais un accès préférentiel au placement.</div></details>
       <details><summary>Puis-je arrêter quand je veux ?</summary><div class="a">Oui. L'abonnement se résilie depuis votre compte, sans justification ni préavis. Il reste actif jusqu'à la fin de la période déjà payée, sans reconduction forcée.</div></details>
       <details><summary>Combien de temps avant de voir des profils ?</summary><div class="a">Votre offre est publiable en cinq minutes et apparaît immédiatement dans la pile des candidats correspondant à vos critères. Le rythme des matchs dépend ensuite de votre poste, de votre secteur et de votre zone.</div></details>
     </div>
@@ -812,11 +838,8 @@ footer{background:#070E1B;color:#A9B6CB;padding:42px 0;font-size:13.5px}
     <h2>Arrêtez de chercher des commerciaux.<br><em>Commencez à les rencontrer.</em></h2>
     <p>Pendant que vous lisez ceci, vos concurrents recrutent. Votre offre peut être en ligne ce soir, les premiers profils dans votre pile demain matin.</p>
     <div class="hero-ctas">
-      <a href="swipsales_start.html?role=recruteur" class="btn b-blanc">Publier mon offre</a>
-      <span class="cta-with-badge">
-        <a href="swipsales_start.html?role=candidat" class="btn b-bleu">Créer mon profil commercial</a>
-        <span class="free-badge">Inscription gratuite</span>
-      </span>
+      <a href="#tarifs" class="btn b-blanc">Publier mon offre</a>
+      <a href="#tarifs" class="btn b-bleu" data-tab="candidat">Créer mon profil commercial</a>
     </div>
     <div class="micro">Sans engagement. Résiliable à tout moment. Profil candidat gratuit à vie.</div>
   </div>
@@ -866,8 +889,6 @@ function render(){
 sw.addEventListener('click', () => { annuel = !annuel; render(); });
 render();
 
-// Si une session valide existe déjà (token en local), on le signale clairement
-// au lieu de laisser croire qu'il faut recréer un compte.
 try {
   if (localStorage.getItem('sf_token')) {
     document.getElementById('session-banner').style.display = 'block';

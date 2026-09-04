@@ -42,10 +42,11 @@ router.get('/current', authMiddleware, async (req, res) => {
     }
 
     const swipesUsed = Math.max(Number(abonnement.swipes_u || 0), profileSwipesUsed);
+    // Swipes illimités pour tous les candidats, quel que soit le plan (contrainte légale, voir Notes.md).
     res.json({
       ...abonnement,
       swipes_u: swipesUsed,
-      swipes_m: abonnement.plan === 'freemium' ? 5 : 999,
+      swipes_m: 999,
     });
   } catch (error) {
     res.status(400).json({ error: error.message || error });
