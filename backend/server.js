@@ -48,6 +48,7 @@ app.use('/api/coaching', require('./routes/coaching'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/assistant', require('./routes/assistant'));
  
 // Doit etre place APRES toutes les routes, mais avant tout autre gestionnaire
 // d'erreurs personnalise : capture les erreurs non gerees et les envoie a Sentry.

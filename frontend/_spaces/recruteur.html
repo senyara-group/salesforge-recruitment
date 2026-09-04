@@ -1263,6 +1263,15 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="mstat"><div class="mstat-v sf" id="cov-score">—</div><div class="mstat-l">Score ADN</div></div>
     </div>
     <div class="cov-tags" id="cov-tags"></div>
+    <div class="candidate-workflow">
+      <div><span>Offre concernée</span><strong id="cov-offer">—</strong></div>
+      <label for="cov-status">Étape de la candidature</label>
+      <select class="form-select" id="cov-status" onchange="updatePipelineStatus(this.value)"></select>
+      <button class="btn bo blk" id="cov-cv-btn" type="button" style="display:none" onclick="openSnapshotCV()">Ouvrir le CV transmis</button>
+      <label for="cov-note">Note interne <small>— jamais visible par le candidat</small></label>
+      <textarea class="form-textarea" id="cov-note" rows="3" maxlength="4000" placeholder="Ajoutez un compte rendu privé…"></textarea>
+      <button class="btn bo bsm" type="button" onclick="saveCandidateNote()">Enregistrer la note</button>
+    </div>
     <div class="cov-full-profile" id="cov-full-profile" style="display:none"></div>
     <div class="cov-plan-note" id="cov-plan-note" style="display:none"></div>
     <div class="sh-actions">
@@ -1303,7 +1312,7 @@ let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
 let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
-let OF_TYPE = '', OF_TAGS = [];
+let OF_TYPE = '', OF_TAGS = [], EDITING_OFFER_ID = '', EDITING_OFFER_STATUS = 'active', MY_OFFERS = [];
 let HAS_PLAN = false;
 let CURRENT_PLAN = '';
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
@@ -1952,6 +1961,7 @@ async function doSwipe(action, cand) {
   try {
     const r = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
     if (r.match) showMatch(cand, r);
+    else if (r.interest_recorded) toast(action === 'super' ? 'Profil ajouté à vos intérêts prioritaires' : 'Intérêt enregistré — aucune candidature créée');
   } catch(e) { console.error(e); }
 }
 function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', CANDS[DECK_IDX]); }
@@ -2068,8 +2078,11 @@ async function saveQuestions() {
 // ------------------------------------------------------------
 const PIPE_STAGES = [
   { key:'nouveau', label:'Nouveaux', color:'var(--b)' },
+  { key:'vu', label:'À qualifier', color:'var(--pu)' },
   { key:'contacte', label:'Contactés', color:'var(--a)' },
-  // Entretien et Offre masqués : le backend ne les alimente pas encore (a reactiver avec la logique correspondante)
+  { key:'entretien', label:'Entretiens', color:'var(--g)' },
+  { key:'offre', label:'Propositions', color:'#087a55' },
+  { key:'termine', label:'Terminées', color:'var(--ink3)' },
 ];
 let PIPELINE = {};
 async function loadPipeline() {
@@ -2134,13 +2147,18 @@ function openPipelineCandidate(candidatureId) {
   const c = PIPELINE_CARDS[candidatureId];
   if (!c) return;
   CURRENT_PIPELINE_CANDIDATE = c;
-  if (c.candidat_id) api('POST', '/recruteurs/candidat-vu', { candidat_id: c.candidat_id }).catch(() => {});
+  if (c.candidat_id) api('POST', '/recruteurs/candidat-vu', { candidat_id: c.candidat_id, candidature_id: c.id }).catch(() => {});
   document.getElementById('cov-av').textContent = c.av;
   document.getElementById('cov-av').style.background = c.bg;
   document.getElementById('cov-name').textContent = c.name;
   document.getElementById('cov-role').textContent = c.role;
   document.getElementById('cov-score').textContent = c.score;
   document.getElementById('cov-tags').innerHTML = c.tags.map(t => `<span class="pc-tag">${t}</span>`).join('');
+  document.getElementById('cov-offer').textContent = c.offre_title || 'Offre';
+  document.getElementById('cov-note').value = c.internal_note || '';
+  renderPipelineStatusOptions(c.statut || 'envoyee');
+  const cvButton = document.getElementById('cov-cv-btn');
+  cvButton.style.display = c.cv_snapshot?.url ? '' : 'none';
 
   const btn = document.getElementById('cov-contact-btn');
   const note = document.getElementById('cov-plan-note');
@@ -2160,6 +2178,39 @@ function openPipelineCandidate(candidatureId) {
     note.style.display = 'none';
   }
   document.getElementById('cand-ov').classList.add('on');
+}
+const PIPELINE_TRANSITIONS = {
+  envoyee:['vu','contacte','refusee'], nouveau:['vu','contacte','refusee'], vu:['contacte','refusee'],
+  contacte:['repondu','entretien','refusee'], repondu:['entretien','refusee'], entretien:['offre','refusee'],
+  offre:['embauche','refusee'], embauche:[], refusee:[], retiree:[]
+};
+const PIPELINE_LABELS = { envoyee:'Candidature envoyée',nouveau:'À examiner',vu:'Profil consulté',contacte:'Contacté',repondu:'Réponse reçue',entretien:'Entretien',offre:'Proposition envoyée',embauche:'Recruté',refusee:'Non retenu',retiree:'Retirée' };
+function renderPipelineStatusOptions(status) {
+  const select = document.getElementById('cov-status');
+  const values = [status, ...(PIPELINE_TRANSITIONS[status] || [])];
+  select.innerHTML = values.map(value => `<option value="${value}">${PIPELINE_LABELS[value] || value}</option>`).join('');
+  select.disabled = values.length === 1;
+}
+async function updatePipelineStatus(status) {
+  if (!CURRENT_PIPELINE_CANDIDATE || status === CURRENT_PIPELINE_CANDIDATE.statut) return;
+  const select = document.getElementById('cov-status'); select.disabled = true;
+  try {
+    const result = await api('PUT', '/candidatures/' + encodeURIComponent(CURRENT_PIPELINE_CANDIDATE.id) + '/status', { statut: status });
+    CURRENT_PIPELINE_CANDIDATE.statut = result.statut; toast('Étape mise à jour'); await loadPipeline();
+  } catch (error) { toast(error.message || 'Transition impossible'); renderPipelineStatusOptions(CURRENT_PIPELINE_CANDIDATE.statut); }
+  finally { select.disabled = false; }
+}
+function openSnapshotCV() {
+  const url = CURRENT_PIPELINE_CANDIDATE?.cv_snapshot?.url;
+  if (!url) return toast('CV transmis indisponible');
+  window.open(url, '_blank', 'noopener');
+}
+async function saveCandidateNote() {
+  if (!CURRENT_PIPELINE_CANDIDATE) return;
+  try {
+    const result = await api('PUT', '/candidatures/' + encodeURIComponent(CURRENT_PIPELINE_CANDIDATE.id) + '/note', { note: document.getElementById('cov-note').value });
+    CURRENT_PIPELINE_CANDIDATE.internal_note = result.internal_note; toast('Note interne enregistrée');
+  } catch (error) { toast(error.message || 'Note non enregistrée'); }
 }
 function toggleFullProfile(c) {
   const el = document.getElementById('cov-full-profile');
@@ -2227,11 +2278,14 @@ async function postOffre() {
   }
   setBtn('btn-post-offre', true);
   try {
-    await api('POST', '/offres', { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut:'active' });
-    toast('Offre publiée !');
+    const payload = { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut: EDITING_OFFER_ID ? EDITING_OFFER_STATUS : 'active' };
+    if (EDITING_OFFER_ID) await api('PUT', '/offres/' + encodeURIComponent(EDITING_OFFER_ID), payload);
+    else await api('POST', '/offres', payload);
+    toast(EDITING_OFFER_ID ? 'Offre mise à jour' : 'Offre publiée !');
+    EDITING_OFFER_ID = ''; EDITING_OFFER_STATUS = 'active';
     go('pipeline');
     initNotifications();
-  } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, "Publier l'offre"); }
+  } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, EDITING_OFFER_ID ? 'Enregistrer les modifications' : "Publier l'offre"); }
 }
 
 let VILLE_SEARCH_TIMER = null;
@@ -2289,6 +2343,8 @@ function offerStatusLabel(status = '') {
   const value = String(status || 'active').toLowerCase();
   if (value === 'active') return 'Active';
   if (value === 'paused') return 'Pause';
+  if (value === 'closed') return 'Clôturée';
+  if (value === 'draft') return 'Brouillon';
   if (value === 'inactive') return 'Inactive';
   return status || 'Active';
 }
@@ -2299,7 +2355,7 @@ function offerTags(tags) {
 }
 async function deleteOffer(id) {
   if (!id) return;
-  if (!confirm('Supprimer cette offre ?')) return;
+  if (!confirm('Supprimer ce brouillon ?')) return;
   try {
     await api('DELETE', '/offres/' + encodeURIComponent(id));
     toast('Offre supprimée');
@@ -2309,11 +2365,21 @@ async function deleteOffer(id) {
     toast(e.message || 'Suppression impossible');
   }
 }
+async function setOfferStatus(id, statut) {
+  const action = statut === 'closed' ? 'clôturer' : 'réactiver';
+  if (!confirm(`Voulez-vous ${action} cette offre ?`)) return;
+  try {
+    await api('PATCH', '/offres/' + encodeURIComponent(id) + '/status', { statut });
+    toast(statut === 'closed' ? 'Offre clôturée, historique conservé' : 'Offre réactivée');
+    if (document.getElementById('p-pipeline')?.classList.contains('on')) loadPipeline(); else loadOffers();
+  } catch (error) { toast(error.message || 'Mise à jour impossible'); }
+}
 function renderPipelineOffers(offers = []) {
   const activeOffers = offers.filter(o => String(o.statut || 'active').toLowerCase() === 'active');
   renderOffers(activeOffers, 'pipeline-offers-list', 'Aucune offre active pour le moment.');
 }
 function renderOffers(offers = [], targetId = 'offers-list', emptyText = 'Aucune offre publiée pour le moment.') {
+  offers.forEach(offer => { if (!MY_OFFERS.some(item => String(item.id) === String(offer.id))) MY_OFFERS.push(offer); });
   const list = document.getElementById(targetId);
   if (!list) return;
   if (!offers.length) {
@@ -2344,10 +2410,30 @@ function renderOffers(offers = [], targetId = 'offers-list', emptyText = 'Aucune
         ${tags.length ? `<div class="offer-tags">${tags.map(t => `<span class="offer-tag">${esc(t)}</span>`).join('')}</div>` : ''}
         <div class="offer-actions">
           <button class="btn bg2 bsm" onclick="go('pipeline')">Voir candidatures</button>
-          <button class="btn bo bsm" onclick="deleteOffer('${esc(o.id)}')">Supprimer</button>
+          <button class="btn bo bsm" onclick="editOffer('${esc(o.id)}')">Modifier</button>
+          ${status==='active'?`<button class="btn bo bsm" onclick="setOfferStatus('${esc(o.id)}','closed')">Clôturer</button>`:status==='draft'?`<button class="btn bo bsm" onclick="deleteOffer('${esc(o.id)}')">Supprimer le brouillon</button>`:`<button class="btn bo bsm" onclick="setOfferStatus('${esc(o.id)}','active')">Réactiver</button>`}
         </div>
       </div>`;
   }).join('');
+}
+function editOffer(id) {
+  const offer = MY_OFFERS.find(item => String(item.id) === String(id));
+  if (!offer) return toast('Offre introuvable');
+  EDITING_OFFER_ID = offer.id;
+  EDITING_OFFER_STATUS = offer.statut || 'active';
+  document.getElementById('of-titre').value = offer.titre || '';
+  document.getElementById('of-lieu').value = offer.lieu || '';
+  document.getElementById('of-salaire').value = offer.salaire || '';
+  document.getElementById('of-desc').value = offer.description || '';
+  document.getElementById('of-auto').checked = Boolean(offer.auto_candidature);
+  OF_TYPE = offer.type || ''; OF_TAGS = offerTags(offer.tags);
+  LIEU_SELECTIONNE = true;
+  document.querySelectorAll('#p-post-offre .form-chip').forEach(button => {
+    const text = button.textContent.trim();
+    button.classList.toggle('on', text === OF_TYPE || OF_TAGS.includes(text));
+  });
+  document.getElementById('btn-post-offre').textContent = 'Enregistrer les modifications';
+  go('post-offre');
 }
 
 // ------------------------------------------------------------
@@ -2385,7 +2471,7 @@ async function loadMessages() {
     list.innerHTML = THREADS.map(t => `
       <div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')">
         <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
-        <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
+        <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-context">${esc(t.context || 'Offre')}</div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
         ${t.ur?'<div class="ur-badge">Nouveau</div>':''}
       </div>`).join('');
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
@@ -2415,7 +2501,7 @@ async function openThread(id) {
   if (!thread) return;
   ACTIVE_THREAD = thread;
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
-  document.getElementById('chat-sub').textContent = thread.prev || 'Match Swip Sales';
+  document.getElementById('chat-sub').textContent = thread.context || thread.prev || 'Match Swip Sales';
   document.getElementById('chat-panel').classList.add('on');
   document.getElementById('chat-placeholder')?.classList.add('hidden');
   const chatBody = document.getElementById('chat-body');

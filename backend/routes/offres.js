@@ -126,7 +126,8 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('offres')
-    .select('*, recruteurs(entreprise, secteur, avatar_meta)');
+    .select('*, recruteurs(entreprise, secteur, avatar_meta)')
+    .or('statut.eq.active,statut.is.null');
 
   if (error) return res.status(400).json({ error });
   res.json(await attachRecruiterLogos(data || []));
@@ -153,7 +154,8 @@ router.get('/deck', authMiddleware, async (req, res) => {
 
     const { data, error } = await supabase
       .from('offres')
-      .select('*, recruteurs(entreprise, secteur, avatar_meta)');
+      .select('*, recruteurs(entreprise, secteur, avatar_meta)')
+      .or('statut.eq.active,statut.is.null');
 
     if (error) return res.status(400).json({ error });
     const withLogos = await attachRecruiterLogos(data || []);
@@ -183,11 +185,29 @@ router.get('/:id', async (req, res) => {
     .from('offres')
     .select('*, recruteurs(entreprise, secteur, avatar_meta)')
     .eq('id', req.params.id)
+    .or('statut.eq.active,statut.is.null')
     .single();
 
   if (error) return res.status(400).json({ error });
   const [withLogo] = await attachRecruiterLogos([data]);
   res.json(withLogo);
+});
+
+router.patch('/:id/status', authMiddleware, requireRecruiterPlan, async (req, res) => {
+  try {
+    const recruteur = await ensureRecruiterProfile(req.user.id);
+    const statut = String(req.body?.statut || '').toLowerCase();
+    if (!['active', 'paused', 'closed'].includes(statut)) return res.status(400).json({ error: 'Statut offre invalide' });
+    const { data: existing, error: existingError } = await supabase.from('offres').select('*')
+      .eq('id', req.params.id).eq('recruteur_id', recruteur.id).maybeSingle();
+    if (existingError) throw existingError;
+    if (!existing) return res.status(404).json({ error: 'Offre introuvable' });
+    if (statut === 'active' && existing.statut !== 'active') await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan, existing.id);
+    const { data, error } = await supabase.from('offres').update({ statut })
+      .eq('id', existing.id).eq('recruteur_id', recruteur.id).select('*').single();
+    if (error) throw error;
+    res.json(data);
+  } catch (error) { publicError(res, error); }
 });
 
 router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
@@ -277,7 +297,7 @@ router.delete('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => 
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offre, error: offerError } = await supabase
       .from('offres')
-      .select('id')
+      .select('id, statut')
       .eq('id', req.params.id)
       .eq('recruteur_id', recruteur.id)
       .maybeSingle();
@@ -285,32 +305,20 @@ router.delete('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => 
     if (offerError) return res.status(400).json({ error: offerError });
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
 
-    const { data: matchs, error: matchsError } = await supabase
-      .from('matchs')
-      .select('id')
-      .eq('offre_id', req.params.id);
-    if (matchsError) return res.status(400).json({ error: matchsError });
-
-    const matchIds = (matchs || []).map((match) => match.id);
-    if (matchIds.length) {
-      const { error: messagesError } = await supabase
-        .from('messages')
-        .delete()
-        .in('match_id', matchIds);
-      if (messagesError) return res.status(400).json({ error: messagesError });
-
-      const { error: deleteMatchesError } = await supabase
-        .from('matchs')
-        .delete()
-        .in('id', matchIds);
-      if (deleteMatchesError) return res.status(400).json({ error: deleteMatchesError });
+    const [candidatureCheck, matchCheck] = await Promise.all([
+      supabase.from('candidatures').select('id', { count: 'exact', head: true }).eq('offre_id', req.params.id),
+      supabase.from('matchs').select('id', { count: 'exact', head: true }).eq('offre_id', req.params.id),
+    ]);
+    if (candidatureCheck.error) throw candidatureCheck.error;
+    if (matchCheck.error) throw matchCheck.error;
+    const candidatureCount = candidatureCheck.count;
+    const matchCount = matchCheck.count;
+    if (candidatureCount || matchCount || offre.statut === 'active') {
+      const { data, error } = await supabase.from('offres').update({ statut: 'closed' })
+        .eq('id', req.params.id).eq('recruteur_id', recruteur.id).select('*').single();
+      if (error) throw error;
+      return res.json({ message: 'Offre cloturee; historique conserve', action: 'closed', offre: data });
     }
-
-    const { error: candidaturesError } = await supabase
-      .from('candidatures')
-      .delete()
-      .eq('offre_id', req.params.id);
-    if (candidaturesError) return res.status(400).json({ error: candidaturesError });
 
     const { error } = await supabase
       .from('offres')
@@ -319,7 +327,7 @@ router.delete('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => 
       .eq('recruteur_id', recruteur.id);
 
     if (error) return res.status(400).json({ error });
-    res.json({ message: 'Offre supprimee' });
+    res.json({ message: 'Brouillon supprime', action: 'deleted' });
   } catch (error) {
     publicError(res, error);
   }

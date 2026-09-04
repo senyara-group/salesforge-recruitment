@@ -4,6 +4,7 @@ const path = require('path');
 const zlib = require('zlib');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
+const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
 
 const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
@@ -474,6 +475,26 @@ router.post('/analyse-cv', async (req, res) => {
   }
 });
 
+router.get('/cv-text', authMiddleware, async (req, res) => {
+  try {
+    const current = await ensureCandidateProfile(req.user.id);
+    const meta = current.axes?.meta || {};
+    if (!meta.cv_path) return res.status(404).json({ error: 'Aucun CV enregistre' });
+    const { data, error } = await supabase.storage.from(meta.cv_bucket || CV_BUCKET).download(meta.cv_path);
+    if (error) throw error;
+    const buffer = Buffer.from(await data.arrayBuffer());
+    const text = extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
+    res.json({
+      filename: meta.cv_file_name || 'CV',
+      text,
+      readable: text.length >= 40,
+      message: text.length >= 40 ? '' : 'Le document semble scanne ou illisible. Collez son texte pour continuer.',
+    });
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
 async function uploadCv(req, res) {
   try {
     const current = await ensureCandidateProfile(req.user.id);
@@ -528,6 +549,7 @@ async function uploadCv(req, res) {
       cv_url: signed?.signedUrl || storagePath,
       cv_file_name: file.filename,
       cv_autofill: autofill,
+      cv_text: extractCvText(file),
       candidat: data,
     });
   } catch (error) {
@@ -700,13 +722,8 @@ router.put('/profil', authMiddleware, async (req, res) => {
     await ensureCandidateProfile(req.user.id);
 
     const current = await ensureCandidateProfile(req.user.id);
-    const { nom, prenom, titre, score_adn, axes, cv_url, motivation, anonyme, avatar_label, ville, competences } = req.body;
-    const nextAxes = axes === undefined
-      ? current.axes
-      : {
-        ...(current.axes || {}),
-        ...(axes || {}),
-      };
+    const { nom, prenom, titre, motivation, anonyme, avatar_label, ville, competences } = req.body;
+    const nextAxes = { ...(current.axes || {}) };
     if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined || competences !== undefined) {
       nextAxes.meta = {
         ...(current.axes?.meta || {}),
@@ -720,7 +737,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
 
     const { data, error } = await supabase
       .from('candidats')
-      .update(definedOnly({ nom, prenom, titre, score_adn, axes: nextAxes, cv_url }))
+      .update(definedOnly({ nom, prenom, titre, axes: nextAxes }))
       .eq('user_id', req.user.id)
       .select('*')
       .single();
@@ -759,8 +776,9 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/deck', authMiddleware, async (req, res) => {
+router.get('/deck', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
+    await ensureRecruiterProfile(req.user.id);
     const matching = req.query.matching ? JSON.parse(req.query.matching) : {};
     const requestedCompetences = req.query.competences
       ? String(req.query.competences).split(',').map((c) => c.trim()).filter(Boolean)
@@ -834,10 +852,10 @@ router.get('/deck', authMiddleware, async (req, res) => {
           letter_text: profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.',
           letter_audio: Boolean(profile.axes?.meta?.audio_url),
           letter_video: Boolean(profile.axes?.meta?.video_url),
-          cv_url: profile.cv_url || '',
-          cv_file_name: profile.axes?.meta?.cv_file_name || '',
-          motivation_url: profile.motivation_url || '',
-          motivation_file_name: profile.axes?.meta?.motivation_file_name || '',
+          cv_url: anon ? '' : (profile.cv_url || ''),
+          cv_file_name: anon ? '' : (profile.axes?.meta?.cv_file_name || ''),
+          motivation_url: anon ? '' : (profile.motivation_url || ''),
+          motivation_file_name: anon ? '' : (profile.axes?.meta?.motivation_file_name || ''),
           skills: skills.length ? skills : ['Sales', 'B2B'],
           competences: profile.axes?.meta?.competences || {},
           ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
