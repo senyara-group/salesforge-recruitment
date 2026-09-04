@@ -173,6 +173,39 @@ Contenu complet fourni par Yannis (document `SwipSales_Questionnaire_ADN_et_Coac
 
 ---
 
+## Audit "commercialisation" du 2026-09-05 — état des lieux et corrections
+
+Guillaume a demandé un état des lieux avant d'ouvrir les paiements candidat. Résumé et actions prises :
+
+### Bloqueur principal (pas levé, hors de portée de Claude Code)
+**Aucun avocat n'a encore validé le découpage gratuit/payant.** Le document de Yannis le dit lui-même : *"Ce document ne remplace pas la validation d'un avocat en droit du travail, qui doit relire le découpage entre ce qui est gratuit et ce qui est payant avant la mise en vente."* Les CGU/CGV portent le même avertissement depuis leur création. Ne pas ouvrir les paiements candidat tant que ce n'est pas fait.
+
+### Corrigé cette session
+- **`frontend/swipsales_legal.html` Article 4** (destinataires des données) : ajout de Brevo et d'Anthropic, qui manquaient malgré des flux de données réels et continus vers ces deux prestataires. Marqué "Extrait à compléter" dans le document — reste un brouillon à valider par un juriste comme le reste.
+- **Quotas mensuels sur les fonctionnalités IA** (`backend/utils/profiles.js`, fonction `checkAndConsumeUsage`, compteur dans `candidats.axes.meta.usage`, reset automatique au changement de mois) :
+  - Chatbot de coaching : **100 messages/mois** tous modules confondus (`backend/routes/coaching.js`)
+  - Optimisation CV/pitch : **10/mois cumulées** (`backend/routes/candidats.js`)
+  - Chiffres proposés par Claude Code, validés par Guillaume le 2026-09-05. Réponse HTTP 429 `QUOTA_EXCEEDED` avec message clair, géré côté frontend.
+  - ⚠️ Bug pendant l'implémentation, corrigé avant commit : `checkAndConsumeUsage` et la sauvegarde de l'historique de conversation écrivaient toutes les deux sur `candidats.axes` dans le même handler — l'ordre initial aurait fait écraser le compteur de quota par une version périmée. Corrigé en relisant le profil après la vérification de quota plutôt qu'avant.
+  - Testé en conditions réelles sur une ligne existante (incrémenté 3 fois, refusé la 4ᵉ sur une limite de 3, état restauré après coup).
+
+### Trouvé, pas corrigé — à trancher avec Yannis
+**Incohérence "Pro" vs "Partenaire" (palier recruteur).** La landing page (`swipsales_landing.html`) affiche un 3ᵉ palier recruteur "Pro" à 399€/319€ (offres illimitées, alertes temps réel). L'app (`recruteur.html`) affiche à la même position "Partenaire" à 899€/719€ (marque blanche, API ATS, SLA garanti). Prix et fonctionnalités totalement différents pour ce qui est présenté comme le même rang de palier sur les deux pages — un recruteur qui s'inscrit depuis la landing en pensant payer 399€ tombe sur 899€ dans l'app. Ce n'est pas qu'un problème de nom (contrairement à Starter/Business, cosmétique) : ce sont deux offres différentes. Ni le prix ni le contenu ne matchent. Guillaume fait le point avec Yannis — à corriger une fois la décision prise (fusionner en un seul palier, ou en faire un vrai 4ᵉ palier distinct).
+
+Table de correspondance tarifs ↔ Stripe (établie pour cet audit — accès Stripe **test** uniquement, pas de visibilité sur les Price ID réels en production) :
+
+| Palier affiché | Prix | Slug | Variable d'env Railway | Dans `.env.example` |
+|---|---|---|---|---|
+| Compte candidat | 0€ | `freemium` | — | — |
+| Carrière | 19€/15€ | `carriere` | `STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH`/`_YEAR` | ✅ |
+| Carrière Coaching | 79€/63€ | `carriere_coaching` | `STRIPE_PRICE_CANDIDAT_PLATINE_MONTH`/`_YEAR` | ✅ |
+| Entrepreneur | 89€/71€ | `solo` | `STRIPE_PRICE_RECRUTEUR_SOLO_MONTH`/`_YEAR` | ❌ absente du fichier exemple bien qu'utilisée dans `stripe.js` — à vérifier qu'elle existe bien sur Railway |
+| Starter (landing) / Business (app) | 149€/119€ | `starter` | `STRIPE_PRICE_RECRUTEUR_STARTER_MONTH`/`_YEAR` | ✅ |
+| Pro (landing uniquement) | 399€/319€ | `pro` | `STRIPE_PRICE_RECRUTEUR_PRO_MONTH`/`_YEAR` | ✅ |
+| Partenaire (app uniquement) | 899€/719€ | `enterprise` | `STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH`/`_YEAR` | ✅ (voir checklist "Bug pricing recruteur Partenaire" plus haut — statut des nouveaux Price 899/8628 côté Stripe live toujours pas confirmé) |
+
+---
+
 ## RGPD — scoring comportemental candidat (construit le 2026-09-04)
 
 Suite de la même consultation juriste que la contrainte tarifaire ci-dessus. Méthode suivie : audit de l'existant avant toute construction, aucun texte légal rédigé comme définitif, questions posées à Guillaume sur les points ambigus (schéma de la table de consentement, stratégie de suppression, délai de suppression, traitement de la donnée envoyée à Brevo) avant de coder.

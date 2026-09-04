@@ -39,6 +39,40 @@ async function getCandidatePlan(userId) {
   return abonnement?.statut === 'actif' ? (abonnement.plan || 'freemium') : 'freemium';
 }
 
+// Quota mensuel sur les fonctionnalités payantes reposant sur Claude (chatbot,
+// optimisation CV/pitch) — pas pour limiter l'accès au produit (contrainte légale),
+// uniquement pour contenir le coût API par abonné. Décision Guillaume 2026-09-05 :
+// 100 messages/mois chatbot (Carrière Coaching), 10 optimisations/mois CV+pitch
+// cumulées (Carrière). Compteur stocké dans candidats.axes.meta.usage, remis à
+// zéro automatiquement au changement de mois (pas de job de reset à programmer).
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+async function checkAndConsumeUsage(userId, key, limit) {
+  const { data: candidat, error } = await supabase
+    .from('candidats')
+    .select('axes')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const usage = candidat?.axes?.meta?.usage || {};
+  const month = currentMonthKey();
+  const entry = usage[key];
+  const count = entry?.month === month ? entry.count : 0;
+
+  if (count >= limit) return { allowed: false, count, limit };
+
+  const nextAxes = {
+    ...(candidat?.axes || {}),
+    meta: { ...(candidat?.axes?.meta || {}), usage: { ...usage, [key]: { month, count: count + 1 } } },
+  };
+  const { error: updateError } = await supabase.from('candidats').update({ axes: nextAxes }).eq('user_id', userId);
+  if (updateError) throw updateError;
+
+  return { allowed: true, count: count + 1, limit };
+}
+
 function assertRoleMatches(role, expectedRole) {
   if (role && role !== expectedRole) {
     const error = new Error(`Acces reserve aux profils ${expectedRole}s`);
@@ -138,4 +172,6 @@ module.exports = {
   ensureCandidateProfile,
   ensureRecruiterProfile,
   ensureRoleProfile,
+  getCandidatePlan,
+  checkAndConsumeUsage,
 };
