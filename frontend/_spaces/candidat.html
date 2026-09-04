@@ -1064,7 +1064,7 @@ button,input,textarea,select{font-family:inherit}
         <div class="notif-list" id="notif-list"><div class="notif-empty">Aucune notification</div></div>
       </div>
     </div>
-    <div class="ib" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="ib" onclick="go('account')" title="Compte"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
   </div>
 </div>
 
@@ -1080,8 +1080,9 @@ button,input,textarea,select{font-family:inherit}
 <!-- HOME -->
 <div id="p-home" class="page">
   <div class="home-hero">
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:2px">Bonjour,</div>
-    <div class="sf" id="home-name" style="font-size:21px;font-weight:900;letter-spacing:-.5px;margin-bottom:13px">Chargement…</div>
+    <div class="page-kicker">Tableau de bord</div>
+    <h1 class="sf page-title">Votre activité</h1>
+    <p class="page-intro">Suivez vos démarches et concentrez-vous sur la prochaine action utile.</p>
     <div class="photo-nudge" id="photo-nudge" style="display:none">
       <div class="photo-nudge-ico"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
       <div class="photo-nudge-txt">
@@ -1090,7 +1091,11 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <button class="btn bp bsm" type="button" onclick="document.getElementById('avatar-file-prof').click()">Ajouter</button>
     </div>
-    <div class="score-card" onclick="go('profile')">
+    <div class="next-action" id="home-next-action" onclick="go('test')">
+      <div class="next-action-copy"><span class="next-action-label">Prochaine action</span><strong class="sf" id="home-next-title">Compléter mon ADN Commercial</strong><span id="home-next-copy">Répondez au questionnaire pour enrichir votre profil professionnel.</span></div>
+      <button class="btn bp bsm" id="home-next-button" type="button">Commencer</button>
+    </div>
+    <div class="score-card compact-score" onclick="go('profile')">
       <div class="score-ring">
         <svg width="68" height="68" viewBox="0 0 68 68" style="transform:rotate(-90deg)">
           <circle cx="34" cy="34" r="28" fill="none" stroke="var(--bd)" stroke-width="5"/>
@@ -1113,10 +1118,6 @@ button,input,textarea,select{font-family:inherit}
     </div>
   </div>
   <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">ADN Commercial</div></div>
-    <div class="adn-bars" id="home-adn"><div class="loading-state">Passez le test ADN pour voir vos axes</div></div>
-  </div>
-  <div class="sec">
     <div class="sec-hd"><div class="sec-t sf">Suivi candidatures</div><button class="btn bg2 bsm" onclick="go('candidatures')">Tout voir</button></div>
     <div class="tr-list" id="home-cands"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
@@ -1125,7 +1126,16 @@ button,input,textarea,select{font-family:inherit}
 <!-- COACHING -->
 <div id="p-coaching" class="page">
   <div class="sec">
-    <div class="sec-hd"><div class="sec-t sf">Ressources</div></div>
+    <div class="page-heading"><div><div class="page-kicker">Développement professionnel</div><h1 class="page-title sf">Coaching</h1><p class="page-intro">Évaluez votre profil commercial, améliorez vos documents et consultez vos ressources.</p></div></div>
+    <div class="coaching-tools">
+      <article class="tool-row" onclick="go('test')">
+        <div class="tool-icon">ADN</div><div class="tool-copy"><div class="tool-eyebrow">Évaluation</div><h2 class="sf">Test ADN Commercial</h2><p>Identifiez votre profil et vos axes commerciaux à partir du questionnaire existant.</p></div><span class="tool-action">Accéder au test</span>
+      </article>
+      <article class="tool-row" onclick="go('profile');setTimeout(toggleProfileEdit,0)">
+        <div class="tool-icon">CV</div><div class="tool-copy"><div class="tool-eyebrow">Documents</div><h2 class="sf">CV et candidature</h2><p>Importez ou remplacez les documents présentés aux recruteurs.</p></div><span class="tool-action">Gérer mes documents</span>
+      </article>
+    </div>
+    <div class="section-divider"><div><div class="sec-t sf">Bibliothèque pratique</div><p>Des guides directement consultables, sans quitter votre parcours.</p></div></div>
     <div class="doc-list">
       <a class="doc-item" href="../documents/SwipSales_01_Traiter_les_objections.pdf" target="_blank" rel="noopener">
         <div class="doc-num" style="background:#1340E0"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
@@ -1528,16 +1538,6 @@ button,input,textarea,select{font-family:inherit}
         <div class="profile-edit-field"><label for="edit-prenom">Prénom</label><input id="edit-prenom" autocomplete="given-name" placeholder="Prénom"></div>
         <div class="profile-edit-field"><label for="edit-nom">Nom</label><input id="edit-nom" autocomplete="family-name" placeholder="Nom"></div>
       </div>
-      <div class="profile-edit-field" style="margin-bottom:12px">
-        <label>Email de connexion</label>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--fond,#F3F5FA);border-radius:10px;font-size:14px" id="account-email-display">—</div>
-        <button type="button" class="btn upload-btn" style="margin-top:8px" onclick="requestPasswordReset()">Changer mon mot de passe</button>
-      </div>
-      <div class="profile-edit-field" style="margin-bottom:12px">
-        <label>Mon abonnement</label>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--fond,#F3F5FA);border-radius:10px;font-size:14px" id="subscription-status-display">—</div>
-        <button type="button" class="btn upload-btn" style="margin-top:8px;display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
-      </div>
       <div class="profile-edit-field" style="position:relative;margin-bottom:12px">
         <label for="edit-ville">Ville</label>
         <input id="edit-ville" autocomplete="off" placeholder="Ville" oninput="searchVilles('edit-ville','edit-ville-list',this.value)" onfocus="searchVilles('edit-ville','edit-ville-list',this.value)">
@@ -1588,22 +1588,24 @@ button,input,textarea,select{font-family:inherit}
       <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
       <div class="comp-display" id="prof-comp-display"></div>
     </div>
-    <div class="plan-banner" id="plan-banner">
-      <div class="plan-info">
-        <div class="plan-cur">Abonnement actuel</div>
-        <div class="plan-name sf" id="plan-n">Freemium</div>
-        <div class="plan-desc" id="plan-d">Chargement…</div>
-      </div>
-      <button onclick="go('pricing')">Upgrader</button>
-    </div>
-    <div class="menu-list">
-      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ressources</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-      <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+    <div class="menu-list profile-shortcuts">
+      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ouvrir le coaching</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="go('account')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg></div><div class="menu-txt">Paramètres du compte</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
       <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
       <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
       <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
+  </div>
+</div>
+
+<!-- COMPTE -->
+<div id="p-account" class="page">
+  <div class="sec account-layout">
+    <div class="page-heading"><div><div class="page-kicker">Préférences</div><h1 class="page-title sf">Compte</h1><p class="page-intro">Gérez vos accès et votre abonnement sans modifier votre profil professionnel.</p></div></div>
+    <section class="account-section"><h2 class="sf">Connexion</h2><p>Adresse utilisée pour accéder à SwipSales.</p><div class="account-value" id="account-email-display">—</div><button type="button" class="btn bo" onclick="requestPasswordReset()">Changer mon mot de passe</button></section>
+    <section class="account-section"><h2 class="sf">Abonnement</h2><p>Consultez votre formule actuelle et gérez-la.</p><div class="account-value" id="subscription-status-display">—</div><div class="account-actions"><button type="button" class="btn bp" onclick="go('pricing')">Voir les formules</button><button type="button" class="btn bo" style="display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier</button></div></section>
+    <button class="btn bo account-logout" type="button" onclick="doLogout()">Se déconnecter</button>
   </div>
 </div>
 
@@ -1625,10 +1627,11 @@ button,input,textarea,select{font-family:inherit}
 <!-- BOTTOM NAV -->
 <nav class="bnav" id="bnav" style="display:none">
   <button class="bn on" id="nav-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></button>
-  <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Explorer</span></button>
+  <button class="bn" id="nav-swipe" onclick="go('swipe')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Opportunités</span></button>
   <button class="bn" id="nav-coaching" onclick="go('coaching')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Ressources</span></button>
   <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
+  <button class="bn bn-secondary" id="nav-account" onclick="go('account')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg><span>Compte</span></button>
 </nav>
 
 <!-- MATCH OVERLAY -->
@@ -1848,7 +1851,7 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',repondu:'chip-a',entretien:'chip-pu'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
-const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','pricing'];
+const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','account','pricing'];
 function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
 function lastPageKey() { return 'sf_last_candidat_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) { if (p !== 'auth') localStorage.setItem(lastPageKey(), p); }
@@ -1982,7 +1985,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2094,7 +2097,6 @@ async function handleCV(input) {
 // ------------------------------------------------------------
 async function loadHome() {
   if (!USER) return;
-  document.getElementById('home-name').textContent = (USER.prenom || '') + ' ' + (USER.nom || '');
   const greetEl = document.getElementById('topbar-greet');
   if (greetEl && USER.prenom) greetEl.innerHTML = `Bonjour, <b>${esc(USER.prenom)}</b>`;
   try {
@@ -2104,11 +2106,14 @@ async function loadHome() {
       api('GET', '/candidatures?limit=3')
     ]);
     renderHomeScore(profil); renderHomeKPIs(stats);
-    document.getElementById('home-adn').innerHTML = adn(profil.axes);
     renderHomeCands(cands);
     const nudge = document.getElementById('photo-nudge');
     if (nudge) nudge.style.display = profil.avatar_url ? 'none' : 'flex';
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    console.error(e);
+    const list = document.getElementById('home-cands');
+    if (list) list.innerHTML = '<div class="empty-state"><b>Tableau de bord indisponible</b><span>Impossible de charger vos données pour le moment.</span><button class="btn bo bsm" type="button" onclick="loadHome()">Réessayer</button></div>';
+  }
 }
 function renderHomeScore(p) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
@@ -2117,6 +2122,16 @@ function renderHomeScore(p) {
   document.getElementById('home-score-type').textContent = p.type_profil || 'Passer le test ADN';
   document.getElementById('home-score-rank').textContent = p.rank || 'Cliquez pour commencer';
   if (p.score_adn) document.getElementById('score-circle').setAttribute('stroke-dasharray', Math.round(p.score_adn / 100 * 176) + ' 176');
+  const next = document.getElementById('home-next-action');
+  const title = document.getElementById('home-next-title');
+  const copy = document.getElementById('home-next-copy');
+  const button = document.getElementById('home-next-button');
+  if (p.score_adn) {
+    next.onclick = () => go('swipe');
+    title.textContent = 'Explorer les opportunités';
+    copy.textContent = 'Votre profil ADN est prêt : consultez les offres compatibles.';
+    button.textContent = 'Voir les offres';
+  }
 }
 function renderHomeKPIs(s) {
   document.getElementById('kpi-m').textContent = s.matchs || '0';
@@ -2135,7 +2150,7 @@ function renderInsights(ins) {
 }
 function renderHomeCands(c) {
   if (!c.length) {
-    document.getElementById('home-cands').innerHTML = '<div class="loading-state">Aucune candidature envoyée pour le moment.</div>';
+    document.getElementById('home-cands').innerHTML = '<div class="empty-state"><b>Aucune candidature en cours</b><span>Explorez les opportunités pour commencer votre recherche.</span><button class="btn bp bsm" type="button" onclick="go(\'swipe\')">Voir les offres</button></div>';
     return;
   }
   document.getElementById('home-cands').innerHTML = c.map(x =>
@@ -2875,8 +2890,10 @@ function renderProfile(p, a) {
   const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
   CURRENT_PLAN = activeSubscriptionPlan(a);
   CURRENT_PLAN_LOADED = true;
-  document.getElementById('plan-n').textContent=names[a.plan]||'Freemium';
-  document.getElementById('plan-d').textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
+  const planName = document.getElementById('plan-n');
+  const planDescription = document.getElementById('plan-d');
+  if (planName) planName.textContent=names[a.plan]||'Freemium';
+  if (planDescription) planDescription.textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
   fillProfileEdit(p, avatarLabel);
 }
 function renderAvatarInto(el, url, label) {
