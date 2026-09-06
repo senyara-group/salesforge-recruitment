@@ -6,6 +6,7 @@ const PDFDocument = require('pdfkit');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const requireCandidatePlan = require('../middleware/requireCandidatePlan');
+const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
 
