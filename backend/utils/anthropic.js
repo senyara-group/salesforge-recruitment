@@ -21,7 +21,27 @@ function getClient() {
   return client;
 }
 
-async function askClaude({ system, messages, maxTokens = 1024, timeoutMs, maxRetries = 0 }) {
+function extractText(response) {
+  return response.content
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n')
+    .trim();
+}
+
+function responseMeta(response, text) {
+  return {
+    stop_reason: response.stop_reason || null,
+    input_tokens: response.usage?.input_tokens ?? null,
+    output_tokens: response.usage?.output_tokens ?? null,
+    response_chars: text.length,
+    has_open_brace: text.includes('{'),
+    has_close_brace: text.includes('}'),
+    has_markdown_fence: /```/.test(text),
+  };
+}
+
+async function askClaude({ system, messages, maxTokens = 1024, timeoutMs, maxRetries = 0, returnMeta = false }) {
   const anthropic = getClient();
   const response = await anthropic.messages.create({
     model: MODEL,
@@ -34,11 +54,9 @@ async function askClaude({ system, messages, maxTokens = 1024, timeoutMs, maxRet
     // une génération trop longue ; on laisse l'appelant décider.
     maxRetries,
   });
-  return response.content
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n')
-    .trim();
+  const text = extractText(response);
+  if (returnMeta) return { text, meta: responseMeta(response, text) };
+  return text;
 }
 
 module.exports = { askClaude, MODEL, anthropicTimeout };

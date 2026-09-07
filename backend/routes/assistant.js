@@ -13,10 +13,26 @@ const MODE_LABELS = { interview: 'Préparation entretien', pitch: 'Amélioration
 
 function publicError(res, error) {
   const response = publicAiError(error);
-  console.error('[assistant]', response.code, {
+  const logPayload = {
     technicalCode: error?.code || null,
     technicalMessage: String(error?.message || 'Unknown error').slice(0, 500),
-  });
+  };
+  // DIAG_CV_JSON: métadonnées non sensibles uniquement (pas de CV / prompt / réponse).
+  if (error?.diagnostics && typeof error.diagnostics === 'object') {
+    logPayload.diagnostics = {
+      stage: error.diagnostics.stage || null,
+      schema_stage: error.diagnostics.schema_stage ?? null,
+      stop_reason: error.diagnostics.stop_reason ?? null,
+      input_tokens: error.diagnostics.input_tokens ?? null,
+      output_tokens: error.diagnostics.output_tokens ?? null,
+      response_chars: error.diagnostics.response_chars ?? null,
+      has_open_brace: error.diagnostics.has_open_brace ?? null,
+      has_close_brace: error.diagnostics.has_close_brace ?? null,
+      has_markdown_fence: error.diagnostics.has_markdown_fence ?? null,
+      parse_error: error.diagnostics.parse_error ? String(error.diagnostics.parse_error).slice(0, 200) : null,
+    };
+  }
+  console.error('[assistant]', response.code, logPayload);
   return res.status(response.status).json({ error: response.message, code: response.code });
 }
 

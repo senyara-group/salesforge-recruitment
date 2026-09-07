@@ -25,15 +25,46 @@ function stripCodeFence(value = '') {
   return String(value).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 }
 
+function jsonShapeHints(value = '') {
+  const text = String(value);
+  return {
+    response_chars: text.length,
+    has_open_brace: text.includes('{'),
+    has_close_brace: text.includes('}'),
+    has_markdown_fence: /```/.test(text),
+  };
+}
+
 function parseJsonResponse(value) {
   const text = stripCodeFence(value);
-  if (text.length > MAX_RESPONSE_CHARS) throw new Error('Reponse IA trop volumineuse');
+  if (text.length > MAX_RESPONSE_CHARS) {
+    const error = new Error('Reponse IA trop volumineuse');
+    error.diagnostics = { stage: 'json_parse', parse_error: error.message, ...jsonShapeHints(text) };
+    throw error;
+  }
   try { return JSON.parse(text); }
-  catch (_error) {
+  catch (firstError) {
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
-    if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
-    throw new Error('Reponse IA invalide');
+    if (start >= 0 && end > start) {
+      try { return JSON.parse(text.slice(start, end + 1)); }
+      catch (sliceError) {
+        const error = new Error('Reponse IA invalide');
+        error.diagnostics = {
+          stage: 'json_parse',
+          parse_error: String(sliceError.message || firstError.message || 'JSON.parse failed').slice(0, 200),
+          ...jsonShapeHints(text),
+        };
+        throw error;
+      }
+    }
+    const error = new Error('Reponse IA invalide');
+    error.diagnostics = {
+      stage: 'json_parse',
+      parse_error: String(firstError.message || 'JSON.parse failed').slice(0, 200),
+      ...jsonShapeHints(text),
+    };
+    throw error;
   }
 }
 
@@ -54,6 +85,13 @@ function isAiTimeoutError(error) {
   return /timed out|timeout/i.test(String(error.message || ''));
 }
 
+function normalizeProviderResult(raw) {
+  if (raw && typeof raw === 'object' && typeof raw.text === 'string') {
+    return { content: raw.text, meta: raw.meta || null };
+  }
+  return { content: typeof raw === 'string' ? raw : '', meta: null };
+}
+
 async function callAi({
   messages,
   json = false,
@@ -70,20 +108,52 @@ async function callAi({
   }
   const formatted = anthropicMessages(messages);
   if (json) formatted.system = `${formatted.system}\n\nRéponds uniquement avec un objet JSON valide, sans balise Markdown.`.trim();
+  let providerMeta = null;
   try {
-    const content = await providerCall({ ...formatted, maxTokens, timeoutMs, maxRetries });
+    // DIAG_CV_JSON: demande les métadonnées Anthropic uniquement pour le chemin JSON.
+    const raw = await providerCall({
+      ...formatted,
+      maxTokens,
+      timeoutMs,
+      maxRetries,
+      returnMeta: json && providerCall === askClaude,
+    });
+    const normalized = normalizeProviderResult(raw);
+    const content = normalized.content;
+    providerMeta = normalized.meta;
     if (typeof content !== 'string' || !content.trim()) {
       const invalid = new Error('Reponse IA vide');
       invalid.status = 502;
       invalid.code = 'AI_INVALID_RESPONSE';
+      invalid.diagnostics = {
+        stage: 'empty_response',
+        parse_error: null,
+        schema_stage: null,
+        stop_reason: providerMeta?.stop_reason ?? null,
+        input_tokens: providerMeta?.input_tokens ?? null,
+        output_tokens: providerMeta?.output_tokens ?? null,
+        ...jsonShapeHints(content || ''),
+      };
       throw invalid;
     }
     if (!json) return content.slice(0, MAX_RESPONSE_CHARS).trim();
     try { return parseJsonResponse(content); }
-    catch (_error) {
+    catch (parseError) {
       const invalid = new Error('Le service IA a renvoye une reponse invalide');
       invalid.status = 502;
       invalid.code = 'AI_INVALID_RESPONSE';
+      invalid.diagnostics = {
+        stage: 'json_parse',
+        schema_stage: null,
+        stop_reason: providerMeta?.stop_reason ?? null,
+        input_tokens: providerMeta?.input_tokens ?? null,
+        output_tokens: providerMeta?.output_tokens ?? null,
+        parse_error: String(parseError.diagnostics?.parse_error || parseError.message || 'JSON.parse failed').slice(0, 200),
+        response_chars: parseError.diagnostics?.response_chars ?? content.length,
+        has_open_brace: parseError.diagnostics?.has_open_brace ?? content.includes('{'),
+        has_close_brace: parseError.diagnostics?.has_close_brace ?? content.includes('}'),
+        has_markdown_fence: parseError.diagnostics?.has_markdown_fence ?? /```/.test(content),
+      };
       throw invalid;
     }
   } catch (error) {
@@ -105,6 +175,7 @@ module.exports = {
   aiConfiguration,
   isAiConfigured,
   safeText,
+  stripCodeFence,
   parseJsonResponse,
   anthropicMessages,
   isAiTimeoutError,
