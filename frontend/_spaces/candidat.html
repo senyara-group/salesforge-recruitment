@@ -71,18 +71,22 @@ button,input,textarea,select{font-family:inherit}
 .bo{background:transparent;border:1.5px solid var(--bd2);color:var(--ink2);padding:12px 18px;font-size:14px}
 .bg2{background:var(--bs);color:var(--b);padding:8px 14px;font-size:13px}
 .bsm{padding:8px 13px;font-size:12px}.blk{width:100%}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px;flex-shrink:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip-b{background:var(--bs);color:var(--b);border:1px solid var(--bm)}.chip-g{background:var(--gs);color:var(--g)}
 .chip-r{background:var(--rs);color:var(--r)}.chip-a{background:var(--as);color:var(--a)}
-.chip-pu{background:var(--pus);color:var(--pu)}.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.chip-pu{background:var(--pus);color:var(--pu)}.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
 .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--bm);border-top-color:var(--b);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .err{background:var(--rs);border:1px solid var(--r);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--r);font-weight:600;margin-bottom:12px;display:none}
 .err.on{display:block}
 .sec{padding:15px 18px}
-.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;gap:10px}
+.sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px;min-width:0}
 .loading-state{text-align:center;padding:24px;color:var(--mu);font-size:13px}
+.empty-state{min-height:138px;border:1px dashed var(--bd2);border-radius:12px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--ink3);font-size:13px;line-height:1.55;padding:20px;gap:6px;width:100%;box-sizing:border-box}
+.empty-state b{font-family:'Sora',sans-serif;color:var(--ink);font-size:14px;font-weight:800;margin:0}
+.empty-state span{display:block;max-width:28ch;margin:0 auto}
+.empty-state .btn{margin-top:8px}
 .hscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 4px}
 .hscroll::-webkit-scrollbar{display:none}
 
@@ -148,12 +152,15 @@ button,input,textarea,select{font-family:inherit}
 .adn-tr{flex:1;height:5px;background:var(--bd);border-radius:3px;overflow:hidden}
 .adn-f{height:100%;background:var(--b);border-radius:3px;transition:width .6s}
 .adn-s{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;width:25px;text-align:right}
-.tr-list{display:flex;flex-direction:column;gap:7px}
-.tr-item{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s}
+.tr-list{display:flex;flex-direction:column;gap:7px;min-width:0}
+.tr-item{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s;min-width:0}
 .tr-logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:13px;flex-shrink:0}
 .tr-info{flex:1;min-width:0}
 .tr-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tr-sub{font-size:12px;color:var(--ink3);margin-top:1px}
+.tr-sub{font-size:12px;color:var(--ink3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.candidate-status-actions{display:grid;justify-items:end;gap:3px;flex-shrink:0;max-width:46%;min-width:0}
+.candidate-status-actions .chip{max-width:100%}
+.candidate-date{color:var(--mu);font-size:11px}
 
 /* COACH */
 .coach-card{background:linear-gradient(135deg,#091422,#1340E0);color:#fff;border-radius:16px;padding:18px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
@@ -639,6 +646,8 @@ button,input,textarea,select{font-family:inherit}
   .score-ring{width:60px;height:60px}
   .kpi{padding:10px}
   .kpi-v{font-size:20px}
+  .tr-item{align-items:flex-start}
+  .candidate-status-actions{max-width:42%}
   .swipe-hd{top:54px;padding:10px 14px}
   .filter-row{gap:5px}
   .fp{padding:5px 9px;font-size:10px}
@@ -1037,6 +1046,11 @@ button,input,textarea,select{font-family:inherit}
     border:1px solid var(--bd);
     border-radius:12px;
     padding:16px;
+  }
+  #p-home .tr-list:has(.empty-state){
+    background:transparent;
+    border:0;
+    padding:0;
   }
 }
 
@@ -2215,7 +2229,7 @@ function renderHomeCands(c) {
     return;
   }
   document.getElementById('home-cands').innerHTML = c.map(x =>
-    `<div class="tr-item" onclick="go('candidatures')"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><span class="chip ${cChip(x.statut)}">${x.sl}</span></div>`
+    `<div class="tr-item" onclick="go('candidatures')"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${x.sl}</span></div></div>`
   ).join('');
 }
 async function snooze() {
