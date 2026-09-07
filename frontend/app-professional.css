@@ -417,6 +417,8 @@ body.auth .shell, body.product-gateway .shell {
   .ai-fields, .ai-result-grid { grid-template-columns: minmax(0, 1fr); }
   .ai-form-card, .ai-results { padding: 14px; }
   .cv-export-actions .btn { width: 100%; }
+  .tr-item { align-items: flex-start; flex-wrap: wrap; }
+  .candidate-status-actions { max-width: 100%; width: 100%; justify-items: start; padding-left: 50px; margin-top: 2px; }
   .coach-shell { display: block; min-height: 0; overflow: visible; border: 0; background: transparent; }
   .coach-history { margin-bottom: 12px; border: 1px solid var(--bd); border-radius: 10px; background: var(--w); }
   .coach-history-list { display: flex; overflow-x: auto; }
