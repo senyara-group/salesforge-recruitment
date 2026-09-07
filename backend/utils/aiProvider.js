@@ -1,3 +1,4 @@
+const { APIConnectionTimeoutError } = require('@anthropic-ai/sdk');
 const { askClaude, MODEL, anthropicTimeout } = require('./anthropic');
 
 const MAX_RESPONSE_CHARS = 60000;
@@ -45,7 +46,22 @@ function anthropicMessages(messages = []) {
   return { system, messages: conversation };
 }
 
-async function callAi({ messages, json = false, maxTokens = 1800, providerCall = askClaude }) {
+function isAiTimeoutError(error) {
+  if (!error) return false;
+  // Le SDK Anthropic pose error.name = "Error" ; constructor.name / instanceof restent fiables.
+  if (typeof APIConnectionTimeoutError === 'function' && error instanceof APIConnectionTimeoutError) return true;
+  if (error.constructor && error.constructor.name === 'APIConnectionTimeoutError') return true;
+  return /timed out|timeout/i.test(String(error.message || ''));
+}
+
+async function callAi({
+  messages,
+  json = false,
+  maxTokens = 1800,
+  timeoutMs,
+  maxRetries = 0,
+  providerCall = askClaude,
+}) {
   if (!isAiConfigured() && providerCall === askClaude) {
     const error = new Error('Service IA non configure');
     error.status = 503;
@@ -55,7 +71,7 @@ async function callAi({ messages, json = false, maxTokens = 1800, providerCall =
   const formatted = anthropicMessages(messages);
   if (json) formatted.system = `${formatted.system}\n\nRéponds uniquement avec un objet JSON valide, sans balise Markdown.`.trim();
   try {
-    const content = await providerCall({ ...formatted, maxTokens });
+    const content = await providerCall({ ...formatted, maxTokens, timeoutMs, maxRetries });
     if (typeof content !== 'string' || !content.trim()) {
       const invalid = new Error('Reponse IA vide');
       invalid.status = 502;
@@ -72,7 +88,7 @@ async function callAi({ messages, json = false, maxTokens = 1800, providerCall =
     }
   } catch (error) {
     if (error.code) throw error;
-    if (error.name === 'APIConnectionTimeoutError') {
+    if (isAiTimeoutError(error)) {
       const timeoutError = new Error('Le service IA a depasse le delai autorise');
       timeoutError.status = 504;
       timeoutError.code = 'AI_TIMEOUT';
@@ -85,4 +101,12 @@ async function callAi({ messages, json = false, maxTokens = 1800, providerCall =
   }
 }
 
-module.exports = { aiConfiguration, isAiConfigured, safeText, parseJsonResponse, anthropicMessages, callAi };
+module.exports = {
+  aiConfiguration,
+  isAiConfigured,
+  safeText,
+  parseJsonResponse,
+  anthropicMessages,
+  isAiTimeoutError,
+  callAi,
+};

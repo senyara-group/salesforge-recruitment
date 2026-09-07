@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { safeText, parseJsonResponse, anthropicMessages, callAi, isAiConfigured } = require('../utils/aiProvider');
+const { APIConnectionTimeoutError } = require('@anthropic-ai/sdk');
+const { safeText, parseJsonResponse, anthropicMessages, callAi, isAiConfigured, isAiTimeoutError } = require('../utils/aiProvider');
 
 test('safeText refuse les contenus trop longs', () => {
   assert.throws(() => safeText('abcdef', 3), /trop long/);
@@ -50,4 +51,34 @@ test('callAi classe une réponse JSON fournisseur invalide comme erreur amont', 
     () => callAi({ messages: [], json: true, providerCall: async () => 'pas du json' }),
     (error) => error.status === 502 && error.code === 'AI_INVALID_RESPONSE',
   );
+});
+
+test('isAiTimeoutError détecte le timeout SDK malgré name=Error', () => {
+  const timeout = new APIConnectionTimeoutError();
+  assert.equal(timeout.name, 'Error');
+  assert.equal(isAiTimeoutError(timeout), true);
+  assert.equal(isAiTimeoutError(new Error('Request timed out.')), true);
+  assert.equal(isAiTimeoutError(new Error('Service down')), false);
+});
+
+test('callAi mappe un timeout fournisseur vers AI_TIMEOUT', async () => {
+  await assert.rejects(
+    () => callAi({
+      messages: [{ role: 'user', content: 'test' }],
+      providerCall: async () => { throw new APIConnectionTimeoutError(); },
+    }),
+    (error) => error.status === 504 && error.code === 'AI_TIMEOUT',
+  );
+});
+
+test('callAi transmet timeoutMs et maxRetries au provider', async () => {
+  let request;
+  await callAi({
+    messages: [{ role: 'user', content: 'ping' }],
+    timeoutMs: 55000,
+    maxRetries: 0,
+    providerCall: async (options) => { request = options; return 'ok'; },
+  });
+  assert.equal(request.timeoutMs, 55000);
+  assert.equal(request.maxRetries, 0);
 });

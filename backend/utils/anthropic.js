@@ -5,8 +5,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5';
 const DEFAULT_TIMEOUT_MS = 30000;
 
-function anthropicTimeout() {
-  const value = Number(process.env.ANTHROPIC_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
+function anthropicTimeout(overrideMs) {
+  const value = Number(overrideMs == null ? process.env.ANTHROPIC_TIMEOUT_MS || DEFAULT_TIMEOUT_MS : overrideMs);
   return Number.isFinite(value) ? Math.max(5000, Math.min(60000, value)) : DEFAULT_TIMEOUT_MS;
 }
 
@@ -21,14 +21,19 @@ function getClient() {
   return client;
 }
 
-async function askClaude({ system, messages, maxTokens = 1024 }) {
+async function askClaude({ system, messages, maxTokens = 1024, timeoutMs, maxRetries = 0 }) {
   const anthropic = getClient();
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     system,
     messages,
-  }, { timeout: anthropicTimeout() });
+  }, {
+    timeout: anthropicTimeout(timeoutMs),
+    // Les retries SDK (défaut 2) multiplient les timeouts (~90s) sans améliorer
+    // une génération trop longue ; on laisse l'appelant décider.
+    maxRetries,
+  });
   return response.content
     .filter((block) => block.type === 'text')
     .map((block) => block.text)
