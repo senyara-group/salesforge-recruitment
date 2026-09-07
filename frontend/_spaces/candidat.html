@@ -1233,12 +1233,22 @@ button,input,textarea,select{font-family:inherit}
 
 <!-- TEST ADN -->
 <div id="p-test" class="page">
-  <div class="test-sticky">
+  <div id="adn-consent-gate" class="sec" hidden>
+    <section class="account-section" aria-labelledby="adn-consent-title">
+      <h1 class="sf" id="adn-consent-title">Avant de commencer le test ADN</h1>
+      <p>Pour calculer et enregistrer votre résultat ADN commercial, votre accord est requis.</p>
+      <label class="form-label"><input type="checkbox" id="adn-consent-checkbox"> J’accepte que mes réponses soient utilisées pour calculer et enregistrer mon résultat ADN commercial.</label>
+      <p><a href="../swipsales_legal.html#rgpd" target="_blank" rel="noopener">Consulter les informations sur vos données</a></p>
+      <div class="form-feedback" id="adn-consent-feedback" role="status"></div>
+      <button class="btn bp" id="adn-consent-btn" type="button" onclick="saveAdnConsent()">Continuer vers le test</button>
+    </section>
+  </div>
+  <div class="test-sticky" id="adn-test-sticky" hidden>
     <div class="test-sl" id="test-sl">Étape 1 sur 10</div>
     <div class="test-st sf" id="test-st">Scénario comportemental</div>
     <div class="test-pb"><div class="test-pf" id="test-pf" style="width:10%"></div></div>
   </div>
-  <div class="test-body">
+  <div class="test-body" id="adn-test-body" hidden>
     <!-- STEP 1 -->
     <div id="ts1">
       <div class="qt sf">Objection prix — votre réflexe naturel ?</div>
@@ -1621,6 +1631,8 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-cv" class="page">
   <div class="sec cv-layout">
     <div class="page-heading"><div><div class="page-kicker">Candidature</div><h1 class="page-title sf">Optimiseur de CV</h1><p class="page-intro">Analysez votre CV pour obtenir des recommandations ciblées et des propositions de reformulation, sans ajout de faits absents.</p></div><span class="ai-availability" id="cv-ai-availability">Vérification du service…</span></div>
+    <section class="account-section" id="cv-access-gate" hidden><h2 class="sf">Optimiseur de CV réservé</h2><p id="cv-access-copy"></p><button class="btn bp" type="button" onclick="go('pricing')">Voir les formules</button></section>
+    <div id="cv-tool-content">
     <section class="cv-workspace" aria-labelledby="cv-workspace-title">
       <div class="cv-workspace-icon" aria-hidden="true">CV</div>
       <div class="cv-workspace-copy"><div class="feature-status feature-status-live" id="cv-tool-state">À compléter</div><h2 class="sf" id="cv-workspace-title">Votre document</h2><p id="cv-tool-name">Aucun CV importé</p><small>PDF, DOC ou DOCX · 8 Mo maximum · document original conservé</small></div>
@@ -1637,6 +1649,7 @@ button,input,textarea,select{font-family:inherit}
       <article class="rewrite-card"><h2 class="sf">Propositions de reformulation</h2><div id="cv-rewrites"></div></article>
       <article class="improved-cv-card"><div><h2 class="sf">Version améliorée</h2><p>Relisez et modifiez cette proposition. Elle ne remplacera jamais automatiquement le CV de votre profil.</p></div><textarea class="form-textarea" id="cv-improved-text" rows="18" maxlength="40000"></textarea><div class="cv-export-actions"><button class="btn bp" type="button" onclick="saveImprovedCV()">Enregistrer mes modifications</button><button class="btn bo" type="button" onclick="copyImprovedCV()">Copier</button><button class="btn bo" type="button" onclick="downloadImprovedCV()">Télécharger en .txt</button></div></article>
     </section>
+    </div>
   </div>
 </div>
 
@@ -1644,7 +1657,8 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-coach" class="page">
   <div class="sec coach-layout">
     <div class="page-heading"><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach commercial</h1><p class="page-intro">Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente. Ce coach n’est pas un recruteur réel.</p></div><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div>
-    <div class="coach-shell">
+    <section class="account-section" id="coach-access-gate" hidden><h2 class="sf">Coach commercial réservé</h2><p id="coach-access-copy"></p><button class="btn bp" type="button" onclick="go('pricing')">Voir les formules</button></section>
+    <div class="coach-shell" id="coach-tool-content">
       <aside class="coach-history"><div class="coach-history-head"><h2 class="sf">Conversations</h2><button class="btn bo bsm" type="button" onclick="showCoachSetup()">Nouvelle</button></div><div id="coach-history-list" class="coach-history-list"><div class="loading-state"><div class="spinner"></div></div></div></aside>
       <section class="coach-main">
         <div id="coach-setup" class="coach-setup"><h2 class="sf">Choisissez votre entraînement</h2><div class="coach-starters"><button type="button" onclick="selectCoachMode(this,'interview')"><strong>Préparer un entretien</strong><span>Anticiper les questions et structurer ses réponses.</span></button><button type="button" onclick="selectCoachMode(this,'pitch')"><strong>Améliorer son pitch</strong><span>Travailler un discours clair, crédible et concis.</span></button><button type="button" onclick="selectCoachMode(this,'simulation')"><strong>Situation commerciale</strong><span>Jouer une mise en situation puis recevoir un débrief.</span></button></div><fieldset class="coach-context"><legend>Contexte à partager avec le coach</legend><label><input type="checkbox" id="coach-use-profile"> Mon profil SwipSales</label><label><input type="checkbox" id="coach-use-cv"> Le texte affiché dans l’Optimiseur de CV</label><label for="coach-offer-text">Offre ciblée <small>(facultatif)</small></label><textarea class="form-textarea" id="coach-offer-text" rows="5" maxlength="20000" placeholder="Cette offre ne sera partagée que pour cette conversation."></textarea></fieldset><div class="form-feedback" id="coach-setup-feedback" role="status"></div><button class="btn bp" id="coach-start-btn" type="button" onclick="createCoachConversation()" disabled>Commencer</button></div>
@@ -1668,7 +1682,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-pricing" class="page">
   <div class="pricing-hd">
     <h2 class="sf">Choisissez votre formule</h2>
-    <p>Freemium à vie. Premium dès 15 €/mois en annuel.</p>
+    <p>Compte candidat gratuit. Carrière dès 15 €/mois en annuel.</p>
     <div class="bill-toggle">
       <button class="bill-opt" onclick="setBill(this,'month')">Mensuel</button>
       <button class="bill-opt on" onclick="setBill(this,'year')">Annuel <span class="bill-save">-20%</span></button>
@@ -1914,6 +1928,9 @@ function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',nouveau:'chip-g',contac
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
 const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','cv','coach','account','pricing'];
 let AI_AVAILABLE = false;
+let CV_ALLOWED = false;
+let COACH_ALLOWED = false;
+let CV_ANALYSING = false;
 let ACTIVE_CV_ANALYSIS_ID = '';
 let COACH_MODE = '';
 let ACTIVE_CONVERSATION_ID = '';
@@ -2051,7 +2068,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, messages:loadMessages, profile:loadProfile, cv:loadCVTool, coach:loadCoach, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, test:loadAdnConsent, messages:loadMessages, profile:loadProfile, cv:loadCVTool, coach:loadCoach, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2308,7 +2325,7 @@ async function shareCert() {
 }
 async function joinCommunity() {
   // ------------------------------------------------------------
-  toast('Accès communauté — disponible en Gold');
+  toast('Communauté momentanément indisponible');
 }
 
 // ------------------------------------------------------------
@@ -2430,11 +2447,6 @@ async function doSwipe(action, offre, attempt = 1) {
     if (r.match) showMatch(offre, r);
     else if (r.candidature_sent) toast(action === 'super' ? 'Candidature prioritaire envoyée' : 'Candidature envoyée');
   } catch(e) {
-    if (e.message?.includes('Limite Freemium')) {
-      toast('Limite de 5 swipes atteinte — passez à un plan payant');
-      goToPricing();
-      return;
-    }
     // La carte a déjà quitté l'écran (animation optimiste) : si l'appel échoue pour
     // une raison transitoire (réseau, pic de charge), on retente avant d'abandonner,
     // sinon l'offre réapparaîtrait au prochain chargement de la pile.
@@ -2631,6 +2643,33 @@ function pp(btn, pid, idx) {
 }
 function tg(btn, cat, val) { btn.classList.toggle('on'); if(!ADN.prefs[cat]) ADN.prefs[cat]=[]; if(btn.classList.contains('on')) ADN.prefs[cat].push(val); else ADN.prefs[cat]=ADN.prefs[cat].filter(v=>v!==val); }
 function tg1(btn, cat, val) { btn.parentElement.querySelectorAll('.pc').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); ADN.prefs[cat]=val; }
+async function loadAdnConsent() {
+  const gate = document.getElementById('adn-consent-gate');
+  const sticky = document.getElementById('adn-test-sticky');
+  const body = document.getElementById('adn-test-body');
+  gate.hidden = false; sticky.hidden = true; body.hidden = true;
+  setFeedback('adn-consent-feedback', 'Vérification de votre choix…');
+  try {
+    const consent = await api('GET', '/candidats/consentement/test_adn');
+    if (consent?.accepte) {
+      gate.hidden = true; sticky.hidden = false; body.hidden = false;
+    } else setFeedback('adn-consent-feedback', 'Votre accord est nécessaire pour accéder au test.');
+  } catch (error) {
+    setFeedback('adn-consent-feedback', error.message || 'Impossible de vérifier votre choix. Réessayez.', true);
+  }
+}
+async function saveAdnConsent() {
+  if (!document.getElementById('adn-consent-checkbox').checked) {
+    return setFeedback('adn-consent-feedback', 'Cochez la case pour continuer.', true);
+  }
+  setBtn('adn-consent-btn', true, 'Continuer vers le test');
+  try {
+    await api('POST', '/candidats/consentement', { type:'test_adn', version:'test_adn_v1', accepte:true });
+    await loadAdnConsent();
+  } catch (error) {
+    setFeedback('adn-consent-feedback', error.message || 'Enregistrement impossible. Réessayez.', true);
+  } finally { setBtn('adn-consent-btn', false, 'Continuer vers le test'); }
+}
 function submitADN() {
   hideAllTestSteps();
   const el = document.getElementById('ts10'); if (el) el.style.display = 'block';
@@ -3218,15 +3257,25 @@ function renderProfileCV(p) {
 }
 async function loadAIHighlights() {
   try {
-    const config = await api('GET', '/assistant/config');
+    const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
     AI_AVAILABLE = Boolean(config.configured);
-    const [analysisResult, conversationResult] = await Promise.allSettled([api('GET', '/assistant/cv-analyses'), api('GET', '/assistant/conversations')]);
+    CURRENT_PLAN = activeSubscriptionPlan(subscription);
+    CV_ALLOWED = planAllowed(config.cv_access_policy, CURRENT_PLAN);
+    COACH_ALLOWED = planAllowed(config.coach_access_policy, CURRENT_PLAN);
+    const [analysisResult, conversationResult] = await Promise.allSettled([
+      CV_ALLOWED ? api('GET', '/assistant/cv-analyses') : Promise.resolve([]),
+      COACH_ALLOWED ? api('GET', '/assistant/conversations') : Promise.resolve([]),
+    ]);
     const analyses = analysisResult.status === 'fulfilled' ? analysisResult.value : [];
     const conversations = conversationResult.status === 'fulfilled' ? conversationResult.value : [];
     const cv = document.getElementById('home-cv-status');
     const coach = document.getElementById('home-coach-status');
     if (cv && analyses[0]) cv.textContent = 'Dernière analyse : ' + new Date(analyses[0].updated_at).toLocaleDateString('fr-FR');
     if (coach && conversations[0]) coach.textContent = 'Reprendre : ' + conversations[0].title;
+    if (!CV_ALLOWED && cv) cv.textContent = `Disponible avec ${planPolicyLabel(config.cv_access_policy)}`;
+    if (!COACH_ALLOWED && coach) coach.textContent = `Disponible avec ${planPolicyLabel(config.coach_access_policy)}`;
+    if (!CV_ALLOWED) document.getElementById('home-cv-feature-state').textContent = 'Formule requise';
+    if (!COACH_ALLOWED) document.getElementById('home-coach-feature-state').textContent = 'Formule requise';
     if (!AI_AVAILABLE) {
       document.getElementById('home-cv-feature-state').textContent = 'Configuration requise';
       document.getElementById('home-coach-feature-state').textContent = 'Configuration requise';
@@ -3363,13 +3412,30 @@ function setFeedback(id, message, error = false) {
   el.textContent = message || '';
   el.classList.toggle('is-error', error);
 }
+function planAllowed(policy, plan) {
+  return Array.isArray(policy) && (policy.includes('all') || policy.includes(String(plan || '').toLowerCase()));
+}
+function planPolicyLabel(policy) {
+  const labels = { carriere:'Carrière', carriere_coaching:'Carrière Coaching' };
+  return (policy || []).filter(plan => plan !== 'all').map(plan => labels[plan] || plan).join(' ou ');
+}
+function renderAiAccessGate(kind, allowed, policy) {
+  document.getElementById(kind + '-access-gate').hidden = allowed;
+  document.getElementById(kind + '-tool-content').hidden = !allowed;
+  const copy = document.getElementById(kind + '-access-copy');
+  if (copy) copy.textContent = allowed ? '' : `Cette fonctionnalité nécessite la formule ${planPolicyLabel(policy)}.`;
+}
 async function loadCVTool() {
   try {
-    const [profile, config] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/assistant/config')]);
+    const [profile, config, subscription] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
     AI_AVAILABLE = Boolean(config.configured);
+    CURRENT_PLAN = activeSubscriptionPlan(subscription);
+    CV_ALLOWED = planAllowed(config.cv_access_policy, CURRENT_PLAN);
+    renderAiAccessGate('cv', CV_ALLOWED, config.cv_access_policy);
     renderProfileCV(profile);
     setAiAvailability('cv-ai-availability', AI_AVAILABLE);
-    document.getElementById('cv-analyse-btn').disabled = !AI_AVAILABLE;
+    document.getElementById('cv-analyse-btn').disabled = !AI_AVAILABLE || !CV_ALLOWED;
+    if (!CV_ALLOWED) return;
     if (!AI_AVAILABLE) setFeedback('cv-analysis-feedback', 'L’assistant est momentanément indisponible. Vous pouvez préparer le texte et réessayer plus tard.', true);
     if ((profile.axes?.meta?.cv_file_name || profile.cv_url) && !document.getElementById('cv-source-text').value.trim()) {
       await loadStoredCvText();
@@ -3437,15 +3503,17 @@ function renderCVAnalysis(record) {
   document.getElementById('cv-results').hidden = false;
 }
 async function analyseCVWithAI() {
+  if (!CV_ALLOWED || CV_ANALYSING) return;
   const source = document.getElementById('cv-source-text').value.trim();
   if (source.length < 40) return setFeedback('cv-analysis-feedback', 'Ajoutez au moins 40 caractères de contenu CV.', true);
-  setBtn('cv-analyse-btn', true, 'Analyser mon CV'); setFeedback('cv-analysis-feedback', 'Analyse en cours…');
+  CV_ANALYSING = true;
+  setBtn('cv-analyse-btn', true, 'Analyser mon CV'); setFeedback('cv-analysis-feedback', 'Analyse en cours… Cela peut prendre jusqu’à environ une minute.');
   try {
     const data = await api('POST', '/assistant/cv-analyses', { source_text: source, target_role: document.getElementById('cv-target-role').value, offer_text: document.getElementById('cv-offer-text').value });
     renderCVAnalysis(data); setFeedback('cv-analysis-feedback', 'Analyse terminée. Relisez chaque proposition avant usage.');
     document.getElementById('cv-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'La réponse n’a pas pu être générée. Vous pouvez réessayer.', true); }
-  finally { setBtn('cv-analyse-btn', false, 'Analyser mon CV'); }
+  finally { CV_ANALYSING = false; setBtn('cv-analyse-btn', false, 'Analyser mon CV'); }
 }
 async function saveImprovedCV() {
   if (!ACTIVE_CV_ANALYSIS_ID) return toast('Aucune analyse à enregistrer');
@@ -3473,8 +3541,12 @@ function downloadImprovedCV() {
 // ------------------------------------------------------------
 async function loadCoach() {
   try {
-    const config = await api('GET', '/assistant/config');
+    const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
+    CURRENT_PLAN = activeSubscriptionPlan(subscription);
+    COACH_ALLOWED = planAllowed(config.coach_access_policy, CURRENT_PLAN);
+    renderAiAccessGate('coach', COACH_ALLOWED, config.coach_access_policy);
     AI_AVAILABLE = Boolean(config.configured); setAiAvailability('coach-ai-availability', AI_AVAILABLE);
+    if (!COACH_ALLOWED) return;
     if (!AI_AVAILABLE) setFeedback('coach-setup-feedback', 'L’assistant est momentanément indisponible.', true);
     try { renderCoachHistory(await api('GET', '/assistant/conversations')); }
     catch (error) { document.getElementById('coach-history-list').innerHTML = '<div class="empty-state">' + esc(error.message || 'Historique indisponible') + '</div>'; }
@@ -3501,11 +3573,11 @@ function showCoachSetup() {
 }
 function selectCoachMode(button, mode) {
   COACH_MODE = mode; document.querySelectorAll('.coach-starters button').forEach((item) => item.classList.remove('on')); button.classList.add('on');
-  document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE;
+  document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE || !COACH_ALLOWED;
 }
 const COACH_OPENERS = { interview: 'Aide-moi à préparer un entretien. Commence par me poser la question la plus utile pour cadrer la préparation.', pitch: 'Aide-moi à améliorer mon pitch. Commence par me demander le contexte et le public visé.', simulation: 'Je veux m’entraîner à une situation commerciale. Aide-moi d’abord à choisir et cadrer le scénario.' };
 async function createCoachConversation() {
-  if (!COACH_MODE || !AI_AVAILABLE) return;
+  if (!COACH_MODE || !AI_AVAILABLE || !COACH_ALLOWED) return;
   const useCv = document.getElementById('coach-use-cv').checked;
   const cvText = document.getElementById('cv-source-text').value.trim();
   if (useCv && !cvText) return setFeedback('coach-setup-feedback', 'Ouvrez l’Optimiseur de CV et ajoutez ou collez le texte à partager.', true);

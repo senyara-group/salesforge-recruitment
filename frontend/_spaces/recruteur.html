@@ -1466,7 +1466,7 @@ function messageStatusLabel(status = '') {
   return String(status).replace('Envoye', 'Envoyé');
 }
 const APP_PAGES = ['dashboard','swipe','matching','pipeline','offres','post-offre','messages','settings','pricing'];
-function normalizeRecruiterPage(page) { return page === 'offres' ? 'pipeline' : page; }
+function normalizeRecruiterPage(page) { return page; }
 function lastPageKey() { return 'sf_last_recruteur_page_' + (USER?.id || USER?.user_id || 'anon'); }
 function saveLastPage(p) {
   p = normalizeRecruiterPage(p);
