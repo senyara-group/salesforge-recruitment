@@ -93,6 +93,8 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .account-section h2 { margin: 0; font-size: 15px; }
 .account-section > p { margin: 4px 0 14px; color: var(--ink3); font-size: 12px; }
 .account-value { margin-bottom: 12px; padding: 11px 12px; border-radius: 8px; background: var(--bg); color: var(--ink2); font-size: 13px; }
+.account-value strong, .account-value span { display: block; }
+.account-value span { margin-top: 3px; color: var(--ink3); font-size: 12px; font-weight: 600; }
 .account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .account-logout { justify-self: start; color: var(--r); }
 .bn-secondary { display: none; }

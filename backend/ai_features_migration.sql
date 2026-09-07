@@ -43,6 +43,8 @@ create index if not exists ai_messages_conversation_created_idx
   on public.ai_conversation_messages (conversation_id, created_at);
 create index if not exists ai_messages_user_idx
   on public.ai_conversation_messages (user_id);
+create index if not exists ai_messages_owner_conversation_idx
+  on public.ai_conversation_messages (user_id, conversation_id, created_at);
 
 alter table public.ai_cv_analyses enable row level security;
 alter table public.ai_conversations enable row level security;
@@ -58,4 +60,38 @@ create policy "Users manage own AI conversations" on public.ai_conversations
 
 drop policy if exists "Users manage own AI messages" on public.ai_conversation_messages;
 create policy "Users manage own AI messages" on public.ai_conversation_messages
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all using (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.ai_conversations conversation
+      where conversation.id = conversation_id
+        and conversation.user_id = auth.uid()
+    )
+  ) with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.ai_conversations conversation
+      where conversation.id = conversation_id
+        and conversation.user_id = auth.uid()
+    )
+  );
+
+-- Aucun accès anonyme. Le serveur utilise exclusivement la clé service_role,
+-- conservée dans Railway, tandis que ces politiques protègent aussi tout accès
+-- direct avec le JWT authentifié du candidat.
+revoke all on public.ai_cv_analyses from anon;
+revoke all on public.ai_conversations from anon;
+revoke all on public.ai_conversation_messages from anon;
+grant select, insert, update, delete on public.ai_cv_analyses to authenticated;
+grant select, insert, update, delete on public.ai_conversations to authenticated;
+grant select, insert, update, delete on public.ai_conversation_messages to authenticated;
+
+-- Demande à PostgREST de relire le schéma après une exécution réussie.
+notify pgrst, 'reload schema';
+
+-- Contrôles non destructifs après application :
+-- select to_regclass('public.ai_cv_analyses'),
+--        to_regclass('public.ai_conversations'),
+--        to_regclass('public.ai_conversation_messages');
+-- select schemaname, tablename, policyname, roles, cmd
+-- from pg_policies where tablename like 'ai_%' order by tablename, policyname;

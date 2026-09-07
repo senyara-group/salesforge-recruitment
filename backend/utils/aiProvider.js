@@ -1,19 +1,13 @@
-const DEFAULT_TIMEOUT_MS = 30000;
+const { askClaude, MODEL, anthropicTimeout } = require('./anthropic');
+
 const MAX_RESPONSE_CHARS = 60000;
 
 function aiConfiguration() {
-  const requestedTimeout = Number(process.env.AI_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
-  return {
-    apiKey: String(process.env.AI_API_KEY || '').trim(),
-    apiUrl: String(process.env.AI_API_URL || 'https://api.openai.com/v1/chat/completions').trim(),
-    model: String(process.env.AI_MODEL || '').trim(),
-    timeoutMs: Number.isFinite(requestedTimeout) ? Math.max(5000, Math.min(60000, requestedTimeout)) : DEFAULT_TIMEOUT_MS,
-  };
+  return { provider: 'anthropic', model: process.env.ANTHROPIC_MODEL || MODEL, timeoutMs: anthropicTimeout() };
 }
 
 function isAiConfigured() {
-  const config = aiConfiguration();
-  return Boolean(config.apiKey && config.model && /^https:\/\//i.test(config.apiUrl));
+  return Boolean(String(process.env.ANTHROPIC_API_KEY || '').trim());
 }
 
 function safeText(value, maxLength, label = 'Texte') {
@@ -33,9 +27,8 @@ function stripCodeFence(value = '') {
 function parseJsonResponse(value) {
   const text = stripCodeFence(value);
   if (text.length > MAX_RESPONSE_CHARS) throw new Error('Reponse IA trop volumineuse');
-  try {
-    return JSON.parse(text);
-  } catch (_error) {
+  try { return JSON.parse(text); }
+  catch (_error) {
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
     if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
@@ -43,58 +36,53 @@ function parseJsonResponse(value) {
   }
 }
 
-async function callAi({ messages, json = false, temperature = 0.25, maxTokens = 1800 }) {
-  const config = aiConfiguration();
-  if (!isAiConfigured()) {
+function anthropicMessages(messages = []) {
+  const system = messages.filter((message) => message.role === 'system').map((message) => message.content).join('\n\n');
+  const conversation = messages.filter((message) => message.role !== 'system').map((message) => ({
+    role: message.role === 'assistant' ? 'assistant' : 'user',
+    content: String(message.content || ''),
+  }));
+  return { system, messages: conversation };
+}
+
+async function callAi({ messages, json = false, maxTokens = 1800, providerCall = askClaude }) {
+  if (!isAiConfigured() && providerCall === askClaude) {
     const error = new Error('Service IA non configure');
     error.status = 503;
     error.code = 'AI_NOT_CONFIGURED';
     throw error;
   }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), config.timeoutMs);
+  const formatted = anthropicMessages(messages);
+  if (json) formatted.system = `${formatted.system}\n\nRéponds uniquement avec un objet JSON valide, sans balise Markdown.`.trim();
   try {
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        ...(json ? { response_format: { type: 'json_object' } } : {}),
-      }),
-      signal: controller.signal,
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      const error = new Error(response.status === 429 ? 'Service IA temporairement limite' : 'Service IA indisponible');
-      error.status = response.status === 429 ? 429 : 502;
-      error.code = 'AI_PROVIDER_ERROR';
-      throw error;
+    const content = await providerCall({ ...formatted, maxTokens });
+    if (typeof content !== 'string' || !content.trim()) {
+      const invalid = new Error('Reponse IA vide');
+      invalid.status = 502;
+      invalid.code = 'AI_INVALID_RESPONSE';
+      throw invalid;
     }
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string' || !content.trim()) throw new Error('Reponse IA vide');
     if (!json) return content.slice(0, MAX_RESPONSE_CHARS).trim();
     try { return parseJsonResponse(content); }
     catch (_error) {
-      const invalidError = new Error('Le service IA a renvoye une reponse invalide');
-      invalidError.status = 502;
-      invalidError.code = 'AI_INVALID_RESPONSE';
-      throw invalidError;
+      const invalid = new Error('Le service IA a renvoye une reponse invalide');
+      invalid.status = 502;
+      invalid.code = 'AI_INVALID_RESPONSE';
+      throw invalid;
     }
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error.code) throw error;
+    if (error.name === 'APIConnectionTimeoutError') {
       const timeoutError = new Error('Le service IA a depasse le delai autorise');
       timeoutError.status = 504;
       timeoutError.code = 'AI_TIMEOUT';
       throw timeoutError;
     }
-    throw error;
-  } finally {
-    clearTimeout(timer);
+    const providerError = new Error('Service IA indisponible');
+    providerError.status = error.status === 429 ? 429 : 502;
+    providerError.code = 'AI_PROVIDER_ERROR';
+    throw providerError;
   }
 }
 
-module.exports = { aiConfiguration, isAiConfigured, safeText, parseJsonResponse, callAi };
+module.exports = { aiConfiguration, isAiConfigured, safeText, parseJsonResponse, anthropicMessages, callAi };
