@@ -12,6 +12,40 @@ test('parseJsonResponse accepte un objet JSON clôturé par markdown', () => {
   assert.deepEqual(parseJsonResponse('```json\n{"strengths":["Clair"]}\n```'), { strengths: ['Clair'] });
 });
 
+test('parseJsonResponse accepte du texte avant/après si un objet JSON est extractible', () => {
+  assert.deepEqual(
+    parseJsonResponse('Voici le résultat:\n{"ok":true}\nFin.'),
+    { ok: true },
+  );
+});
+
+test('parseJsonResponse échoue sur un JSON tronqué sans accolade fermante', () => {
+  assert.throws(
+    () => parseJsonResponse('{"strengths":["A"],"improved_cv":"Début sans fin'),
+    (error) => error.message === 'Reponse IA invalide' && error.diagnostics?.stage === 'json_parse'
+      && error.diagnostics.has_open_brace === true && error.diagnostics.has_close_brace === false,
+  );
+});
+
+test('callAi conserve les diagnostics de parse sans exposer le contenu', async () => {
+  await assert.rejects(
+    () => callAi({
+      messages: [],
+      json: true,
+      providerCall: async () => ({
+        text: '{"strengths":["A"],"improved_cv":"coupe',
+        meta: { stop_reason: 'max_tokens', input_tokens: 100, output_tokens: 2500, response_chars: 40, has_open_brace: true, has_close_brace: false, has_markdown_fence: false },
+      }),
+    }),
+    (error) => error.code === 'AI_INVALID_RESPONSE'
+      && error.diagnostics?.stage === 'json_parse'
+      && error.diagnostics?.stop_reason === 'max_tokens'
+      && error.diagnostics?.output_tokens === 2500
+      && error.diagnostics?.has_close_brace === false
+      && !JSON.stringify(error.diagnostics).includes('coupe'),
+  );
+});
+
 test('callAi échoue explicitement sans configuration Anthropic', async () => {
   const previousKey = process.env.ANTHROPIC_API_KEY;
   delete process.env.ANTHROPIC_API_KEY;
