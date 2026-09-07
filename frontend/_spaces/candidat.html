@@ -71,7 +71,7 @@ button,input,textarea,select{font-family:inherit}
 .bo{background:transparent;border:1.5px solid var(--bd2);color:var(--ink2);padding:12px 18px;font-size:14px}
 .bg2{background:var(--bs);color:var(--b);padding:8px 14px;font-size:13px}
 .bsm{padding:8px 13px;font-size:12px}.blk{width:100%}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px;flex-shrink:0;white-space:nowrap}
 .chip-b{background:var(--bs);color:var(--b);border:1px solid var(--bm)}.chip-g{background:var(--gs);color:var(--g)}
 .chip-r{background:var(--rs);color:var(--r)}.chip-a{background:var(--as);color:var(--a)}
 .chip-pu{background:var(--pus);color:var(--pu)}.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -80,9 +80,13 @@ button,input,textarea,select{font-family:inherit}
 .err{background:var(--rs);border:1px solid var(--r);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--r);font-weight:600;margin-bottom:12px;display:none}
 .err.on{display:block}
 .sec{padding:15px 18px}
-.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sec-t{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.3px;min-width:0}
 .loading-state{text-align:center;padding:24px;color:var(--mu);font-size:13px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;min-height:138px;padding:28px 20px;color:var(--mu);font-size:13px;line-height:1.55;border:1px dashed var(--bd2);border-radius:12px;background:rgba(255,255,255,.55)}
+.empty-state b{display:block;font-family:'Sora',sans-serif;color:var(--ink);font-size:14px;font-weight:800;margin-bottom:0}
+.empty-state span{display:block;max-width:320px}
+.empty-state .btn{margin-top:6px;flex-shrink:0}
 .hscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 4px}
 .hscroll::-webkit-scrollbar{display:none}
 
@@ -153,7 +157,7 @@ button,input,textarea,select{font-family:inherit}
 .tr-logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:13px;flex-shrink:0}
 .tr-info{flex:1;min-width:0}
 .tr-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tr-sub{font-size:12px;color:var(--ink3);margin-top:1px}
+.tr-sub{font-size:12px;color:var(--ink3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* COACH */
 .coach-card{background:linear-gradient(135deg,#091422,#1340E0);color:#fff;border-radius:16px;padding:18px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
