@@ -6,16 +6,18 @@ const supabase = require('../supabase');
 const { ensureCandidateProfile } = require('../utils/profiles');
 const { callAi, isAiConfigured, safeText } = require('../utils/aiProvider');
 const { assertAiAccess, configuredPlans } = require('../utils/aiAccess');
+const { publicAiError } = require('../utils/aiErrors');
 
 const MODES = new Set(['interview', 'pitch', 'simulation']);
 const MODE_LABELS = { interview: 'Préparation entretien', pitch: 'Amélioration du pitch', simulation: 'Simulation commerciale' };
 
 function publicError(res, error) {
-  const status = Number(error.status) || (/relation .* does not exist/i.test(error.message || '') ? 503 : 400);
-  const message = /relation .* does not exist/i.test(error.message || '')
-    ? 'Les tables IA ne sont pas encore initialisees'
-    : (error.message || 'Erreur serveur');
-  return res.status(status).json({ error: message, code: error.code });
+  const response = publicAiError(error);
+  console.error('[assistant]', response.code, {
+    technicalCode: error?.code || null,
+    technicalMessage: String(error?.message || 'Unknown error').slice(0, 500),
+  });
+  return res.status(response.status).json({ error: response.message, code: response.code });
 }
 
 function stringList(value, maxItems, maxLength) {
