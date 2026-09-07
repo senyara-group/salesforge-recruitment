@@ -8,36 +8,6 @@ const { trackBrevoEvent } = require('../utils/brevoEvents');
 const RETAKE_COOLDOWN_MONTHS = 6;
 const RETAKE_COOLDOWN_MS = RETAKE_COOLDOWN_MONTHS * 30 * 24 * 60 * 60 * 1000;
 
-router.post('/analyse', authMiddleware, async (req, res) => {
-  try {
-    await ensureCandidateProfile(req.user.id);
-
-    const score = Math.floor(Math.random() * 100);
-    const axes = {
-      communication: Math.random(),
-      leadership: Math.random(),
-      autonomie: Math.random(),
-      creativite: Math.random(),
-    };
-
-    const { data, error } = await supabase
-      .from('candidats')
-      .update({
-        score_adn: score,
-        axes,
-      })
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
-
-    if (error) return res.status(400).json({ error });
-
-    res.json({ score, axes, profil: data });
-  } catch (error) {
-    res.status(400).json({ error });
-  }
-});
-
 router.post('/score-adn', authMiddleware, async (req, res) => {
   try {
     const candidat = await ensureCandidateProfile(req.user.id);
@@ -183,21 +153,6 @@ router.get('/benchmark-salaire', authMiddleware, async (req, res) => {
     mb: 50000,
     mh: 70000,
     conseil: 'Benchmark indicatif base sur votre profil Swip Sales.',
-  });
-});
-
-router.get('/hot-candidate', authMiddleware, async (req, res) => {
-  const { data, error } = await supabase
-    .from('candidats')
-    .select('*')
-    .order('score_adn', { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) return res.status(400).json({ error });
-  res.json({
-    title: data ? `${data.prenom || 'Candidat'} — Score ${data.score_adn || 0}` : 'Aucun candidat chaud',
-    text: data?.titre || 'Les candidatures apparaitront ici quand elles arriveront.',
   });
 });
 
