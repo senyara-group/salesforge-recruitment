@@ -27,6 +27,7 @@
 }
 
 html { color-scheme: light; }
+[hidden], #cv-tool-content[hidden], #coach-tool-content[hidden], #adn-consent-gate[hidden], #adn-test-sticky[hidden], #adn-test-body[hidden] { display: none !important; }
 body { letter-spacing: -.005em; }
 button, a, input, textarea, select, [tabindex] { outline-offset: 3px; }
 :focus-visible { outline: 3px solid rgba(22, 70, 216, .36) !important; }

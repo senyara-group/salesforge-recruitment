@@ -9,6 +9,7 @@ const requireCandidatePlan = require('../middleware/requireCandidatePlan');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
+const { finalizeCvReplacement } = require('../utils/cvReplacement');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -38,6 +39,7 @@ const EBOOK_CATALOG = [
   { file: 'SwipSales_15_Comprendre_son_variable.pdf', titre: 'Comprendre son variable', desc: 'Plan de commissionnement et négociation', categorie: 'Sa carrière' },
 ];
 const MAX_CV_BYTES = Number(process.env.MAX_CV_UPLOAD_MB || 8) * 1024 * 1024;
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
 const CV_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
 const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
@@ -102,7 +104,7 @@ async function getMultipartFile(req, fieldName, maxBytes = MAX_CV_BYTES, label =
     throw error;
   }
 
-  const body = await readRequestBuffer(req, maxBytes, label);
+  const body = await readRequestBuffer(req, maxBytes + MULTIPART_OVERHEAD_BYTES, label);
   const parts = body.toString('latin1').split(`--${boundary}`);
 
   for (const part of parts) {
@@ -122,11 +124,17 @@ async function getMultipartFile(req, fieldName, maxBytes = MAX_CV_BYTES, label =
     const disposition = parseContentDisposition(headers['content-disposition']);
     if (disposition.name !== fieldName || !disposition.filename) continue;
 
-    return {
+    const file = {
       filename: sanitizeFilename(disposition.filename),
       contentType: headers['content-type'] || 'application/octet-stream',
       buffer: Buffer.from(content, 'latin1'),
     };
+    if (file.buffer.length > maxBytes) {
+      const error = new Error(`${label} trop volumineux`);
+      error.status = 413;
+      throw error;
+    }
+    return file;
   }
 
   const error = new Error(`Fichier ${fieldName} manquant`);
@@ -143,6 +151,16 @@ function validateProfileDocument(file, label = 'CV') {
   }
   if (!file.buffer.length) {
     const error = new Error(`${label} vide`);
+    error.status = 400;
+    throw error;
+  }
+  const isPdf = ext === '.pdf' && file.buffer.subarray(0, 5).toString('ascii') === '%PDF-';
+  const isDoc = ext === '.doc' && file.buffer.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]));
+  const isDocx = ext === '.docx'
+    && file.buffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))
+    && file.buffer.includes(Buffer.from('word/document.xml'));
+  if (!isPdf && !isDoc && !isDocx) {
+    const error = new Error(`${label} invalide ou extension incorrecte`);
     error.status = 400;
     throw error;
   }
@@ -562,14 +580,22 @@ async function uploadCv(req, res) {
     if (autofill.prenom && !current.prenom) profilePatch.prenom = autofill.prenom;
     if (autofill.nom && !current.nom) profilePatch.nom = autofill.nom;
 
-    const { data, error } = await supabase
-      .from('candidats')
-      .update(profilePatch)
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
-
-    if (error) throw error;
+    const previousMeta = current.axes?.meta || {};
+    const data = await finalizeCvReplacement({
+      updateProfile: async () => {
+        const result = await supabase.from('candidats').update(profilePatch)
+          .eq('user_id', req.user.id).select('*').single();
+        if (result.error) throw result.error;
+        return result.data;
+      },
+      removeFile: ({ bucket, path: filePath }) => removeStorageFile(bucket, filePath),
+      newFile: { bucket: CV_BUCKET, path: storagePath },
+      previousFile: { bucket: previousMeta.cv_bucket || CV_BUCKET, path: previousMeta.cv_path },
+      onCleanupError: (kind, cleanupError) => console.warn(
+        `Nettoyage du ${kind === 'new' ? 'nouveau' : 'précédent'} CV échoué:`,
+        cleanupError.message || cleanupError,
+      ),
+    });
 
     res.json({
       message: 'CV importe',
@@ -1330,5 +1356,7 @@ router.post('/optimiser-pitch', authMiddleware, requireCandidatePlan('carriere')
     res.status(error.status || 400).json({ error: error.message || error });
   }
 });
+
+router._test = { MAX_CV_BYTES, extractCvText, validateProfileDocument };
 
 module.exports = router;
