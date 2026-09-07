@@ -52,7 +52,16 @@ nav{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.9);backdrop-fi
 .nav-l a:hover{color:var(--encre)}
 .nav-l .btn{padding:10px 20px;font-size:14.5px;color:#fff}
 @media(max-width:860px){.nav-l{gap:10px}.nav-l a:not(.btn):not(#nav-login-link){display:none}.nav-l .btn{padding:10px 16px;font-size:14px}.nav-in{height:64px;gap:12px}#nav-login-link{font-size:13px;padding:8px 12px}}
-@media(max-width:420px){.logo{font-size:18px;gap:7px;min-width:0}.logo .wm{font-size:17px}.nav-l{gap:6px;flex-shrink:0}.nav-l .btn{padding:8px 10px;font-size:12.5px}#nav-login-link{padding:8px 10px;font-size:12.5px}}
+@media(max-width:560px){
+  .nav-in{height:auto;min-height:64px;flex-wrap:wrap;gap:8px;padding-top:10px;padding-bottom:10px}
+  .nav-in>.logo{width:100%;flex:none;font-size:18px;gap:7px}
+  .nav-in>.logo .mark{flex-shrink:0}
+  .nav-in>.logo .wm{font-size:17px;flex-shrink:0}
+  .nav-l{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:8px}
+  .nav-l .btn,#nav-login-link{display:flex;min-width:0;min-height:42px;align-items:center;justify-content:center;padding:9px 8px;font-size:12.5px;line-height:1.2;text-align:center;white-space:normal}
+  #session-banner{line-height:1.45}
+  #session-banner a{display:inline-block;margin-left:4px!important}
+}
 .hero{position:relative;background:linear-gradient(180deg,#fff 0%,var(--fond) 100%);overflow:hidden}
 .hero::after{content:"";position:absolute;bottom:-120px;left:50%;transform:translateX(-50%);width:min(1400px,220vw);max-width:none;height:320px;background:radial-gradient(closest-side,rgba(38,71,232,.10),transparent);pointer-events:none}
 .hero-in{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:44px;align-items:center;padding:76px 0 90px}
