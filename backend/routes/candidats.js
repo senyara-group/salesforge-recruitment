@@ -9,6 +9,7 @@ const requireCandidatePlan = require('../middleware/requireCandidatePlan');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
+const { finalizeCvReplacement } = require('../utils/cvReplacement');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -579,24 +580,22 @@ async function uploadCv(req, res) {
     if (autofill.prenom && !current.prenom) profilePatch.prenom = autofill.prenom;
     if (autofill.nom && !current.nom) profilePatch.nom = autofill.nom;
 
-    const { data, error } = await supabase
-      .from('candidats')
-      .update(profilePatch)
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
-
-    if (error) {
-      try { await removeStorageFile(CV_BUCKET, storagePath); }
-      catch (cleanupError) { console.warn('Nettoyage du nouveau CV échoué:', cleanupError.message || cleanupError); }
-      throw error;
-    }
-
     const previousMeta = current.axes?.meta || {};
-    if (previousMeta.cv_path && previousMeta.cv_path !== storagePath) {
-      try { await removeStorageFile(previousMeta.cv_bucket || CV_BUCKET, previousMeta.cv_path); }
-      catch (cleanupError) { console.warn('Nettoyage de l’ancien CV échoué:', cleanupError.message || cleanupError); }
-    }
+    const data = await finalizeCvReplacement({
+      updateProfile: async () => {
+        const result = await supabase.from('candidats').update(profilePatch)
+          .eq('user_id', req.user.id).select('*').single();
+        if (result.error) throw result.error;
+        return result.data;
+      },
+      removeFile: ({ bucket, path: filePath }) => removeStorageFile(bucket, filePath),
+      newFile: { bucket: CV_BUCKET, path: storagePath },
+      previousFile: { bucket: previousMeta.cv_bucket || CV_BUCKET, path: previousMeta.cv_path },
+      onCleanupError: (kind, cleanupError) => console.warn(
+        `Nettoyage du ${kind === 'new' ? 'nouveau' : 'précédent'} CV échoué:`,
+        cleanupError.message || cleanupError,
+      ),
+    });
 
     res.json({
       message: 'CV importe',
