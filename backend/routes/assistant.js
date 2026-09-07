@@ -51,7 +51,8 @@ router.get('/config', authMiddleware, async (req, res) => {
       configured: isAiConfigured(),
       cv_access_policy: cvPlans ? [...cvPlans] : ['all'],
       coach_access_policy: coachPlans ? [...coachPlans] : ['all'],
-      model_configured: Boolean(process.env.AI_MODEL),
+      model_configured: Boolean(process.env.ANTHROPIC_MODEL),
+      provider: 'anthropic',
     });
   } catch (error) { publicError(res, error); }
 });

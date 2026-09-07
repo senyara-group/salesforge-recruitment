@@ -11,7 +11,7 @@ test('une table IA absente ne divulgue pas le détail Supabase', () => {
 });
 
 test('une configuration fournisseur absente produit un message public stable', () => {
-  const result = publicAiError({ code: 'AI_NOT_CONFIGURED', message: 'AI_API_KEY missing', status: 503 });
+  const result = publicAiError({ code: 'AI_NOT_CONFIGURED', message: 'ANTHROPIC_API_KEY missing', status: 503 });
   assert.deepEqual(result, {
     status: 503,
     code: 'AI_NOT_CONFIGURED',
