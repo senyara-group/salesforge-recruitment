@@ -116,3 +116,12 @@ test('callAi transmet timeoutMs et maxRetries au provider', async () => {
   assert.equal(request.timeoutMs, 55000);
   assert.equal(request.maxRetries, 0);
 });
+
+test('callAi retourne les métadonnées de consommation sur demande', async () => {
+  const result = await callAi({
+    messages: [{ role: 'user', content: 'contenu fictif' }],
+    returnMeta: true,
+    providerCall: async () => ({ text: 'réponse fictive', meta: { input_tokens: 12, output_tokens: 7, stop_reason: 'end_turn' } }),
+  });
+  assert.deepEqual(result, { value: 'réponse fictive', meta: { input_tokens: 12, output_tokens: 7, stop_reason: 'end_turn' } });
+});

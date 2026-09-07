@@ -5,10 +5,12 @@ const aiRateLimit = require('../middleware/aiRateLimit');
 const supabase = require('../supabase');
 const { ensureCandidateProfile } = require('../utils/profiles');
 const { callAi, isAiConfigured, safeText } = require('../utils/aiProvider');
-const { assertAiAccess, configuredPlans } = require('../utils/aiAccess');
+const { assertAiAccess, configuredPlans, getAiPlan } = require('../utils/aiAccess');
 const { publicAiError } = require('../utils/aiErrors');
 const { owned, ownedById, ownedConversationMessages, withOwner } = require('../utils/ownership');
 const { CV_MAX_TOKENS, cvAnalysisPrompt, normalizeCvAnalysis } = require('../utils/cvAnalysis');
+const { selectCoachHistory } = require('../utils/coachContext');
+const { usageFor, reserveUsage, releaseUsage, finalizeUsage } = require('../utils/aiUsage');
 
 const MODES = new Set(['interview', 'pitch', 'simulation']);
 const MODE_LABELS = {
@@ -46,12 +48,14 @@ function publicError(res, error) {
   return res.status(response.status).json({
     error: response.message,
     code: response.code,
+    ...(response.details ? response.details : {}),
   });
 }
 
 router.get('/config', authMiddleware, async (req, res) => {
   try {
     await ensureCandidateProfile(req.user.id);
+    const plan = await getAiPlan(req.user.id);
 
     const cvPlans = configuredPlans('cv');
     const coachPlans = configuredPlans('coach');
@@ -62,6 +66,12 @@ router.get('/config', authMiddleware, async (req, res) => {
       coach_access_policy: coachPlans ? [...coachPlans] : ['all'],
       model_configured: Boolean(process.env.ANTHROPIC_MODEL),
       provider: 'anthropic',
+      plan,
+      access: {
+        cv: cvPlans?.has(plan) ?? true,
+        coach: coachPlans?.has(plan) ?? true,
+      },
+      usage: await usageFor(req.user.id, plan),
     });
   } catch (error) {
     publicError(res, error);
@@ -94,8 +104,9 @@ router.post(
   authMiddleware,
   aiRateLimit({ max: 4, windowMs: 60000 }),
   async (req, res) => {
+    let reservation;
     try {
-      await assertAiAccess(req.user.id, 'cv');
+      const access = await assertAiAccess(req.user.id, 'cv');
 
       const sourceText = safeText(
         req.body?.source_text,
@@ -121,8 +132,11 @@ router.post(
         });
       }
 
-      const result = await callAi({
+      reservation = await reserveUsage(req.user.id, access.plan, 'cv');
+
+      const aiResult = await callAi({
         json: true,
+        returnMeta: true,
 
         // JSON CV : génération plus longue que le coach ;
         // 55s / 0 retry évite le triple timeout SDK (~90s).
@@ -146,7 +160,7 @@ router.post(
         ],
       });
 
-      const normalized = normalizeCvAnalysis(result, sourceText);
+      const normalized = normalizeCvAnalysis(aiResult.value, sourceText);
 
       const { data, error } = await supabase
         .from('ai_cv_analyses')
@@ -169,8 +183,17 @@ router.post(
 
       if (error) throw error;
 
+      await finalizeUsage(
+        reservation,
+        aiResult.meta,
+        'cv_analysis',
+        data.id,
+      );
+      reservation = null;
+
       res.status(201).json(data);
     } catch (error) {
+      await releaseUsage(reservation);
       publicError(res, error);
     }
   },
@@ -394,6 +417,7 @@ async function generateCoachReply(
   conversation,
   userContent,
   saveUser = true,
+  reservation,
 ) {
   if (saveUser) {
     const { error } = await supabase
@@ -426,7 +450,8 @@ async function generateCoachReply(
 
   if (historyError) throw historyError;
 
-  const content = await callAi({
+  const aiResult = await callAi({
+    returnMeta: true,
     maxTokens: 1200,
 
     messages: [
@@ -435,14 +460,10 @@ async function generateCoachReply(
         content: coachSystem(conversation),
       },
 
-      ...(history || [])
-        .reverse()
-        .map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
+      ...selectCoachHistory(history || [], undefined, userContent),
     ],
   });
+  const content = aiResult.value;
 
   const { data, error } = await supabase
     .from('ai_conversation_messages')
@@ -467,6 +488,13 @@ async function generateCoachReply(
 
   if (error) throw error;
 
+  await finalizeUsage(
+    reservation,
+    aiResult.meta,
+    'conversation_message',
+    data.id,
+  );
+
   await supabase
     .from('ai_conversations')
     .update({
@@ -483,8 +511,9 @@ router.post(
   authMiddleware,
   aiRateLimit({ max: 10, windowMs: 60000 }),
   async (req, res) => {
+    let reservation;
     try {
-      await assertAiAccess(req.user.id, 'coach');
+      const access = await assertAiAccess(req.user.id, 'coach');
 
       const conversation = await ownedConversation(
         req.user.id,
@@ -503,15 +532,23 @@ router.post(
         });
       }
 
-      res.status(201).json(
-        await generateCoachReply(
-          req.user.id,
-          conversation,
-          content,
-          true,
-        ),
+      reservation = await reserveUsage(
+        req.user.id,
+        access.plan,
+        'coach',
       );
+
+      const reply = await generateCoachReply(
+        req.user.id,
+        conversation,
+        content,
+        true,
+        reservation,
+      );
+      reservation = null;
+      res.status(201).json(reply);
     } catch (error) {
+      await releaseUsage(reservation);
       publicError(res, error);
     }
   },
@@ -522,8 +559,9 @@ router.post(
   authMiddleware,
   aiRateLimit({ max: 10, windowMs: 60000 }),
   async (req, res) => {
+    let reservation;
     try {
-      await assertAiAccess(req.user.id, 'coach');
+      const access = await assertAiAccess(req.user.id, 'coach');
 
       const conversation = await ownedConversation(
         req.user.id,
@@ -547,15 +585,23 @@ router.post(
         });
       }
 
-      res.status(201).json(
-        await generateCoachReply(
-          req.user.id,
-          conversation,
-          data.content,
-          false,
-        ),
+      reservation = await reserveUsage(
+        req.user.id,
+        access.plan,
+        'coach',
       );
+
+      const reply = await generateCoachReply(
+        req.user.id,
+        conversation,
+        data.content,
+        false,
+        reservation,
+      );
+      reservation = null;
+      res.status(201).json(reply);
     } catch (error) {
+      await releaseUsage(reservation);
       publicError(res, error);
     }
   },

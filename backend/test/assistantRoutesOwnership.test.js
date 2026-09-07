@@ -6,10 +6,11 @@ process.env.SUPABASE_SERVICE_KEY ||= 'test-service-key';
 
 const rows = {
   ai_cv_analyses: [{ id: 'analysis-b', user_id: 'user-b', improved_text: 'original-b' }],
-  ai_conversations: [{ id: 'conversation-b', user_id: 'user-b', mode: 'pitch', title: 'Privée B', context_data: {} }],
+  ai_conversations: [{ id: 'conversation-a', user_id: 'user-a', mode: 'pitch', title: 'Privée A', context_data: {} }, { id: 'conversation-b', user_id: 'user-b', mode: 'pitch', title: 'Privée B', context_data: {} }],
   ai_conversation_messages: [{ id: 'message-b', conversation_id: 'conversation-b', user_id: 'user-b', role: 'assistant', content: 'secret-b' }],
 };
 const operations = [];
+let failCvInsert = false;
 
 class Query {
   constructor(table) { this.table = table; this.filters = []; this.operation = 'select'; this.payload = null; }
@@ -25,6 +26,9 @@ class Query {
   then(resolve, reject) { return Promise.resolve(this.execute(false)).then(resolve, reject); }
   execute(single) {
     operations.push({ table: this.table, operation: this.operation, filters: [...this.filters], payload: this.payload });
+    if (this.table === 'ai_cv_analyses' && this.operation === 'insert' && failCvInsert) {
+      return { data: null, error: new Error('persistence failed') };
+    }
     const matching = (rows[this.table] || []).filter((row) => this.filters.every(([key, value]) => row[key] === value));
     if (this.operation === 'insert') {
       const value = { id: `${this.table}-new`, ...(Array.isArray(this.payload) ? this.payload[0] : this.payload) };
@@ -46,11 +50,33 @@ mockModule('../supabase', fakeSupabase);
 mockModule('../middleware/auth', (_req, _res, next) => next());
 mockModule('../middleware/aiRateLimit', () => (_req, _res, next) => next());
 mockModule('../utils/profiles', { ensureCandidateProfile: async (id) => ({ id, titre: 'Profil fictif' }) });
-mockModule('../utils/aiAccess', { assertAiAccess: async () => {}, configuredPlans: () => new Set(['all']) });
+mockModule('../utils/aiAccess', { assertAiAccess: async () => ({ plan:'carriere_coaching' }), configuredPlans: (feature) => new Set(feature === 'cv' ? ['carriere', 'carriere_coaching'] : ['carriere_coaching']), getAiPlan: async () => 'carriere_coaching' });
+let providerCalls = 0;
+let quotaMode = 'exhausted';
+let releaseCalls = 0;
+let finalizeCalls = 0;
+let failFinalize = false;
 mockModule('../utils/aiProvider', {
-  callAi: async () => { throw new Error('Un appel Anthropic ne doit pas avoir lieu dans ces tests'); },
+  callAi: async () => {
+    providerCalls += 1;
+    return {
+      value: { strengths: [], clarifications: [], priorities: [], rewrites: [], questions: [], improved_cv: 'CV fictif amélioré' },
+      meta: { input_tokens: 100, output_tokens: 50 },
+    };
+  },
   isAiConfigured: () => true,
   safeText: (value, max = 40000) => String(value || '').slice(0, max),
+});
+mockModule('../utils/aiUsage', {
+  usageFor: async () => ({ cv:{quota:50,used:50,remaining:0,extra_credits:0}, coach:{quota:100,used:100,remaining:0,extra_credits:0}, reset_at:'2026-10-01', period_end:'2026-10-01' }),
+  reserveUsage: async (_userId, _plan, feature) => {
+    if (quotaMode === 'exhausted') {
+      const error = new Error('quota'); error.code = 'AI_QUOTA_EXCEEDED'; error.status = 429; error.details = { feature }; throw error;
+    }
+    return { id: `reservation-${feature}`, feature };
+  },
+  releaseUsage: async (reservation) => { if (reservation) releaseCalls += 1; },
+  finalizeUsage: async () => { finalizeCalls += 1; if (failFinalize) throw new Error('finalize failed'); },
 });
 
 delete require.cache[require.resolve('../routes/assistant')];
@@ -71,6 +97,18 @@ async function invoke(method, routePath, { userId = 'user-a', params = {}, body 
   await handler(method, routePath)({ user: { id: userId }, params, body }, res);
   return response;
 }
+
+test('GET config expose un contrat quota stable', async () => {
+  const response = await invoke('get', '/config');
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.payload.plan, 'carriere_coaching');
+  assert.deepEqual(response.payload.access, { cv: true, coach: true });
+  for (const feature of ['cv', 'coach']) {
+    assert.deepEqual(Object.keys(response.payload.usage[feature]).sort(), ['extra_credits', 'quota', 'remaining', 'used']);
+  }
+  assert.equal(response.payload.usage.reset_at, '2026-10-01');
+  assert.equal(response.payload.usage.period_end, '2026-10-01');
+});
 
 test('GET conversation refuse à A la conversation de B sans lire ses messages', async () => {
   operations.length = 0;
@@ -104,4 +142,48 @@ test('POST conversation ignore le user_id arbitraire du body au profit du JWT', 
   assert.equal(response.statusCode, 201);
   const insert = operations.find((op) => op.table === 'ai_conversations' && op.operation === 'insert');
   assert.equal(insert.payload.user_id, 'user-a');
+});
+
+test('quota CV épuisé bloque la route avant tout appel provider', async () => {
+  providerCalls = 0;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'CV candidat entièrement fictif avec plus de quarante caractères.' } });
+  assert.equal(response.statusCode,429); assert.equal(response.payload.code,'AI_QUOTA_EXCEEDED'); assert.equal(providerCalls,0);
+});
+
+test('quota Coach épuisé bloque la route avant tout appel provider', async () => {
+  providerCalls = 0;
+  const response = await invoke('post', '/conversations/:id/messages', { params:{id:'conversation-a'}, body:{content:'Message fictif'} });
+  assert.equal(response.statusCode,429); assert.equal(response.payload.code,'AI_QUOTA_EXCEEDED'); assert.equal(providerCalls,0);
+});
+
+test('provider success then persistence failure releases without finalizing', async () => {
+  quotaMode = 'available'; failCvInsert = true; failFinalize = false;
+  providerCalls = 0; releaseCalls = 0; finalizeCalls = 0;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  assert.equal(response.statusCode, 500);
+  assert.equal(providerCalls, 1);
+  assert.equal(finalizeCalls, 0);
+  assert.equal(releaseCalls, 1);
+  failCvInsert = false; quotaMode = 'exhausted';
+});
+
+test('successful persistence finalizes exactly once', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = false;
+  providerCalls = 0; releaseCalls = 0; finalizeCalls = 0;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  assert.equal(response.statusCode, 201);
+  assert.equal(providerCalls, 1);
+  assert.equal(finalizeCalls, 1);
+  assert.equal(releaseCalls, 0);
+  quotaMode = 'exhausted';
+});
+
+test('finalization failure fails closed without double finalization', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = true;
+  releaseCalls = 0; finalizeCalls = 0;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  assert.equal(response.statusCode, 500);
+  assert.equal(finalizeCalls, 1);
+  assert.equal(releaseCalls, 1);
+  failFinalize = false; quotaMode = 'exhausted';
 });
