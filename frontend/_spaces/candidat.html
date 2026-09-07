@@ -3011,12 +3011,11 @@ function renderProfile(p, a) {
   renderProfileCV(p);
   renderMotivationFile(p);
   renderProfileCompetences(p.competences || {});
-  const names={freemium:'Compte candidat',carriere:'Carrière',carriere_coaching:'Carrière Coaching'};
   CURRENT_PLAN = activeSubscriptionPlan(a);
   CURRENT_PLAN_LOADED = true;
   const planName = document.getElementById('plan-n');
   const planDescription = document.getElementById('plan-d');
-  if (planName) planName.textContent=names[a.plan]||'Freemium';
+  if (planName) planName.textContent=a.plan_label||'Abonnement candidat';
   if (planDescription) planDescription.textContent=a.swipes_u+' / '+a.swipes_m+' swipes utilisés';
   fillProfileEdit(p, avatarLabel);
 }
@@ -3108,16 +3107,30 @@ async function loadSubscriptionStatus() {
   try {
     const a = await api('GET', '/abonnements/current?t=' + Date.now());
     const plan = String(a?.plan || 'freemium').toLowerCase();
+    const label = a?.plan_label || 'Abonnement candidat';
+    const status = String(a?.statut || a?.status || 'actif').toLowerCase();
     if (plan === 'freemium') {
-      statusEl.textContent = 'Plan Freemium (gratuit)';
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Compte gratuit</span>`;
       cancelBtn.style.display = 'none';
     } else if (a.resiliation_programmee && a.date_fin) {
       const d = new Date(a.date_fin).toLocaleDateString('fr-FR');
-      statusEl.textContent = `Plan ${plan} — résiliation prévue le ${d}`;
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Résiliation prévue le ${esc(d)}</span>`;
       cancelBtn.style.display = 'none';
-    } else {
-      statusEl.textContent = `Plan ${plan} — actif`;
+    } else if (status === 'trialing') {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Période d’essai</span>`;
       cancelBtn.style.display = 'block';
+    } else if (['incomplete', 'incomplete_expired', 'past_due'].includes(status)) {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Paiement incomplet</span>`;
+      cancelBtn.style.display = 'none';
+    } else if (['inactif', 'inactive', 'expired', 'canceled', 'cancelled'].includes(status)) {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Abonnement expiré</span>`;
+      cancelBtn.style.display = 'none';
+    } else if (status === 'actif' || status === 'active') {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Abonnement actif</span>`;
+      cancelBtn.style.display = 'block';
+    } else {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>État de l’abonnement indisponible</span>`;
+      cancelBtn.style.display = 'none';
     }
   } catch (e) {
     statusEl.textContent = 'Impossible de charger votre abonnement';
