@@ -2965,7 +2965,7 @@ function renderProfile(p, a) {
   renderProfileCV(p);
   renderMotivationFile(p);
   renderProfileCompetences(p.competences || {});
-  const names={freemium:'Freemium',premium:'Premium',gold:'Gold',platine:'Platine'};
+  const names={freemium:'Compte candidat',carriere:'Carrière',carriere_coaching:'Carrière Coaching'};
   CURRENT_PLAN = activeSubscriptionPlan(a);
   CURRENT_PLAN_LOADED = true;
   const planName = document.getElementById('plan-n');
@@ -3504,16 +3504,14 @@ async function deleteCoachConversation() {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
-    {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:19,u:'/mois',h:'Sans engagement',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Passer Premium',pop:true},
-    {n:'Gold',f:'Top performer',p:39,u:'/mois',h:'Sans engagement',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification Swip Sales','Offres exclusives','Communauté Closers Elite'],cta:'Passer Gold'},
-    {n:'Platine',f:'Closer Elite',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Accéder au Platine',dk:true}
+    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
+    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Passer à Carrière',pop:true},
+    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Passer à Carrière Coaching',dk:true}
   ],
   year:[
-    {n:'Freemium',f:'Découvrir la plateforme',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN 10 étapes complet','Score IA global','5 swipes / mois','Import CV automatique','Lettre de motivation écrite','Suivi candidatures'],cta:'Commencer gratuitement'},
-    {n:'Premium',f:'Commercial actif',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · -48 €',feats:['Swipes et candidatures illimités','10 contacts recruteurs/mois','ADN détaillé 8 axes','Lettre de motivation écrite','Benchmark salarial précis','Préparation entretien'],cta:'Économiser 20%',pop:true},
-    {n:'Gold',f:'Top performer',p:31,old:39,u:'/mois',h:'Facturé 372 €/an · -96 €',feats:['Tout Premium inclus','Contacts illimités','Mise en avant ×3','5 Super-likes/mois','Ressources avancées','Certification Swip Sales','Offres exclusives','Communauté Closers Elite'],cta:'Économiser 20%'},
-    {n:'Platine',f:'Closer Elite',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · -192 €',feats:['Tout Gold inclus','Initier contact recruteurs','Ressources premium','Score compatibilité culturelle','Simulation entretien','Mise en relation garantie 30j'],cta:'Économiser 20%',dk:true}
+    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
+    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · Économie 48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Choisir Carrière',pop:true},
+    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Carrière inclus','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Choisir Carrière Coaching',dk:true}
   ]
 };
 function activeSubscriptionPlan(abonnement) {
@@ -3550,7 +3548,7 @@ function isCurrentPlan(plan) {
 function renderPlans() {
   if (!CURRENT_PLAN_LOADED && TOKEN) loadCurrentPlan().then(renderPlans);
   document.getElementById('plans-row').innerHTML=PLANS[BILLING].map(p=>{
-    const active = isCurrentPlan(p.n);
+    const active = isCurrentPlan(p.id);
     return `
     <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
       ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
@@ -3560,7 +3558,7 @@ function renderPlans() {
       </div>
       <div class="pc-h">${p.h}</div>
       <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.n.toLowerCase()}','${BILLING}')">${active?'Offre active':p.cta}</button>
+      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.id}','${BILLING}')">${active?'Offre active':p.cta}</button>
     </div>`;
   }).join('');
 }
