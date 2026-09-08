@@ -2,7 +2,8 @@ const AI_SAFETY_FALLBACK = 'Je suis un outil d’entraînement et d’optimisati
 
 const RULES = [
   ['connection', /\b(?:mise|mettre) en relation\b|\b(?:te|vous) présenter à (?:un|une|l[’'])\s*(?:recruteur|entreprise)/i],
-  ['offer_recommendation', /\b(?:je (?:te|vous) recommande|voici|j[’']ai trouvé)\s+(?:cette |une |des |l[’'])?offres?\b|\bpostulez?\s+(?:chez|auprès de)\b/i],
+  ['offer_recommendation', /\b(?:je (?:te|vous) (?:recommande|propose|suggère)|voici|j[’']ai trouvé)\s+(?:cette |une |des |l[’'])?offres?\b|\bcette offre (?:vous|te) correspond\b/i],
+  ['specific_application', /\b(?:postulez?|candidatez?)\s+(?:à cette offre|à l[’']offre|chez|auprès de)\b/i],
   ['platform_company', /\b(?:entreprise|recruteur)\s+(?:inscrit|inscrite|présent|présente)\s+sur\s+SwipSales\b/i],
   ['job_search', /\bje (?:vais|peux) (?:chercher|trouver) (?:un poste|des offres?)\b/i],
   ['candidate_comparison', /\b(?:meilleur|moins bon|mieux classé)\s+que\s+(?:les |d[’'])?autres candidats\b|\bcomparé aux autres candidats\b/i],

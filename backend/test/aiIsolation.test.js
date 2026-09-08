@@ -18,3 +18,12 @@ test('résultats IA ne sont servis que par les routes candidat dédiées', () =>
   assert.match(server, /\/api\/assistant/);
   assert.doesNotMatch(server, /\/api\/(?:recruteurs|swipes|matchs)[^\n]+assistant/);
 });
+
+test('assistant est le Coach canonique et la route coaching ne génère plus de réponse', () => {
+  const candidate = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
+  const legacy = fs.readFileSync(path.join(__dirname, '..', 'routes', 'coaching.js'), 'utf8');
+  assert.match(candidate, /\/assistant\/conversations/);
+  assert.doesNotMatch(candidate, /\/coaching\/(?:chat|modules)/);
+  assert.match(legacy, /COACH_ROUTE_DEPRECATED/);
+  assert.doesNotMatch(legacy, /askClaude|callAi|COACHING_BASE_PROMPT|checkAndConsumeUsage/);
+});

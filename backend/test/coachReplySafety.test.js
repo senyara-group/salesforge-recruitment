@@ -30,11 +30,29 @@ test('prompt Coach interdit note, comparaison, placement et invention', () => {
   assert.match(prompt, /aucune note chiffrée/i); assert.match(prompt, /compare jamais/i); assert.match(prompt, /ne recommande aucune offre/i); assert.match(prompt, /n'invente jamais chiffre/i);
 });
 
-test('filtre bloque placement précis mais autorise une entreprise SaaS générique', () => {
-  assert.equal(inspectAssistantOutput('Vous pouvez travailler dans une entreprise SaaS.').safe, true);
-  const blocked = inspectAssistantOutput('Je vous recommande cette offre et peux vous mettre en relation.');
-  assert.equal(blocked.safe, false); assert.equal(blocked.incidentType, 'connection');
+test('filtre ciblé bloque les sorties plateforme interdites', () => {
+  const cases = [
+    ['Je vous recommande cette offre.', 'offer_recommendation'],
+    ['Cette offre vous correspond parfaitement.', 'offer_recommendation'],
+    ['Postulez à cette offre dès maintenant.', 'specific_application'],
+    ['Je peux vous mettre en relation avec un recruteur.', 'connection'],
+    ['Cette entreprise inscrite sur SwipSales recherche votre profil.', 'platform_company'],
+  ];
+  for (const [content, incidentType] of cases) {
+    const blocked = inspectAssistantOutput(content);
+    assert.equal(blocked.safe, false, content);
+    assert.equal(blocked.incidentType, incidentType, content);
+  }
   assert.doesNotMatch(AI_SAFETY_FALLBACK, /Anthropic|Claude|token|coût/i);
   assert.equal(inspectAssistantOutput('Je vous donne une note de 8/10.').safe, false);
   assert.equal(inspectAssistantOutput('Vous êtes meilleur que les autres candidats.').safe, false);
+});
+
+test('filtre ciblé ne bloque pas les formulations génériques utiles', () => {
+  for (const content of [
+    'Une entreprise SaaS peut attendre un pitch concis.',
+    'Un recruteur peut attendre un exemple vérifiable.',
+    'Dans une entreprise de votre secteur, adaptez le vocabulaire.',
+    'Vous pouvez expliquer comment vous avez traité une objection.',
+  ]) assert.equal(inspectAssistantOutput(content).safe, true, content);
 });

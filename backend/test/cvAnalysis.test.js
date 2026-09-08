@@ -47,6 +47,18 @@ test('un chiffre absent du CV est remplacé sans invention', () => {
   assert.match(result.improved_cv, /À COMPLÉTER/);
 });
 
+test('les exemples chiffrés Yannis ne deviennent ni few-shot ni faits candidat', () => {
+  const prompt = cvAnalysisPrompt(4000);
+  assert.doesNotMatch(prompt, /118\s*%|40 comptes/i);
+  assert.match(prompt, /utilise \[À COMPLÉTER\] lorsqu'une donnée manque/i);
+  const result = normalizeCvAnalysis(completeAnalysis({
+    rewrites: [{ original:'Portefeuille', suggestion:'Gestion de 40 comptes à 118 % de l’objectif', method:'preuve', reason:'Quantifier' }],
+    missing_metrics: [{ location:'Expérience', metric_type:'40 comptes', expected_format:'118 %' }],
+  }), 'Gestion d’un portefeuille commercial sans métrique renseignée');
+  assert.doesNotMatch(JSON.stringify(result), /118|40 comptes/);
+  assert.match(JSON.stringify(result), /À COMPLÉTER/);
+});
+
 test('ancien historique reste normalisable', () => {
   const result = normalizeCvAnalysis({ strengths:['Clair.'], priorities:['Clarifier le titre'], rewrites:[{ original:'A', suggestion:'B', reason:'C' }], improved_cv:'CV historique' }, 'fallback');
   assert.equal(result.schema_version, 2);
