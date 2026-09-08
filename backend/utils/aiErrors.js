@@ -33,6 +33,9 @@ function publicAiError(error = {}) {
   if (['AI_PROVIDER_ERROR', 'AI_INVALID_RESPONSE', 'AI_TIMEOUT'].includes(code)) {
     return { status: Number(error.status) || 502, code, message: 'La réponse n’a pas pu être générée. Vous pouvez réessayer.' };
   }
+  if (code === 'AI_SAFETY_BLOCKED') {
+    return { status: 422, code, message: 'Je suis un outil d’entraînement et d’optimisation. Pour découvrir des offres, rendez-vous dans l’espace Offres de SwipSales.' };
+  }
   if (code === 'AI_ACCESS_DENIED') {
     return { status: 403, code, message: 'Cette fonctionnalité n’est pas incluse dans votre abonnement.' };
   }

@@ -52,6 +52,7 @@ mockModule('../middleware/aiRateLimit', () => (_req, _res, next) => next());
 mockModule('../utils/profiles', { ensureCandidateProfile: async (id) => ({ id, titre: 'Profil fictif' }) });
 mockModule('../utils/aiAccess', { assertAiAccess: async () => ({ plan:'carriere_coaching' }), configuredPlans: (feature) => new Set(feature === 'cv' ? ['carriere', 'carriere_coaching'] : ['carriere_coaching']), getAiPlan: async () => 'carriere_coaching' });
 let providerCalls = 0;
+let providerValue = { strengths: [], clarifications: [], priorities: [], rewrites: [], questions: [], improved_cv: 'CV fictif amélioré' };
 let quotaMode = 'exhausted';
 let releaseCalls = 0;
 let finalizeCalls = 0;
@@ -60,7 +61,7 @@ mockModule('../utils/aiProvider', {
   callAi: async () => {
     providerCalls += 1;
     return {
-      value: { strengths: [], clarifications: [], priorities: [], rewrites: [], questions: [], improved_cv: 'CV fictif amélioré' },
+      value: providerValue,
       meta: { input_tokens: 100, output_tokens: 50 },
     };
   },
@@ -146,8 +147,17 @@ test('POST conversation ignore le user_id arbitraire du body au profit du JWT', 
 
 test('quota CV épuisé bloque la route avant tout appel provider', async () => {
   providerCalls = 0;
-  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'CV candidat entièrement fictif avec plus de quarante caractères.' } });
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'CV candidat entièrement fictif. '.repeat(8) } });
   assert.equal(response.statusCode,429); assert.equal(response.payload.code,'AI_QUOTA_EXCEEDED'); assert.equal(providerCalls,0);
+});
+
+test('extraction CV sous 200 caractères bloque avant quota et provider', async () => {
+  quotaMode = 'available'; providerCalls = 0; finalizeCalls = 0;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'CV fictif trop court pour permettre une analyse métier fiable.' } });
+  assert.equal(response.statusCode, 400);
+  assert.match(response.payload.error, /200 caractères/i);
+  assert.equal(providerCalls, 0); assert.equal(finalizeCalls, 0);
+  quotaMode = 'exhausted';
 });
 
 test('quota Coach épuisé bloque la route avant tout appel provider', async () => {
@@ -159,7 +169,7 @@ test('quota Coach épuisé bloque la route avant tout appel provider', async () 
 test('provider success then persistence failure releases without finalizing', async () => {
   quotaMode = 'available'; failCvInsert = true; failFinalize = false;
   providerCalls = 0; releaseCalls = 0; finalizeCalls = 0;
-  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV. '.repeat(8) } });
   assert.equal(response.statusCode, 500);
   assert.equal(providerCalls, 1);
   assert.equal(finalizeCalls, 0);
@@ -170,7 +180,7 @@ test('provider success then persistence failure releases without finalizing', as
 test('successful persistence finalizes exactly once', async () => {
   quotaMode = 'available'; failCvInsert = false; failFinalize = false;
   providerCalls = 0; releaseCalls = 0; finalizeCalls = 0;
-  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV. '.repeat(8) } });
   assert.equal(response.statusCode, 201);
   assert.equal(providerCalls, 1);
   assert.equal(finalizeCalls, 1);
@@ -181,9 +191,51 @@ test('successful persistence finalizes exactly once', async () => {
 test('finalization failure fails closed without double finalization', async () => {
   quotaMode = 'available'; failCvInsert = false; failFinalize = true;
   releaseCalls = 0; finalizeCalls = 0;
-  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV with more than forty characters.' } });
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV. '.repeat(8) } });
   assert.equal(response.statusCode, 500);
   assert.equal(finalizeCalls, 1);
   assert.equal(releaseCalls, 1);
   failFinalize = false; quotaMode = 'exhausted';
+});
+
+test('route Coach structure la réponse et finalise après persistance', async () => {
+  quotaMode = 'available'; failFinalize = false; finalizeCalls = 0;
+  providerValue = { feedback:{ works:'Réponse claire', missing:'Un fait précis', rewrite:'Réponse factuelle' }, next:{ type:'question', content:'Quel résultat pouvez-vous prouver ?' } };
+  const response = await invoke('post', '/conversations/:id/messages', { params:{ id:'conversation-a' }, body:{ content:'Réponse candidat fictive' } });
+  assert.equal(response.statusCode, 201);
+  assert.match(response.payload.content, /Ce qui fonctionne/);
+  assert.match(response.payload.content, /Question suivante/);
+  assert.equal(finalizeCalls, 1);
+  quotaMode = 'exhausted';
+});
+
+test('route Coach remplace une sortie interdite sans logger son contenu', async () => {
+  quotaMode = 'available'; finalizeCalls = 0;
+  const forbidden = 'Je vous recommande cette offre confidentielle.';
+  providerValue = { feedback:{ works:forbidden, missing:'', rewrite:'' }, next:{ type:'question', content:'Suite' } };
+  const warnings = []; const originalWarn = console.warn; console.warn = (...args) => warnings.push(args);
+  try {
+    const response = await invoke('post', '/conversations/:id/messages', { params:{ id:'conversation-a' }, body:{ content:'Autre réponse fictive' } });
+    assert.equal(response.statusCode, 201);
+    assert.match(response.payload.content, /outil d’entraînement et d’optimisation/);
+    assert.doesNotMatch(response.payload.content, /confidentielle/);
+    assert.doesNotMatch(JSON.stringify(warnings), /confidentielle/);
+    assert.equal(finalizeCalls, 1);
+  } finally { console.warn = originalWarn; quotaMode = 'exhausted'; }
+});
+
+test('changement de mode Coach reste scoped à id et user_id', async () => {
+  operations.length = 0;
+  const response = await invoke('patch', '/conversations/:id', { params:{ id:'conversation-b' }, body:{ mode:'objections', user_id:'user-b' } });
+  assert.equal(response.statusCode, 404);
+  assert.deepEqual(operations[0].filters, [['id','conversation-b'],['user_id','user-a']]);
+  assert.equal(rows.ai_conversations.find((row) => row.id === 'conversation-b').mode, 'pitch');
+});
+
+test('réinitialisation Coach ne supprime jamais les messages d’un autre propriétaire', async () => {
+  operations.length = 0;
+  const response = await invoke('post', '/conversations/:id/reset', { params:{ id:'conversation-b' }, body:{ user_id:'user-b' } });
+  assert.equal(response.statusCode, 404);
+  assert.equal(operations.some((operation) => operation.operation === 'delete'), false);
+  assert.equal(rows.ai_conversation_messages.some((row) => row.id === 'message-b'), true);
 });
