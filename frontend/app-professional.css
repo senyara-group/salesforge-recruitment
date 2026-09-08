@@ -806,3 +806,427 @@ body.auth .shell, body.product-gateway .shell {
   border-radius: 12px;
   background: #fafbfc;
 }
+
+/* ============================================================
+   Pass 2 — shared surfaces (messages, forms, lists, pricing)
+   CSS-first; IDs / hooks untouched
+   ============================================================ */
+
+/* Form field aliases (recruteur .form-field ↔ candidat .form-input) */
+.form-field,
+.resource-search {
+  width: 100%;
+  border: 1px solid var(--bd) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--w);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .03);
+  font: inherit;
+}
+.form-field:focus,
+.resource-search:focus {
+  border-color: var(--b) !important;
+  box-shadow: 0 0 0 3px rgba(22, 70, 216, .11) !important;
+  outline: none;
+}
+.form-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.form-chip {
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: var(--ink2);
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.form-chip:hover { border-color: var(--bm); background: var(--bs); color: var(--b); }
+.form-chip.on, .form-chip.active {
+  border-color: var(--b);
+  background: var(--bs);
+  color: var(--b);
+}
+.form-group { margin-bottom: 14px; }
+#p-post-offre .form-group,
+#p-post-offre .form-field,
+#p-post-offre textarea.form-field {
+  border-radius: var(--radius-sm);
+}
+.form-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(8, 122, 85, .18);
+  border-radius: var(--radius-md);
+  background: var(--gs);
+}
+.form-toggle-copy { flex: 1; font-size: 12px; font-weight: 600; color: var(--g); }
+.form-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--g); }
+
+/* Page headers / toolbars */
+.page-heading-inline {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%;
+}
+.page-meta {
+  flex: 0 0 auto;
+  color: var(--ink3);
+  font-size: 12px;
+  font-weight: 650;
+}
+.sec-hd.page-heading {
+  align-items: center;
+  margin-bottom: 16px;
+}
+.sec-hd .page-kicker { margin-bottom: 2px; }
+.swipe-hd .page-title,
+.swipe-hd .sec-t {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 26px);
+  letter-spacing: -.55px;
+}
+.filter-row .fp,
+.tab-seg .tsb {
+  border-radius: 999px !important;
+  border-color: var(--bd);
+  min-height: 34px;
+}
+.filter-row .fp.on,
+.tab-seg .tsb.on {
+  border-color: var(--b) !important;
+  background: var(--bs) !important;
+  color: var(--b) !important;
+}
+.comp-filter-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+}
+.comp-filter-badge {
+  border-radius: 999px;
+  background: var(--b);
+  color: #fff;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* Empty / deck states */
+.deck-empty-ico {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gs); color: var(--g);
+}
+.deck-empty-title {
+  font-size: 16px; font-weight: 800; color: var(--ink);
+}
+.deck-empty-copy {
+  max-width: 240px; margin: 0;
+  color: var(--ink3); font-size: 13px; line-height: 1.65; text-align: center;
+}
+.deck-empty {
+  display: grid; justify-items: center; gap: 10px;
+  padding: 28px 16px;
+}
+.chat-head-copy { flex: 1; min-width: 0; }
+.kpi-link { cursor: pointer; }
+.kpi-link:hover { border-color: var(--bm) !important; box-shadow: var(--sh-md); }
+
+/* Messages — shared candidat + recruteur */
+#p-messages .sec-hd { margin-bottom: 14px; }
+#p-messages #msgs-list {
+  gap: 8px;
+}
+#p-messages .msg-th {
+  padding: 14px 16px !important;
+  border: 1px solid var(--bd);
+  border-radius: 12px !important;
+  background: var(--w);
+}
+#p-messages .msg-th:hover {
+  border-color: var(--bm) !important;
+  background: #fafbff;
+}
+#p-messages .chat-panel {
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--w);
+  box-shadow: var(--sh-sm);
+}
+#p-messages .chat-head {
+  border-bottom: 1px solid var(--bd);
+  background: #f8fafc;
+  padding: 12px 14px;
+}
+#p-messages .chat-title { font-size: 14px; font-weight: 800; color: var(--ink); }
+#p-messages .chat-sub { color: var(--ink3); font-size: 12px; }
+#p-messages .chat-body { background: #fafbfc; }
+#p-messages .chat-compose {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid var(--bd);
+  background: var(--w);
+}
+#p-messages .chat-input {
+  flex: 1;
+  min-height: 42px;
+  border: 1px solid var(--bd) !important;
+  border-radius: 999px !important;
+  padding: 0 14px;
+  background: #f8fafc;
+}
+#p-messages .chat-input:focus {
+  border-color: var(--b) !important;
+  background: var(--w);
+  box-shadow: 0 0 0 3px rgba(22, 70, 216, .11) !important;
+}
+#p-messages .chat-send {
+  width: 42px; height: 42px; border-radius: 999px;
+  background: var(--b); color: #fff; border: 0;
+  display: grid; place-items: center;
+}
+#p-messages .chat-placeholder {
+  padding: 36px 20px;
+  text-align: center;
+}
+#p-messages .bubble,
+#p-messages .msg-bubble,
+#chat-body .bubble {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+/* Profile / candidatures / tools library */
+#p-profile .ph {
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  background: var(--w);
+  box-shadow: var(--sh-sm);
+}
+#p-profile .ph-kicker {
+  color: var(--b);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+#p-profile .card-sec,
+#p-profile .menu-list,
+#p-profile .plan-banner {
+  border-color: var(--bd);
+  border-radius: 12px;
+  box-shadow: var(--sh-sm);
+}
+#p-profile .profile-edit-panel {
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+#p-profile .profile-edit-field input,
+#p-profile .profile-edit-field select,
+#p-profile .profile-edit-field textarea {
+  border-radius: var(--radius-sm) !important;
+}
+#p-candidatures .tr-item,
+#p-home .tr-item {
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--w);
+  box-shadow: var(--sh-sm);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+#p-candidatures .tr-item:hover,
+#p-home .tr-item:hover {
+  border-color: var(--bm);
+  box-shadow: var(--sh-md);
+}
+#p-coaching .resource-search {
+  min-height: 42px;
+  padding: 0 12px;
+  margin-bottom: 10px;
+}
+#p-coaching .doc-item {
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--w);
+  box-shadow: var(--sh-sm);
+}
+#p-coaching .resource-filters {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 12px;
+}
+#p-test .opt,
+#p-test .sc-box {
+  border-radius: 12px;
+  border-color: var(--bd);
+}
+#p-test .test-sticky {
+  border-bottom: 1px solid var(--bd);
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: none;
+}
+
+/* Pricing */
+#p-pricing .pricing-hd {
+  text-align: center;
+  margin-bottom: 22px;
+}
+#p-pricing .pricing-hd h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: -.7px;
+}
+#p-pricing .pricing-hd > p {
+  margin: 0 auto 16px;
+  max-width: 42ch;
+  color: var(--ink3);
+  font-size: 13px;
+  line-height: 1.55;
+}
+#p-pricing .bill-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: #f8fafc;
+}
+#p-pricing .bill-opt {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink2);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+#p-pricing .bill-opt.on {
+  background: var(--w);
+  color: var(--b);
+  box-shadow: var(--sh-sm);
+}
+#p-pricing .plan-card,
+#p-pricing .plan {
+  border: 1px solid var(--bd) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--sh-sm);
+  background: var(--w);
+}
+#p-pricing .plan-card:hover,
+#p-pricing .plan:hover {
+  border-color: var(--bm) !important;
+  box-shadow: var(--sh-md);
+}
+
+/* Recruiter pages */
+#p-dashboard .dash-actions .btn {
+  margin-bottom: 0;
+}
+#p-dashboard .dash-actions {
+  display: grid;
+  gap: 8px;
+}
+#p-matching .page-intro,
+#p-matching .match-intro {
+  margin: 0 0 14px;
+  color: var(--ink3);
+  font-size: 13px;
+  line-height: 1.6;
+}
+#p-matching .match-engine {
+  padding: 16px;
+  margin-bottom: 14px;
+  background: var(--w);
+}
+#p-pipeline .pipe-col-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+#p-pipeline .pipe-count {
+  border-radius: 999px;
+  background: #eef1f5;
+  color: var(--ink3);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+#p-offres .offer-card,
+#p-pipeline .offer-card {
+  padding: 14px 16px;
+}
+#p-settings .account-layout { gap: 14px; }
+#p-settings .account-section { margin-bottom: 0; }
+#p-settings .menu-list {
+  background: var(--w);
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 2px;
+  box-shadow: var(--sh-sm);
+}
+#p-settings .menu-i {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--bd);
+  cursor: pointer;
+  color: var(--ink);
+  transition: background .15s ease;
+}
+#p-settings .menu-i:last-child { border-bottom: none; }
+#p-settings .menu-i:hover { background: var(--bg); }
+#p-settings .menu-ico {
+  width: 31px; height: 31px; border-radius: 8px;
+  background: var(--bs); color: var(--b);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+#p-settings .menu-ico svg {
+  width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2;
+}
+#p-settings .menu-txt { flex: 1; font-size: 13px; font-weight: 600; }
+#p-settings .menu-i:last-child .menu-txt { color: var(--r); }
+#p-swipe .swipe-hd,
+#p-candidatures .sec,
+#p-offres .sec,
+#p-pipeline .sec,
+#p-matching .sec,
+#p-post-offre .sec,
+#p-settings .sec {
+  max-width: 920px;
+}
+
+/* Photo nudge */
+.photo-nudge {
+  border: 1px solid var(--bm);
+  border-radius: 12px;
+  background: var(--bs);
+  box-shadow: none;
+}
+
+/* Mobile refinements */
+@media (max-width: 719px) {
+  .page-heading { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 18px; }
+  .page-heading-inline { align-items: flex-start; }
+  #p-messages .chat-compose { position: sticky; bottom: 64px; }
+  #p-messages .chat-send { flex: 0 0 42px; }
+  #p-post-offre .btn.blk,
+  #p-matching .btn.blk,
+  #p-dashboard .dash-actions .btn { width: 100%; }
+  #p-pricing .plans-row {
+    display: grid;
+    gap: 12px;
+  }
+  .filter-row { gap: 6px; }
+  #p-profile .ph-stats { gap: 8px; }
+}
+
+/* Desktop messages layout is owned by embedded space CSS (.chat-panel.on / placeholder.hidden).
+   Keep DS polish only — do not redeclare the split-pane grid here. */

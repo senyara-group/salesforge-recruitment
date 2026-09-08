@@ -1147,8 +1147,8 @@ button,input,textarea,select{font-family:inherit}
       <svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="kpi-grid">
-      <div class="kpi" style="cursor:pointer" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
-      <div class="kpi" style="cursor:pointer" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
+      <div class="kpi kpi-link" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
+      <div class="kpi kpi-link" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
       <div class="kpi"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
       <div class="kpi"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
     </div>
@@ -1187,9 +1187,12 @@ button,input,textarea,select{font-family:inherit}
 <!-- SWIPE -->
 <div id="p-swipe" class="page">
   <div class="swipe-hd">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div class="sec-t sf">Offres sales</div>
-      <span style="font-size:12px;color:var(--mu)" id="deck-count">Chargement…</span>
+    <div class="page-heading-inline">
+      <div>
+        <div class="page-kicker">Opportunités</div>
+        <div class="sec-t sf page-title">Offres sales</div>
+      </div>
+      <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
     <div class="filter-row" id="filter-row">
       <button class="fp on" onclick="setFilt(this,'all')">Toutes</button>
@@ -1206,9 +1209,9 @@ button,input,textarea,select{font-family:inherit}
     <div class="deck-area" id="deck-area">
       <div id="deck-cards"></div>
       <div class="deck-empty" id="deck-empty">
-        <div style="width:48px;height:48px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center;color:var(--g)"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="sf" style="font-size:16px;font-weight:800">Tout vu</div>
-        <p style="font-size:13px;color:var(--ink3);max-width:220px;line-height:1.65;text-align:center">Toutes les offres compatibles ont été vues. Revenez demain.</p>
+        <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="sf deck-empty-title">Tout vu</div>
+        <p class="deck-empty-copy">Toutes les offres compatibles ont été vues. Revenez demain.</p>
       </div>
     </div>
     <div class="deck-actions">
@@ -1222,7 +1225,13 @@ button,input,textarea,select{font-family:inherit}
 <!-- CANDIDATURES -->
 <div id="p-candidatures" class="page">
   <div class="sec">
-    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Mes candidatures</div><span class="chip chip-b" id="cand-chip"><span class="chip-dot"></span>—</span></div>
+    <div class="sec-hd page-heading">
+      <div>
+        <div class="page-kicker">Suivi</div>
+        <div class="sec-t sf page-title">Mes candidatures</div>
+      </div>
+      <span class="chip chip-b" id="cand-chip"><span class="chip-dot"></span>—</span>
+    </div>
     <div class="tab-seg">
       <button class="tsb on" onclick="tabSeg(this);filterCands('all')">Toutes</button>
       <button class="tsb" onclick="tabSeg(this);filterCands('reponse')">Réponses</button>
@@ -1510,7 +1519,13 @@ button,input,textarea,select{font-family:inherit}
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
   <div class="sec">
-    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Messages</div></div>
+    <div class="sec-hd page-heading">
+      <div>
+        <div class="page-kicker">Inbox</div>
+        <div class="sec-t sf page-title">Messages</div>
+        <p class="page-intro">Échangez avec les recruteurs après un match.</p>
+      </div>
+    </div>
     <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
     <div id="chat-placeholder" class="chat-placeholder">
       <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
@@ -1520,7 +1535,7 @@ button,input,textarea,select{font-family:inherit}
     <div id="chat-panel" class="chat-panel">
       <div class="chat-head">
         <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div style="flex:1;min-width:0">
+        <div class="chat-head-copy">
           <div class="chat-title" id="chat-title">Conversation</div>
           <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
         </div>
@@ -1789,6 +1804,7 @@ button,input,textarea,select{font-family:inherit}
 <!-- PRICING -->
 <div id="p-pricing" class="page">
   <div class="pricing-hd">
+    <div class="page-kicker">Abonnement</div>
     <h2 class="sf">Choisissez votre formule</h2>
     <p>Compte candidat gratuit. Carrière dès 15 €/mois en annuel.</p>
     <div class="bill-toggle">
