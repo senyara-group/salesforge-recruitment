@@ -1795,10 +1795,7 @@ body.auth .shell, body.product-gateway .shell {
   gap: 12px;
 }
 .profile-row-primary {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
+  display: contents;
 }
 .profile-about-grid { display: grid; gap: 10px; }
 .profile-about-row {
@@ -1900,66 +1897,82 @@ body.auth .shell, body.product-gateway .shell {
     flex-direction: column;
     gap: 12px;
   }
-  #p-profile .profile-row-primary {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
 }
 @media (min-width: 860px) {
+  #p-profile.page.on {
+    width: 100%;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #p-profile .ph,
+  #p-profile > .sec,
+  #p-profile .card-sec,
+  #p-profile .menu-list,
+  #p-profile .plan-banner {
+    max-width: none;
+    width: 100%;
+  }
   #p-profile > .sec.profile-layout {
     display: flex !important;
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  #p-profile .profile-row-primary {
-    display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(280px, .9fr);
-    gap: 16px;
-    align-items: start;
-  }
   #p-profile .profile-docs-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   #p-profile .profile-shortcuts {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
   #p-profile .profile-shortcuts > .menu-i {
-    flex: 1 1 200px;
-    min-width: 180px;
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 @media (min-width: 1080px) {
-  #p-profile .profile-row-primary {
-    grid-template-columns: minmax(0, 1.75fr) minmax(300px, .9fr);
-    gap: 18px;
-  }
   #p-swipe.page.on {
-    gap: 10px;
+    gap: 8px;
     padding-top: 14px;
-    padding-bottom: 24px;
+    padding-bottom: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    align-items: center;
+  }
+  #p-swipe .swipe-hd {
+    width: 100%;
+    max-width: 1100px;
+  }
+  #p-swipe .deck-wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0;
   }
   #p-swipe .deck-area {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: calc(100dvh - 195px);
+    height: 400px !important;
+    min-height: 360px !important;
+    max-height: 440px !important;
   }
   #p-swipe .deck-area.is-empty {
-    min-height: 240px;
+    min-height: 360px;
+    height: 400px;
   }
   #p-swipe #deck-cards {
     position: relative;
-    height: auto;
+    height: 100%;
     min-height: 0;
   }
   #p-swipe .swipe-card {
     position: relative !important;
     inset: auto !important;
     width: 100%;
-    height: auto !important;
-    max-height: calc(100dvh - 195px);
+    height: 100% !important;
+    min-height: 360px;
+    max-height: 440px;
     flex-direction: row;
     align-items: stretch;
   }
@@ -1968,10 +1981,15 @@ body.auth .shell, body.product-gateway .shell {
     display: none;
   }
   #p-swipe .card-identity {
-    width: min(300px, 30%);
+    width: 30%;
     height: auto !important;
     min-height: 0 !important;
     align-self: stretch;
+    flex-shrink: 0;
+  }
+  #p-swipe .card-body {
+    flex: 1 1 70%;
+    overflow: hidden;
   }
   #p-swipe .card-desc-block {
     flex: 0 1 auto !important;
@@ -1979,6 +1997,10 @@ body.auth .shell, body.product-gateway .shell {
   }
   #p-swipe .card-desc {
     flex: none !important;
+    -webkit-line-clamp: 7;
+  }
+  #p-swipe .deck-actions {
+    padding: 8px 16px;
   }
   #p-swipe .deck-empty {
     position: absolute;
@@ -1990,6 +2012,6 @@ body.auth .shell, body.product-gateway .shell {
   }
 }
 @media (min-width: 1440px) {
-  #p-profile.page.on { max-width: 1360px; }
-  #p-swipe .card-identity { width: min(320px, 30%); }
+  #p-profile.page.on { max-width: 960px; }
+  #p-swipe .card-identity { width: 30%; }
 }

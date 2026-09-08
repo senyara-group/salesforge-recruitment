@@ -707,18 +707,20 @@ button,input,textarea,select{font-family:inherit}
   #p-test .test-body{max-width:none;padding-left:0;padding-right:0}
   #p-test .test-sticky{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
   #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
-  #p-profile.page.on{display:flex;flex-direction:column;gap:16px;padding:24px 28px 96px;max-width:1180px;margin:0 auto}
-  #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:static;margin:0;width:100%}
-  #p-profile>.sec.profile-layout{padding:0;display:flex;flex-direction:column;gap:14px;align-items:stretch}
-  #p-profile .profile-row-primary{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);gap:16px;align-items:start}
-  #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%;height:auto}
-  #p-swipe.page.on{display:flex !important;flex-direction:column;gap:12px;align-items:stretch;padding:18px 28px 28px;max-width:1180px;margin:0 auto}
-  #p-swipe .swipe-hd{position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;top:auto;width:100%}
+  #p-profile.page.on{display:flex;flex-direction:column;gap:16px;padding:24px 28px 96px;width:100%;max-width:960px;margin:0 auto}
+  #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:static;margin:0;width:100%;max-width:none}
+  #p-profile>.sec.profile-layout{padding:0;display:flex;flex-direction:column;gap:14px;align-items:stretch;width:100%;max-width:none}
+  #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%;max-width:none;height:auto}
+  #p-profile .profile-shortcuts{display:flex;flex-wrap:wrap}
+  #p-profile .profile-shortcuts>.menu-i{flex:1 1 200px;min-width:180px}
+  #p-profile .profile-docs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #p-swipe.page.on{display:flex !important;flex-direction:column;gap:10px;align-items:center;padding:18px 28px 28px;width:100%;max-width:1200px;margin:0 auto}
+  #p-swipe .swipe-hd{position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;top:auto;width:100%;max-width:1100px}
   #p-swipe .filter-row{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin-top:8px;gap:6px;scrollbar-width:thin}
   #p-swipe .fp{width:auto;text-align:center;padding:7px 12px;flex-shrink:0}
   #p-swipe .fp-more{border-style:dashed}
-  #p-swipe .deck-wrap{width:100%;max-width:none;margin:0;border-radius:22px}
-  #p-swipe .deck-area{height:min(560px,calc(100dvh - 240px));max-height:calc(100dvh - 220px);min-height:0}
+  #p-swipe .deck-wrap{width:100%;max-width:1180px;margin:0;border-radius:22px}
+  #p-swipe .deck-area{height:min(480px,calc(100dvh - 240px));max-height:calc(100dvh - 220px);min-height:0}
   #p-swipe .card-identity{min-height:140px}
   #p-swipe .card-desc{-webkit-line-clamp:6}
   .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
@@ -734,26 +736,26 @@ button,input,textarea,select{font-family:inherit}
   #p-home .home-hero{grid-row:span 1}
   #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   #cands-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
-  #p-profile.page.on{max-width:1280px}
-  #p-profile .profile-row-primary{grid-template-columns:minmax(0,1.75fr) minmax(300px,.9fr);gap:18px}
+  #p-profile.page.on{max-width:960px;padding:24px 28px 96px;width:100%;margin-left:auto;margin-right:auto}
   #p-profile .menu-list{align-self:stretch}
-  #p-swipe.page.on{padding:14px 42px 24px;max-width:1320px;margin-left:auto;margin-right:auto;gap:10px}
-  #p-swipe .deck-wrap{width:100%;max-width:none}
-  #p-swipe .deck-area{height:auto;min-height:0;max-height:calc(100dvh - 195px)}
-  #p-swipe #deck-cards{position:relative;height:auto;min-height:0}
-  #p-swipe .swipe-card{position:relative;inset:auto;width:100%;height:auto;max-height:calc(100dvh - 195px);flex-direction:row;align-items:stretch}
+  #p-swipe.page.on{padding:14px 24px 20px;max-width:1200px;width:100%;margin-left:auto;margin-right:auto;gap:8px;align-items:center}
+  #p-swipe .swipe-hd{max-width:1100px;width:100%;padding:12px 16px}
+  #p-swipe .deck-wrap{width:100%;max-width:1180px;margin:0}
+  #p-swipe .deck-area{height:400px;min-height:360px;max-height:440px}
+  #p-swipe #deck-cards{position:relative;height:100%;min-height:0}
+  #p-swipe .swipe-card{position:relative;inset:auto;width:100%;height:100%;min-height:360px;max-height:440px;flex-direction:row;align-items:stretch}
   #p-swipe .swipe-card:nth-last-child(2),#p-swipe .swipe-card:nth-last-child(3){display:none}
   #p-swipe .swipe-card:last-child{position:relative;z-index:10}
-  #p-swipe .card-identity{width:min(300px,30%);height:auto;align-self:stretch;flex-shrink:0;min-height:0}
-  #p-swipe .card-body{flex:1 1 auto;gap:12px;padding:18px 22px;justify-content:flex-start;overflow:auto;min-height:0}
+  #p-swipe .card-identity{width:30%;height:auto;align-self:stretch;flex-shrink:0;min-height:0}
+  #p-swipe .card-body{flex:1 1 70%;gap:10px;padding:16px 20px;justify-content:flex-start;overflow:hidden;min-height:0}
   #p-swipe .card-title{font-size:22px}
   #p-swipe .card-meta-mobile{display:none}
   #p-swipe .card-skills-body{display:none}
-  #p-swipe .card-desc{-webkit-line-clamp:8;font-size:14px;line-height:1.6;flex:none}
+  #p-swipe .card-desc{-webkit-line-clamp:7;font-size:14px;line-height:1.55;flex:none}
   #p-swipe .card-desc-block{flex:0 1 auto;min-height:0;display:block}
-  #p-swipe .card-desc.expanded{max-height:min(260px,28dvh);overflow-y:auto;display:block}
-  #p-swipe .deck-actions{padding:10px 16px}
-  #p-swipe .deck-area.is-empty{min-height:240px}
+  #p-swipe .card-desc.expanded{max-height:min(180px,22dvh);overflow-y:auto;display:block}
+  #p-swipe .deck-actions{padding:8px 16px}
+  #p-swipe .deck-area.is-empty{min-height:360px;height:400px}
   #p-swipe .deck-empty{position:absolute;inset:0;min-height:0}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
@@ -779,10 +781,9 @@ button,input,textarea,select{font-family:inherit}
   .doc-item,.tr-item,.match-item,.msg-th,.menu-i{padding:17px 18px}
   .doc-title,.tr-title,.mi-t,.msg-n,.card-sec-t{font-size:16px}
   .doc-meta,.tr-sub,.mi-s,.msg-prev{font-size:14px}
-  #p-profile .ph{position:static;padding:34px 38px;margin:0;border:1px solid var(--bd);border-radius:16px}
-  #p-profile>.sec{display:block}
-  #p-profile>.sec.profile-layout{display:flex;flex-direction:column;gap:16px}
-  #p-profile .profile-row-primary{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:16px;align-items:start}
+  #p-profile .ph{position:static;padding:34px 38px;margin:0;border:1px solid var(--bd);border-radius:16px;max-width:none;width:100%}
+  #p-profile>.sec{display:block;max-width:none;width:100%}
+  #p-profile>.sec.profile-layout{display:flex;flex-direction:column;gap:16px;width:100%}
   .ph-top{gap:20px}
   .ph-av{width:82px;height:82px;font-size:28px}
   .ph-name{font-size:26px}
@@ -1011,8 +1012,8 @@ button,input,textarea,select{font-family:inherit}
     display:flex !important;
     flex-direction:column;
     gap:12px;
-    width:min(1180px,100%);
-    max-width:1180px;
+    width:min(960px,100%);
+    max-width:960px;
     margin:0 auto;
     background:var(--bg);
     min-height:calc(100dvh - 52px);
@@ -1022,6 +1023,7 @@ button,input,textarea,select{font-family:inherit}
     position:static !important;
     top:auto;
     width:100%;
+    max-width:none;
     margin:0;
     padding:24px 28px;
     border:1px solid var(--bd);
@@ -1032,6 +1034,7 @@ button,input,textarea,select{font-family:inherit}
     flex-direction:column;
     gap:10px;
     width:100%;
+    max-width:none;
     padding:0 !important;
   }
   #p-profile>.sec.profile-layout{
@@ -1040,12 +1043,6 @@ button,input,textarea,select{font-family:inherit}
     gap:14px;
     align-items:stretch;
   }
-  #p-profile .profile-row-primary{
-    display:grid;
-    grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);
-    gap:16px;
-    align-items:start;
-  }
   #p-profile .card-sec,
   #p-profile .plan-banner,
   #p-profile .menu-list{
@@ -1053,6 +1050,17 @@ button,input,textarea,select{font-family:inherit}
     max-width:none;
     margin:0;
     border-radius:12px;
+  }
+  #p-profile .profile-shortcuts{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  #p-profile .profile-shortcuts>.menu-i{
+    flex:1 1 200px;
+    min-width:180px;
+  }
+  #p-profile .profile-docs-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
 
@@ -1669,27 +1677,25 @@ button,input,textarea,select{font-family:inherit}
     </div>
   </div>
   <div class="sec profile-body profile-layout">
-    <div class="profile-row profile-row-primary">
-      <div class="card-sec" id="prof-adn-card">
-        <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b" id="prof-adn-chip"><span class="chip-dot"></span>Évaluation</span></div>
-        <div class="adn-summary" id="prof-adn-summary" hidden>
-          <div class="adn-summary-score sf" id="prof-adn-summary-score"></div>
-          <div class="adn-summary-copy">
-            <strong id="prof-adn-summary-type"></strong>
-            <span id="prof-adn-summary-rank"></span>
-          </div>
+    <div class="card-sec" id="prof-adn-card">
+      <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b" id="prof-adn-chip"><span class="chip-dot"></span>Évaluation</span></div>
+      <div class="adn-summary" id="prof-adn-summary" hidden>
+        <div class="adn-summary-score sf" id="prof-adn-summary-score"></div>
+        <div class="adn-summary-copy">
+          <strong id="prof-adn-summary-type"></strong>
+          <span id="prof-adn-summary-rank"></span>
         </div>
-        <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
       </div>
-      <section class="card-sec profile-checklist-card" id="prof-checklist-card">
-        <div class="card-sec-hd"><div class="card-sec-t sf">Compléter mon profil</div></div>
-        <div class="profile-progress">
-          <div class="profile-progress-bar" aria-hidden="true"><div class="profile-progress-fill" id="prof-progress-fill"></div></div>
-          <div class="profile-progress-label" id="prof-progress-label">0 / 0</div>
-        </div>
-        <ul class="profile-checklist" id="prof-checklist"></ul>
-      </section>
+      <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
     </div>
+    <section class="card-sec profile-checklist-card" id="prof-checklist-card">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Compléter mon profil</div></div>
+      <div class="profile-progress">
+        <div class="profile-progress-bar" aria-hidden="true"><div class="profile-progress-fill" id="prof-progress-fill"></div></div>
+        <div class="profile-progress-label" id="prof-progress-label">0 / 0</div>
+      </div>
+      <ul class="profile-checklist" id="prof-checklist"></ul>
+    </section>
     <div class="card-sec profile-docs-card" id="prof-docs-card">
       <div class="card-sec-hd"><div class="card-sec-t sf">Documents</div></div>
       <div class="profile-docs-grid">
