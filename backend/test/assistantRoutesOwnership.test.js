@@ -52,6 +52,7 @@ mockModule('../middleware/aiRateLimit', () => (_req, _res, next) => next());
 mockModule('../utils/profiles', { ensureCandidateProfile: async (id) => ({ id, titre: 'Profil fictif' }) });
 mockModule('../utils/aiAccess', { assertAiAccess: async () => ({ plan:'carriere_coaching' }), configuredPlans: (feature) => new Set(feature === 'cv' ? ['carriere', 'carriere_coaching'] : ['carriere_coaching']), getAiPlan: async () => 'carriere_coaching' });
 let providerCalls = 0;
+let providerRequest = null;
 let providerValue = { strengths: [], clarifications: [], priorities: [], rewrites: [], questions: [], improved_cv: 'CV fictif amélioré' };
 let providerError = null;
 let quotaMode = 'exhausted';
@@ -59,8 +60,9 @@ let releaseCalls = 0;
 let finalizeCalls = 0;
 let failFinalize = false;
 mockModule('../utils/aiProvider', {
-  callAi: async () => {
+  callAi: async (request) => {
     providerCalls += 1;
+    providerRequest = request;
     if (providerError) throw providerError;
     return {
       value: providerValue,
@@ -205,6 +207,21 @@ test('successful persistence finalizes exactly once', async () => {
   assert.equal(providerCalls, 1);
   assert.equal(finalizeCalls, 1);
   assert.equal(releaseCalls, 0);
+  quotaMode = 'exhausted';
+});
+
+test('route CV sépare source, déclarations A2 et facts déterministes dans un seul appel', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = false;
+  providerCalls = 0; providerRequest = null;
+  const sourceText = 'EXPÉRIENCES PROFESSIONNELLES\n2019-2024 Développeur React Native. '.repeat(4);
+  const response = await invoke('post', '/cv-analyses', { body: { source_text: sourceText, experience_years: 5, target_role: 'Développeur mobile', sector: 'SaaS' } });
+  assert.equal(response.statusCode, 201);
+  assert.equal(providerCalls, 1);
+  const context = JSON.parse(providerRequest.messages.at(-1).content);
+  assert.equal(context.SOURCE_CV, sourceText);
+  assert.equal(context.DONNEES_UTILISATEUR.annees_experience, 5);
+  assert.equal(context.FACTS_CALCULES.declared.experience_years.status, 'DECLARED');
+  assert.equal(context.FACTS_CALCULES.confirmed.technologies.find((item) => item.name === 'React Native').evidence, 'experience');
   quotaMode = 'exhausted';
 });
 

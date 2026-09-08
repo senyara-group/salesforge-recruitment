@@ -75,6 +75,25 @@ test('une réponse JSON valide plus longue que l’ancien plafond reste analysab
   assert.equal(result.improved_cv.length, 12000);
 });
 
+test('le prompt impose la provenance et borne les inférences factuelles', () => {
+  const prompt = cvAnalysisPrompt(4000);
+  assert.match(prompt, /SOURCE_CV, DONNÉES_UTILISATEUR et FACTS_CALCULÉS/);
+  assert.match(prompt, /DECLARED > CONFIRMED > INFERRED > VERIFY > MISSING/);
+  assert.match(prompt, /Ne transforme jamais une durée générale de parcours en durée d'une spécialité/);
+  assert.match(prompt, /skills_list_only est listée, pas démontrée en production/);
+});
+
+test('préserve les années déclarées A2 sans autoriser les autres chiffres inventés', () => {
+  const result = normalizeCvAnalysis(completeAnalysis({
+    summary: 'Profil avec 5 ans d’expérience et 118 % de résultat.',
+    improved_cv: 'Développeur — 5 années d’expérience — 118 % de résultat.',
+  }), 'CV sans métrique', { experienceYears: 5 });
+  assert.match(result.summary, /5 ans d’expérience/);
+  assert.match(result.improved_cv, /5 années d’expérience/);
+  assert.doesNotMatch(result.summary, /118/);
+  assert.match(result.summary, /À COMPLÉTER/);
+});
+
 test('régression production : JSON tronqué à 3200 tokens reste rejeté avec diagnostics', async () => {
   const truncated = '{"score":{"global":50},"rewrites":[' + '{"original":"A","suggestion":"B"},'.repeat(280);
   await assert.rejects(() => callAi({ json:true, maxTokens:3200, messages:[], providerCall:async()=>({ text:truncated, meta:{ stop_reason:'max_tokens', input_tokens:1787, output_tokens:3200, response_chars:truncated.length } }) }), (error) => error.code === 'AI_INVALID_RESPONSE' && error.diagnostics.stage === 'json_parse' && error.diagnostics.stop_reason === 'max_tokens' && error.diagnostics.output_tokens === 3200 && !JSON.stringify(error.diagnostics).includes('suggestion'));
