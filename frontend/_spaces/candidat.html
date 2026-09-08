@@ -711,9 +711,11 @@ button,input,textarea,select{font-family:inherit}
   #p-swipe .swipe-hd{grid-area:sidebar;position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:18px;top:auto}
   #p-swipe .filter-row{flex-direction:column;overflow:visible;margin-top:14px;gap:5px}
   #p-swipe .fp{width:100%;text-align:left;padding:9px 12px}
-  #p-swipe .deck-wrap{grid-area:wrap;width:100%;max-width:600px;margin:0 auto;border-radius:22px}
-  #p-swipe .deck-area{height:min(820px,calc(100dvh - 260px))}
-  #p-swipe .card-top{height:230px}
+  #p-swipe .deck-wrap{grid-area:wrap;width:100%;max-width:min(920px,100%);margin:0 auto;border-radius:22px}
+  #p-swipe .deck-area{height:min(760px,calc(100dvh - 220px));max-height:none}
+  #p-swipe .card-top{height:200px}
+  #p-swipe .card-desc{-webkit-line-clamp:8}
+  #p-swipe .swipe-card.is-wide-layout .card-desc{-webkit-line-clamp:12}
   #p-swipe .card-match-box,#p-swipe .card-badge-row{top:18px}
   .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
   .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
@@ -729,11 +731,19 @@ button,input,textarea,select{font-family:inherit}
   #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   #cands-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
   #p-profile.page.on{grid-template-columns:minmax(420px,34vw) minmax(0,1fr)}
-  #p-profile>.sec{grid-template-columns:1.2fr .8fr}
-  #p-profile .card-sec{grid-row:span 2}
+  #p-profile>.sec.profile-body{grid-template-columns:1fr;gap:14px}
+  #p-profile .card-sec{grid-row:auto}
   #p-profile .menu-list{align-self:start}
-  #p-swipe.page.on{grid-template-columns:260px minmax(0,1fr);padding-left:42px;padding-right:42px}
-  #p-swipe .deck-wrap{width:100%}
+  #p-swipe.page.on{grid-template-columns:240px minmax(0,1fr);padding-left:42px;padding-right:42px;max-width:1440px;margin-left:auto;margin-right:auto}
+  #p-swipe .deck-wrap{width:100%;max-width:min(1040px,100%)}
+  #p-swipe .deck-area{height:min(720px,calc(100dvh - 180px));min-height:560px}
+  #p-swipe .swipe-card{flex-direction:row}
+  #p-swipe .card-top{width:min(300px,34%);height:100%;flex-shrink:0}
+  #p-swipe .card-fade{background:linear-gradient(90deg,transparent 10%,rgba(255,255,255,.97))}
+  #p-swipe .card-body{gap:12px;padding:18px 22px}
+  #p-swipe .card-title{font-size:22px}
+  #p-swipe .card-desc{-webkit-line-clamp:14;font-size:14px;line-height:1.65}
+  #p-swipe .card-desc-block{flex:1;min-height:0}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
@@ -1115,17 +1125,17 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <div class="priority-tools" aria-label="Outils prioritaires">
       <article class="priority-card priority-card-live" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
-        <div class="priority-icon" aria-hidden="true">CV</div>
+        <div class="priority-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-cv-feature-state">Optimiseur de CV</div><h2 class="sf">Améliorer mon CV</h2><p>Analysez votre CV pour obtenir des recommandations ciblées et des propositions de reformulation.</p><span class="priority-document" id="home-cv-status">Aucun CV importé</span></div>
         <span class="priority-action btn bp bsm">Ouvrir l’optimiseur</span>
       </article>
       <article class="priority-card priority-card-live" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
-        <div class="priority-icon" aria-hidden="true">IA</div>
+        <div class="priority-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg></div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-coach-feature-state">Coach commercial</div><h2 class="sf">Préparer mes échanges</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p><span class="priority-document" id="home-coach-status">Démarrer une conversation</span></div>
         <span class="priority-action btn bp bsm">Ouvrir le coach</span>
       </article>
       <article class="priority-card priority-card-live" onclick="go('swipe')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('swipe')}">
-        <div class="priority-icon" aria-hidden="true">JOB</div>
+        <div class="priority-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><path d="M2 13h20"/></svg></div>
         <div class="priority-copy"><div class="feature-status feature-status-live">Opportunités</div><h2 class="sf">Explorer les offres</h2><p>Parcourez les offres sales compatibles et candidatez quand le match est clair.</p><span class="priority-document">Swipe &amp; candidature</span></div>
         <span class="priority-action btn bp bsm">Voir les opportunités</span>
       </article>
@@ -1139,8 +1149,8 @@ button,input,textarea,select{font-family:inherit}
       <button class="btn bp bsm" type="button" onclick="document.getElementById('avatar-file-prof').click()">Ajouter</button>
     </div>
     <div class="next-action" id="home-next-action" onclick="go('test')">
-      <div class="next-action-copy"><span class="next-action-label">Prochaine action</span><strong class="sf" id="home-next-title">Compléter mon ADN Commercial</strong><span id="home-next-copy">Répondez au questionnaire pour enrichir votre profil professionnel.</span></div>
-      <button class="btn bp bsm" id="home-next-button" type="button">Commencer</button>
+      <div class="next-action-copy"><span class="next-action-label">Prochaine action</span><strong class="sf" id="home-next-title">Découvrez votre profil commercial</strong><span id="home-next-copy">Répondez à quelques questions pour identifier vos forces, votre style de vente et enrichir votre profil.</span></div>
+      <button class="btn bp bsm" id="home-next-button" type="button">Faire mon évaluation</button>
     </div>
     <div class="score-card compact-score" onclick="go('profile')">
       <div class="score-ring">
@@ -1152,8 +1162,8 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <div class="score-copy">
         <div class="score-eyebrow">ADN Commercial</div>
-        <div class="sf score-type" id="home-score-type">Passer le test ADN</div>
-        <div class="score-rank" id="home-score-rank">Cliquez pour commencer</div>
+        <div class="sf score-type" id="home-score-type">Profil commercial</div>
+        <div class="score-rank" id="home-score-rank">Résultat après évaluation</div>
       </div>
       <svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
@@ -1170,16 +1180,16 @@ button,input,textarea,select{font-family:inherit}
     <div class="page-heading"><div><div class="page-kicker">Développement professionnel</div><h1 class="page-title sf">Coaching</h1><p class="page-intro">Évaluez votre profil commercial, améliorez vos documents et consultez vos ressources.</p></div></div>
     <div class="coaching-tools">
       <article class="tool-row" onclick="go('test')">
-        <div class="tool-icon">ADN</div><div class="tool-copy"><div class="tool-eyebrow">Évaluation</div><h2 class="sf">Test ADN Commercial</h2><p>Identifiez votre profil et vos axes commerciaux à partir du questionnaire existant.</p></div><span class="tool-action">Accéder au test</span>
+        <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Évaluation</div><h2 class="sf">Test ADN Commercial</h2><p>Identifiez votre profil et vos axes commerciaux à partir du questionnaire existant.</p></div><span class="tool-action">Accéder au test</span>
       </article>
       <article class="tool-row" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
-        <div class="tool-icon">CV</div><div class="tool-copy"><div class="tool-eyebrow">Import assisté</div><h2 class="sf">Mon CV</h2><p>Importez le document original et complétez plus rapidement les informations de base de votre profil.</p></div><span class="tool-action">Gérer mon CV</span>
+        <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Import assisté</div><h2 class="sf">Mon CV</h2><p>Importez le document original et complétez plus rapidement les informations de base de votre profil.</p></div><span class="tool-action">Gérer mon CV</span>
       </article>
       <article class="tool-row" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
-        <div class="tool-icon">IA</div><div class="tool-copy"><div class="tool-eyebrow">Entraînement</div><h2 class="sf">Coach commercial</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p></div><span class="tool-action">Ouvrir le coach</span>
+        <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Entraînement</div><h2 class="sf">Coach commercial</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p></div><span class="tool-action">Ouvrir le coach</span>
       </article>
     </div>
-    <div class="section-divider"><div><div class="sec-t sf">Bibliothèque Carrière</div><p>15 guides réservés aux abonnements Carrière et Carrière Coaching.</p></div></div>
+    <div class="section-divider library-intro"><div><div class="sec-t sf">Bibliothèque Carrière</div><p class="library-lead">Développez vos compétences commerciales</p><p>Guides pratiques pour progresser : prospection, closing, méthodes et outils. Réservés aux formules Carrière et Carrière Coaching.</p></div></div>
     <div class="resource-controls" id="resource-controls" hidden>
       <label class="sr-only" for="resource-search">Rechercher un guide</label>
       <input class="resource-search" id="resource-search" type="search" placeholder="Rechercher un guide" oninput="filterResources()">
@@ -1556,13 +1566,18 @@ button,input,textarea,select{font-family:inherit}
 
 <!-- PROFIL -->
 <div id="p-profile" class="page">
-  <div class="ph">
+  <div class="ph profile-identity">
     <div class="ph-top">
       <div class="ph-av sf" id="prof-av" onclick="document.getElementById('avatar-file-prof').click()" style="cursor:pointer" title="Cliquer pour changer la photo de profil">YS</div>
       <div class="ph-main">
-        <div class="ph-kicker">Profil candidat</div>
+        <div class="ph-kicker">Synthèse professionnelle</div>
         <div class="ph-name sf" id="prof-name"><span id="prof-name-text">—</span><span id="prof-certified-badge" style="display:none;align-items:center;gap:3px;margin-left:8px;padding:3px 9px;border-radius:99px;background:linear-gradient(135deg,#FFD86B,#F5A623);color:#5C3B00;font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:middle" title="Certifié Swip Sales"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline"><path d="M12 1l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 14.9 6.8 17.1l1-5.8L3.5 7.2l5.9-.9z"/></svg>Certifié</span></div>
         <div class="ph-title" id="prof-title">—</div>
+        <div class="ph-meta-row" id="prof-meta-row">
+          <span class="ph-meta-item" id="prof-ville" hidden></span>
+          <span class="ph-meta-item" id="prof-completeness" hidden></span>
+          <span class="ph-meta-item" id="prof-status-chip" hidden><span id="prof-status">Actif</span></span>
+        </div>
         <div class="ph-rank link" id="prof-rank" onclick="handleRankClick()" style="cursor:pointer">—</div>
         <div class="ph-badges">
           <button class="ph-badge link" id="prof-cv-badge" onclick="openProfileCV()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CV intégré</button>
@@ -1621,22 +1636,49 @@ button,input,textarea,select{font-family:inherit}
         <button class="btn save-btn" type="button" onclick="saveProfileEdit()">Enregistrer</button>
       </div>
     </div>
-    <div class="ph-stats">
+    <div class="ph-stats" aria-label="Indicateurs">
       <div class="ph-stat" style="cursor:pointer" onclick="go('test')"><div class="phs-v sf" id="prof-score">—</div><div class="phs-l">ADN Score</div></div>
       <div class="ph-stat" style="cursor:pointer" onclick="go('swipe')"><div class="phs-v sf" id="prof-matchs">—</div><div class="phs-l">Matchs</div></div>
-      <div class="ph-stat" style="cursor:pointer" onclick="toggleProfileEdit()"><div class="phs-v sf" id="prof-status">Actif</div><div class="phs-l">Profil</div></div>
+      <div class="ph-stat" style="cursor:pointer" onclick="go('candidatures')"><div class="phs-v sf" id="prof-cands">—</div><div class="phs-l">Candidatures</div></div>
     </div>
   </div>
-  <div class="sec">
-    <div class="card-sec">
-      <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b"><span class="chip-dot"></span>IA</span></div>
+  <div class="sec profile-body">
+    <div class="card-sec profile-docs-card" id="prof-docs-card">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Documents</div></div>
+      <div class="profile-docs-grid">
+        <div class="profile-doc-tile">
+          <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div>
+          <div class="profile-doc-copy">
+            <strong class="sf">CV</strong>
+            <span id="prof-doc-cv-status">Non ajouté</span>
+          </div>
+          <div class="profile-doc-actions">
+            <button type="button" class="btn bo bsm" id="prof-doc-cv-open" onclick="openProfileCV()">Ouvrir</button>
+            <button type="button" class="btn bp bsm" onclick="document.getElementById('cv-file-prof').click()">Importer</button>
+          </div>
+        </div>
+        <div class="profile-doc-tile">
+          <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+          <div class="profile-doc-copy">
+            <strong class="sf">Lettre de motivation</strong>
+            <span id="prof-doc-motiv-status">Non ajoutée</span>
+          </div>
+          <div class="profile-doc-actions">
+            <button type="button" class="btn bo bsm" id="prof-doc-motiv-open" onclick="openMotivationFile()">Ouvrir</button>
+            <button type="button" class="btn bp bsm" onclick="document.getElementById('motiv-file-prof').click()">Importer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-sec" id="prof-adn-card">
+      <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b" id="prof-adn-chip"><span class="chip-dot"></span>Évaluation</span></div>
       <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
     </div>
     <div class="card-sec" id="prof-comp-card" style="display:none">
       <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
       <div class="comp-display" id="prof-comp-display"></div>
     </div>
-    <div class="menu-list profile-shortcuts">
+    <div class="menu-list profile-shortcuts is-secondary">
       <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ouvrir le coaching</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-i" onclick="go('account')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg></div><div class="menu-txt">Paramètres du compte</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
       <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
@@ -1704,12 +1746,12 @@ button,input,textarea,select{font-family:inherit}
       <article class="cv-result-card" id="cv-card-score" hidden>
         <div class="cv-score-hero">
           <div class="cv-score-ring"><strong id="cv-score-global">—</strong><span>/100</span></div>
-          <div class="cv-score-copy"><h2 class="sf">Score global</h2><p id="cv-score-summary">Diagnostic synthétique de l’adéquation de votre CV au poste visé.</p></div>
+          <div class="cv-score-copy"><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Score global</h2><p id="cv-score-summary">Diagnostic synthétique de l’adéquation de votre CV au poste visé.</p></div>
         </div>
         <div class="cv-subscore-grid" id="cv-subscores"></div>
       </article>
       <article class="cv-result-card" id="cv-card-diagnostic">
-        <header><h2 class="sf">Diagnostic</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-diagnostic-text')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>Diagnostic</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-diagnostic-text')">Copier</button></header>
         <p class="cv-result-body" id="cv-diagnostic-text"></p>
         <div class="ai-result-grid">
           <article><h2 class="sf">Points forts</h2><ul id="cv-strengths"></ul></article>
@@ -1717,38 +1759,38 @@ button,input,textarea,select{font-family:inherit}
         </div>
       </article>
       <article class="cv-result-card" id="cv-card-title" hidden>
-        <header><h2 class="sf">Titre actuel / proposé</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-title-proposed')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/></svg></span>Titre actuel / proposé</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-title-proposed')">Copier</button></header>
         <div class="cv-ba-grid">
           <div class="cv-ba-col"><h3>Actuel</h3><p id="cv-title-current"></p></div>
           <div class="cv-ba-col"><h3>Proposé</h3><p id="cv-title-proposed"></p><small id="cv-title-reason"></small></div>
         </div>
       </article>
       <article class="cv-result-card" id="cv-card-hook" hidden>
-        <header><h2 class="sf">Accroche</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-hook-text')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></span>Accroche</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-hook-text')">Copier</button></header>
         <p class="cv-result-body" id="cv-hook-text"></p>
       </article>
       <article class="cv-result-card" id="cv-card-experiences">
-        <header><h2 class="sf">Expériences avant / après</h2></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Expériences avant / après</h2></header>
         <div id="cv-rewrites"></div>
       </article>
       <article class="cv-result-card" id="cv-card-metrics">
-        <header><h2 class="sf">Chiffres manquants</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvList('cv-questions')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg></span>Chiffres manquants</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvList('cv-questions')">Copier</button></header>
         <ul id="cv-questions"></ul>
       </article>
       <article class="cv-result-card" id="cv-card-keywords" hidden>
-        <header><h2 class="sf">Mots-clés</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-keywords')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg></span>Mots-clés</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-keywords')">Copier</button></header>
         <div class="cv-keyword-list" id="cv-keywords"></div>
       </article>
       <article class="cv-result-card" id="cv-card-alerts" hidden>
-        <header><h2 class="sf">Signaux d’alerte</h2></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Signaux d’alerte</h2></header>
         <div class="cv-alert-list" id="cv-alerts"></div>
       </article>
       <article class="cv-result-card" id="cv-card-priorities">
-        <header><h2 class="sf">3 priorités</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvList('cv-priorities')">Copier</button></header>
+        <header><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7-6.3-4.6L5.7 21l2.3-7-6-4.6h7.6z"/></svg></span>3 priorités</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvList('cv-priorities')">Copier</button></header>
         <ol id="cv-priorities"></ol>
       </article>
       <article class="improved-cv-card">
-        <div><h2 class="sf">Version améliorée</h2><p>Relisez et modifiez cette proposition. Elle ne remplacera jamais automatiquement le CV de votre profil.</p></div>
+        <div><h2 class="sf"><span class="section-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg></span>Version améliorée</h2><p>Relisez et modifiez cette proposition. Elle ne remplacera jamais automatiquement le CV de votre profil.</p></div>
         <textarea class="form-textarea" id="cv-improved-text" rows="16" maxlength="40000"></textarea>
         <div class="cv-export-actions"><button class="btn bp" type="button" onclick="saveImprovedCV()">Enregistrer mes modifications</button><button class="btn bo" type="button" onclick="copyImprovedCV()">Copier</button></div>
       </article>
@@ -1834,9 +1876,17 @@ button,input,textarea,select{font-family:inherit}
   <button class="bn bn-secondary" id="nav-account" onclick="go('account')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg><span>Compte</span></button>
   <div class="bnav-spacer bn-secondary" aria-hidden="true"></div>
   <div class="bnav-credits bn-secondary" id="bnav-credits" hidden>
-    <div class="credits-label">Crédits IA</div>
-    <div class="credits-value" id="bnav-credits-value"></div>
-    <div class="credits-bar" aria-hidden="true"><div class="credits-bar-fill" id="bnav-credits-fill"></div></div>
+    <div class="credits-label">Utilisation IA</div>
+    <div class="usage-meter" id="bnav-usage-cv" hidden>
+      <div class="usage-meter-hd"><span>CV</span><span class="usage-meter-value" id="bnav-credits-cv-value"></span></div>
+      <div class="credits-bar" aria-hidden="true"><div class="credits-bar-fill" id="bnav-credits-cv-fill"></div></div>
+    </div>
+    <div class="usage-meter" id="bnav-usage-coach" hidden>
+      <div class="usage-meter-hd"><span>Coach</span><span class="usage-meter-value" id="bnav-credits-coach-value"></span></div>
+      <div class="credits-bar" aria-hidden="true"><div class="credits-bar-fill" id="bnav-credits-coach-fill"></div></div>
+    </div>
+    <div class="credits-value" id="bnav-credits-value" hidden></div>
+    <div class="credits-bar" aria-hidden="true" hidden><div class="credits-bar-fill" id="bnav-credits-fill"></div></div>
   </div>
 </nav>
 
@@ -2092,7 +2142,7 @@ function messageStatusLabel(status = '') {
 function adn(axes) {
   if (axes?.resultat?.axes) axes = Object.fromEntries(axes.resultat.axes.map(a => [a.l, a.v]));
   axes = Object.fromEntries(Object.entries(axes || {}).filter(([, v]) => typeof v === 'number'));
-  if (!axes || !Object.keys(axes).length) return '<div class="loading-state"><button class="btn bg2 bsm" onclick="go(\'test\')">Passer le test ADN</button></div>';
+  if (!axes || !Object.keys(axes).length) return '<div class="empty-state profile-adn-empty"><b>Découvrez votre profil commercial</b><span>Répondez à quelques questions pour identifier vos forces, votre style de vente et enrichir votre profil.</span><button class="btn bp bsm" type="button" onclick="go(\'test\')">Faire mon évaluation</button></div>';
   return Object.entries(axes).map(([l, v]) =>
     `<div class="adn-row"><div class="adn-l">${l}</div><div class="adn-tr"><div class="adn-f" style="width:${v}%"></div></div><div class="adn-s sf" style="color:${v<80?'var(--a)':'var(--b)'}">${v}</div></div>`
   ).join('');
@@ -2420,6 +2470,10 @@ function renderHomeScore(p) {
     button.textContent = 'Voir les offres';
     scoreCard?.classList.remove('is-soft-cta');
   } else {
+    next.onclick = () => go('test');
+    title.textContent = 'Découvrez votre profil commercial';
+    copy.textContent = 'Répondez à quelques questions pour identifier vos forces, votre style de vente et enrichir votre profil.';
+    button.textContent = 'Faire mon évaluation';
     // next-action already owns the ADN CTA — soften the score card to avoid duplicate CTAs
     scoreCard?.classList.add('is-soft-cta');
   }
@@ -2495,7 +2549,7 @@ function filterResources() {
   }
   list.innerHTML = resources.map(item => {
     const available = Boolean(item.url);
-    const body = `<div class="doc-num" style="background:#1340E0" aria-hidden="true">PDF</div><div class="doc-info"><div class="doc-title">${esc(item.titre)}</div><div class="doc-meta">${esc(item.description)}</div><span class="doc-category">${esc(item.categorie)}</span></div><div class="doc-open" aria-hidden="true">${available ? '↗' : '—'}</div>`;
+    const body = `<div class="doc-num resource-type-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div><div class="doc-info"><div class="doc-title">${esc(item.titre)}</div><div class="doc-meta">${esc(item.description)}</div><span class="doc-category">${esc(item.categorie)}</span></div><div class="doc-open resource-open-affordance" aria-hidden="true">${available ? '<span>Consulter</span><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>' : '—'}</div>`;
     return available ? `<a class="doc-item" href="${esc(item.url)}" target="_blank" rel="noopener" aria-label="Ouvrir le guide ${esc(item.titre)} dans un nouvel onglet">${body}</a>` : `<div class="doc-item" aria-disabled="true" title="Fichier indisponible">${body}</div>`;
   }).join('');
 }
@@ -3238,6 +3292,21 @@ async function loadProfile() {
     renderProfile({...p, ...stats}, abo);
   } catch(e) {}
 }
+function profileCompleteness(p) {
+  const hasCv = Boolean(p.cv_url || p.axes?.meta?.cv_path || p.axes?.meta?.cv_file_name);
+  const hasMotiv = Boolean(p.motivation_url || p.axes?.meta?.motivation_path || p.axes?.meta?.motivation_file_name);
+  const hasSkills = Object.values(p.competences || {}).flat().filter(Boolean).length > 0;
+  const checks = [
+    Boolean(String(p.prenom || '').trim() && String(p.nom || '').trim()),
+    Boolean(String(p.ville || '').trim()),
+    hasCv,
+    hasMotiv,
+    Boolean(p.score_adn),
+    hasSkills,
+  ];
+  const done = checks.filter(Boolean).length;
+  return { done, total: checks.length, pct: Math.round((done / checks.length) * 100), hasCv, hasMotiv };
+}
 function renderProfile(p, a) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
@@ -3246,14 +3315,40 @@ function renderProfile(p, a) {
   const certBadge = document.getElementById('prof-certified-badge');
   if (certBadge) certBadge.style.display = p.certifie ? 'inline-flex' : 'none';
   renderProfileAvatar(p, avatarLabel);
-  document.getElementById('prof-title').textContent = p.type_profil || '';
-  document.getElementById('prof-title').style.display = p.type_profil ? '' : 'none';
-  document.getElementById('prof-rank').textContent = p.rank || 'Passer le test ADN pour compléter mon profil';
-  document.getElementById('prof-score').textContent=p.score_adn||'—'; document.getElementById('prof-matchs').textContent=p.matchs||'0';
-  document.getElementById('prof-status').textContent=p.score_adn?'Actif':'À compléter';
+  const titleBits = [p.titre, p.type_profil].filter(Boolean);
+  const titleEl = document.getElementById('prof-title');
+  titleEl.textContent = titleBits[0] || '';
+  titleEl.style.display = titleBits[0] ? '' : 'none';
+  const villeEl = document.getElementById('prof-ville');
+  if (villeEl) {
+    const ville = String(p.ville || '').trim();
+    villeEl.hidden = !ville;
+    villeEl.textContent = ville || '';
+  }
+  const complete = profileCompleteness(p);
+  const completeEl = document.getElementById('prof-completeness');
+  if (completeEl) {
+    completeEl.hidden = false;
+    completeEl.textContent = 'Profil ' + complete.pct + '%';
+  }
+  document.getElementById('prof-rank').textContent = p.rank || (p.score_adn ? '' : 'Complétez votre évaluation pour afficher votre ADN Commercial');
+  document.getElementById('prof-score').textContent=p.score_adn||'—';
+  document.getElementById('prof-matchs').textContent=p.matchs||'0';
+  const candsEl = document.getElementById('prof-cands');
+  if (candsEl) candsEl.textContent = p.candidatures || '0';
+  const statusEl = document.getElementById('prof-status');
+  if (statusEl) statusEl.textContent = p.score_adn ? 'Actif' : 'À compléter';
+  const statusChip = document.getElementById('prof-status-chip');
+  if (statusChip) statusChip.hidden = false;
   document.getElementById('prof-adn').innerHTML=adn(p.axes);
+  const adnChip = document.getElementById('prof-adn-chip');
+  if (adnChip) adnChip.innerHTML = p.score_adn ? '<span class="chip-dot"></span>Complété' : '<span class="chip-dot"></span>À faire';
   const cvLabel = document.getElementById('cv-menu-label');
   if (cvLabel) cvLabel.textContent = p.axes?.meta?.cv_file_name ? 'CV : ' + p.axes.meta.cv_file_name : 'Importer un nouveau CV';
+  const docCv = document.getElementById('prof-doc-cv-status');
+  if (docCv) docCv.textContent = p.axes?.meta?.cv_file_name || (complete.hasCv ? 'CV intégré' : 'Non ajouté');
+  const docMotiv = document.getElementById('prof-doc-motiv-status');
+  if (docMotiv) docMotiv.textContent = p.axes?.meta?.motivation_file_name || (complete.hasMotiv ? 'Lettre intégrée' : 'Non ajoutée');
   renderProfileCV(p);
   renderMotivationFile(p);
   renderProfileCompetences(p.competences || {});
@@ -3405,7 +3500,8 @@ async function requestPasswordReset() {
 }
 function handleRankClick() {
   const rankEl = document.getElementById('prof-rank');
-  if (rankEl && rankEl.textContent.includes('test ADN')) go('test');
+  const text = rankEl?.textContent || '';
+  if (/ADN|évaluation|évaluat/i.test(text) && !/\d/.test(text)) go('test');
 }
 function toggleProfileEdit() {
   document.getElementById('profile-edit-panel').classList.toggle('on');
@@ -3465,6 +3561,10 @@ function renderProfileCV(p) {
   if (toolDelete) toolDelete.disabled = !has;
   if (toolName && has) toolName.classList.add('is-ready');
   else if (toolName) toolName.classList.remove('is-ready');
+  const docCv = document.getElementById('prof-doc-cv-status');
+  if (docCv) docCv.textContent = name || (has ? 'CV intégré' : 'Non ajouté');
+  const docOpen = document.getElementById('prof-doc-cv-open');
+  if (docOpen) docOpen.disabled = !PROFILE_CV_URL;
 }
 async function loadAIHighlights() {
   try {
@@ -3493,6 +3593,7 @@ async function loadAIHighlights() {
       document.getElementById('home-cv-feature-state').textContent = 'Configuration requise';
       document.getElementById('home-coach-feature-state').textContent = 'Configuration requise';
     }
+    updateNavUsage(config);
   } catch (_error) {}
 }
 function openProfileCV() {
@@ -3512,6 +3613,10 @@ function renderMotivationFile(p) {
   if (label) label.textContent = name ? 'Lettre : ' + name : 'Lettre de motivation non ajoutée';
   const deleteBtn = document.getElementById('delete-motivation-btn');
   if (deleteBtn) deleteBtn.disabled = !has;
+  const docMotiv = document.getElementById('prof-doc-motiv-status');
+  if (docMotiv) docMotiv.textContent = name || (has ? 'Lettre intégrée' : 'Non ajoutée');
+  const docOpen = document.getElementById('prof-doc-motiv-open');
+  if (docOpen) docOpen.disabled = !PROFILE_MOTIVATION_URL;
 }
 function openMotivationFile() {
   if (!PROFILE_MOTIVATION_URL) return toast('Lettre indisponible');
@@ -3657,29 +3762,48 @@ function setAiQuotaChip(kind, usage, exhausted) {
       chip.classList.toggle('is-low', !exhausted && remaining > 0 && remaining <= 3);
     }
   }
-  if (kind === 'cv') updateNavCredits(usage, exhausted);
 }
-function updateNavCredits(usage, exhausted) {
-  const card = document.getElementById('bnav-credits');
-  const value = document.getElementById('bnav-credits-value');
-  const fill = document.getElementById('bnav-credits-fill');
-  if (!card || !value) return;
-  if (!usage) { card.hidden = true; return; }
-  const remaining = Number(usage.remaining || 0);
-  const limit = Number(usage.limit || usage.monthly_limit || usage.quota || 0);
-  const noun = remaining > 1 ? 'analyses restantes' : 'analyse restante';
-  card.hidden = false;
-  value.textContent = exhausted ? 'Quota mensuel épuisé' : `${remaining} ${noun}`;
+function usageRemaining(usage) { return Number(usage?.remaining || 0); }
+function usageLimit(usage) { return Number(usage?.limit || usage?.monthly_limit || usage?.quota || 0); }
+function fillUsageMeter(kind, usage, accessAllowed) {
+  const row = document.getElementById('bnav-usage-' + kind);
+  const value = document.getElementById('bnav-credits-' + kind + '-value');
+  const fill = document.getElementById('bnav-credits-' + kind + '-fill');
+  if (!row || !value) return false;
+  const limit = usageLimit(usage);
+  const hasQuota = Boolean(usage) && limit > 0;
+  const show = Boolean(accessAllowed) || hasQuota;
+  row.hidden = !show;
+  if (!show) return false;
+  const remaining = usageRemaining(usage);
+  const exhausted = hasQuota && remaining <= 0;
+  value.textContent = hasQuota ? `${remaining} / ${limit}` : (accessAllowed ? 'Disponible' : '—');
   if (fill) {
     const ratio = limit > 0 ? Math.max(0, Math.min(100, (remaining / limit) * 100)) : (exhausted ? 0 : 100);
     fill.style.width = ratio + '%';
     fill.classList.toggle('is-low', !exhausted && remaining > 0 && remaining <= 3);
-    fill.classList.toggle('is-empty', Boolean(exhausted));
+    fill.classList.toggle('is-empty', Boolean(exhausted) || limit === 0);
   }
+  return true;
+}
+function updateNavUsage(config) {
+  const card = document.getElementById('bnav-credits');
+  if (!card) return;
+  if (!config) { card.hidden = true; return; }
+  const cvAccess = Boolean(config.access?.cv);
+  const coachAccess = Boolean(config.access?.coach);
+  const cvShown = fillUsageMeter('cv', config.usage?.cv, cvAccess);
+  const coachShown = fillUsageMeter('coach', config.usage?.coach, coachAccess);
+  card.hidden = !(cvShown || coachShown);
+}
+function updateNavCredits(usage, exhausted) {
+  // Compat: single-meter callers — refresh from last known config when possible
+  if (usage && typeof usage === 'object' && (usage.cv || usage.coach)) updateNavUsage(usage);
 }
 function renderAiQuota(kind, config) {
   const usage = config.usage?.[kind];
   const allowed = Boolean(config.access?.[kind]);
+  updateNavUsage(config);
   if (!allowed) {
     setAiQuotaChip(kind, null, false);
     return renderAiAccessGate(kind, false, kind === 'cv' ? config.cv_access_policy : config.coach_access_policy);
