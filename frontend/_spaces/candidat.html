@@ -1104,19 +1104,30 @@ button,input,textarea,select{font-family:inherit}
 <!-- HOME -->
 <div id="p-home" class="page">
   <div class="home-hero">
-    <div class="page-kicker">Tableau de bord</div>
-    <h1 class="sf page-title">Votre activité</h1>
+    <div class="page-kicker">Espace candidat</div>
+    <h1 class="sf page-title" id="home-title">Votre activité</h1>
     <p class="page-intro">Suivez vos démarches et concentrez-vous sur la prochaine action utile.</p>
+    <div class="kpi-grid home-kpi-grid" aria-label="Indicateurs">
+      <div class="kpi kpi-link kpi-tone-blue" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
+      <div class="kpi kpi-link kpi-tone-green" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
+      <div class="kpi kpi-tone-amber"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
+      <div class="kpi kpi-tone-slate"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
+    </div>
     <div class="priority-tools" aria-label="Outils prioritaires">
       <article class="priority-card priority-card-live" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
         <div class="priority-icon" aria-hidden="true">CV</div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-cv-feature-state">Optimiseur de CV</div><h2 class="sf">Améliorer mon CV</h2><p>Analysez votre CV pour obtenir des recommandations ciblées et des propositions de reformulation.</p><span class="priority-document" id="home-cv-status">Aucun CV importé</span></div>
-        <span class="priority-action">Ouvrir l’optimiseur</span>
+        <span class="priority-action btn bp bsm">Ouvrir l’optimiseur</span>
       </article>
       <article class="priority-card priority-card-live" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
         <div class="priority-icon" aria-hidden="true">IA</div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-coach-feature-state">Coach commercial</div><h2 class="sf">Préparer mes échanges</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p><span class="priority-document" id="home-coach-status">Démarrer une conversation</span></div>
-        <span class="priority-action">Ouvrir le coach</span>
+        <span class="priority-action btn bp bsm">Ouvrir le coach</span>
+      </article>
+      <article class="priority-card priority-card-live" onclick="go('swipe')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('swipe')}">
+        <div class="priority-icon" aria-hidden="true">JOB</div>
+        <div class="priority-copy"><div class="feature-status feature-status-live">Opportunités</div><h2 class="sf">Explorer les offres</h2><p>Parcourez les offres sales compatibles et candidatez quand le match est clair.</p><span class="priority-document">Swipe &amp; candidature</span></div>
+        <span class="priority-action btn bp bsm">Voir les opportunités</span>
       </article>
     </div>
     <div class="photo-nudge" id="photo-nudge" style="display:none">
@@ -1139,18 +1150,12 @@ button,input,textarea,select{font-family:inherit}
         </svg>
         <div class="score-num"><div class="score-v sf" id="home-score">—</div><div class="score-d">/100</div></div>
       </div>
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;font-weight:700">ADN Commercial</div>
-        <div class="sf" id="home-score-type" style="font-size:15px;font-weight:800;margin-top:2px">Passer le test ADN</div>
-        <div id="home-score-rank" style="font-size:12px;color:var(--b);font-weight:600;margin-top:3px">Cliquez pour commencer</div>
+      <div class="score-copy">
+        <div class="score-eyebrow">ADN Commercial</div>
+        <div class="sf score-type" id="home-score-type">Passer le test ADN</div>
+        <div class="score-rank" id="home-score-rank">Cliquez pour commencer</div>
       </div>
       <svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi" style="cursor:pointer" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
-      <div class="kpi" style="cursor:pointer" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
-      <div class="kpi"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
-      <div class="kpi"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
     </div>
   </div>
   <div class="sec">
@@ -1187,9 +1192,12 @@ button,input,textarea,select{font-family:inherit}
 <!-- SWIPE -->
 <div id="p-swipe" class="page">
   <div class="swipe-hd">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div class="sec-t sf">Offres sales</div>
-      <span style="font-size:12px;color:var(--mu)" id="deck-count">Chargement…</span>
+    <div class="page-heading-inline">
+      <div>
+        <div class="page-kicker">Opportunités</div>
+        <div class="sec-t sf page-title">Offres sales</div>
+      </div>
+      <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
     <div class="filter-row" id="filter-row">
       <button class="fp on" onclick="setFilt(this,'all')">Toutes</button>
@@ -1206,9 +1214,9 @@ button,input,textarea,select{font-family:inherit}
     <div class="deck-area" id="deck-area">
       <div id="deck-cards"></div>
       <div class="deck-empty" id="deck-empty">
-        <div style="width:48px;height:48px;border-radius:50%;background:var(--gs);display:flex;align-items:center;justify-content:center;color:var(--g)"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="sf" style="font-size:16px;font-weight:800">Tout vu</div>
-        <p style="font-size:13px;color:var(--ink3);max-width:220px;line-height:1.65;text-align:center">Toutes les offres compatibles ont été vues. Revenez demain.</p>
+        <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="sf deck-empty-title">Tout vu</div>
+        <p class="deck-empty-copy">Toutes les offres compatibles ont été vues. Revenez demain.</p>
       </div>
     </div>
     <div class="deck-actions">
@@ -1222,7 +1230,13 @@ button,input,textarea,select{font-family:inherit}
 <!-- CANDIDATURES -->
 <div id="p-candidatures" class="page">
   <div class="sec">
-    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Mes candidatures</div><span class="chip chip-b" id="cand-chip"><span class="chip-dot"></span>—</span></div>
+    <div class="sec-hd page-heading">
+      <div>
+        <div class="page-kicker">Suivi</div>
+        <div class="sec-t sf page-title">Mes candidatures</div>
+      </div>
+      <span class="chip chip-b" id="cand-chip"><span class="chip-dot"></span>—</span>
+    </div>
     <div class="tab-seg">
       <button class="tsb on" onclick="tabSeg(this);filterCands('all')">Toutes</button>
       <button class="tsb" onclick="tabSeg(this);filterCands('reponse')">Réponses</button>
@@ -1510,7 +1524,13 @@ button,input,textarea,select{font-family:inherit}
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
   <div class="sec">
-    <div class="sec-hd" style="margin-bottom:13px"><div class="sec-t sf">Messages</div></div>
+    <div class="sec-hd page-heading">
+      <div>
+        <div class="page-kicker">Inbox</div>
+        <div class="sec-t sf page-title">Messages</div>
+        <p class="page-intro">Échangez avec les recruteurs après un match.</p>
+      </div>
+    </div>
     <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
     <div id="chat-placeholder" class="chat-placeholder">
       <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
@@ -1520,7 +1540,7 @@ button,input,textarea,select{font-family:inherit}
     <div id="chat-panel" class="chat-panel">
       <div class="chat-head">
         <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div style="flex:1;min-width:0">
+        <div class="chat-head-copy">
           <div class="chat-title" id="chat-title">Conversation</div>
           <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
         </div>
@@ -1634,35 +1654,41 @@ button,input,textarea,select{font-family:inherit}
     <section class="account-section is-upsell" id="cv-access-gate" hidden><h2 class="sf" id="cv-access-title">Optimisez votre CV avec SwipSales</h2><p id="cv-access-copy"></p><button class="btn bp" id="cv-access-cta" type="button" onclick="go('pricing')">Voir les formules</button></section>
     <div id="cv-tool-content">
     <nav class="cv-journey" aria-label="Parcours Optimiseur de CV">
-      <div class="cv-journey-step is-active" data-cv-step="a1" id="cv-step-a1"><span class="cv-journey-code">A1</span><span class="cv-journey-label">Dépôt</span><span class="cv-journey-hint">PDF, Word ou texte</span></div>
-      <div class="cv-journey-step" data-cv-step="a2" id="cv-step-a2"><span class="cv-journey-code">A2</span><span class="cv-journey-label">Cadrage</span><span class="cv-journey-hint">Poste, expérience, secteur</span></div>
-      <div class="cv-journey-step" data-cv-step="a3" id="cv-step-a3"><span class="cv-journey-code">A3</span><span class="cv-journey-label">Résultats</span><span class="cv-journey-hint">Diagnostic et priorités</span></div>
+      <div class="cv-journey-step is-active" data-cv-step="a1" id="cv-step-a1"><span class="cv-journey-code" aria-hidden="true">1</span><div><span class="cv-journey-label">Dépôt</span><span class="cv-journey-hint">PDF, Word ou texte</span></div></div>
+      <div class="cv-journey-step" data-cv-step="a2" id="cv-step-a2"><span class="cv-journey-code" aria-hidden="true">2</span><div><span class="cv-journey-label">Cadrage</span><span class="cv-journey-hint">Poste, expérience, secteur</span></div></div>
+      <div class="cv-journey-step" data-cv-step="a3" id="cv-step-a3"><span class="cv-journey-code" aria-hidden="true">3</span><div><span class="cv-journey-label">Résultats</span><span class="cv-journey-hint">Diagnostic et priorités</span></div></div>
     </nav>
-    <section class="cv-panel" id="cv-panel-a1" aria-labelledby="cv-workspace-title">
-      <div class="section-divider"><div><div class="sec-t sf" id="cv-workspace-title">A1 · Déposez votre CV</div><p>Importez un PDF ou Word. Le document original reste sur votre profil.</p></div><div class="feature-status feature-status-live" id="cv-tool-state">À compléter</div></div>
-      <div class="cv-dropzone" id="cv-dropzone" role="button" tabindex="0" aria-controls="cv-file-tool" onclick="document.getElementById('cv-file-tool').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('cv-file-tool').click()}">
-        <div class="cv-dropzone-ico" aria-hidden="true">PDF</div>
+    <section class="cv-panel card" id="cv-panel-a1" aria-labelledby="cv-workspace-title">
+      <div class="section-divider"><div><div class="sec-t sf" id="cv-workspace-title">1. Déposez votre CV</div><p>Importez un PDF ou Word. Le document original reste sur votre profil.</p></div><div class="feature-status feature-status-live" id="cv-tool-state">À compléter</div></div>
+      <div class="cv-dropzone" id="cv-dropzone" tabindex="0" aria-controls="cv-file-tool" onclick="if(event.target.closest('button'))return;document.getElementById('cv-file-tool').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('cv-file-tool').click()}">
+        <div class="cv-dropzone-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
         <strong>Glissez votre CV ici ou cliquez pour importer</strong>
         <span>PDF, DOC ou DOCX · 8 Mo maximum</span>
-        <span id="cv-tool-name">Aucun CV importé</span>
+        <button class="btn bp" type="button" onclick="event.stopPropagation();document.getElementById('cv-file-tool').click()" id="cv-tool-upload">Choisir un fichier</button>
+        <span class="cv-file-chip" id="cv-tool-name">Aucun CV importé</span>
       </div>
-      <div class="cv-workspace-actions"><button class="btn bp" type="button" onclick="document.getElementById('cv-file-tool').click()" id="cv-tool-upload">Importer mon CV</button><button class="btn bo" type="button" id="cv-tool-use" onclick="loadStoredCvText()" disabled>Utiliser ce CV</button><button class="btn bo" type="button" id="cv-tool-open" onclick="openProfileCV()" disabled>Voir l’original</button><input type="file" id="cv-file-tool" hidden accept=".pdf,.doc,.docx" onchange="updateCVForAnalysis(this)"></div>
+      <div class="cv-workspace-actions"><button class="btn bo" type="button" id="cv-tool-replace" onclick="document.getElementById('cv-file-tool').click()">Remplacer mon CV</button><button class="btn bo" type="button" id="cv-tool-use" onclick="loadStoredCvText()" disabled>Utiliser ce CV</button><button class="btn bo" type="button" id="cv-tool-open" onclick="openProfileCV()" disabled>Voir l’original</button><input type="file" id="cv-file-tool" hidden accept=".pdf,.doc,.docx" onchange="updateCVForAnalysis(this)"></div>
       <details class="cv-text-alt" id="cv-text-alt">
         <summary>Alternative : coller le texte du CV</summary>
         <label class="form-label" for="cv-source-text">Texte du CV</label>
         <textarea class="form-textarea ai-source-text" id="cv-source-text" rows="10" maxlength="30000" placeholder="Collez ici le contenu de votre CV…" oninput="syncCvJourney()"></textarea>
       </details>
     </section>
-    <section class="cv-panel" id="cv-panel-a2" aria-labelledby="cv-analysis-title">
-      <div class="section-divider"><div><div class="sec-t sf" id="cv-analysis-title">A2 · Cadrez l’analyse</div><p>Plus le ciblage est précis, plus les recommandations sont utiles.</p></div></div>
-      <div class="ai-fields">
-        <label><span class="form-label" for="cv-target-role">Poste visé</span><input class="form-input" id="cv-target-role" maxlength="160" placeholder="Ex. Account Executive B2B" oninput="syncCvJourney()"></label>
-        <label><span class="form-label" for="cv-experience-years">Années d’expérience</span><input class="form-input" id="cv-experience-years" type="number" min="0" max="80" step="0.5" placeholder="Ex. 5" inputmode="decimal" oninput="syncCvJourney()"></label>
-        <label><span class="form-label" for="cv-sector">Secteur <small>(facultatif)</small></span><input class="form-input" id="cv-sector" maxlength="120" placeholder="Ex. SaaS B2B" oninput="syncCvJourney()"></label>
-        <label class="ai-fields-wide"><span class="form-label" for="cv-offer-text">Offre ciblée <small>(facultatif)</small></span><textarea class="form-textarea" id="cv-offer-text" rows="4" maxlength="20000" placeholder="Collez le descriptif de l’offre…"></textarea></label>
+    <section class="cv-panel card" id="cv-panel-a2" aria-labelledby="cv-analysis-title">
+      <div class="section-divider"><div><div class="sec-t sf" id="cv-analysis-title">2. Cadrez l’analyse</div><p>Plus le ciblage est précis, plus les recommandations sont utiles.</p></div></div>
+      <div class="ai-fields form-grid">
+        <label class="field"><span class="form-label" for="cv-target-role">Poste visé</span><input class="form-input" id="cv-target-role" maxlength="160" placeholder="Ex. Account Executive B2B" oninput="syncCvJourney()"></label>
+        <label class="field"><span class="form-label" for="cv-experience-years">Années d’expérience</span><input class="form-input" id="cv-experience-years" type="number" min="0" max="80" step="0.5" placeholder="Ex. 5" inputmode="decimal" oninput="syncCvJourney()"></label>
+        <label class="field"><span class="form-label" for="cv-sector">Secteur <small>(facultatif)</small></span><input class="form-input" id="cv-sector" maxlength="120" placeholder="Ex. SaaS B2B" oninput="syncCvJourney()"></label>
+        <label class="field ai-fields-wide"><span class="form-label" for="cv-offer-text">Offre ciblée <small>(facultatif)</small></span><textarea class="form-textarea" id="cv-offer-text" rows="4" maxlength="20000" placeholder="Collez le descriptif de l’offre…"></textarea></label>
       </div>
       <div class="form-feedback" id="cv-analysis-feedback" role="status"></div>
-      <div class="cv-actions-row"><button class="btn bp" id="cv-analyse-btn" type="button" onclick="analyseCVWithAI()">Analyser mon CV</button></div>
+      <div class="cv-actions-row card-footer">
+        <button class="btn bp" id="cv-analyse-btn" type="button" onclick="analyseCVWithAI()">Analyser mon CV</button>
+        <p class="cv-privacy-note">Aucune information inventée. Analyse basée uniquement sur votre CV et les informations fournies.</p>
+      </div>
     </section>
     <section class="cv-waiting" id="cv-waiting" hidden aria-live="polite" aria-busy="true">
       <div class="cv-waiting-head"><h2 class="sf">Analyse en cours</h2><p>Nous préparons votre diagnostic. Cela peut prendre jusqu’à une minute.</p></div>
@@ -1783,6 +1809,7 @@ button,input,textarea,select{font-family:inherit}
 <!-- PRICING -->
 <div id="p-pricing" class="page">
   <div class="pricing-hd">
+    <div class="page-kicker">Abonnement</div>
     <h2 class="sf">Choisissez votre formule</h2>
     <p>Compte candidat gratuit. Carrière dès 15 €/mois en annuel.</p>
     <div class="bill-toggle">
@@ -1805,6 +1832,12 @@ button,input,textarea,select{font-family:inherit}
   <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
   <button class="bn bn-secondary" id="nav-account" onclick="go('account')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg><span>Compte</span></button>
+  <div class="bnav-spacer bn-secondary" aria-hidden="true"></div>
+  <div class="bnav-credits bn-secondary" id="bnav-credits" hidden>
+    <div class="credits-label">Crédits IA</div>
+    <div class="credits-value" id="bnav-credits-value"></div>
+    <div class="credits-bar" aria-hidden="true"><div class="credits-bar-fill" id="bnav-credits-fill"></div></div>
+  </div>
 </nav>
 
 <!-- MATCH OVERLAY -->
@@ -2321,16 +2354,42 @@ async function handleCV(input) {
 // ------------------------------------------------------------
 // HOME
 // ------------------------------------------------------------
+function isGreetingPrenom(value, user) {
+  const p = String(value || '').trim();
+  if (p.length < 2 || p.length > 40) return false;
+  if (/[@\d_]/.test(p)) return false;
+  if (!/^[\p{L}][\p{L}\s'.\-]*$/u.test(p)) return false;
+  if (!/[aeiouyàâäéèêëïîôùûüÿ]/i.test(p)) return false;
+  const username = String(user?.username || user?.handle || user?.login || '').trim().toLowerCase();
+  if (username && p.toLowerCase() === username) return false;
+  // Reject email-derived logins like "gcools" / "jean.dupont" — keep real given names even if email local matches ("guillaume@…").
+  const emailLocal = String(user?.email || '').split('@')[0].trim().toLowerCase();
+  if (emailLocal) {
+    const localNorm = emailLocal.replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    const prenomNorm = p.toLowerCase().replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    if (localNorm && prenomNorm === localNorm && /[._\d-]/.test(emailLocal)) return false;
+    if (localNorm && prenomNorm === localNorm && !user?.nom) return false;
+  }
+  return true;
+}
+function applyHomeGreeting(preferred) {
+  const name = isGreetingPrenom(preferred, USER) ? String(preferred).trim()
+    : (isGreetingPrenom(USER?.prenom, USER) ? String(USER.prenom).trim() : '');
+  const greetEl = document.getElementById('topbar-greet');
+  const homeTitle = document.getElementById('home-title');
+  if (greetEl) greetEl.innerHTML = name ? `Bonjour, <b>${esc(name)}</b>` : 'Bonjour';
+  if (homeTitle) homeTitle.textContent = name ? `Bonjour ${name}` : 'Votre espace';
+}
 async function loadHome() {
   if (!USER) return;
-  const greetEl = document.getElementById('topbar-greet');
-  if (greetEl && USER.prenom) greetEl.innerHTML = `Bonjour, <b>${esc(USER.prenom)}</b>`;
+  applyHomeGreeting(USER.prenom);
   try {
     const [profil, stats, cands] = await Promise.all([
       api('GET', '/candidats/profil'),
       api('GET', '/candidats/stats'),
       api('GET', '/candidatures?limit=3')
     ]);
+    applyHomeGreeting(profil?.prenom || USER.prenom);
     renderHomeScore(profil); renderProfileCV(profil); renderHomeKPIs(stats);
     renderHomeCands(cands);
     loadAIHighlights();
@@ -2346,18 +2405,23 @@ function renderHomeScore(p) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
   document.getElementById('home-score').textContent = p.score_adn || '—';
-  document.getElementById('home-score-type').textContent = p.type_profil || 'Passer le test ADN';
-  document.getElementById('home-score-rank').textContent = p.rank || 'Cliquez pour commencer';
+  document.getElementById('home-score-type').textContent = p.type_profil || 'ADN Commercial';
+  document.getElementById('home-score-rank').textContent = p.rank || (p.score_adn ? '' : 'Non renseigné');
   if (p.score_adn) document.getElementById('score-circle').setAttribute('stroke-dasharray', Math.round(p.score_adn / 100 * 176) + ' 176');
   const next = document.getElementById('home-next-action');
   const title = document.getElementById('home-next-title');
   const copy = document.getElementById('home-next-copy');
   const button = document.getElementById('home-next-button');
+  const scoreCard = document.querySelector('#p-home .score-card.compact-score');
   if (p.score_adn) {
     next.onclick = () => go('swipe');
     title.textContent = 'Explorer les opportunités';
     copy.textContent = 'Votre profil ADN est prêt : consultez les offres compatibles.';
     button.textContent = 'Voir les offres';
+    scoreCard?.classList.remove('is-soft-cta');
+  } else {
+    // next-action already owns the ADN CTA — soften the score card to avoid duplicate CTAs
+    scoreCard?.classList.add('is-soft-cta');
   }
 }
 function renderHomeKPIs(s) {
@@ -2943,7 +3007,7 @@ async function renderMessagesWelcome() {
     : `<button class="btn bp" onclick="go('test')">Compléter mon test</button>`;
   const text = testDone
     ? `Cette messagerie s'ouvrira à votre premier match. Continuez à explorer les offres pour augmenter vos chances.`
-    : `Cette messagerie s'ouvrira à votre premier match. Les profils au test ADN complété reçoivent 4× plus de likes.`;
+    : `Cette messagerie s'ouvrira à votre premier match. Complétez votre profil pour permettre aux recruteurs de mieux vous découvrir.`;
   return `<div class="msg-welcome">
       <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
       <h2 class="sf">Bienvenue sur Swip Sales</h2>
@@ -3390,13 +3454,17 @@ function renderProfileCV(p) {
   const toolName = document.getElementById('cv-tool-name');
   if (toolName) toolName.textContent = name || (has ? 'CV importé' : 'Aucun CV importé');
   const toolUpload = document.getElementById('cv-tool-upload');
-  if (toolUpload) toolUpload.textContent = has ? 'Remplacer mon CV' : 'Importer mon CV';
+  if (toolUpload) toolUpload.textContent = 'Choisir un fichier';
+  const toolReplace = document.getElementById('cv-tool-replace');
+  if (toolReplace) toolReplace.disabled = !has;
   const toolOpen = document.getElementById('cv-tool-open');
   if (toolOpen) toolOpen.disabled = !PROFILE_CV_URL;
   const toolUse = document.getElementById('cv-tool-use');
   if (toolUse) toolUse.disabled = !has;
   const toolDelete = document.getElementById('cv-tool-delete');
   if (toolDelete) toolDelete.disabled = !has;
+  if (toolName && has) toolName.classList.add('is-ready');
+  else if (toolName) toolName.classList.remove('is-ready');
 }
 async function loadAIHighlights() {
   try {
@@ -3578,14 +3646,36 @@ function renderAiAccessGate(kind, allowed, policy) {
 }
 function setAiQuotaChip(kind, usage, exhausted) {
   const chip = document.getElementById(kind + '-quota-chip');
-  if (!chip) return;
-  if (!usage) { chip.hidden = true; chip.textContent = ''; return; }
+  if (chip) {
+    if (!usage) { chip.hidden = true; chip.textContent = ''; }
+    else {
+      const remaining = Number(usage.remaining || 0);
+      const noun = kind === 'cv' ? (remaining > 1 ? 'analyses' : 'analyse') : (remaining > 1 ? 'réponses' : 'réponse');
+      chip.hidden = false;
+      chip.textContent = exhausted ? `Quota mensuel épuisé` : `${remaining} ${noun} restante${remaining > 1 ? 's' : ''} ce mois-ci`;
+      chip.classList.toggle('is-empty', exhausted);
+      chip.classList.toggle('is-low', !exhausted && remaining > 0 && remaining <= 3);
+    }
+  }
+  if (kind === 'cv') updateNavCredits(usage, exhausted);
+}
+function updateNavCredits(usage, exhausted) {
+  const card = document.getElementById('bnav-credits');
+  const value = document.getElementById('bnav-credits-value');
+  const fill = document.getElementById('bnav-credits-fill');
+  if (!card || !value) return;
+  if (!usage) { card.hidden = true; return; }
   const remaining = Number(usage.remaining || 0);
-  const noun = kind === 'cv' ? (remaining > 1 ? 'analyses' : 'analyse') : (remaining > 1 ? 'réponses' : 'réponse');
-  chip.hidden = false;
-  chip.textContent = exhausted ? `Quota mensuel épuisé` : `${remaining} ${noun} restante${remaining > 1 ? 's' : ''} ce mois-ci`;
-  chip.classList.toggle('is-empty', exhausted);
-  chip.classList.toggle('is-low', !exhausted && remaining > 0 && remaining <= 3);
+  const limit = Number(usage.limit || usage.monthly_limit || usage.quota || 0);
+  const noun = remaining > 1 ? 'analyses restantes' : 'analyse restante';
+  card.hidden = false;
+  value.textContent = exhausted ? 'Quota mensuel épuisé' : `${remaining} ${noun}`;
+  if (fill) {
+    const ratio = limit > 0 ? Math.max(0, Math.min(100, (remaining / limit) * 100)) : (exhausted ? 0 : 100);
+    fill.style.width = ratio + '%';
+    fill.classList.toggle('is-low', !exhausted && remaining > 0 && remaining <= 3);
+    fill.classList.toggle('is-empty', Boolean(exhausted));
+  }
 }
 function renderAiQuota(kind, config) {
   const usage = config.usage?.[kind];
@@ -3637,7 +3727,7 @@ async function updateCVForAnalysis(input) {
   const file = input.files[0];
   const error = validateCVFile(file);
   if (error) { setFeedback('cv-analysis-feedback', error, true); input.value = ''; return; }
-  setBtn('cv-tool-upload', true, 'Importer mon CV');
+  setBtn('cv-tool-upload', true, 'Choisir un fichier');
   try {
     const data = await uploadCandidateCV(file);
     renderProfileCV({ cv_url: data.cv_url, axes: { meta: { cv_file_name: data.cv_file_name || file.name } } });
@@ -3647,7 +3737,7 @@ async function updateCVForAnalysis(input) {
     syncCvJourney();
     toast('CV original conservé sur votre profil');
   } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Import impossible', true); }
-  finally { input.value = ''; setBtn('cv-tool-upload', false, 'Remplacer mon CV'); }
+  finally { input.value = ''; setBtn('cv-tool-upload', false, 'Choisir un fichier'); }
 }
 async function loadStoredCvText() {
   const toolState = document.getElementById('cv-tool-state');
