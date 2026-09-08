@@ -532,8 +532,8 @@ router.get('/cv-text', authMiddleware, async (req, res) => {
     res.json({
       filename: meta.cv_file_name || 'CV',
       text,
-      readable: text.length >= 40,
-      message: text.length >= 40 ? '' : 'Le document semble scanne ou illisible. Collez son texte pour continuer.',
+      readable: text.length >= 200,
+      message: text.length >= 200 ? '' : 'Le document semble scanne, corrompu ou trop peu lisible. Collez au moins 200 caracteres de son texte pour continuer.',
     });
   } catch (error) {
     publicError(res, error);

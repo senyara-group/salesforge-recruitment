@@ -1657,7 +1657,7 @@ button,input,textarea,select{font-family:inherit}
       <div class="section-divider"><div><div class="sec-t sf" id="cv-analysis-title">A2 · Cadrez l’analyse</div><p>Plus le ciblage est précis, plus les recommandations sont utiles.</p></div></div>
       <div class="ai-fields">
         <label><span class="form-label" for="cv-target-role">Poste visé</span><input class="form-input" id="cv-target-role" maxlength="160" placeholder="Ex. Account Executive B2B" oninput="syncCvJourney()"></label>
-        <label><span class="form-label" for="cv-experience-years">Années d’expérience</span><input class="form-input" id="cv-experience-years" type="number" min="0" max="50" step="1" placeholder="Ex. 5" inputmode="numeric" oninput="syncCvJourney()"></label>
+        <label><span class="form-label" for="cv-experience-years">Années d’expérience</span><input class="form-input" id="cv-experience-years" type="number" min="0" max="80" step="0.5" placeholder="Ex. 5" inputmode="decimal" oninput="syncCvJourney()"></label>
         <label><span class="form-label" for="cv-sector">Secteur <small>(facultatif)</small></span><input class="form-input" id="cv-sector" maxlength="120" placeholder="Ex. SaaS B2B" oninput="syncCvJourney()"></label>
         <label class="ai-fields-wide"><span class="form-label" for="cv-offer-text">Offre ciblée <small>(facultatif)</small></span><textarea class="form-textarea" id="cv-offer-text" rows="4" maxlength="20000" placeholder="Collez le descriptif de l’offre…"></textarea></label>
       </div>
@@ -1694,7 +1694,7 @@ button,input,textarea,select{font-family:inherit}
         <header><h2 class="sf">Titre actuel / proposé</h2><button class="btn bo bsm btn-copy" type="button" onclick="copyCvBlock('cv-title-proposed')">Copier</button></header>
         <div class="cv-ba-grid">
           <div class="cv-ba-col"><h3>Actuel</h3><p id="cv-title-current"></p></div>
-          <div class="cv-ba-col"><h3>Proposé</h3><p id="cv-title-proposed"></p></div>
+          <div class="cv-ba-col"><h3>Proposé</h3><p id="cv-title-proposed"></p><small id="cv-title-reason"></small></div>
         </div>
       </article>
       <article class="cv-result-card" id="cv-card-hook" hidden>
@@ -3603,7 +3603,7 @@ async function updateCVForAnalysis(input) {
     renderProfileCV({ cv_url: data.cv_url, axes: { meta: { cv_file_name: data.cv_file_name || file.name } } });
     document.getElementById('cv-source-text').value = data.cv_text || '';
     if (data.cv_text) document.getElementById('cv-text-alt')?.setAttribute('open', '');
-    setFeedback('cv-analysis-feedback', data.cv_text?.length >= 40 ? 'Texte extrait : vérifiez-le avant l’analyse.' : 'Le document semble scanné ou illisible. Collez son texte pour continuer.', !data.cv_text?.length);
+    setFeedback('cv-analysis-feedback', data.cv_text?.length >= 200 ? 'Texte extrait : vérifiez-le avant l’analyse.' : 'Le document semble scanné, corrompu ou trop peu lisible. Collez au moins 200 caractères de son texte pour continuer.', data.cv_text?.length < 200);
     syncCvJourney();
     toast('CV original conservé sur votre profil');
   } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'Import impossible', true); }
@@ -3715,9 +3715,10 @@ function renderSubscores(subscores) {
   const host = document.getElementById('cv-subscores');
   if (!host) return false;
   host.innerHTML = '';
+  const labels = { readability:'Lisibilité', quantified_impact:'Impact chiffré', ats_compatibility:'Compatibilité ATS', commercial_relevance:'Pertinence commerciale' };
   const entries = Array.isArray(subscores)
     ? subscores.map((item) => [item.label || item.name || 'Sous-score', item.score ?? item.value])
-    : Object.entries(subscores || {});
+    : Object.entries(subscores || {}).map(([label, score]) => [labels[label] || label, score]);
   entries.slice(0, 4).forEach(([label, score]) => {
     const item = document.createElement('div'); item.className = 'cv-subscore';
     const name = document.createElement('span'); name.textContent = label;
@@ -3730,8 +3731,11 @@ function renderKeywords(values) {
   const host = document.getElementById('cv-keywords');
   if (!host) return false;
   host.innerHTML = '';
-  (values || []).filter(Boolean).forEach((keyword) => {
-    const chip = document.createElement('span'); chip.className = 'cv-keyword'; chip.textContent = keyword; host.appendChild(chip);
+  (values || []).filter(Boolean).forEach((item) => {
+    const keyword = typeof item === 'string' ? item : item.keyword;
+    if (!keyword) return;
+    const status = typeof item === 'string' ? '' : item.status === 'present' ? ' · présent' : item.status === 'missing' ? ' · manquant' : ' · à vérifier';
+    const chip = document.createElement('span'); chip.className = 'cv-keyword'; chip.textContent = keyword + status; host.appendChild(chip);
   });
   return host.children.length > 0;
 }
@@ -3740,7 +3744,9 @@ function renderAlerts(values) {
   if (!host) return false;
   host.innerHTML = '';
   (values || []).filter(Boolean).forEach((alert) => {
-    const item = document.createElement('div'); item.className = 'cv-alert-item'; item.textContent = alert; host.appendChild(item);
+    const content = typeof alert === 'string' ? alert : [alert.type, alert.detail, alert.correction].filter(Boolean).join(' — ');
+    if (!content) return;
+    const item = document.createElement('div'); item.className = 'cv-alert-item'; item.textContent = content; host.appendChild(item);
   });
   return host.children.length > 0;
 }
@@ -3748,28 +3754,35 @@ function renderCVAnalysis(record) {
   const result = record.analysis || {};
   ACTIVE_CV_ANALYSIS_ID = record.id;
   stopCvWaiting();
-  const diagnostic = firstText(result.diagnostic, result.diagnosis, (result.strengths || []).slice(0, 2).concat(result.clarifications || []).join('\n'));
+  const scoreContract = result.score && typeof result.score === 'object' ? result.score : {};
+  const diagnostic = firstText(scoreContract.diagnostic, result.diagnostic, result.diagnosis, (result.strengths || []).slice(0, 2).concat(result.clarifications || []).join('\n'));
   setText('cv-diagnostic-text', diagnostic || 'Diagnostic synthétique à partir des points forts et des zones à clarifier.');
   renderList('cv-strengths', result.strengths, 'Aucun point fort explicite identifié.');
   renderList('cv-clarifications', result.clarifications, 'Aucun élément signalé.');
   renderList('cv-priorities', (result.priorities || []).slice(0, 3), 'Aucune priorité signalée.');
-  renderList('cv-questions', result.missing_metrics || result.questions, 'Aucun chiffre manquant signalé.');
+  const missingMetrics = (result.missing_metrics || result.questions || []).map((item) => typeof item === 'string' ? item : [item.location, item.metric_type, item.expected_format && `Format attendu : ${item.expected_format}`].filter(Boolean).join(' — '));
+  renderList('cv-questions', missingMetrics, 'Aucun chiffre manquant signalé.');
 
-  const score = result.score_global ?? result.global_score ?? result.score;
+  const score = scoreContract.global ?? result.score_global ?? result.global_score ?? (typeof result.score === 'number' ? result.score : null);
   const hasScore = score != null && score !== '';
-  const hasSubscores = renderSubscores(result.subscores || result.sub_scores || result.scores);
+  const nestedSubscores = ['readability','quantified_impact','ats_compatibility','commercial_relevance'].reduce((values, key) => {
+    if (scoreContract[key] != null) values[key] = scoreContract[key];
+    return values;
+  }, {});
+  const hasSubscores = renderSubscores(Object.keys(nestedSubscores).length ? nestedSubscores : (result.subscores || result.sub_scores || result.scores));
   showCard('cv-card-score', hasScore || hasSubscores);
   if (hasScore) setText('cv-score-global', String(score));
   else setText('cv-score-global', '—');
-  if (result.score_summary) setText('cv-score-summary', result.score_summary);
+  setText('cv-score-summary', firstText(scoreContract.diagnostic, result.score_summary) || 'Diagnostic synthétique de l’adéquation de votre CV au poste visé.');
 
-  const titleCurrent = firstText(result.title_current, result.current_title);
-  const titleProposed = firstText(result.title_proposed, result.proposed_title);
+  const titleCurrent = firstText(result.title?.current, result.title_current, result.current_title);
+  const titleProposed = firstText(result.title?.suggested, result.title_proposed, result.proposed_title);
   showCard('cv-card-title', Boolean(titleCurrent || titleProposed));
   setText('cv-title-current', titleCurrent || '—');
   setText('cv-title-proposed', titleProposed || '—');
+  setText('cv-title-reason', firstText(result.title?.reason, result.title_reason));
 
-  const hook = firstText(result.hook, result.accroche, result.summary_line);
+  const hook = firstText(result.summary, result.hook, result.accroche, result.summary_line);
   showCard('cv-card-hook', Boolean(hook));
   setText('cv-hook-text', hook);
 
@@ -3780,8 +3793,9 @@ function renderCVAnalysis(record) {
     const item = document.createElement('div'); item.className = 'rewrite-item';
     const before = document.createElement('p'); before.textContent = rewrite.original || rewrite.before || '';
     const after = document.createElement('strong'); after.textContent = rewrite.suggestion || rewrite.after || '';
+    const method = document.createElement('small'); method.textContent = rewrite.method ? `Méthode : ${rewrite.method}` : '';
     const reason = document.createElement('small'); reason.textContent = rewrite.reason || '';
-    item.append(before, after, reason); rewrites.appendChild(item);
+    item.append(before, after, method, reason); rewrites.appendChild(item);
   });
   if (!rewrites.children.length) {
     rewrites.textContent = 'Aucune reformulation proposée pour le moment. Les exemples futurs utiliseront des placeholders du type [X % de l’objectif] ou [X comptes], jamais de chiffres inventés.';
@@ -3797,9 +3811,9 @@ function renderCVAnalysis(record) {
 async function analyseCVWithAI() {
   if (!CV_ALLOWED || CV_ANALYSING) return;
   const source = document.getElementById('cv-source-text').value.trim();
-  if (source.length < 40) {
+  if (source.length < 200) {
     document.getElementById('cv-text-alt')?.setAttribute('open', '');
-    return setFeedback('cv-analysis-feedback', 'Ajoutez au moins 40 caractères de contenu CV.', true);
+    return setFeedback('cv-analysis-feedback', 'L’extraction est insuffisante. Collez manuellement au moins 200 caractères du CV.', true);
   }
   CV_ANALYSING = true;
   setBtn('cv-analyse-btn', true, 'Analyser mon CV');
