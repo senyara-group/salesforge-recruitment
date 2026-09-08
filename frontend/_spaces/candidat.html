@@ -2314,18 +2314,42 @@ async function handleCV(input) {
 // ------------------------------------------------------------
 // HOME
 // ------------------------------------------------------------
+function isGreetingPrenom(value, user) {
+  const p = String(value || '').trim();
+  if (p.length < 2 || p.length > 40) return false;
+  if (/[@\d_]/.test(p)) return false;
+  if (!/^[\p{L}][\p{L}\s'.\-]*$/u.test(p)) return false;
+  if (!/[aeiouyàâäéèêëïîôùûüÿ]/i.test(p)) return false;
+  const username = String(user?.username || user?.handle || user?.login || '').trim().toLowerCase();
+  if (username && p.toLowerCase() === username) return false;
+  // Reject email-derived logins like "gcools" / "jean.dupont" — keep real given names even if email local matches ("guillaume@…").
+  const emailLocal = String(user?.email || '').split('@')[0].trim().toLowerCase();
+  if (emailLocal) {
+    const localNorm = emailLocal.replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    const prenomNorm = p.toLowerCase().replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    if (localNorm && prenomNorm === localNorm && /[._\d-]/.test(emailLocal)) return false;
+    if (localNorm && prenomNorm === localNorm && !user?.nom) return false;
+  }
+  return true;
+}
+function applyHomeGreeting(preferred) {
+  const name = isGreetingPrenom(preferred, USER) ? String(preferred).trim()
+    : (isGreetingPrenom(USER?.prenom, USER) ? String(USER.prenom).trim() : '');
+  const greetEl = document.getElementById('topbar-greet');
+  const homeTitle = document.getElementById('home-title');
+  if (greetEl) greetEl.innerHTML = name ? `Bonjour, <b>${esc(name)}</b>` : 'Bonjour';
+  if (homeTitle) homeTitle.textContent = name ? `Bonjour ${name}` : 'Votre espace';
+}
 async function loadHome() {
   if (!USER) return;
-  const greetEl = document.getElementById('topbar-greet');
-  if (greetEl && USER.prenom) greetEl.innerHTML = `Bonjour, <b>${esc(USER.prenom)}</b>`;
-  const homeTitle = document.getElementById('home-title');
-  if (homeTitle) homeTitle.textContent = USER.prenom ? `Bonjour ${USER.prenom}` : 'Votre activité';
+  applyHomeGreeting(USER.prenom);
   try {
     const [profil, stats, cands] = await Promise.all([
       api('GET', '/candidats/profil'),
       api('GET', '/candidats/stats'),
       api('GET', '/candidatures?limit=3')
     ]);
+    applyHomeGreeting(profil?.prenom || USER.prenom);
     renderHomeScore(profil); renderProfileCV(profil); renderHomeKPIs(stats);
     renderHomeCands(cands);
     loadAIHighlights();
@@ -2341,18 +2365,23 @@ function renderHomeScore(p) {
   p.type_profil = p.type_profil || p.axes?.resultat?.type || p.axes?.resultat?.type_profil;
   p.rank = p.rank || p.axes?.resultat?.rank;
   document.getElementById('home-score').textContent = p.score_adn || '—';
-  document.getElementById('home-score-type').textContent = p.type_profil || 'Passer le test ADN';
-  document.getElementById('home-score-rank').textContent = p.rank || 'Cliquez pour commencer';
+  document.getElementById('home-score-type').textContent = p.type_profil || 'ADN Commercial';
+  document.getElementById('home-score-rank').textContent = p.rank || (p.score_adn ? '' : 'Non renseigné');
   if (p.score_adn) document.getElementById('score-circle').setAttribute('stroke-dasharray', Math.round(p.score_adn / 100 * 176) + ' 176');
   const next = document.getElementById('home-next-action');
   const title = document.getElementById('home-next-title');
   const copy = document.getElementById('home-next-copy');
   const button = document.getElementById('home-next-button');
+  const scoreCard = document.querySelector('#p-home .score-card.compact-score');
   if (p.score_adn) {
     next.onclick = () => go('swipe');
     title.textContent = 'Explorer les opportunités';
     copy.textContent = 'Votre profil ADN est prêt : consultez les offres compatibles.';
     button.textContent = 'Voir les offres';
+    scoreCard?.classList.remove('is-soft-cta');
+  } else {
+    // next-action already owns the ADN CTA — soften the score card to avoid duplicate CTAs
+    scoreCard?.classList.add('is-soft-cta');
   }
 }
 function renderHomeKPIs(s) {
@@ -2938,7 +2967,7 @@ async function renderMessagesWelcome() {
     : `<button class="btn bp" onclick="go('test')">Compléter mon test</button>`;
   const text = testDone
     ? `Cette messagerie s'ouvrira à votre premier match. Continuez à explorer les offres pour augmenter vos chances.`
-    : `Cette messagerie s'ouvrira à votre premier match. Les profils au test ADN complété reçoivent 4× plus de likes.`;
+    : `Cette messagerie s'ouvrira à votre premier match. Complétez votre profil pour permettre aux recruteurs de mieux vous découvrir.`;
   return `<div class="msg-welcome">
       <div class="msg-welcome-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
       <h2 class="sf">Bienvenue sur Swip Sales</h2>

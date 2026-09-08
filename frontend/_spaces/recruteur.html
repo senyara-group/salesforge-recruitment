@@ -1698,11 +1698,30 @@ function doLogout() {
 // ------------------------------------------------------------
 // DASHBOARD
 // ------------------------------------------------------------
+function isGreetingPrenom(value, user) {
+  const p = String(value || '').trim();
+  if (p.length < 2 || p.length > 40) return false;
+  if (/[@\d_]/.test(p)) return false;
+  if (!/^[\p{L}][\p{L}\s'.\-]*$/u.test(p)) return false;
+  if (!/[aeiouyàâäéèêëïîôùûüÿ]/i.test(p)) return false;
+  const username = String(user?.username || user?.handle || user?.login || '').trim().toLowerCase();
+  if (username && p.toLowerCase() === username) return false;
+  // Reject email-derived logins like "gcools" / "jean.dupont" — keep real given names even if email local matches ("guillaume@…").
+  const emailLocal = String(user?.email || '').split('@')[0].trim().toLowerCase();
+  if (emailLocal) {
+    const localNorm = emailLocal.replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    const prenomNorm = p.toLowerCase().replace(/[^a-zàâäéèêëïîôùûüç]/gi, '');
+    if (localNorm && prenomNorm === localNorm && /[._\d-]/.test(emailLocal)) return false;
+    if (localNorm && prenomNorm === localNorm && !user?.nom) return false;
+  }
+  return true;
+}
 async function loadDashboard() {
+  const name = isGreetingPrenom(USER?.prenom, USER) ? String(USER.prenom).trim() : '';
   const greetEl = document.getElementById('topbar-greet');
-  if (greetEl && USER && USER.prenom) greetEl.innerHTML = `Bonjour, <b>${esc(USER.prenom)}</b>`;
+  if (greetEl) greetEl.innerHTML = name ? `Bonjour, <b>${esc(name)}</b>` : 'Bonjour';
   const dashTitle = document.getElementById('dash-title');
-  if (dashTitle) dashTitle.textContent = (USER && USER.prenom) ? `Bonjour ${USER.prenom}` : 'Tableau de bord recrutement';
+  if (dashTitle) dashTitle.textContent = name ? `Bonjour ${name}` : 'Tableau de bord recrutement';
   if (!USER) return;
   const init = ((USER.entreprise||'?')[0] + (USER.entreprise||'??')[1]).toUpperCase();
   document.getElementById('dash-logo').textContent = init;
