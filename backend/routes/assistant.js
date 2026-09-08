@@ -9,6 +9,7 @@ const { assertAiAccess, configuredPlans, getAiPlan } = require('../utils/aiAcces
 const { publicAiError } = require('../utils/aiErrors');
 const { owned, ownedById, ownedConversationMessages, withOwner } = require('../utils/ownership');
 const { CV_MAX_TOKENS, CV_MIN_SOURCE_CHARS, cvAnalysisPrompt, normalizeCvAnalysis } = require('../utils/cvAnalysis');
+const { buildCvFacts } = require('../utils/cvFacts');
 const { selectCoachHistory } = require('../utils/coachContext');
 const { AI_SAFETY_FALLBACK, inspectAssistantOutput } = require('../utils/aiSafety');
 const { COACH_MODES, COACH_MODE_LABELS, normalizeCoachReply, formatCoachReply, coachSystemPrompt } = require('../utils/coachReply');
@@ -136,6 +137,8 @@ router.post(
         });
       }
 
+      const factualContext = buildCvFacts({ sourceText, experienceYears, targetRole, sector, offerText });
+
       reservation = await reserveUsage(req.user.id, access.plan, 'cv');
 
       const aiResult = await callAi({
@@ -156,11 +159,14 @@ router.post(
           {
             role: 'user',
             content: JSON.stringify({
-              poste_vise: targetRole || 'Non précisé',
-              offre_cible: offerText || 'Non fournie',
-              annees_experience: experienceYears,
-              secteur: sector || 'Non précisé',
-              cv: sourceText,
+              SOURCE_CV: sourceText,
+              DONNEES_UTILISATEUR: {
+                poste_vise: targetRole || null,
+                offre_cible: offerText || null,
+                annees_experience: experienceYears,
+                secteur: sector || null,
+              },
+              FACTS_CALCULES: factualContext,
             }),
           },
         ],
@@ -175,7 +181,7 @@ router.post(
         throw safetyError;
       }
 
-      const normalized = normalizeCvAnalysis(aiResult.value, sourceText);
+      const normalized = normalizeCvAnalysis(aiResult.value, sourceText, { experienceYears });
 
       const { data, error } = await supabase
         .from('ai_cv_analyses')
