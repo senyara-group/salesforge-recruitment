@@ -301,6 +301,10 @@ button,input,textarea,select{font-family:inherit}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
 .deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px}
 .deck-empty.on{display:flex}
+.deck-empty[hidden]{display:none !important}
+.deck-area.has-offer .deck-empty{display:none !important}
+.deck-area.is-empty #deck-cards{display:none}
+.deck-actions[hidden]{display:none !important}
 
 /* TEST ADN */
 .test-sticky{padding:15px 18px;background:var(--w);border-bottom:1px solid var(--bd);position:sticky;top:59px;z-index:40}
@@ -705,8 +709,8 @@ button,input,textarea,select{font-family:inherit}
   #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
   #p-profile.page.on{display:flex;flex-direction:column;gap:16px;padding:24px 28px 96px;max-width:1180px;margin:0 auto}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:static;margin:0;width:100%}
-  #p-profile>.sec.profile-layout{padding:0;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);gap:16px;align-items:start}
-  #p-profile .profile-main-col,#p-profile .profile-aside-col{display:grid;gap:12px;align-content:start;align-self:start;height:auto}
+  #p-profile>.sec.profile-layout{padding:0;display:flex;flex-direction:column;gap:14px;align-items:stretch}
+  #p-profile .profile-row-primary{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);gap:16px;align-items:start}
   #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%;height:auto}
   #p-swipe.page.on{display:flex !important;flex-direction:column;gap:12px;align-items:stretch;padding:18px 28px 28px;max-width:1180px;margin:0 auto}
   #p-swipe .swipe-hd{position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;top:auto;width:100%}
@@ -731,8 +735,8 @@ button,input,textarea,select{font-family:inherit}
   #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   #cands-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
   #p-profile.page.on{max-width:1280px}
-  #p-profile>.sec.profile-layout{grid-template-columns:minmax(0,1.85fr) minmax(300px,.85fr);gap:18px}
-  #p-profile .menu-list{align-self:start}
+  #p-profile .profile-row-primary{grid-template-columns:minmax(0,1.75fr) minmax(300px,.9fr);gap:18px}
+  #p-profile .menu-list{align-self:stretch}
   #p-swipe.page.on{padding:14px 42px 24px;max-width:1320px;margin-left:auto;margin-right:auto;gap:10px}
   #p-swipe .deck-wrap{width:100%;max-width:none}
   #p-swipe .deck-area{height:auto;min-height:0;max-height:calc(100dvh - 195px)}
@@ -749,7 +753,8 @@ button,input,textarea,select{font-family:inherit}
   #p-swipe .card-desc-block{flex:0 1 auto;min-height:0;display:block}
   #p-swipe .card-desc.expanded{max-height:min(260px,28dvh);overflow-y:auto;display:block}
   #p-swipe .deck-actions{padding:10px 16px}
-  #p-swipe .deck-empty{position:relative;inset:auto;min-height:220px}
+  #p-swipe .deck-area.is-empty{min-height:240px}
+  #p-swipe .deck-empty{position:absolute;inset:0;min-height:0}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
@@ -776,7 +781,8 @@ button,input,textarea,select{font-family:inherit}
   .doc-meta,.tr-sub,.mi-s,.msg-prev{font-size:14px}
   #p-profile .ph{position:static;padding:34px 38px;margin:0;border:1px solid var(--bd);border-radius:16px}
   #p-profile>.sec{display:block}
-  #p-profile>.sec.profile-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:16px}
+  #p-profile>.sec.profile-layout{display:flex;flex-direction:column;gap:16px}
+  #p-profile .profile-row-primary{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:16px;align-items:start}
   .ph-top{gap:20px}
   .ph-av{width:82px;height:82px;font-size:28px}
   .ph-name{font-size:26px}
@@ -1029,16 +1035,16 @@ button,input,textarea,select{font-family:inherit}
     padding:0 !important;
   }
   #p-profile>.sec.profile-layout{
-    display:grid !important;
+    display:flex !important;
+    flex-direction:column;
+    gap:14px;
+    align-items:stretch;
+  }
+  #p-profile .profile-row-primary{
+    display:grid;
     grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);
     gap:16px;
     align-items:start;
-    flex-direction:unset;
-  }
-  #p-profile .profile-main-col,
-  #p-profile .profile-aside-col{
-    align-self:start;
-    height:auto;
   }
   #p-profile .card-sec,
   #p-profile .plan-banner,
@@ -1243,7 +1249,7 @@ button,input,textarea,select{font-family:inherit}
   <div class="deck-wrap">
     <div class="deck-area" id="deck-area">
       <div id="deck-cards"></div>
-      <div class="deck-empty" id="deck-empty">
+      <div class="deck-empty" id="deck-empty" hidden>
         <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="sf deck-empty-title">Tout vu</div>
         <p class="deck-empty-copy">Toutes les offres compatibles ont été vues. Revenez demain.</p>
@@ -1663,7 +1669,7 @@ button,input,textarea,select{font-family:inherit}
     </div>
   </div>
   <div class="sec profile-body profile-layout">
-    <div class="profile-main-col">
+    <div class="profile-row profile-row-primary">
       <div class="card-sec" id="prof-adn-card">
         <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b" id="prof-adn-chip"><span class="chip-dot"></span>Évaluation</span></div>
         <div class="adn-summary" id="prof-adn-summary" hidden>
@@ -1675,16 +1681,6 @@ button,input,textarea,select{font-family:inherit}
         </div>
         <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
       </div>
-      <div class="card-sec" id="prof-comp-card" style="display:none">
-        <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
-        <div class="comp-display" id="prof-comp-display"></div>
-      </div>
-      <section class="card-sec" id="prof-about-card" hidden>
-        <div class="card-sec-hd"><div class="card-sec-t sf">Présentation</div></div>
-        <div class="profile-about-grid" id="prof-about-grid"></div>
-      </section>
-    </div>
-    <aside class="profile-aside-col">
       <section class="card-sec profile-checklist-card" id="prof-checklist-card">
         <div class="card-sec-hd"><div class="card-sec-t sf">Compléter mon profil</div></div>
         <div class="profile-progress">
@@ -1693,42 +1689,50 @@ button,input,textarea,select{font-family:inherit}
         </div>
         <ul class="profile-checklist" id="prof-checklist"></ul>
       </section>
-      <div class="card-sec profile-docs-card" id="prof-docs-card">
-        <div class="card-sec-hd"><div class="card-sec-t sf">Documents</div></div>
-        <div class="profile-docs-grid is-compact">
-          <div class="profile-doc-tile">
-            <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div>
-            <div class="profile-doc-copy">
-              <strong class="sf">CV</strong>
-              <span id="prof-doc-cv-status">Non ajouté</span>
-            </div>
-            <div class="profile-doc-actions">
-              <button type="button" class="btn bo bsm" id="prof-doc-cv-open" onclick="openProfileCV()">Ouvrir</button>
-              <button type="button" class="btn bp bsm" onclick="document.getElementById('cv-file-prof').click()">Importer</button>
-            </div>
+    </div>
+    <div class="card-sec profile-docs-card" id="prof-docs-card">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Documents</div></div>
+      <div class="profile-docs-grid">
+        <div class="profile-doc-tile">
+          <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div>
+          <div class="profile-doc-copy">
+            <strong class="sf">CV</strong>
+            <span id="prof-doc-cv-status">Non ajouté</span>
           </div>
-          <div class="profile-doc-tile">
-            <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
-            <div class="profile-doc-copy">
-              <strong class="sf">Lettre</strong>
-              <span id="prof-doc-motiv-status">Non ajoutée</span>
-            </div>
-            <div class="profile-doc-actions">
-              <button type="button" class="btn bo bsm" id="prof-doc-motiv-open" onclick="openMotivationFile()">Ouvrir</button>
-              <button type="button" class="btn bp bsm" onclick="document.getElementById('motiv-file-prof').click()">Importer</button>
-            </div>
+          <div class="profile-doc-actions">
+            <button type="button" class="btn bo bsm" id="prof-doc-cv-open" onclick="openProfileCV()">Ouvrir</button>
+            <button type="button" class="btn bp bsm" onclick="document.getElementById('cv-file-prof').click()">Importer</button>
+          </div>
+        </div>
+        <div class="profile-doc-tile">
+          <div class="profile-doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+          <div class="profile-doc-copy">
+            <strong class="sf">Lettre</strong>
+            <span id="prof-doc-motiv-status">Non ajoutée</span>
+          </div>
+          <div class="profile-doc-actions">
+            <button type="button" class="btn bo bsm" id="prof-doc-motiv-open" onclick="openMotivationFile()">Ouvrir</button>
+            <button type="button" class="btn bp bsm" onclick="document.getElementById('motiv-file-prof').click()">Importer</button>
           </div>
         </div>
       </div>
-      <div class="menu-list profile-shortcuts is-secondary">
-        <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ouvrir le coaching</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-        <div class="menu-i" onclick="go('account')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg></div><div class="menu-txt">Paramètres du compte</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-        <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
-        <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
-        <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
-        <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-    </aside>
+    </div>
+    <div class="card-sec" id="prof-comp-card" style="display:none">
+      <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
+      <div class="comp-display" id="prof-comp-display"></div>
+    </div>
+    <section class="card-sec" id="prof-about-card" hidden>
+      <div class="card-sec-hd"><div class="card-sec-t sf">Présentation</div></div>
+      <div class="profile-about-grid" id="prof-about-grid"></div>
+    </section>
+    <div class="menu-list profile-shortcuts is-secondary">
+      <div class="menu-i" onclick="go('coaching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="menu-txt">Ouvrir le coaching</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-i" onclick="go('account')"><div class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06"/></svg></div><div class="menu-txt">Paramètres du compte</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <input type="file" id="motiv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateMotivationFile(this)">
+      <input type="file" id="cv-file-prof" style="display:none" accept=".pdf,.doc,.docx" onchange="updateCV(this)">
+      <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
+      <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
   </div>
 </div>
 
@@ -2650,12 +2654,20 @@ async function joinCommunity() {
 // ------------------------------------------------------------
 async function loadOffres() {
   DECK_IDX = 0;
+  const empty = document.getElementById('deck-empty');
+  const area = document.getElementById('deck-area');
+  if (empty) { empty.classList.remove('on'); empty.hidden = true; }
+  if (area) { area.classList.remove('is-empty'); area.classList.add('is-loading'); }
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
     const mySkills = await getMySkillsFlat();
     OFFRES = (await api('GET', '/offres/deck')).map(o => normOffre(o, mySkills)).filter(o => !isOfferLocallySeen(o));
     applyFilter('all');
-  } catch(e) { document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>'; }
+  } catch(e) {
+    document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>';
+    if (empty) { empty.classList.remove('on'); empty.hidden = true; }
+    if (area) area.classList.remove('is-loading', 'is-empty');
+  }
 }
 function applyFilter(f) {
   const normalized = String(f).toLowerCase();
@@ -2678,11 +2690,29 @@ function toggleMoreFilters() {
   extras.forEach((el) => { el.hidden = !next; });
 }
 function renderDeck() {
-  const el = document.getElementById('deck-cards'); el.innerHTML = '';
+  const el = document.getElementById('deck-cards');
+  const empty = document.getElementById('deck-empty');
+  const area = document.getElementById('deck-area');
+  const actions = document.querySelector('#p-swipe .deck-actions');
+  if (!el) return;
+  el.innerHTML = '';
   const rem = Math.max(0, OFFRES_F.length - DECK_IDX);
+  const isEmpty = rem === 0;
   document.getElementById('deck-count').textContent = rem + ' offre' + (rem > 1 ? 's' : '');
-  document.getElementById('deck-empty').classList.toggle('on', rem === 0);
-  OFFRES_F.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(o => el.appendChild(buildCard(o)));
+  // États mutuellement exclusifs : carte active XOR « Tout vu »
+  if (empty) {
+    empty.classList.toggle('on', isEmpty);
+    empty.hidden = !isEmpty;
+  }
+  if (area) {
+    area.classList.toggle('is-empty', isEmpty);
+    area.classList.toggle('has-offer', !isEmpty);
+    area.classList.remove('is-loading');
+  }
+  if (actions) actions.hidden = isEmpty;
+  if (!isEmpty) {
+    OFFRES_F.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(o => el.appendChild(buildCard(o)));
+  }
 }
 function toggleCardDesc(event, offreId) {
   event.stopPropagation();
