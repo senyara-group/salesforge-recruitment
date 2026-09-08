@@ -28,7 +28,15 @@ test('les erreurs fournisseur et réponses invalides restent réessayables', () 
 });
 
 test('le quota atteint possède un code et un message dédiés', () => {
-  const result = publicAiError({ code: 'AI_QUOTA_REACHED' });
+  const result = publicAiError({ code: 'AI_QUOTA_REACHED', details: {
+    feature: 'coach', quota: 100, used: 100, remaining: 0,
+    reset_at: '2026-10-01', period_end: '2026-10-01',
+    can_upgrade: false, can_buy_credits: true,
+    model: 'secret-provider-model', estimated_cost_eur: 12,
+  } });
   assert.equal(result.status, 429);
   assert.match(result.message, /quota mensuel/i);
+  assert.equal(result.details.quota, 100);
+  assert.equal(result.details.can_buy_credits, true);
+  assert.doesNotMatch(JSON.stringify(result), /provider|model|cost|claude|anthropic/i);
 });

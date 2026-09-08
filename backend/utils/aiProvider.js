@@ -98,6 +98,7 @@ async function callAi({
   maxTokens = 1800,
   timeoutMs,
   maxRetries = 0,
+  returnMeta = false,
   providerCall = askClaude,
 }) {
   if (!isAiConfigured() && providerCall === askClaude) {
@@ -116,7 +117,7 @@ async function callAi({
       maxTokens,
       timeoutMs,
       maxRetries,
-      returnMeta: json && providerCall === askClaude,
+      returnMeta: (json || returnMeta) && providerCall === askClaude,
     });
     const normalized = normalizeProviderResult(raw);
     const content = normalized.content;
@@ -136,8 +137,14 @@ async function callAi({
       };
       throw invalid;
     }
-    if (!json) return content.slice(0, MAX_RESPONSE_CHARS).trim();
-    try { return parseJsonResponse(content); }
+    if (!json) {
+      const value = content.slice(0, MAX_RESPONSE_CHARS).trim();
+      return returnMeta ? { value, meta: providerMeta } : value;
+    }
+    try {
+      const value = parseJsonResponse(content);
+      return returnMeta ? { value, meta: providerMeta } : value;
+    }
     catch (parseError) {
       const invalid = new Error('Le service IA a renvoye une reponse invalide');
       invalid.status = 502;

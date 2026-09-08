@@ -1631,7 +1631,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-cv" class="page">
   <div class="sec cv-layout">
     <div class="page-heading"><div><div class="page-kicker">Candidature</div><h1 class="page-title sf">Optimiseur de CV</h1><p class="page-intro">Analysez votre CV pour obtenir des recommandations ciblées et des propositions de reformulation, sans ajout de faits absents.</p></div><span class="ai-availability" id="cv-ai-availability">Vérification du service…</span></div>
-    <section class="account-section" id="cv-access-gate" hidden><h2 class="sf">Optimiseur de CV réservé</h2><p id="cv-access-copy"></p><button class="btn bp" type="button" onclick="go('pricing')">Voir les formules</button></section>
+    <section class="account-section" id="cv-access-gate" hidden><h2 class="sf" id="cv-access-title">Optimisez votre CV avec SwipSales</h2><p id="cv-access-copy"></p><button class="btn bp" id="cv-access-cta" type="button" onclick="go('pricing')">Voir les formules</button></section>
     <div id="cv-tool-content">
     <section class="cv-workspace" aria-labelledby="cv-workspace-title">
       <div class="cv-workspace-icon" aria-hidden="true">CV</div>
@@ -1657,7 +1657,7 @@ button,input,textarea,select{font-family:inherit}
 <div id="p-coach" class="page">
   <div class="sec coach-layout">
     <div class="page-heading"><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach commercial</h1><p class="page-intro">Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente. Ce coach n’est pas un recruteur réel.</p></div><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div>
-    <section class="account-section" id="coach-access-gate" hidden><h2 class="sf">Coach commercial réservé</h2><p id="coach-access-copy"></p><button class="btn bp" type="button" onclick="go('pricing')">Voir les formules</button></section>
+    <section class="account-section" id="coach-access-gate" hidden><h2 class="sf" id="coach-access-title">Préparez vos entretiens avec le Coach SwipSales</h2><p id="coach-access-copy"></p><button class="btn bp" id="coach-access-cta" type="button" onclick="go('pricing')">Voir les formules</button></section>
     <div class="coach-shell" id="coach-tool-content">
       <aside class="coach-history"><div class="coach-history-head"><h2 class="sf">Conversations</h2><button class="btn bo bsm" type="button" onclick="showCoachSetup()">Nouvelle</button></div><div id="coach-history-list" class="coach-history-list"><div class="loading-state"><div class="spinner"></div></div></div></aside>
       <section class="coach-main">
@@ -1840,6 +1840,7 @@ async function api(method, path, body) {
     const error = new Error(d?.message || d?.error?.message || d?.error || 'Erreur serveur');
     error.code = d?.code || 'REQUEST_FAILED';
     error.status = r.status;
+    if (d && typeof d === 'object') Object.assign(error, d);
     throw error;
   }
   return d;
@@ -3259,9 +3260,9 @@ async function loadAIHighlights() {
   try {
     const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
     AI_AVAILABLE = Boolean(config.configured);
-    CURRENT_PLAN = activeSubscriptionPlan(subscription);
-    CV_ALLOWED = planAllowed(config.cv_access_policy, CURRENT_PLAN);
-    COACH_ALLOWED = planAllowed(config.coach_access_policy, CURRENT_PLAN);
+    CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
+    CV_ALLOWED = Boolean(config.access?.cv ?? planAllowed(config.cv_access_policy, CURRENT_PLAN));
+    COACH_ALLOWED = Boolean(config.access?.coach ?? planAllowed(config.coach_access_policy, CURRENT_PLAN));
     const [analysisResult, conversationResult] = await Promise.allSettled([
       CV_ALLOWED ? api('GET', '/assistant/cv-analyses') : Promise.resolve([]),
       COACH_ALLOWED ? api('GET', '/assistant/conversations') : Promise.resolve([]),
@@ -3274,6 +3275,8 @@ async function loadAIHighlights() {
     if (coach && conversations[0]) coach.textContent = 'Reprendre : ' + conversations[0].title;
     if (!CV_ALLOWED && cv) cv.textContent = `Disponible avec ${planPolicyLabel(config.cv_access_policy)}`;
     if (!COACH_ALLOWED && coach) coach.textContent = `Disponible avec ${planPolicyLabel(config.coach_access_policy)}`;
+    if (CV_ALLOWED && config.usage?.cv && cv && !analyses[0]) cv.textContent = `${config.usage.cv.remaining} analyses restantes ce mois-ci`;
+    if (COACH_ALLOWED && config.usage?.coach && coach && !conversations[0]) coach.textContent = `${config.usage.coach.remaining} réponses restantes ce mois-ci`;
     if (!CV_ALLOWED) document.getElementById('home-cv-feature-state').textContent = 'Formule requise';
     if (!COACH_ALLOWED) document.getElementById('home-coach-feature-state').textContent = 'Formule requise';
     if (!AI_AVAILABLE) {
@@ -3424,14 +3427,36 @@ function renderAiAccessGate(kind, allowed, policy) {
   document.getElementById(kind + '-tool-content').hidden = !allowed;
   const copy = document.getElementById(kind + '-access-copy');
   if (copy) copy.textContent = allowed ? '' : `Cette fonctionnalité nécessite la formule ${planPolicyLabel(policy)}.`;
+  if (!allowed) {
+    document.getElementById(kind + '-access-title').textContent = kind === 'cv' ? 'Optimisez votre CV avec SwipSales' : 'Préparez vos entretiens avec le Coach SwipSales';
+    document.getElementById(kind + '-access-cta').hidden = false;
+  }
+}
+function renderAiQuota(kind, config) {
+  const usage = config.usage?.[kind];
+  const allowed = Boolean(config.access?.[kind]);
+  if (!allowed) return renderAiAccessGate(kind, false, kind === 'cv' ? config.cv_access_policy : config.coach_access_policy);
+  const exhausted = usage && usage.remaining <= 0;
+  renderAiAccessGate(kind, !exhausted, []);
+  if (exhausted) {
+    document.getElementById(kind + '-access-title').textContent = kind === 'cv' ? 'Analyses CV utilisées ce mois-ci' : 'Votre quota mensuel est épuisé';
+    const resetAt = config.usage.reset_at || config.usage.period_end;
+    const reset = resetAt ? new Date(resetAt).toLocaleDateString('fr-FR') : '';
+    document.getElementById(kind + '-access-copy').textContent = kind === 'cv' && config.plan === 'carriere'
+      ? `Vous avez utilisé vos analyses CV incluses. Renouvellement le ${reset}. Carrière Coaching inclut davantage d’analyses et le Coach commercial.`
+      : `Votre quota se renouvelle le ${reset}. Des crédits supplémentaires pourront être proposés prochainement.`;
+    document.getElementById(kind + '-access-cta').hidden = !(kind === 'cv' && config.plan === 'carriere');
+  }
+  if (!exhausted && usage) setFeedback(kind === 'cv' ? 'cv-analysis-feedback' : 'coach-setup-feedback', `${usage.remaining} utilisation${usage.remaining > 1 ? 's' : ''} restante${usage.remaining > 1 ? 's' : ''} ce mois-ci.`);
 }
 async function loadCVTool() {
   try {
     const [profile, config, subscription] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
     AI_AVAILABLE = Boolean(config.configured);
-    CURRENT_PLAN = activeSubscriptionPlan(subscription);
-    CV_ALLOWED = planAllowed(config.cv_access_policy, CURRENT_PLAN);
-    renderAiAccessGate('cv', CV_ALLOWED, config.cv_access_policy);
+    CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
+    CV_ALLOWED = Boolean(config.access?.cv ?? planAllowed(config.cv_access_policy, CURRENT_PLAN));
+    renderAiQuota('cv', config);
+    if (config.usage?.cv?.remaining <= 0) CV_ALLOWED = false;
     renderProfileCV(profile);
     setAiAvailability('cv-ai-availability', AI_AVAILABLE);
     document.getElementById('cv-analyse-btn').disabled = !AI_AVAILABLE || !CV_ALLOWED;
@@ -3512,7 +3537,10 @@ async function analyseCVWithAI() {
     const data = await api('POST', '/assistant/cv-analyses', { source_text: source, target_role: document.getElementById('cv-target-role').value, offer_text: document.getElementById('cv-offer-text').value });
     renderCVAnalysis(data); setFeedback('cv-analysis-feedback', 'Analyse terminée. Relisez chaque proposition avant usage.');
     document.getElementById('cv-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (error) { setFeedback('cv-analysis-feedback', error.message || 'La réponse n’a pas pu être générée. Vous pouvez réessayer.', true); }
+  } catch (error) {
+    setFeedback('cv-analysis-feedback', error.message || 'La réponse n’a pas pu être générée. Vous pouvez réessayer.', true);
+    if (error.code === 'AI_QUOTA_EXCEEDED') await loadCVTool();
+  }
   finally { CV_ANALYSING = false; setBtn('cv-analyse-btn', false, 'Analyser mon CV'); }
 }
 async function saveImprovedCV() {
@@ -3542,9 +3570,10 @@ function downloadImprovedCV() {
 async function loadCoach() {
   try {
     const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
-    CURRENT_PLAN = activeSubscriptionPlan(subscription);
-    COACH_ALLOWED = planAllowed(config.coach_access_policy, CURRENT_PLAN);
-    renderAiAccessGate('coach', COACH_ALLOWED, config.coach_access_policy);
+    CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
+    COACH_ALLOWED = Boolean(config.access?.coach ?? planAllowed(config.coach_access_policy, CURRENT_PLAN));
+    renderAiQuota('coach', config);
+    if (config.usage?.coach?.remaining <= 0) COACH_ALLOWED = false;
     AI_AVAILABLE = Boolean(config.configured); setAiAvailability('coach-ai-availability', AI_AVAILABLE);
     if (!COACH_ALLOWED) return;
     if (!AI_AVAILABLE) setFeedback('coach-setup-feedback', 'L’assistant est momentanément indisponible.', true);
@@ -3622,6 +3651,7 @@ async function sendCoachContent(content) {
     document.querySelector('#coach-messages .coach-message:last-child')?.remove(); appendCoachMessage(message);
   } catch (error) {
     document.querySelector('#coach-messages .coach-message:last-child')?.remove(); document.getElementById('coach-error-text').textContent = error.message || 'Réponse impossible'; document.getElementById('coach-error').hidden = false;
+    if (error.code === 'AI_QUOTA_EXCEEDED') await loadCoach();
   } finally { setCoachWaiting(false); document.getElementById('coach-input').focus(); }
 }
 async function sendCoachMessage(event) { event.preventDefault(); const input = document.getElementById('coach-input'); const content = input.value.trim(); if (!content || COACH_SENDING) return; input.value = ''; await sendCoachContent(content); }

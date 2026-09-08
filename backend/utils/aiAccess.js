@@ -6,13 +6,22 @@ function configuredPlans(feature) {
   return raw === '*' ? null : new Set(raw.split(',').map((plan) => plan.trim()).filter(Boolean));
 }
 
-async function assertAiAccess(userId, feature) {
+function isAiPlanAllowed(plan, feature) {
   const plans = configuredPlans(feature);
-  if (!plans) return { allowed: true, policy: 'all' };
+  return !plans || plans.has(String(plan || 'freemium').toLowerCase());
+}
+
+async function getAiPlan(userId) {
   const { data, error } = await supabase.from('abonnements').select('plan, statut').eq('user_id', userId).maybeSingle();
   if (error) throw error;
-  const plan = data?.statut === 'actif' ? String(data.plan || 'freemium').toLowerCase() : 'freemium';
-  if (!plans.has(plan)) {
+  return data?.statut === 'actif' ? String(data.plan || 'freemium').toLowerCase() : 'freemium';
+}
+
+async function assertAiAccess(userId, feature) {
+  const plans = configuredPlans(feature);
+  const plan = await getAiPlan(userId);
+  if (!plans) return { allowed: true, policy: 'all', plan };
+  if (!isAiPlanAllowed(plan, feature)) {
     const accessError = new Error('Cette fonctionnalite n’est pas incluse dans votre acces actuel');
     accessError.status = 403;
     accessError.code = 'AI_ACCESS_DENIED';
@@ -21,4 +30,4 @@ async function assertAiAccess(userId, feature) {
   return { allowed: true, policy: [...plans], plan };
 }
 
-module.exports = { configuredPlans, assertAiAccess };
+module.exports = { configuredPlans, isAiPlanAllowed, assertAiAccess, getAiPlan };
