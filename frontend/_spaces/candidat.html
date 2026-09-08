@@ -705,18 +705,18 @@ button,input,textarea,select{font-family:inherit}
   #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
   #p-profile.page.on{display:flex;flex-direction:column;gap:16px;padding:24px 28px 96px;max-width:1180px;margin:0 auto}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:static;margin:0;width:100%}
-  #p-profile>.sec.profile-layout{padding:0;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:16px;align-items:start}
-  #p-profile .profile-main-col,#p-profile .profile-aside-col{display:grid;gap:12px;align-content:start}
-  #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%}
-  #p-swipe.page.on{display:flex !important;flex-direction:column;gap:16px;align-items:stretch;padding:24px 28px 96px;max-width:1180px;margin:0 auto}
-  #p-swipe .swipe-hd{position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:16px 18px;top:auto;width:100%}
-  #p-swipe .filter-row{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin-top:12px;gap:6px;scrollbar-width:thin}
+  #p-profile>.sec.profile-layout{padding:0;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);gap:16px;align-items:start}
+  #p-profile .profile-main-col,#p-profile .profile-aside-col{display:grid;gap:12px;align-content:start;align-self:start;height:auto}
+  #p-profile .card-sec,#p-profile .plan-banner,#p-profile .menu-list{width:100%;height:auto}
+  #p-swipe.page.on{display:flex !important;flex-direction:column;gap:12px;align-items:stretch;padding:18px 28px 28px;max-width:1180px;margin:0 auto}
+  #p-swipe .swipe-hd{position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;top:auto;width:100%}
+  #p-swipe .filter-row{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin-top:8px;gap:6px;scrollbar-width:thin}
   #p-swipe .fp{width:auto;text-align:center;padding:7px 12px;flex-shrink:0}
   #p-swipe .fp-more{border-style:dashed}
   #p-swipe .deck-wrap{width:100%;max-width:none;margin:0;border-radius:22px}
-  #p-swipe .deck-area{height:min(720px,calc(100dvh - 250px));max-height:none;min-height:520px}
-  #p-swipe .card-identity{min-height:168px}
-  #p-swipe .card-desc{-webkit-line-clamp:8}
+  #p-swipe .deck-area{height:min(560px,calc(100dvh - 240px));max-height:calc(100dvh - 220px);min-height:0}
+  #p-swipe .card-identity{min-height:140px}
+  #p-swipe .card-desc{-webkit-line-clamp:6}
   .plans-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
   .bottom-sheet{max-width:560px;border-radius:22px 22px 0 0}
 }
@@ -733,18 +733,23 @@ button,input,textarea,select{font-family:inherit}
   #p-profile.page.on{max-width:1280px}
   #p-profile>.sec.profile-layout{grid-template-columns:minmax(0,1.85fr) minmax(300px,.85fr);gap:18px}
   #p-profile .menu-list{align-self:start}
-  #p-swipe.page.on{padding-left:42px;padding-right:42px;max-width:1320px;margin-left:auto;margin-right:auto}
+  #p-swipe.page.on{padding:14px 42px 24px;max-width:1320px;margin-left:auto;margin-right:auto;gap:10px}
   #p-swipe .deck-wrap{width:100%;max-width:none}
-  #p-swipe .deck-area{height:min(740px,calc(100dvh - 210px));min-height:580px}
-  #p-swipe .swipe-card{flex-direction:row}
-  #p-swipe .card-identity{width:min(320px,30%);height:100%;flex-shrink:0;min-height:0}
-  #p-swipe .card-body{gap:14px;padding:22px 26px;justify-content:flex-start}
-  #p-swipe .card-title{font-size:24px}
+  #p-swipe .deck-area{height:auto;min-height:0;max-height:calc(100dvh - 195px)}
+  #p-swipe #deck-cards{position:relative;height:auto;min-height:0}
+  #p-swipe .swipe-card{position:relative;inset:auto;width:100%;height:auto;max-height:calc(100dvh - 195px);flex-direction:row;align-items:stretch}
+  #p-swipe .swipe-card:nth-last-child(2),#p-swipe .swipe-card:nth-last-child(3){display:none}
+  #p-swipe .swipe-card:last-child{position:relative;z-index:10}
+  #p-swipe .card-identity{width:min(300px,30%);height:auto;align-self:stretch;flex-shrink:0;min-height:0}
+  #p-swipe .card-body{flex:1 1 auto;gap:12px;padding:18px 22px;justify-content:flex-start;overflow:auto;min-height:0}
+  #p-swipe .card-title{font-size:22px}
   #p-swipe .card-meta-mobile{display:none}
   #p-swipe .card-skills-body{display:none}
-  #p-swipe .card-desc{-webkit-line-clamp:16;font-size:14px;line-height:1.65}
-  #p-swipe .card-desc-block{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
-  #p-swipe .card-desc{flex:1}
+  #p-swipe .card-desc{-webkit-line-clamp:8;font-size:14px;line-height:1.6;flex:none}
+  #p-swipe .card-desc-block{flex:0 1 auto;min-height:0;display:block}
+  #p-swipe .card-desc.expanded{max-height:min(260px,28dvh);overflow-y:auto;display:block}
+  #p-swipe .deck-actions{padding:10px 16px}
+  #p-swipe .deck-empty{position:relative;inset:auto;min-height:220px}
   #p-test .test-sticky{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
@@ -1025,9 +1030,15 @@ button,input,textarea,select{font-family:inherit}
   }
   #p-profile>.sec.profile-layout{
     display:grid !important;
-    grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);
+    grid-template-columns:minmax(0,1.65fr) minmax(280px,.9fr);
     gap:16px;
+    align-items:start;
     flex-direction:unset;
+  }
+  #p-profile .profile-main-col,
+  #p-profile .profile-aside-col{
+    align-self:start;
+    height:auto;
   }
   #p-profile .card-sec,
   #p-profile .plan-banner,
@@ -1653,14 +1664,6 @@ button,input,textarea,select{font-family:inherit}
   </div>
   <div class="sec profile-body profile-layout">
     <div class="profile-main-col">
-      <section class="card-sec" id="prof-about-card" hidden>
-        <div class="card-sec-hd"><div class="card-sec-t sf">Présentation</div></div>
-        <div class="profile-about-grid" id="prof-about-grid"></div>
-      </section>
-      <div class="card-sec" id="prof-comp-card" style="display:none">
-        <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
-        <div class="comp-display" id="prof-comp-display"></div>
-      </div>
       <div class="card-sec" id="prof-adn-card">
         <div class="card-sec-hd"><div class="card-sec-t sf">ADN Commercial</div><span class="chip chip-b" id="prof-adn-chip"><span class="chip-dot"></span>Évaluation</span></div>
         <div class="adn-summary" id="prof-adn-summary" hidden>
@@ -1672,6 +1675,14 @@ button,input,textarea,select{font-family:inherit}
         </div>
         <div class="adn-bars" id="prof-adn"><div class="loading-state">Passez le test ADN</div></div>
       </div>
+      <div class="card-sec" id="prof-comp-card" style="display:none">
+        <div class="card-sec-hd"><div class="card-sec-t sf">Compétences</div></div>
+        <div class="comp-display" id="prof-comp-display"></div>
+      </div>
+      <section class="card-sec" id="prof-about-card" hidden>
+        <div class="card-sec-hd"><div class="card-sec-t sf">Présentation</div></div>
+        <div class="profile-about-grid" id="prof-about-grid"></div>
+      </section>
     </div>
     <aside class="profile-aside-col">
       <section class="card-sec profile-checklist-card" id="prof-checklist-card">
