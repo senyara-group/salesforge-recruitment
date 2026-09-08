@@ -1759,17 +1759,14 @@ body.auth .shell, body.product-gateway .shell {
   }
   #p-swipe .card-identity-inner {
     background: linear-gradient(180deg, rgba(9,20,34,.08), rgba(9,20,34,.55));
+    min-height: 100%;
   }
   #p-swipe .card-co-block {
-    margin-top: 8px;
+    margin-top: auto;
   }
   #p-swipe .deck-actions {
     border-top: 1px solid var(--bd);
   }
-}
-@media (min-width: 1440px) {
-  #p-swipe.page.on { max-width: 1400px; }
-  #p-swipe .card-identity { width: min(340px, 32%); }
 }
 
 /* Profile editorial */
@@ -1900,10 +1897,9 @@ body.auth .shell, body.product-gateway .shell {
   }
 }
 @media (min-width: 860px) {
-  #p-profile .profile-aside-col .profile-checklist-card { position: sticky; top: 84px; }
   #p-profile > .sec.profile-layout {
     display: grid !important;
-    grid-template-columns: minmax(0, 1.7fr) minmax(280px, .9fr);
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, .9fr);
     gap: 16px;
     align-items: start;
     flex-direction: unset;
@@ -1913,14 +1909,64 @@ body.auth .shell, body.product-gateway .shell {
     display: grid !important;
     gap: 12px;
     align-content: start;
+    align-self: start;
+    height: auto;
+  }
+  #p-profile .profile-main-col > *,
+  #p-profile .profile-aside-col > * {
+    height: auto;
+    align-self: start;
   }
 }
 @media (min-width: 1080px) {
   #p-profile > .sec.profile-layout {
     grid-template-columns: minmax(0, 1.85fr) minmax(300px, .85fr);
     gap: 18px;
+    align-items: start;
+  }
+  #p-swipe.page.on {
+    gap: 10px;
+    padding-top: 14px;
+    padding-bottom: 24px;
+  }
+  #p-swipe .deck-area {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 195px);
+  }
+  #p-swipe #deck-cards {
+    position: relative;
+    height: auto;
+    min-height: 0;
+  }
+  #p-swipe .swipe-card {
+    position: relative !important;
+    inset: auto !important;
+    width: 100%;
+    height: auto !important;
+    max-height: calc(100dvh - 195px);
+    flex-direction: row;
+    align-items: stretch;
+  }
+  #p-swipe .swipe-card:nth-last-child(2),
+  #p-swipe .swipe-card:nth-last-child(3) {
+    display: none;
+  }
+  #p-swipe .card-identity {
+    width: min(300px, 30%);
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: stretch;
+  }
+  #p-swipe .card-desc-block {
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
+  }
+  #p-swipe .card-desc {
+    flex: none !important;
   }
 }
 @media (min-width: 1440px) {
   #p-profile.page.on { max-width: 1360px; }
+  #p-swipe .card-identity { width: min(320px, 30%); }
 }
