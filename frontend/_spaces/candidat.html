@@ -1924,7 +1924,38 @@ const P2 = [
 // ------------------------------------------------------------
 // HELPERS
 // ------------------------------------------------------------
-async function api(method, path, body) {
+// L'access_token Supabase expire (1 h par defaut). Sans prolongation, tous les
+// appels /api/* finissaient en 401 : c'est ce qui faisait echouer le sondage
+// /messages/threads (toutes les 30 s) et /candidats/cv-text longtemps apres que
+// /assistant/config, appele une seule fois au chargement, ait repondu 200.
+// Les refresh_token Supabase tournent a chaque usage : deux rafraichissements
+// concurrents s'invalideraient mutuellement, d'ou la promesse partagee.
+let REFRESH_PROMISE = null;
+function refreshAccessToken() {
+  if (!REFRESH_PROMISE) {
+    REFRESH_PROMISE = (async () => {
+      const refreshToken = localStorage.getItem('sf_refresh_token');
+      if (!refreshToken) return null;
+      try {
+        const r = await fetch(API + '/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+          cache: 'no-store'
+        });
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (!d || !d.token) return null;
+        TOKEN = d.token;
+        localStorage.setItem('sf_token', d.token);
+        if (d.refresh_token) localStorage.setItem('sf_refresh_token', d.refresh_token);
+        return TOKEN;
+      } catch (e) { return null; }
+    })().finally(() => { REFRESH_PROMISE = null; });
+  }
+  return REFRESH_PROMISE;
+}
+async function api(method, path, body, allowRefresh = true) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, {
@@ -1933,6 +1964,9 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
     cache: 'no-store'
   });
+  if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
+    return api(method, path, body, false);
+  }
   const text = await r.text();
   let d = null;
   try { d = text ? JSON.parse(text) : null; } catch (e) { d = null; }
@@ -1947,10 +1981,13 @@ async function api(method, path, body) {
   }
   return d;
 }
-async function apiUp(path, fd) {
+async function apiUp(path, fd, allowRefresh = true) {
   const h = {};
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, { method: 'POST', headers: h, body: fd });
+  if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
+    return apiUp(path, fd, false);
+  }
   const d = await r.json();
   if (!r.ok) throw new Error(d.message || d.error?.message || d.error || 'Erreur upload');
   return d;
@@ -2209,6 +2246,7 @@ async function doLogin() {
     const d = await api('POST', '/auth/login', { email, password });
     TOKEN = d.token; USER = d.profile || d.user;
     localStorage.setItem('sf_token', TOKEN); localStorage.setItem('sf_user', JSON.stringify(USER));
+    if (d.refresh_token) localStorage.setItem('sf_refresh_token', d.refresh_token);
     go('home');
   } catch(e) { showErr(e.message); } finally { setBtn('btn-login', false, 'Se connecter'); }
 }
@@ -2223,6 +2261,7 @@ async function doRegister() {
     await api('POST', '/auth/register', { prenom, nom, ville, email, password, role:'candidat' });
     TOKEN = null; USER = null; PENDING_CV_FILE = null;
     localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_refresh_token');
     localStorage.removeItem('sf_user');
     localStorage.removeItem('sf_profile');
     showRegisterConfirm();
@@ -2253,6 +2292,7 @@ function goLanding() {
 function doLogout() {
   TOKEN = null; USER = null;
   localStorage.removeItem('sf_token');
+  localStorage.removeItem('sf_refresh_token');
   localStorage.removeItem('sf_user');
   localStorage.removeItem('sf_profile');
   goLanding();
@@ -3622,8 +3662,14 @@ async function loadStoredCvText() {
     syncCvJourney();
     document.getElementById('cv-source-text').focus();
   } catch (error) {
-    if (toolState) toolState.textContent = 'Extraction impossible';
-    setFeedback('cv-analysis-feedback', 'Le texte du document n’a pas pu être extrait. Collez-le dans la zone ci-dessous pour continuer.', true);
+    // Une session expiree ou un service indisponible n'est pas un echec
+    // d'extraction : le document n'a meme pas ete lu. Afficher "Extraction
+    // impossible" dans ce cas envoyait l'utilisateur sur une fausse piste.
+    const sessionIssue = error.status === 401 || error.status === 503;
+    if (toolState) toolState.textContent = sessionIssue ? 'Session à rafraîchir' : 'Extraction impossible';
+    setFeedback('cv-analysis-feedback', sessionIssue
+      ? 'Session expirée ou service momentanément indisponible. Rechargez la page puis réessayez.'
+      : (error.message || 'Le texte du document n’a pas pu être extrait. Collez-le dans la zone ci-dessous pour continuer.'), true);
   }
 }
 function renderList(id, values, emptyText) {

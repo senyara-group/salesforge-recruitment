@@ -164,6 +164,7 @@ function showSuccess(text){
  
 function clearStoredSession(){
   localStorage.removeItem('sf_token');
+  localStorage.removeItem('sf_refresh_token');
   localStorage.removeItem('sf_rec_token');
   localStorage.removeItem('sf_user');
   localStorage.removeItem('sf_rec_user');
@@ -193,6 +194,41 @@ function showRoleChoice(){
 function showRoleMessage(text){
   roleMessage.className = 'msg error';
   roleMessage.textContent = frError(text);
+}
+
+// Le refresh_token est indispensable : sans lui l'access_token Supabase expire
+// (1 h par defaut) et tous les appels /api/* repondent 401 jusqu'a reconnexion.
+function storeSession(data){
+  if (data?.token) localStorage.setItem('sf_token', data.token);
+  if (data?.refresh_token) localStorage.setItem('sf_refresh_token', data.refresh_token);
+}
+
+// Les refresh_token Supabase tournent a chaque usage : deux rafraichissements
+// concurrents s'invalideraient mutuellement. On partage donc une seule promesse.
+let refreshPromise = null;
+
+function refreshStoredToken(){
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refreshToken = localStorage.getItem('sf_refresh_token');
+      if (!refreshToken) return null;
+      try {
+        const res = await fetch(`${API}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data?.token) return null;
+        storeSession(data);
+        return data.token;
+      } catch (error) {
+        return null;
+      }
+    })().finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
 }
  
 function socialLogin(provider){
@@ -243,7 +279,7 @@ async function consumeAuthCallback(){
   }
  
   if (token) {
-    localStorage.setItem('sf_token', token);
+    storeSession({ token, refresh_token: hashParams.get('refresh_token') });
     localStorage.setItem('sf_just_confirmed', '1');
     history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
     return;
@@ -263,7 +299,7 @@ async function consumeAuthCallback(){
       showMessage(data.error?.message || data.error || 'Confirmation impossible. Reconnectez-vous.');
       return;
     }
-    localStorage.setItem('sf_token', data.token);
+    storeSession(data);
     if (data.profile) localStorage.setItem('sf_profile', JSON.stringify(data.profile));
     localStorage.setItem('sf_just_confirmed', '1');
     history.replaceState({ sfAuthClean: true }, '', window.location.pathname);
@@ -294,8 +330,8 @@ async function openRoleSpace(){
     return;
   }
  
-  const token = localStorage.getItem('sf_token');
-  if (!token) {
+  let activeToken = localStorage.getItem('sf_token');
+  if (!activeToken) {
     showLogin();
     if (localStorage.getItem('sf_just_confirmed')) {
       showSuccess('Email confirmé. Vous pouvez maintenant vous connecter.');
@@ -308,12 +344,23 @@ async function openRoleSpace(){
  
   try {
     const roleQuery = pendingRole ? `?role=${encodeURIComponent(pendingRole)}` : '';
-    const res = await fetch(`${API}/auth/me${roleQuery}`, {
+    const fetchMe = () => fetch(`${API}/auth/me${roleQuery}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${activeToken}`,
         ...(pendingRole ? { 'X-SF-Role': pendingRole } : {})
       }
     });
+
+    let res = await fetchMe();
+    // Session expiree : on la prolonge et on retente une fois, au lieu de
+    // renvoyer l'utilisateur sur l'ecran de connexion.
+    if (res.status === 401) {
+      const refreshed = await refreshStoredToken();
+      if (refreshed) {
+        activeToken = refreshed;
+        res = await fetchMe();
+      }
+    }
     const profile = await res.json();
     if (res.status === 409 && profile.error === 'ROLE_REQUIRED') {
       showRoleChoice();
@@ -328,7 +375,7 @@ async function openRoleSpace(){
     frame.style.display = 'block';
     localStorage.setItem('sf_profile', JSON.stringify(profile));
     if (profile.role === 'recruteur') {
-      localStorage.setItem('sf_rec_token', token);
+      localStorage.setItem('sf_rec_token', activeToken);
       localStorage.setItem('sf_rec_user', JSON.stringify(profile));
     } else {
       localStorage.setItem('sf_user', JSON.stringify(profile));
@@ -371,6 +418,7 @@ async function openRoleSpace(){
     localStorage.removeItem('sf_onboarding_role');
   } catch (error) {
     localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_refresh_token');
     localStorage.removeItem('sf_pending_role');
     showLogin();
     showMessage('Votre session a expiré. Reconnectez-vous.');
@@ -420,7 +468,7 @@ form.addEventListener('submit', async (event) => {
       showMessage(error);
       return;
     }
-    localStorage.setItem('sf_token', data.token);
+    storeSession(data);
     localStorage.removeItem('sf_pending_role');
     history.replaceState(null, '', window.location.pathname);
     await openRoleSpace();

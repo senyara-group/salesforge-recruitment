@@ -524,9 +524,19 @@ router.get('/cv-text', authMiddleware, async (req, res) => {
   try {
     const current = await ensureCandidateProfile(req.user.id);
     const meta = current.axes?.meta || {};
-    if (!meta.cv_path) return res.status(404).json({ error: 'Aucun CV enregistre' });
+    // Etat metier explicite : aucun CV sur le profil. Ni un probleme
+    // d'authentification, ni une panne.
+    if (!meta.cv_path) return res.status(404).json({ error: 'Aucun CV enregistre', code: 'NO_CV_STORED' });
     const { data, error } = await supabase.storage.from(meta.cv_bucket || CV_BUCKET).download(meta.cv_path);
-    if (error) throw error;
+    if (error) {
+      // Echec de lecture du stockage : panne de service. Ni un 401 (le candidat
+      // est bien authentifie) ni un 400 (la requete est valide). Le detail
+      // Supabase reste dans les logs.
+      console.error('[candidats] telechargement CV impossible', String(error.message || error).slice(0, 300));
+      const failure = new Error('Document momentanement illisible');
+      failure.status = 502;
+      throw failure;
+    }
     const buffer = Buffer.from(await data.arrayBuffer());
     const text = extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
     res.json({

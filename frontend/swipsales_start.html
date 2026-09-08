@@ -250,11 +250,15 @@ form.addEventListener('submit', async (event) => {
       // Confirmation email désactivée côté Supabase : le compte est déjà actif,
       // pas besoin de passer par l'écran d'attente — connexion immédiate.
       localStorage.setItem('sf_token', data.token);
+      // Sans refresh_token, la session du nouveau compte expirerait au bout
+      // d'une heure sans aucun moyen d'etre prolongee.
+      if (data.refresh_token) localStorage.setItem('sf_refresh_token', data.refresh_token);
       localStorage.removeItem('sf_pending_role');
       window.location.href = 'swipsales_app.html';
       return;
     }
     localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_refresh_token');
     localStorage.removeItem('sf_onboarding_role');
     showConfirmMail(email);
   } catch (error) {
