@@ -39,4 +39,6 @@ test('interface #221 consomme le contrat CV V2 et conserve les fallbacks histori
   for (const fallback of ['result.strengths', 'result.clarifications', 'result.questions', 'result.score_global', 'result.current_title']) {
     assert.match(candidate, new RegExp(fallback.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), fallback);
   }
+  assert.match(candidate, /Aucune reformulation proposée pour le moment\./);
+  assert.doesNotMatch(candidate, /Les exemples futurs utiliseront des placeholders/);
 });

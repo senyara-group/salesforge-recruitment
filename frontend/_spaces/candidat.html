@@ -3798,7 +3798,7 @@ function renderCVAnalysis(record) {
     item.append(before, after, method, reason); rewrites.appendChild(item);
   });
   if (!rewrites.children.length) {
-    rewrites.textContent = 'Aucune reformulation proposée pour le moment. Les exemples futurs utiliseront des placeholders du type [X % de l’objectif] ou [X comptes], jamais de chiffres inventés.';
+    rewrites.textContent = 'Aucune reformulation proposée pour le moment.';
   }
 
   showCard('cv-card-keywords', renderKeywords(result.keywords || result.mots_cles));
