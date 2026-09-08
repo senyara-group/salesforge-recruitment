@@ -12,6 +12,26 @@ const authClient = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Client dedie au rafraichissement de session. `persistSession: false` evite de
+// stocker la session de l'appelant dans une instance partagee par toutes les
+// requetes du process.
+const statelessAuthClient = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false } }
+);
+
+// Le client ne recevait que l'access_token : sans refresh_token il n'avait aucun
+// moyen de prolonger la session, et tous les appels /api/* basculaient en 401 des
+// que le JWT Supabase atteignait sa duree de vie (1 h par defaut).
+function sessionPayload(session) {
+  return {
+    token: session?.access_token || null,
+    refresh_token: session?.refresh_token || null,
+    expires_at: session?.expires_at || null,
+  };
+}
+
 const oauthProviders = {
   google: 'google',
 };
@@ -305,7 +325,7 @@ async function signup(req, res) {
 
   res.json({
     message: 'Utilisateur cree',
-    token: data.session?.access_token || null,
+    ...sessionPayload(data.session),
     user: data.user,
     profile: { id: data.user.id, email, role: normalizedRole, ...(roleProfile || {}) },
     userProfileCreated: !userProfileError,
@@ -394,7 +414,7 @@ router.post('/exchange-code', async (req, res) => {
     profile = await hydrateRoleProfile(profile);
     profile = await applyOAuthNames(profile, data.user);
 
-    res.json({ token: data.session.access_token, user: data.user, profile });
+    res.json({ ...sessionPayload(data.session), user: data.user, profile });
   } catch (error) {
     res.status(error.status || 400).json({ error: error.message || error });
   }
@@ -419,12 +439,43 @@ router.post('/login', async (req, res) => {
     return res.status(error.status || 400).json({ error: error.message || 'Connexion impossible' });
   }
 
-  res.json({ token: data.session.access_token, user: data.user, profile });
+  res.json({ ...sessionPayload(data.session), user: data.user, profile });
 
   // Scénarios 04-B/04-C : date de dernière connexion, utilisée pour la réactivation.
   const table = profile?.role === 'recruteur' ? 'recruteurs' : 'candidats';
   touchLastLogin(table, data.user.id).catch(() => {});
   upsertBrevoContact(email, { DERNIERE_CONNEXION: new Date().toISOString() }).catch(() => {});
+});
+
+// Prolonge la session sans redemander les identifiants. Le refresh_token est
+// valide par Supabase lui-meme (cle anon, jamais service_role) : aucun user_id
+// fourni par le client n'entre dans cette verification.
+router.post('/refresh', async (req, res) => {
+  const refreshToken = String(req.body?.refresh_token || '').trim();
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'Refresh token requis', code: 'REFRESH_TOKEN_MISSING' });
+  }
+
+  try {
+    const { data, error } = await statelessAuthClient.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data?.session?.access_token) {
+      // Refresh token revoque, deja consomme ou expire : le client doit se
+      // reconnecter. On ne renvoie pas le detail Supabase.
+      if (error) console.warn('[auth] refresh refuse', String(error.message || error).slice(0, 200));
+      return res.status(401).json({ error: 'Session expiree', code: 'REFRESH_REJECTED' });
+    }
+
+    res.json(sessionPayload(data.session));
+  } catch (error) {
+    console.error('[auth] refresh indisponible', String(error?.message || error).slice(0, 300));
+    res.status(503).json({
+      error: 'Rafraichissement de session temporairement indisponible',
+      code: 'AUTH_UNAVAILABLE',
+    });
+  }
 });
 
 router.get('/me', authMiddleware, async (req, res) => {
