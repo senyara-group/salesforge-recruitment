@@ -11,15 +11,17 @@ function completeAnalysis(overrides = {}) {
   };
 }
 
-test('contrat CV V2 est borné, explicable et conserve les constantes #219', () => {
+test('contrat CV V2 reste complet, explicable et strictement borné', () => {
   const prompt = cvAnalysisPrompt(6000);
   assert.match(prompt, /score global est la moyenne arrondie/i);
   assert.match(prompt, /ne recommande aucune offre/i);
   assert.match(prompt, /n'invente jamais chiffre/i);
   assert.match(prompt, /rewrites <= 6/);
   assert.match(prompt, /priorities <= 3/);
-  assert.match(prompt, /ne dépasse pas 6600 caractères/);
-  assert.equal(CV_MAX_TOKENS, 3200);
+  assert.match(prompt, /ne dépasse pas 6300 caractères/);
+  assert.match(prompt, /diagnostic fait 3 à 4 phrases courtes et <= 500 caractères/i);
+  assert.match(prompt, /suggestion <= 260/);
+  assert.equal(CV_MAX_TOKENS, 5000);
   assert.equal(CV_MIN_SOURCE_CHARS, 200);
 });
 
@@ -67,12 +69,18 @@ test('ancien historique reste normalisable', () => {
   assert.equal(result.improved_cv, 'CV historique');
 });
 
-test('une réponse JSON valide proche du plafond reste analysable', async () => {
-  const json = JSON.stringify(completeAnalysis({ improved_cv: 'C'.repeat(9000) }));
-  const result = await callAi({ json:true, maxTokens:CV_MAX_TOKENS, messages:[], providerCall:async()=>({ text:json, meta:{ stop_reason:'end_turn', output_tokens:3180, response_chars:json.length } }) });
-  assert.equal(result.improved_cv.length, 9000);
+test('une réponse JSON valide plus longue que l’ancien plafond reste analysable', async () => {
+  const json = JSON.stringify(completeAnalysis({ improved_cv: 'C'.repeat(12000) }));
+  const result = await callAi({ json:true, maxTokens:CV_MAX_TOKENS, messages:[], providerCall:async()=>({ text:json, meta:{ stop_reason:'end_turn', output_tokens:4400, response_chars:json.length } }) });
+  assert.equal(result.improved_cv.length, 12000);
 });
 
-test('une troncature max_tokens conserve les diagnostics sans contenu', async () => {
-  await assert.rejects(() => callAi({ json:true, maxTokens:CV_MAX_TOKENS, messages:[], providerCall:async()=>({ text:'{"score":{"global":50', meta:{ stop_reason:'max_tokens', input_tokens:1321, output_tokens:CV_MAX_TOKENS, response_chars:21 } }) }), (error) => error.code === 'AI_INVALID_RESPONSE' && error.diagnostics.stage === 'json_parse' && error.diagnostics.stop_reason === 'max_tokens' && !JSON.stringify(error.diagnostics).includes('global'));
+test('régression production : JSON tronqué à 3200 tokens reste rejeté avec diagnostics', async () => {
+  const truncated = '{"score":{"global":50},"rewrites":[' + '{"original":"A","suggestion":"B"},'.repeat(280);
+  await assert.rejects(() => callAi({ json:true, maxTokens:3200, messages:[], providerCall:async()=>({ text:truncated, meta:{ stop_reason:'max_tokens', input_tokens:1787, output_tokens:3200, response_chars:truncated.length } }) }), (error) => error.code === 'AI_INVALID_RESPONSE' && error.diagnostics.stage === 'json_parse' && error.diagnostics.stop_reason === 'max_tokens' && error.diagnostics.output_tokens === 3200 && !JSON.stringify(error.diagnostics).includes('suggestion'));
+});
+
+test('stop_reason max_tokens refuse aussi un JSON syntaxiquement fermé potentiellement partiel', async () => {
+  const json = JSON.stringify(completeAnalysis());
+  await assert.rejects(() => callAi({ json:true, maxTokens:CV_MAX_TOKENS, messages:[], providerCall:async()=>({ text:json, meta:{ stop_reason:'max_tokens', input_tokens:1787, output_tokens:CV_MAX_TOKENS, response_chars:json.length } }) }), (error) => error.code === 'AI_INVALID_RESPONSE' && error.diagnostics.stage === 'json_parse' && error.diagnostics.stop_reason === 'max_tokens' && error.diagnostics.output_tokens === CV_MAX_TOKENS);
 });

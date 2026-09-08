@@ -53,6 +53,7 @@ mockModule('../utils/profiles', { ensureCandidateProfile: async (id) => ({ id, t
 mockModule('../utils/aiAccess', { assertAiAccess: async () => ({ plan:'carriere_coaching' }), configuredPlans: (feature) => new Set(feature === 'cv' ? ['carriere', 'carriere_coaching'] : ['carriere_coaching']), getAiPlan: async () => 'carriere_coaching' });
 let providerCalls = 0;
 let providerValue = { strengths: [], clarifications: [], priorities: [], rewrites: [], questions: [], improved_cv: 'CV fictif amélioré' };
+let providerError = null;
 let quotaMode = 'exhausted';
 let releaseCalls = 0;
 let finalizeCalls = 0;
@@ -60,6 +61,7 @@ let failFinalize = false;
 mockModule('../utils/aiProvider', {
   callAi: async () => {
     providerCalls += 1;
+    if (providerError) throw providerError;
     return {
       value: providerValue,
       meta: { input_tokens: 100, output_tokens: 50 },
@@ -158,6 +160,24 @@ test('extraction CV sous 200 caractères bloque avant quota et provider', async 
   assert.match(response.payload.error, /200 caractères/i);
   assert.equal(providerCalls, 0); assert.equal(finalizeCalls, 0);
   quotaMode = 'exhausted';
+});
+
+test('JSON CV tronqué à 3200 tokens ne persiste rien, ne finalise pas et libère la réservation', async () => {
+  quotaMode = 'available'; providerCalls = 0; releaseCalls = 0; finalizeCalls = 0; operations.length = 0;
+  providerError = Object.assign(new Error('invalid response'), {
+    code: 'AI_INVALID_RESPONSE', status: 502,
+    diagnostics: { stage:'json_parse', stop_reason:'max_tokens', input_tokens:1787, output_tokens:3200, response_chars:9974 },
+  });
+  const before = rows.ai_cv_analyses.length;
+  const response = await invoke('post', '/cv-analyses', { body:{ source_text:'CV candidat entièrement fictif. '.repeat(8) } });
+  assert.equal(response.statusCode, 502);
+  assert.equal(response.payload.code, 'AI_INVALID_RESPONSE');
+  assert.equal(providerCalls, 1);
+  assert.equal(rows.ai_cv_analyses.length, before);
+  assert.equal(operations.some((operation) => operation.table === 'ai_cv_analyses' && operation.operation === 'insert'), false);
+  assert.equal(finalizeCalls, 0);
+  assert.equal(releaseCalls, 1);
+  providerError = null; quotaMode = 'exhausted';
 });
 
 test('quota Coach épuisé bloque la route avant tout appel provider', async () => {

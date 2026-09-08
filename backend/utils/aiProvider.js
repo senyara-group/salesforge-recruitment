@@ -141,6 +141,21 @@ async function callAi({
       const value = content.slice(0, MAX_RESPONSE_CHARS).trim();
       return returnMeta ? { value, meta: providerMeta } : value;
     }
+    if (providerMeta?.stop_reason === 'max_tokens') {
+      const invalid = new Error('Le service IA a atteint sa limite avant de confirmer une réponse complète');
+      invalid.status = 502;
+      invalid.code = 'AI_INVALID_RESPONSE';
+      invalid.diagnostics = {
+        stage: 'json_parse',
+        schema_stage: null,
+        stop_reason: 'max_tokens',
+        input_tokens: providerMeta?.input_tokens ?? null,
+        output_tokens: providerMeta?.output_tokens ?? null,
+        parse_error: 'Generation stopped at max_tokens before completion',
+        ...jsonShapeHints(content),
+      };
+      throw invalid;
+    }
     try {
       const value = parseJsonResponse(content);
       return returnMeta ? { value, meta: providerMeta } : value;
