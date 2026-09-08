@@ -1731,7 +1731,8 @@ button,input,textarea,select{font-family:inherit}
   </div>
 </div>
 
-<!-- COACH COMMERCIAL -->
+<!-- COACH COMMERCIAL — contrat actuel: /api/assistant (assistant.js), modes interview|simulation|pitch.
+     Ne pas brancher l’UI sur /api/coaching (coaching.js / m1-m2-m3) sans contrat Codex final. -->
 <div id="p-coach" class="page">
   <div class="sec coach-layout">
     <div class="page-heading"><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach commercial</h1><p class="page-intro">Entraînez-vous à l’entretien, aux objections et au pitch. Compteur mensuel, jamais quotidien. Ce coach n’est pas un recruteur réel.</p></div><div class="cv-toolbar"><span class="coach-quota-chip" id="coach-quota-chip" hidden></span><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div></div>
@@ -3782,7 +3783,9 @@ function renderCVAnalysis(record) {
     const reason = document.createElement('small'); reason.textContent = rewrite.reason || '';
     item.append(before, after, reason); rewrites.appendChild(item);
   });
-  if (!rewrites.children.length) rewrites.textContent = 'Aucune reformulation proposée pour le moment.';
+  if (!rewrites.children.length) {
+    rewrites.textContent = 'Aucune reformulation proposée pour le moment. Les exemples futurs utiliseront des placeholders du type [X % de l’objectif] ou [X comptes], jamais de chiffres inventés.';
+  }
 
   showCard('cv-card-keywords', renderKeywords(result.keywords || result.mots_cles));
   showCard('cv-card-alerts', renderAlerts(result.alerts || result.warning_signals || result.signaux));
@@ -3887,6 +3890,7 @@ function selectCoachMode(button, mode) {
   COACH_MODE = mode; document.querySelectorAll('.coach-starters button').forEach((item) => item.classList.remove('on')); button.classList.add('on');
   document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE || !COACH_ALLOWED;
 }
+// Modes API /assistant uniquement (ne pas substituer par m1/m2/m3 de /coaching).
 const COACH_OPENERS = {
   interview: 'Aide-moi à préparer un entretien. Commence par me poser la question la plus utile pour cadrer la préparation.',
   pitch: 'Aide-moi à améliorer mon pitch de résultats chiffrés. Commence par me demander le contexte et le public visé.',
