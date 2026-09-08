@@ -1104,19 +1104,30 @@ button,input,textarea,select{font-family:inherit}
 <!-- HOME -->
 <div id="p-home" class="page">
   <div class="home-hero">
-    <div class="page-kicker">Tableau de bord</div>
-    <h1 class="sf page-title">Votre activité</h1>
+    <div class="page-kicker">Espace candidat</div>
+    <h1 class="sf page-title" id="home-title">Votre activité</h1>
     <p class="page-intro">Suivez vos démarches et concentrez-vous sur la prochaine action utile.</p>
+    <div class="kpi-grid home-kpi-grid" aria-label="Indicateurs">
+      <div class="kpi kpi-link kpi-tone-blue" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
+      <div class="kpi kpi-link kpi-tone-green" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
+      <div class="kpi kpi-tone-amber"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
+      <div class="kpi kpi-tone-slate"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
+    </div>
     <div class="priority-tools" aria-label="Outils prioritaires">
       <article class="priority-card priority-card-live" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
         <div class="priority-icon" aria-hidden="true">CV</div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-cv-feature-state">Optimiseur de CV</div><h2 class="sf">Améliorer mon CV</h2><p>Analysez votre CV pour obtenir des recommandations ciblées et des propositions de reformulation.</p><span class="priority-document" id="home-cv-status">Aucun CV importé</span></div>
-        <span class="priority-action">Ouvrir l’optimiseur</span>
+        <span class="priority-action btn bp bsm">Ouvrir l’optimiseur</span>
       </article>
       <article class="priority-card priority-card-live" onclick="go('coach')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('coach')}">
         <div class="priority-icon" aria-hidden="true">IA</div>
         <div class="priority-copy"><div class="feature-status feature-status-live" id="home-coach-feature-state">Coach commercial</div><h2 class="sf">Préparer mes échanges</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p><span class="priority-document" id="home-coach-status">Démarrer une conversation</span></div>
-        <span class="priority-action">Ouvrir le coach</span>
+        <span class="priority-action btn bp bsm">Ouvrir le coach</span>
+      </article>
+      <article class="priority-card priority-card-live" onclick="go('swipe')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('swipe')}">
+        <div class="priority-icon" aria-hidden="true">JOB</div>
+        <div class="priority-copy"><div class="feature-status feature-status-live">Opportunités</div><h2 class="sf">Explorer les offres</h2><p>Parcourez les offres sales compatibles et candidatez quand le match est clair.</p><span class="priority-document">Swipe &amp; candidature</span></div>
+        <span class="priority-action btn bp bsm">Voir les opportunités</span>
       </article>
     </div>
     <div class="photo-nudge" id="photo-nudge" style="display:none">
@@ -1139,18 +1150,12 @@ button,input,textarea,select{font-family:inherit}
         </svg>
         <div class="score-num"><div class="score-v sf" id="home-score">—</div><div class="score-d">/100</div></div>
       </div>
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;font-weight:700">ADN Commercial</div>
-        <div class="sf" id="home-score-type" style="font-size:15px;font-weight:800;margin-top:2px">Passer le test ADN</div>
-        <div id="home-score-rank" style="font-size:12px;color:var(--b);font-weight:600;margin-top:3px">Cliquez pour commencer</div>
+      <div class="score-copy">
+        <div class="score-eyebrow">ADN Commercial</div>
+        <div class="sf score-type" id="home-score-type">Passer le test ADN</div>
+        <div class="score-rank" id="home-score-rank">Cliquez pour commencer</div>
       </div>
       <svg width="13" height="13" viewBox="0 0 24 24" style="stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi kpi-link" onclick="go('messages')"><div class="kpi-l">Matchs</div><div class="kpi-v sf" id="kpi-m">—</div><div class="kpi-t tf" id="kpi-mt">—</div></div>
-      <div class="kpi kpi-link" onclick="go('candidatures')"><div class="kpi-l">Candidatures</div><div class="kpi-v sf" id="kpi-c">—</div><div class="kpi-t tf" id="kpi-ct">—</div></div>
-      <div class="kpi"><div class="kpi-l">Série coach</div><div class="kpi-v sf" id="kpi-s">—</div><div class="kpi-t tf">Jours</div></div>
-      <div class="kpi"><div class="kpi-l">Salaire marché</div><div class="kpi-v sf" id="kpi-sal">—</div><div class="kpi-t tf">Estimation IA</div></div>
     </div>
   </div>
   <div class="sec">
@@ -2313,6 +2318,8 @@ async function loadHome() {
   if (!USER) return;
   const greetEl = document.getElementById('topbar-greet');
   if (greetEl && USER.prenom) greetEl.innerHTML = `Bonjour, <b>${esc(USER.prenom)}</b>`;
+  const homeTitle = document.getElementById('home-title');
+  if (homeTitle) homeTitle.textContent = USER.prenom ? `Bonjour ${USER.prenom}` : 'Votre activité';
   try {
     const [profil, stats, cands] = await Promise.all([
       api('GET', '/candidats/profil'),

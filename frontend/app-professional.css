@@ -1230,3 +1230,100 @@ body.auth .shell, body.product-gateway .shell {
 
 /* Desktop messages layout is owned by embedded space CSS (.chat-panel.on / placeholder.hidden).
    Keep DS polish only — do not redeclare the split-pane grid here. */
+
+/* ============================================================
+   Pass 3 — showcase alignment (no invented metrics / charts)
+   ============================================================ */
+.topbar-greet {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.topbar-greet b { font-weight: 800; }
+
+.home-kpi-grid,
+.dash-kpi-grid {
+  margin: 18px 0 16px;
+}
+.kpi {
+  position: relative;
+  overflow: hidden;
+  background: var(--w);
+  border: 1px solid var(--bd);
+}
+.kpi-tone-blue { box-shadow: inset 3px 0 0 var(--b); }
+.kpi-tone-green { box-shadow: inset 3px 0 0 var(--g); }
+.kpi-tone-amber { box-shadow: inset 3px 0 0 var(--a); }
+.kpi-tone-slate { box-shadow: inset 3px 0 0 #98a2b3; }
+
+.priority-tools {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.priority-card {
+  grid-template-rows: auto 1fr auto;
+  align-content: start;
+}
+.priority-card .priority-action.btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 4px;
+  pointer-events: none;
+}
+.priority-card-live:hover .priority-action.btn {
+  background: var(--b2);
+}
+
+.score-copy { flex: 1; min-width: 0; }
+.score-eyebrow {
+  font-size: 10px; color: var(--mu); text-transform: uppercase;
+  letter-spacing: .7px; font-weight: 700;
+}
+.score-type { font-size: 15px; font-weight: 800; margin-top: 2px; }
+.score-rank { font-size: 12px; color: var(--b); font-weight: 600; margin-top: 3px; }
+
+.dash-panels {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 1024px) {
+  .dash-panels {
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+#p-dashboard .cand-recue,
+#cands-recues .cand-recue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--w);
+}
+
+/* Coach feedback = conseils look (existing is-feedback only) */
+.coach-message.is-feedback {
+  width: min(92%, 720px);
+}
+.coach-message.is-feedback .coach-bubble {
+  border: 1px solid #abefc6;
+  background: var(--gs);
+  color: var(--ink2);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.coach-message.is-feedback .coach-message-kind::before {
+  content: '✓ ';
+}
+
+@media (max-width: 899px) {
+  .priority-tools { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 900px) and (max-width: 1099px) {
+  .priority-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .priority-tools > :last-child { grid-column: 1 / -1; }
+}
