@@ -160,9 +160,10 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .cv-dropzone .btn { margin-top: 4px; }
 .cv-file-chip {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;
-  border-radius: 999px; background: var(--gs); color: var(--g);
+  border-radius: 999px; background: #eef1f5; color: var(--ink3);
   padding: 5px 10px; font-size: 11px; font-weight: 750;
 }
+.cv-file-chip.is-ready { background: var(--gs); color: var(--g); }
 .cv-dropzone-ico {
   display: grid; width: 48px; height: 48px; place-items: center;
   border-radius: 12px; background: var(--w); border: 1px solid var(--bd); color: var(--b);
@@ -784,4 +785,24 @@ body.auth .shell, body.product-gateway .shell {
   .cv-journey { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ai-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ai-fields-wide { grid-column: 1 / -1; }
+}
+
+/* Recruiter settings rows + logo tag */
+.logo-tag {
+  margin-left: 8px; border-radius: 999px; background: var(--bs); color: var(--b);
+  padding: 3px 8px; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+}
+#p-settings > .sec > div[style] {
+  border-radius: 12px !important;
+  border-color: var(--bd) !important;
+  box-shadow: var(--sh-sm);
+}
+#p-dashboard .dash-actions .btn,
+#p-offres .offer-actions .btn {
+  border-radius: 8px;
+}
+#p-messages #chat-placeholder {
+  border: 1px dashed var(--bd2);
+  border-radius: 12px;
+  background: #fafbfc;
 }

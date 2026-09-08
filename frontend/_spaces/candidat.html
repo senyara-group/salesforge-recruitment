@@ -3362,13 +3362,17 @@ function renderProfileCV(p) {
   const toolName = document.getElementById('cv-tool-name');
   if (toolName) toolName.textContent = name || (has ? 'CV importé' : 'Aucun CV importé');
   const toolUpload = document.getElementById('cv-tool-upload');
-  if (toolUpload) toolUpload.textContent = has ? 'Remplacer mon CV' : 'Importer mon CV';
+  if (toolUpload) toolUpload.textContent = 'Choisir un fichier';
+  const toolReplace = document.getElementById('cv-tool-replace');
+  if (toolReplace) toolReplace.disabled = !has;
   const toolOpen = document.getElementById('cv-tool-open');
   if (toolOpen) toolOpen.disabled = !PROFILE_CV_URL;
   const toolUse = document.getElementById('cv-tool-use');
   if (toolUse) toolUse.disabled = !has;
   const toolDelete = document.getElementById('cv-tool-delete');
   if (toolDelete) toolDelete.disabled = !has;
+  if (toolName && has) toolName.classList.add('is-ready');
+  else if (toolName) toolName.classList.remove('is-ready');
 }
 async function loadAIHighlights() {
   try {
