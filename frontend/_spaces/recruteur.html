@@ -1383,6 +1383,7 @@ let CAND_DECK_FETCHING_MORE = false;
 let CAND_DECK_LOAD_GEN = 0;
 let CAND_DECK_ABORT = null;
 const CAND_DECK_PREFETCH_REMAINING = 4;
+const CAND_DECK_EMPTY_PREFETCH_MAX = 4;
 let ACTIVE_THREAD = null;
 let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
@@ -1977,24 +1978,35 @@ async function maybePrefetchCandidates() {
   const cursor = CAND_DECK_CURSOR;
   CAND_DECK_FETCHING_MORE = true;
   try {
-    const page = await fetchCandidateDeckPage(cursor);
-    if (gen !== CAND_DECK_LOAD_GEN) return;
-    const mapped = page.batch.filter(c => !isSeenCandidate(c));
-    const seen = new Set(CANDS.map(c => String(c.id)));
-    mapped.forEach(c => {
-      if (!seen.has(String(c.id))) {
-        CANDS.push(c);
-        seen.add(String(c.id));
-      }
-    });
-    CAND_DECK_CURSOR = page.next_cursor;
-    CAND_DECK_HAS_MORE = page.has_more;
-    renderDeck();
+    let continuation = cursor;
+    let emptyPages = 0;
+    let added = 0;
+    do {
+      const page = await fetchCandidateDeckPage(continuation);
+      if (gen !== CAND_DECK_LOAD_GEN) return;
+      if (page.has_more && page.next_cursor === continuation) return;
+      const seenIds = new Set(CANDS.map(c => String(c.id)));
+      const seenUsers = new Set(CANDS.map(c => String(c.user_id || '')).filter(Boolean));
+      page.batch.filter(c => !isSeenCandidate(c)).forEach(c => {
+        const userId = String(c.user_id || '');
+        if (!seenIds.has(String(c.id)) && (!userId || !seenUsers.has(userId))) {
+          CANDS.push(c);
+          seenIds.add(String(c.id));
+          if (userId) seenUsers.add(userId);
+          added += 1;
+        }
+      });
+      CAND_DECK_CURSOR = page.next_cursor;
+      CAND_DECK_HAS_MORE = page.has_more;
+      continuation = page.next_cursor;
+      emptyPages = added ? emptyPages : emptyPages + 1;
+    } while (!added && CAND_DECK_HAS_MORE && continuation && emptyPages < CAND_DECK_EMPTY_PREFETCH_MAX);
   } catch (e) {
     // Prefetch soft-fail
   } finally {
     if (gen === CAND_DECK_LOAD_GEN) CAND_DECK_FETCHING_MORE = false;
   }
+  if (gen === CAND_DECK_LOAD_GEN) renderDeck();
 }
 
 async function loadCandidates() {
@@ -2012,7 +2024,14 @@ async function loadCandidates() {
   try {
     const page = await fetchCandidateDeckPage(null, CAND_DECK_ABORT ? { signal: CAND_DECK_ABORT.signal } : null);
     if (gen !== CAND_DECK_LOAD_GEN) return;
-    CANDS = page.batch.filter(c => !isSeenCandidate(c));
+    const firstPageUsers = new Set();
+    CANDS = page.batch.filter(c => {
+      if (isSeenCandidate(c)) return false;
+      const userId = String(c.user_id || '');
+      if (userId && firstPageUsers.has(userId)) return false;
+      if (userId) firstPageUsers.add(userId);
+      return true;
+    });
     CAND_DECK_CURSOR = page.next_cursor;
     CAND_DECK_HAS_MORE = page.has_more;
     renderDeck();

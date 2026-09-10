@@ -13,13 +13,9 @@ const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
 const {
   parseCandidateDeckQuery,
-  encodeCursor,
-  candidateMatchesSkills,
   applySupabaseCandidateDeckFilters,
   applySupabaseScoreCursor,
-  SKILLS_FILL_BATCH_FACTOR,
-  SKILLS_FILL_MAX_ROUNDS,
-  MAX_LIMIT,
+  fetchCandidateDeckRows,
 } = require('../utils/candidateDeckQuery');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
@@ -31,6 +27,7 @@ const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const EBOOKS_BUCKET = process.env.EBOOKS_BUCKET || 'ebooks';
 const CANDIDATE_DECK_SELECT = [
   'id', 'user_id', 'prenom', 'nom', 'titre', 'score_adn', 'axes',
+  'avatar_url', 'cv_url', 'motivation_url',
   'target_job_types', 'sales_style', 'years_experience',
   'desired_contracts', 'sectors', 'tools', 'methodologies',
   'availability', 'customer_types',
@@ -906,72 +903,27 @@ function mapCandidateDeckCard(profile, matching) {
   };
 }
 
-async function fetchCandidateDeckRows(filters, { seenIds, excludeUserId }) {
-  const need = filters.limit + 1;
-  const collected = [];
-  let cursor = filters.cursor;
-  let rounds = 0;
-  let exhausted = false;
-  const skillsActive = filters.skills.length > 0;
-
-  while (collected.length < need && rounds < (skillsActive ? SKILLS_FILL_MAX_ROUNDS : 1) && !exhausted) {
-    rounds += 1;
-    const remaining = need - collected.length;
-    const batchSize = skillsActive
-      ? Math.min(MAX_LIMIT, Math.max(remaining, remaining * SKILLS_FILL_BATCH_FACTOR))
-      : remaining;
-
-    let query = supabase.from('candidats').select(CANDIDATE_DECK_SELECT);
-    query = applySupabaseCandidateDeckFilters(query, filters);
-    if (excludeUserId) query = query.neq('user_id', excludeUserId);
-    if (seenIds.length) {
-      const inList = `(${seenIds.join(',')})`;
-      query = query.not('id', 'in', inList).not('user_id', 'in', inList);
-    }
-    query = applySupabaseScoreCursor(query, cursor);
-    query = query
-      .order('score_adn', { ascending: false, nullsFirst: false })
-      .order('id', { ascending: false })
-      .limit(batchSize);
-
-    const { data, error } = await query;
-    if (error) {
-      const err = new Error(error.message || error);
-      err.status = 400;
-      throw err;
-    }
-    const rows = data || [];
-    if (!rows.length) {
-      exhausted = true;
-      break;
-    }
-
-    for (const row of rows) {
-      if (skillsActive && !candidateMatchesSkills(row, filters.skills)) continue;
-      collected.push(row);
-      if (collected.length >= need) break;
-    }
-
-    const lastRaw = rows[rows.length - 1];
-    cursor = lastRaw
-      ? {
-        phase: lastRaw.score_adn != null && lastRaw.score_adn !== '' ? 's' : 'n',
-        score_adn: lastRaw.score_adn != null && lastRaw.score_adn !== '' ? Number(lastRaw.score_adn) : null,
-        id: String(lastRaw.id),
-      }
-      : null;
-    if (rows.length < batchSize) exhausted = true;
-    if (!skillsActive) break;
+async function fetchCandidateDeckBatch(filters, cursor, batchSize, { seenIds, excludeUserId }) {
+  let query = supabase.from('candidats').select(CANDIDATE_DECK_SELECT);
+  query = applySupabaseCandidateDeckFilters(query, filters);
+  if (excludeUserId) query = query.neq('user_id', excludeUserId);
+  if (seenIds.length) {
+    const inList = `(${seenIds.join(',')})`;
+    query = query.not('id', 'in', inList).not('user_id', 'in', inList);
   }
+  query = applySupabaseScoreCursor(query, cursor);
+  query = query
+    .order('score_adn', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .limit(batchSize);
 
-  const hasMore = collected.length > filters.limit || (skillsActive && !exhausted && collected.length >= filters.limit);
-  const page = collected.slice(0, filters.limit);
-  const last = page[page.length - 1];
-  return {
-    page,
-    next_cursor: hasMore && last ? encodeCursor(last) : null,
-    has_more: Boolean(hasMore && last),
-  };
+  const { data, error } = await query;
+  if (error) {
+    const err = new Error(error.message || error);
+    err.status = 400;
+    throw err;
+  }
+  return data || [];
 }
 
 router.get('/deck', authMiddleware, requireRecruiterPlan, async (req, res) => {
@@ -982,6 +934,10 @@ router.get('/deck', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { page, next_cursor, has_more } = await fetchCandidateDeckRows(filters, {
       seenIds: seenCandidateIds,
       excludeUserId: req.user.id,
+      fetchBatch: (cursor, batchSize) => fetchCandidateDeckBatch(filters, cursor, batchSize, {
+        seenIds: seenCandidateIds,
+        excludeUserId: req.user.id,
+      }),
     });
 
     // Enrichissement + compatibilityScore uniquement sur la page retenue.

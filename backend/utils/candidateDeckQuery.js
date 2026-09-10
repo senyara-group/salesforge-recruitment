@@ -15,6 +15,11 @@ const MIN_YEARS = 0;
 const MAX_YEARS = 80;
 const SKILLS_FILL_BATCH_FACTOR = 3;
 const SKILLS_FILL_MAX_ROUNDS = 6;
+const MAX_CURSOR_LENGTH = 256;
+const MAX_MATCHING_LENGTH = 2048;
+const MAX_MATCHING_KEYS = 7;
+const MATCHING_KEYS = Object.freeze(['closing', 'cycle', 'saas', 'resilience', 'salestech', 'outbound', 'drive']);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function httpError(message, code, status = 400) {
   const error = new Error(message);
@@ -25,10 +30,10 @@ function httpError(message, code, status = 400) {
 
 function splitCsv(raw) {
   if (raw == null || raw === '') return [];
-  return String(raw)
+  return [...new Set(String(raw)
     .split(',')
     .map((part) => normalizeToken(part))
-    .filter(Boolean);
+    .filter(Boolean))];
 }
 
 function parseLimit(raw) {
@@ -86,14 +91,17 @@ function encodeCursor(row) {
 function decodeCursor(raw) {
   if (raw == null || raw === '') return null;
   try {
+    if (typeof raw !== 'string' || raw.length > MAX_CURSOR_LENGTH) throw new Error('invalid length');
     const parsed = JSON.parse(Buffer.from(String(raw), 'base64url').toString('utf8'));
-    if (!parsed || typeof parsed !== 'object' || !parsed.i) {
-      throw new Error('missing id');
+    if (!parsed || typeof parsed !== 'object' || !['s', 'n'].includes(parsed.p)) throw new Error('invalid phase');
+    if (typeof parsed.i !== 'string' || !UUID_PATTERN.test(parsed.i)) throw new Error('invalid id');
+    if (parsed.p === 's' && (!Number.isFinite(parsed.s) || parsed.s < MIN_SCORE || parsed.s > MAX_SCORE)) {
+      throw new Error('invalid score');
     }
-    const scored = parsed.p === 's' || (parsed.p == null && parsed.s != null);
+    if (parsed.p === 'n' && parsed.s !== null) throw new Error('invalid null phase');
     return {
-      phase: scored ? 's' : 'n',
-      score_adn: scored ? Number(parsed.s) : null,
+      phase: parsed.p,
+      score_adn: parsed.p === 's' ? Number(parsed.s) : null,
       id: String(parsed.i),
     };
   } catch {
@@ -109,9 +117,17 @@ function parseCandidateDeckQuery(query = {}) {
   let matching = {};
   if (query.matching != null && query.matching !== '') {
     try {
+      if (typeof query.matching === 'string' && query.matching.length > MAX_MATCHING_LENGTH) throw new Error('too large');
       matching = typeof query.matching === 'string' ? JSON.parse(query.matching) : query.matching;
       if (!matching || typeof matching !== 'object' || Array.isArray(matching)) {
         throw new Error('invalid');
+      }
+      const entries = Object.entries(matching);
+      if (entries.length > MAX_MATCHING_KEYS) throw new Error('too many keys');
+      for (const [key, value] of entries) {
+        if (!MATCHING_KEYS.includes(key) || !Number.isFinite(value) || value < 0 || value > 100) {
+          throw new Error('invalid matching criterion');
+        }
       }
     } catch {
       throw httpError('matching invalide', 'CANDIDATE_DECK_MATCHING_INVALID');
@@ -296,6 +312,77 @@ function applySupabaseScoreCursor(query, cursor) {
   );
 }
 
+function cursorFromRow(row) {
+  return {
+    phase: row.score_adn != null && row.score_adn !== '' ? 's' : 'n',
+    score_adn: row.score_adn != null && row.score_adn !== '' ? Number(row.score_adn) : null,
+    id: String(row.id),
+  };
+}
+
+/**
+ * Scan borné d'une page skills. Le curseur pointe toujours vers la dernière
+ * ligne réellement inspectée. Le scan s'arrête au `limit`e match : aucune ligne
+ * non inspectée (et donc aucun match non retourné) ne peut être sautée.
+ */
+async function fetchCandidateDeckRows(filters, {
+  fetchBatch,
+  seenIds = [],
+  excludeUserId = null,
+} = {}) {
+  if (typeof fetchBatch !== 'function') throw new TypeError('fetchBatch requis');
+  const collected = [];
+  const seen = new Set(seenIds.map(String));
+  const pageUserIds = new Set();
+  const skillsActive = filters.skills.length > 0;
+  const maxRounds = skillsActive ? SKILLS_FILL_MAX_ROUNDS : 1;
+  let scanCursor = filters.cursor;
+  let exhausted = false;
+  let rounds = 0;
+
+  while (collected.length < filters.limit && rounds < maxRounds && !exhausted) {
+    rounds += 1;
+    const remaining = filters.limit - collected.length;
+    const batchSize = skillsActive
+      ? Math.min(MAX_LIMIT, Math.max(remaining + 1, (remaining + 1) * SKILLS_FILL_BATCH_FACTOR))
+      : remaining + 1;
+    const rows = await fetchBatch(scanCursor, batchSize) || [];
+    if (!rows.length) {
+      exhausted = true;
+      break;
+    }
+
+    let pageFilled = false;
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index];
+      scanCursor = cursorFromRow(row);
+      const duplicateUser = row.user_id && pageUserIds.has(String(row.user_id));
+      const excluded = (excludeUserId && String(row.user_id) === String(excludeUserId))
+        || seen.has(String(row.id))
+        || seen.has(String(row.user_id));
+      if (!excluded && !duplicateUser && candidateMatchesSkills(row, filters.skills)) {
+        collected.push(row);
+        if (row.user_id) pageUserIds.add(String(row.user_id));
+      }
+      if (collected.length >= filters.limit) {
+        pageFilled = true;
+        if (index === rows.length - 1 && rows.length < batchSize) exhausted = true;
+        break;
+      }
+    }
+
+    if (pageFilled) break;
+    if (rows.length < batchSize) exhausted = true;
+  }
+
+  const hasMore = !exhausted && Boolean(scanCursor);
+  return {
+    page: collected,
+    next_cursor: hasMore ? encodeCursor({ id: scanCursor.id, score_adn: scanCursor.score_adn }) : null,
+    has_more: hasMore,
+  };
+}
+
 module.exports = {
   DEFAULT_LIMIT,
   MAX_LIMIT,
@@ -312,4 +399,6 @@ module.exports = {
   paginateCandidateDeck,
   applySupabaseCandidateDeckFilters,
   applySupabaseScoreCursor,
+  fetchCandidateDeckRows,
+  MATCHING_KEYS,
 };

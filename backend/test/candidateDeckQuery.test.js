@@ -11,9 +11,55 @@ const {
   paginateCandidateDeck,
   applySupabaseCandidateDeckFilters,
   applySupabaseScoreCursor,
+  fetchCandidateDeckRows,
+  compareCandidatesByScore,
+  isAfterScoreCursor,
   DEFAULT_LIMIT,
   MAX_LIMIT,
 } = require('../utils/candidateDeckQuery');
+
+function uuid(value) {
+  return `00000000-0000-4000-8000-${Number(value).toString(16).padStart(12, '0')}`;
+}
+
+function candidateAt(position, total, { skill = false, score = 80, userId } = {}) {
+  return {
+    id: uuid(total - position + 1),
+    user_id: userId || uuid(total + position),
+    score_adn: score,
+    axes: { meta: { competences: skill ? { Vente: ['RareSkill'] } : {} } },
+    sectors: ['SaaS'],
+  };
+}
+
+function inMemoryBatchFetcher(rows, filters) {
+  const dbFilters = { ...filters, skills: [] };
+  return async (cursor, limit) => rows
+    .filter((row) => candidateMatchesDeckFilters(row, dbFilters))
+    .sort(compareCandidatesByScore)
+    .filter((row) => isAfterScoreCursor(row, cursor))
+    .slice(0, limit);
+}
+
+async function collectFlow(rows, rawQuery, options = {}, maxPages = 100) {
+  const base = parseCandidateDeckQuery(rawQuery);
+  const all = [];
+  const pages = [];
+  let cursor = base.cursor;
+  for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
+    const filters = { ...base, cursor };
+    const result = await fetchCandidateDeckRows(filters, {
+      ...options,
+      fetchBatch: inMemoryBatchFetcher(rows, filters),
+    });
+    pages.push(result);
+    all.push(...result.page);
+    if (!result.has_more) return { all, pages };
+    assert.ok(result.next_cursor, 'une continuation doit fournir un cursor');
+    cursor = decodeCursor(result.next_cursor);
+  }
+  throw new Error('pagination non terminée');
+}
 
 function fakeQuery() {
   const calls = [];
@@ -107,38 +153,39 @@ test('AND entre familles et OR intra-famille', () => {
 });
 
 test('cursor score_adn : phases scored/null, tie-break id, pas de doublon', () => {
+  const ids = { a3: uuid(5), a2: uuid(4), a1: uuid(3), n2: uuid(2), n1: uuid(1) };
   const rows = [
-    { id: 'a3', score_adn: 90, user_id: 'u3' },
-    { id: 'a2', score_adn: 90, user_id: 'u2' },
-    { id: 'a1', score_adn: 80, user_id: 'u1' },
-    { id: 'n2', score_adn: null, user_id: 'un2' },
-    { id: 'n1', score_adn: null, user_id: 'un1' },
+    { id: ids.a3, score_adn: 90, user_id: uuid(15) },
+    { id: ids.a2, score_adn: 90, user_id: uuid(14) },
+    { id: ids.a1, score_adn: 80, user_id: uuid(13) },
+    { id: ids.n2, score_adn: null, user_id: uuid(12) },
+    { id: ids.n1, score_adn: null, user_id: uuid(11) },
   ];
   const page1 = paginateCandidateDeck(rows, parseCandidateDeckQuery({ limit: '2' }));
-  assert.deepEqual(page1.candidates.map((r) => r.id), ['a3', 'a2']);
+  assert.deepEqual(page1.candidates.map((r) => r.id), [ids.a3, ids.a2]);
   assert.equal(page1.has_more, true);
   const page2 = paginateCandidateDeck(rows, {
     ...parseCandidateDeckQuery({ limit: '2' }),
     cursor: decodeCursor(page1.next_cursor),
   });
-  assert.deepEqual(page2.candidates.map((r) => r.id), ['a1', 'n2']);
+  assert.deepEqual(page2.candidates.map((r) => r.id), [ids.a1, ids.n2]);
   const page3 = paginateCandidateDeck(rows, {
     ...parseCandidateDeckQuery({ limit: '2' }),
     cursor: decodeCursor(page2.next_cursor),
   });
-  assert.deepEqual(page3.candidates.map((r) => r.id), ['n1']);
+  assert.deepEqual(page3.candidates.map((r) => r.id), [ids.n1]);
   assert.equal(page3.has_more, false);
   assert.equal(page3.next_cursor, null);
   const all = [...page1.candidates, ...page2.candidates, ...page3.candidates].map((r) => r.id);
   assert.equal(new Set(all).size, all.length);
-  assert.deepEqual(all.sort(), ['a1', 'a2', 'a3', 'n1', 'n2'].sort());
+  assert.deepEqual(all.sort(), Object.values(ids).sort());
 });
 
 test('encode/decode cursor round-trip scored et null', () => {
-  const scored = decodeCursor(encodeCursor({ id: 'x', score_adn: 72 }));
+  const scored = decodeCursor(encodeCursor({ id: uuid(20), score_adn: 72 }));
   assert.equal(scored.phase, 's');
   assert.equal(scored.score_adn, 72);
-  const nulled = decodeCursor(encodeCursor({ id: 'y', score_adn: null }));
+  const nulled = decodeCursor(encodeCursor({ id: uuid(21), score_adn: null }));
   assert.equal(nulled.phase, 'n');
   assert.equal(nulled.score_adn, null);
 });
@@ -180,8 +227,8 @@ test('applySupabaseCandidateDeckFilters pousse overlaps / gte / in', () => {
 
 test('smoke 120 candidats paginés sans doublon ni omission hors exclusions', () => {
   const rows = Array.from({ length: 120 }, (_, i) => ({
-    id: `c${String(i).padStart(3, '0')}`,
-    user_id: `u${i}`,
+    id: uuid(1000 - i),
+    user_id: uuid(2000 + i),
     score_adn: i < 100 ? 100 - Math.floor(i / 2) : null,
   }));
   const seen = [];
@@ -191,13 +238,13 @@ test('smoke 120 candidats paginés sans doublon ni omission hors exclusions', ()
     const result = paginateCandidateDeck(rows, {
       ...parseCandidateDeckQuery({ limit: '20' }),
       cursor,
-    }, { seenIds: ['c000'], excludeUserId: 'u1' });
+    }, { seenIds: [rows[0].id], excludeUserId: rows[1].user_id });
     collected.push(...result.candidates.map((r) => r.id));
     if (!result.has_more) break;
     cursor = decodeCursor(result.next_cursor);
   }
-  assert.equal(collected.includes('c000'), false);
-  assert.equal(collected.includes('c001'), false); // user_id u1 excluded
+  assert.equal(collected.includes(rows[0].id), false);
+  assert.equal(collected.includes(rows[1].id), false);
   assert.equal(new Set(collected).size, collected.length);
   assert.ok(collected.length >= 100);
 });
@@ -235,4 +282,101 @@ test('frontend recruteur consomme candidates + cursor + race', () => {
 test('params invalides matching / cursor', () => {
   assert.throws(() => parseCandidateDeckQuery({ matching: '{' }), /matching invalide/);
   assert.throws(() => parseCandidateDeckQuery({ cursor: '%%%' }), /cursor invalide/);
+});
+
+test('matching est borné aux 7 critères et aux poids finis 0-100', () => {
+  assert.deepEqual(parseCandidateDeckQuery({ matching: JSON.stringify({ closing: 70, drive: 0 }) }).matching, { closing: 70, drive: 0 });
+  assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ inconnu: 50 }) }), /matching invalide/);
+  assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ closing: 101 }) }), /matching invalide/);
+  assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ closing: '70' }) }), /matching invalide/);
+  assert.throws(() => parseCandidateDeckQuery({ matching: '{"closing":1e309}' }), /matching invalide/);
+  assert.throws(() => parseCandidateDeckQuery({ matching: `{\"closing\":50,\"pad\":\"${'x'.repeat(2100)}\"}` }), /matching invalide/);
+});
+
+test('CSV multi-select déduplique avant contrôle de limite', () => {
+  assert.deepEqual(parseCandidateDeckQuery({ skills: 'HubSpot,HubSpot,Salesforce' }).skills, ['HubSpot', 'Salesforce']);
+  assert.doesNotThrow(() => parseCandidateDeckQuery({ skills: Array(20).fill('HubSpot').join(',') }));
+});
+
+test('cursor forgé est refusé avant toute interpolation PostgREST', () => {
+  const cursor = (payload) => Buffer.from(JSON.stringify(payload)).toString('base64url');
+  for (const payload of [
+    { p: 'x', s: 50, i: uuid(1) },
+    { p: 's', s: 'NaN', i: uuid(1) },
+    { p: 's', s: 'Infinity', i: uuid(1) },
+    { p: 's', s: 101, i: uuid(1) },
+    { p: 'n', s: 0, i: uuid(1) },
+    { p: 's', s: 50, i: 'id),score_adn.gte.0' },
+  ]) assert.throws(() => decodeCursor(cursor(payload)), /cursor invalide/);
+  const infiniteScore = Buffer.from(`{"p":"s","s":1e309,"i":"${uuid(1)}"}`).toString('base64url');
+  assert.throws(() => decodeCursor(infiniteScore), /cursor invalide/);
+  assert.throws(() => decodeCursor('x'.repeat(257)), /cursor invalide/);
+});
+
+test('vrai fill-loop skills atteint les positions 150 / 280 / 490 sans fausse fin', async () => {
+  const matches = new Set([150, 280, 490]);
+  const rows = Array.from({ length: 500 }, (_, index) => candidateAt(index + 1, 500, { skill: matches.has(index + 1) }));
+  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [150, 280, 490]);
+  assert.equal(new Set(result.all.map((row) => row.id)).size, 3);
+  assert.equal(result.pages[0].has_more, true);
+  assert.equal(decodeCursor(result.pages[0].next_cursor).id, rows[299].id);
+});
+
+test('page vide puis partielle conservent la continuation jusqu’au match sparse', async () => {
+  const rows = Array.from({ length: 700 }, (_, index) => candidateAt(index + 1, 700, { skill: index + 1 === 650 }));
+  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  assert.equal(result.pages[0].page.length, 0);
+  assert.equal(result.pages[0].has_more, true);
+  assert.equal(result.all.length, 1);
+  assert.equal(rows.indexOf(result.all[0]) + 1, 650);
+  assert.equal(result.pages.at(-1).has_more, false);
+});
+
+test('le 21e match inspecté reste disponible sur la page suivante', async () => {
+  const rows = Array.from({ length: 40 }, (_, index) => candidateAt(index + 1, 40, { skill: index < 21 }));
+  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), Array.from({ length: 21 }, (_, index) => index + 1));
+  assert.equal(new Set(result.all.map((row) => row.id)).size, 21);
+});
+
+test('fill-loop gère égalités, transition NULL, filtre SQL et exclusions', async () => {
+  const rows = Array.from({ length: 620 }, (_, index) => candidateAt(index + 1, 620, {
+    skill: [20, 310, 590, 610].includes(index + 1),
+    score: index < 400 ? 75 : null,
+  }));
+  rows[589].sectors = ['Industrie'];
+  const result = await collectFlow(rows, { limit: '2', skills: 'RareSkill', sectors: 'SaaS' }, {
+    seenIds: [rows[309].id],
+  });
+  assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [20, 610]);
+  assert.equal(new Set(result.all.map((row) => row.user_id)).size, result.all.length);
+});
+
+test('déduplication historique user_id est restaurée dans le flow et dans les pages frontend', async () => {
+  const rows = Array.from({ length: 80 }, (_, index) => candidateAt(index + 1, 80, {
+    skill: [10, 11, 40].includes(index + 1),
+  }));
+  rows[10].user_id = rows[9].user_id;
+  const filters = parseCandidateDeckQuery({ limit: '20', skills: 'RareSkill' });
+  const result = await fetchCandidateDeckRows(filters, { fetchBatch: inMemoryBatchFetcher(rows, filters) });
+  assert.deepEqual(result.page.map((row) => rows.indexOf(row) + 1), [10, 40]);
+  assert.equal(new Set(result.page.map((row) => row.user_id)).size, result.page.length);
+});
+
+test('volume 5000 sparse termine sans omission, doublon ou faux has_more', async () => {
+  const matches = new Set([1, 777, 2499, 4990]);
+  const rows = Array.from({ length: 5000 }, (_, index) => candidateAt(index + 1, 5000, { skill: matches.has(index + 1) }));
+  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' }, {}, 30);
+  assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [...matches]);
+  assert.equal(new Set(result.all.map((row) => row.id)).size, matches.size);
+});
+
+test('select deck restaure les URLs legacy et le frontend enchaîne les pages vides', () => {
+  const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
+  assert.match(route, /'avatar_url', 'cv_url', 'motivation_url'/);
+  assert.match(html, /CAND_DECK_EMPTY_PREFETCH_MAX/);
+  assert.match(html, /do \{[\s\S]*fetchCandidateDeckPage\(continuation\)[\s\S]*\} while \(!added && CAND_DECK_HAS_MORE/);
+  assert.match(html, /seenUsers/);
 });
