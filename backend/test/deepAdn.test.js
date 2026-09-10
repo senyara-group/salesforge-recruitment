@@ -2,16 +2,73 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const {
   QUESTIONS, BLOCKS, QUESTIONNAIRE_VERSION, SCORING_VERSION,
   createPresentation, publicQuestionnaire, scoreAnswers, validateAnswer, normalizeBlockScore,
 } = require('../utils/deepAdnQuestionnaire');
+
+const candidateHtml = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
 
 function answersForWeight(weight) {
   return QUESTIONS.map((question) => ({
     question_id: question.id,
     option_id: question.options.find((option) => option.weight === weight)?.id || question.options[0].id,
   }));
+}
+
+function extractFunction(source, signature) {
+  const start = source.indexOf(signature);
+  assert.ok(start >= 0, `signature introuvable: ${signature}`);
+  let depth = 0;
+  let end = -1;
+  for (let i = start; i < source.length; i += 1) {
+    const ch = source[i];
+    if (ch === '{') depth += 1;
+    if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        end = i + 1;
+        break;
+      }
+    }
+  }
+  assert.ok(end > start, `fin de fonction introuvable: ${signature}`);
+  return source.slice(start, end);
+}
+
+function mockResponse(status, body) {
+  const text = body === undefined ? '' : (typeof body === 'string' ? body : JSON.stringify(body));
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => text,
+  };
+}
+
+function loadCandidateApi(fetchImpl) {
+  const sandbox = {
+    API: 'https://api.test',
+    TOKEN: 'tok',
+    refreshAccessToken: async () => false,
+    fetch: fetchImpl,
+  };
+  vm.runInNewContext(`${extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true)')}\nthis.api = api;`, sandbox);
+  return sandbox.api;
+}
+
+function loadDeepAdnFlow({ apiImpl, completedHandler } = {}) {
+  const root = { innerHTML: '' };
+  const sandbox = {
+    document: { getElementById: (id) => (id === 'deep-adn-state' ? root : null) },
+    api: apiImpl,
+    esc: (text = '') => String(text),
+    renderDeepAdnResult: completedHandler || ((assessment) => {
+      root.innerHTML = `<div class="deep-adn-result">${assessment?.status || ''}</div>`;
+    }),
+  };
+  vm.runInNewContext(`${extractFunction(candidateHtml, 'async function loadDeepAdn()')}\nthis.loadDeepAdn = loadDeepAdn;`, sandbox);
+  return { loadDeepAdn: sandbox.loadDeepAdn, root };
 }
 
 test('référentiel Yannis possède 48 situations stables en 6 blocs de 8', () => {
@@ -96,10 +153,88 @@ test('routes approfondies ne modifient jamais score_adn ou axes candidat', () =>
 });
 
 test('interface candidat consomme uniquement le contrat public approfondi', () => {
-  const candidate = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
   const recruiter = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
-  assert.match(candidate, /\/adn-approfondi\/current/);
-  assert.match(candidate, /question\.options\.map/);
-  assert.doesNotMatch(candidate, /deep.{0,20}(weight|pondération)/i);
+  assert.match(candidateHtml, /\/adn-approfondi\/current/);
+  assert.match(candidateHtml, /question\.options\.map/);
+  assert.doesNotMatch(candidateHtml, /deep.{0,20}(weight|pondération)/i);
   assert.doesNotMatch(recruiter, /adn-approfondi|deep_adn/i);
+});
+
+test('api() accepte HTTP 200 + JSON null sans throw', async () => {
+  const api = loadCandidateApi(async () => mockResponse(200, null));
+  assert.equal(await api('GET', '/adn-approfondi/current'), null);
+});
+
+test('api() conserve HTTP 200 + objet JSON', async () => {
+  const payload = { id: 'a1', status: 'in_progress' };
+  const api = loadCandidateApi(async () => mockResponse(200, payload));
+  const result = await api('GET', '/adn-approfondi/current');
+  assert.equal(JSON.stringify(result), JSON.stringify(payload));
+});
+
+test('api() throw sur HTTP 4xx/5xx avec JSON erreur', async () => {
+  const api = loadCandidateApi(async () => mockResponse(500, {
+    error: 'DEEP_ADN_ERROR',
+    message: 'L’évaluation est momentanément indisponible.',
+  }));
+  await assert.rejects(() => api('GET', '/adn-approfondi/current'), (error) => {
+    assert.equal(error.message, 'L’évaluation est momentanément indisponible.');
+    assert.equal(error.status, 500);
+    return true;
+  });
+});
+
+test('api() throw sur JSON invalide même en HTTP 200', async () => {
+  const api = loadCandidateApi(async () => mockResponse(200, '{not-json'));
+  await assert.rejects(() => api('GET', '/x'), (error) => {
+    assert.equal(error.message, 'Erreur serveur');
+    assert.equal(error.status, 200);
+    return true;
+  });
+});
+
+test('api() ne traite plus d === null comme erreur générique', () => {
+  const source = extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true)');
+  assert.doesNotMatch(source, /if\s*\(\s*!success\s*\|\|\s*d\s*===\s*null\s*\)/);
+  assert.match(source, /parseFailed/);
+  assert.match(source, /if\s*\(\s*!success\s*\)/);
+});
+
+test('loadDeepAdn : current null affiche le démarrage, pas Évaluation indisponible', async () => {
+  const { loadDeepAdn, root } = loadDeepAdnFlow({
+    apiImpl: async () => null,
+  });
+  await loadDeepAdn();
+  assert.match(root.innerHTML, /deep-adn-intro/);
+  assert.match(root.innerHTML, /Commencer/);
+  assert.doesNotMatch(root.innerHTML, /Évaluation indisponible/);
+});
+
+test('loadDeepAdn : current in_progress propose la reprise', async () => {
+  const { loadDeepAdn, root } = loadDeepAdnFlow({
+    apiImpl: async () => ({ id: 'a1', status: 'in_progress', answers: [] }),
+  });
+  await loadDeepAdn();
+  assert.match(root.innerHTML, /deep-adn-intro/);
+  assert.match(root.innerHTML, /Reprendre/);
+  assert.doesNotMatch(root.innerHTML, /Évaluation indisponible/);
+});
+
+test('loadDeepAdn : current completed affiche la restitution', async () => {
+  let seen = null;
+  const { loadDeepAdn, root } = loadDeepAdnFlow({
+    apiImpl: async () => ({
+      id: 'a1',
+      status: 'completed',
+      result: { blocks: [{ label: 'Bloc', profile: 'P', score: 50 }] },
+    }),
+    completedHandler: (assessment) => {
+      seen = assessment;
+      root.innerHTML = '<div class="deep-adn-result">ok</div>';
+    },
+  });
+  await loadDeepAdn();
+  assert.equal(seen?.status, 'completed');
+  assert.match(root.innerHTML, /deep-adn-result/);
+  assert.doesNotMatch(root.innerHTML, /Évaluation indisponible/);
 });
