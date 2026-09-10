@@ -11,6 +11,16 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkA
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
+const {
+  parseCandidateDeckQuery,
+  encodeCursor,
+  candidateMatchesSkills,
+  applySupabaseCandidateDeckFilters,
+  applySupabaseScoreCursor,
+  SKILLS_FILL_BATCH_FACTOR,
+  SKILLS_FILL_MAX_ROUNDS,
+  MAX_LIMIT,
+} = require('../utils/candidateDeckQuery');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -19,6 +29,12 @@ const CERTIFICATION_SCORE_THRESHOLD = 80;
 const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const EBOOKS_BUCKET = process.env.EBOOKS_BUCKET || 'ebooks';
+const CANDIDATE_DECK_SELECT = [
+  'id', 'user_id', 'prenom', 'nom', 'titre', 'score_adn', 'axes',
+  'target_job_types', 'sales_style', 'years_experience',
+  'desired_contracts', 'sectors', 'tools', 'methodologies',
+  'availability', 'customer_types',
+].join(', ');
 
 // Catalogue des ebooks (palier Carrière). Fichiers déjà uploadés dans le bucket
 // privé Supabase Storage "ebooks" — voir Notes.md pour l'origine des fichiers.
@@ -840,83 +856,145 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
+function mapCandidateDeckCard(profile, matching) {
+  const axes = normalizeAxes(profile.axes);
+  const anon = profile.axes?.meta?.anonyme === true;
+  const shortName = profile.nom ? `${profile.nom.slice(0, 1)}.` : '';
+  const name = anon
+    ? 'Candidat anonyme'
+    : [profile.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
+  const initials = anon
+    ? '?'
+    : `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() || 'SF';
+  const skills = Object.keys(axes).filter((key) => typeof axes[key] === 'number').slice(0, 5);
+  const fit = compatibilityScore(axes, matching);
+
+  return {
+    id: profile.id,
+    user_id: profile.user_id,
+    name,
+    initiales: initials,
+    role: profile.titre || 'Commercial',
+    anon,
+    certifie: false,
+    avatar_url: anon ? '' : (profile.avatar_url || ''),
+    m: fit,
+    adn_score: profile.score_adn || 0,
+    adn_type: profile.axes?.resultat?.type || profile.axes?.resultat?.type_profil || 'Profil commercial',
+    rank: profile.axes?.resultat?.rank || 'Profil verifie',
+    axes: Object.entries(axes)
+      .filter(([, value]) => typeof value === 'number')
+      .slice(0, 6)
+      .map(([l, v]) => ({ l, v })),
+    pitch_score: profile.axes?.resultat?.pitch_score || profile.score_adn || 0,
+    pitch_text: profile.axes?.resultat?.desc || profile.axes?.meta?.motivation || 'Profil candidat synchronise avec la base.',
+    letter_text: profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.',
+    letter_audio: Boolean(profile.axes?.meta?.audio_url),
+    letter_video: Boolean(profile.axes?.meta?.video_url),
+    cv_url: anon ? '' : (profile.cv_url || ''),
+    cv_file_name: anon ? '' : (profile.axes?.meta?.cv_file_name || ''),
+    motivation_url: anon ? '' : (profile.motivation_url || ''),
+    motivation_file_name: anon ? '' : (profile.axes?.meta?.motivation_file_name || ''),
+    skills: skills.length ? skills : ['Sales', 'B2B'],
+    competences: profile.axes?.meta?.competences || {},
+    ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
+    predict: [
+      { v: `${fit}%`, l: 'Fit poste' },
+      { v: profile.score_adn || 0, l: 'ADN' },
+      { v: 'Base', l: 'Source' },
+    ],
+  };
+}
+
+async function fetchCandidateDeckRows(filters, { seenIds, excludeUserId }) {
+  const need = filters.limit + 1;
+  const collected = [];
+  let cursor = filters.cursor;
+  let rounds = 0;
+  let exhausted = false;
+  const skillsActive = filters.skills.length > 0;
+
+  while (collected.length < need && rounds < (skillsActive ? SKILLS_FILL_MAX_ROUNDS : 1) && !exhausted) {
+    rounds += 1;
+    const remaining = need - collected.length;
+    const batchSize = skillsActive
+      ? Math.min(MAX_LIMIT, Math.max(remaining, remaining * SKILLS_FILL_BATCH_FACTOR))
+      : remaining;
+
+    let query = supabase.from('candidats').select(CANDIDATE_DECK_SELECT);
+    query = applySupabaseCandidateDeckFilters(query, filters);
+    if (excludeUserId) query = query.neq('user_id', excludeUserId);
+    if (seenIds.length) {
+      const inList = `(${seenIds.join(',')})`;
+      query = query.not('id', 'in', inList).not('user_id', 'in', inList);
+    }
+    query = applySupabaseScoreCursor(query, cursor);
+    query = query
+      .order('score_adn', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .limit(batchSize);
+
+    const { data, error } = await query;
+    if (error) {
+      const err = new Error(error.message || error);
+      err.status = 400;
+      throw err;
+    }
+    const rows = data || [];
+    if (!rows.length) {
+      exhausted = true;
+      break;
+    }
+
+    for (const row of rows) {
+      if (skillsActive && !candidateMatchesSkills(row, filters.skills)) continue;
+      collected.push(row);
+      if (collected.length >= need) break;
+    }
+
+    const lastRaw = rows[rows.length - 1];
+    cursor = lastRaw
+      ? {
+        phase: lastRaw.score_adn != null && lastRaw.score_adn !== '' ? 's' : 'n',
+        score_adn: lastRaw.score_adn != null && lastRaw.score_adn !== '' ? Number(lastRaw.score_adn) : null,
+        id: String(lastRaw.id),
+      }
+      : null;
+    if (rows.length < batchSize) exhausted = true;
+    if (!skillsActive) break;
+  }
+
+  const hasMore = collected.length > filters.limit || (skillsActive && !exhausted && collected.length >= filters.limit);
+  const page = collected.slice(0, filters.limit);
+  const last = page[page.length - 1];
+  return {
+    page,
+    next_cursor: hasMore && last ? encodeCursor(last) : null,
+    has_more: Boolean(hasMore && last),
+  };
+}
+
 router.get('/deck', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     await ensureRecruiterProfile(req.user.id);
-    const matching = req.query.matching ? JSON.parse(req.query.matching) : {};
-    const requestedCompetences = req.query.competences
-      ? String(req.query.competences).split(',').map((c) => c.trim()).filter(Boolean)
-      : [];
+    const filters = parseCandidateDeckQuery(req.query || {});
     const seenCandidateIds = await recruiterSeenCandidateIds(req.user.id);
-    const { data, error } = await supabase
-      .from('candidats')
-      .select('*')
-      .order('score_adn', { ascending: false, nullsFirst: false });
+    const { page, next_cursor, has_more } = await fetchCandidateDeckRows(filters, {
+      seenIds: seenCandidateIds,
+      excludeUserId: req.user.id,
+    });
 
-    if (error) return res.status(400).json({ error });
+    // Enrichissement + compatibilityScore uniquement sur la page retenue.
+    const candidates = await Promise.all(page.map(async (candidat) => {
+      const profile = await withFreshCvUrl(candidat);
+      return mapCandidateDeckCard(profile, filters.matching);
+    }));
 
-    const candidates = dedupeBy(data, (candidat) => candidat.user_id || candidat.id)
-      .filter((candidat) => candidat.user_id !== req.user.id)
-      .filter((candidat) => !seenCandidateIds.includes(String(candidat.id)))
-      .filter((candidat) => !seenCandidateIds.includes(String(candidat.user_id)))
-      .filter((candidat) => {
-        if (!requestedCompetences.length) return true;
-        const competences = candidat.axes?.meta?.competences || {};
-        const flat = Object.values(competences).flat();
-        return requestedCompetences.some((c) => flat.includes(c));
-      });
-
-    const deck = await Promise.all(candidates.map(async (candidat) => {
-        const profile = await withFreshCvUrl(candidat);
-        const axes = normalizeAxes(profile.axes);
-        const anon = profile.axes?.meta?.anonyme === true;
-        const shortName = profile.nom ? `${profile.nom.slice(0, 1)}.` : '';
-        const name = anon
-          ? 'Candidat anonyme'
-          : [profile.prenom, shortName].filter(Boolean).join(' ') || 'Candidat';
-        const initials = anon
-          ? '?'
-          : `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() || 'SF';
-        const skills = Object.keys(axes).filter((key) => typeof axes[key] === 'number').slice(0, 5);
-
-        return {
-          id: profile.id,
-          user_id: profile.user_id,
-          name,
-          initiales: initials,
-          role: profile.titre || 'Commercial',
-          anon,
-          certifie: false,
-          avatar_url: anon ? '' : (profile.avatar_url || ''),
-          m: compatibilityScore(axes, matching),
-          adn_score: profile.score_adn || 0,
-          adn_type: profile.axes?.resultat?.type || profile.axes?.resultat?.type_profil || 'Profil commercial',
-          rank: profile.axes?.resultat?.rank || 'Profil verifie',
-          axes: Object.entries(axes)
-            .filter(([, value]) => typeof value === 'number')
-            .slice(0, 6)
-            .map(([l, v]) => ({ l, v })),
-          pitch_score: profile.axes?.resultat?.pitch_score || profile.score_adn || 0,
-          pitch_text: profile.axes?.resultat?.desc || profile.axes?.meta?.motivation || 'Profil candidat synchronise avec la base.',
-          letter_text: profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.',
-          letter_audio: Boolean(profile.axes?.meta?.audio_url),
-          letter_video: Boolean(profile.axes?.meta?.video_url),
-          cv_url: anon ? '' : (profile.cv_url || ''),
-          cv_file_name: anon ? '' : (profile.axes?.meta?.cv_file_name || ''),
-          motivation_url: anon ? '' : (profile.motivation_url || ''),
-          motivation_file_name: anon ? '' : (profile.axes?.meta?.motivation_file_name || ''),
-          skills: skills.length ? skills : ['Sales', 'B2B'],
-          competences: profile.axes?.meta?.competences || {},
-          ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
-          predict: [
-            { v: `${compatibilityScore(axes, matching)}%`, l: 'Fit poste' },
-            { v: profile.score_adn || 0, l: 'ADN' },
-            { v: 'Base', l: 'Source' },
-          ],
-        };
-      }));
-
-    res.json(deck);
+    res.json({
+      candidates,
+      next_cursor,
+      has_more,
+    });
   } catch (error) {
     publicError(res, error);
   }
