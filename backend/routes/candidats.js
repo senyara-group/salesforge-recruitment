@@ -11,6 +11,7 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkA
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
+const { normalizeCandidateProfileStructuredFields, buildAxesMetaPatch } = require('../utils/candidateProfileWrite');
 const {
   parseCandidateDeckQuery,
   applySupabaseCandidateDeckFilters,
@@ -518,6 +519,17 @@ router.get('/profil', authMiddleware, async (req, res) => {
       ville: profil.axes?.meta?.ville || '',
       competences: profil.axes?.meta?.competences || {},
       certifie,
+      target_job_types: profil.target_job_types || [],
+      sales_style: profil.sales_style || null,
+      years_experience: profil.years_experience ?? null,
+      desired_contracts: profil.desired_contracts || [],
+      sectors: profil.sectors || [],
+      customer_types: profil.customer_types || [],
+      tools: profil.tools || [],
+      methodologies: profil.methodologies || [],
+      availability: profil.availability || null,
+      mobility_km: profil.mobility_km ?? null,
+      city_code: profil.city_code || null,
     });
   } catch (error) {
     publicError(res, error);
@@ -796,31 +808,60 @@ router.delete('/motivation', authMiddleware, (req, res) => deleteProfileDocument
 
 router.put('/profil', authMiddleware, async (req, res) => {
   try {
-    await ensureCandidateProfile(req.user.id);
-
     const current = await ensureCandidateProfile(req.user.id);
-    const { nom, prenom, titre, motivation, anonyme, avatar_label, ville, competences } = req.body;
-    const nextAxes = { ...(current.axes || {}) };
-    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined || competences !== undefined) {
-      nextAxes.meta = {
-        ...(current.axes?.meta || {}),
-        ...(motivation !== undefined ? { motivation } : {}),
-        ...(anonyme !== undefined ? { anonyme } : {}),
-        ...(avatar_label !== undefined ? { avatar_label } : {}),
-        ...(ville !== undefined ? { ville } : {}),
-        ...(competences !== undefined ? { competences } : {}),
-      };
+    if (req.body?.user_id && String(req.body.user_id) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'FORBIDDEN', message: 'Profil non modifiable' });
     }
 
-    const { data, error } = await supabase
-      .from('candidats')
-      .update(definedOnly({ nom, prenom, titre, axes: nextAxes }))
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
+    const { nom, prenom, titre } = req.body || {};
+    const structured = normalizeCandidateProfileStructuredFields(req.body || {});
+    const metaPatch = buildAxesMetaPatch(req.body || {});
+    const columnPatch = definedOnly({
+      nom,
+      prenom,
+      titre,
+      ...structured,
+    });
 
-    if (error) return res.status(400).json({ error });
-    res.json(data);
+    // Jamais de read→merge→UPDATE axes complet : les colonnes structurées
+    // s’écrivent sans toucher axes ; meta legacy (ville/compétences/…) via RPC atomique.
+    let data = current;
+    if (Object.keys(columnPatch).length) {
+      const updated = await supabase
+        .from('candidats')
+        .update(columnPatch)
+        .eq('user_id', req.user.id)
+        .select('*')
+        .single();
+      if (updated.error) return res.status(400).json({ error: updated.error });
+      data = updated.data;
+    }
+
+    if (Object.keys(metaPatch).length) {
+      const { data: mergedAxes, error: rpcError } = await supabase.rpc('merge_candidat_axes_meta', {
+        p_user_id: req.user.id,
+        p_meta_patch: metaPatch,
+      });
+      if (rpcError) return res.status(400).json({ error: rpcError });
+      data = { ...data, axes: mergedAxes };
+    }
+
+    res.json({
+      ...data,
+      ville: data.axes?.meta?.ville || '',
+      competences: data.axes?.meta?.competences || {},
+      target_job_types: data.target_job_types || [],
+      sales_style: data.sales_style || null,
+      years_experience: data.years_experience ?? null,
+      desired_contracts: data.desired_contracts || [],
+      sectors: data.sectors || [],
+      customer_types: data.customer_types || [],
+      tools: data.tools || [],
+      methodologies: data.methodologies || [],
+      availability: data.availability || null,
+      mobility_km: data.mobility_km ?? null,
+      city_code: data.city_code || null,
+    });
   } catch (error) {
     publicError(res, error);
   }

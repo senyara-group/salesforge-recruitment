@@ -377,6 +377,7 @@ test('select deck restaure les URLs legacy et le frontend enchaîne les pages vi
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
   assert.match(route, /'avatar_url', 'cv_url', 'motivation_url'/);
   assert.match(html, /CAND_DECK_EMPTY_PREFETCH_MAX/);
-  assert.match(html, /do \{[\s\S]*fetchCandidateDeckPage\(continuation\)[\s\S]*\} while \(!added && CAND_DECK_HAS_MORE/);
+  assert.match(html, /do \{[\s\S]*fetchCandidateDeckPage\(continuation[\s\S]*\} while \(!added && CAND_DECK_HAS_MORE/);
+  assert.match(html, /filtersSnapshot|cloneCandFilters/);
   assert.match(html, /seenUsers/);
 });
