@@ -284,8 +284,9 @@ test('params invalides matching / cursor', () => {
   assert.throws(() => parseCandidateDeckQuery({ cursor: '%%%' }), /cursor invalide/);
 });
 
-test('matching est borné aux 7 critères et aux poids finis 0-100', () => {
+test('matching est borné aux critères courts et legacy tolérés, avec poids finis 0-100', () => {
   assert.deepEqual(parseCandidateDeckQuery({ matching: JSON.stringify({ closing: 70, drive: 0 }) }).matching, { closing: 70, drive: 0 });
+  assert.deepEqual(parseCandidateDeckQuery({ matching: JSON.stringify({ ecoute: 60 }) }).matching, { ecoute: 60 });
   assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ inconnu: 50 }) }), /matching invalide/);
   assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ closing: 101 }) }), /matching invalide/);
   assert.throws(() => parseCandidateDeckQuery({ matching: JSON.stringify({ closing: '70' }) }), /matching invalide/);
