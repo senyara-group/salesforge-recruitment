@@ -17,8 +17,10 @@ const SKILLS_FILL_BATCH_FACTOR = 3;
 const SKILLS_FILL_MAX_ROUNDS = 6;
 const MAX_CURSOR_LENGTH = 256;
 const MAX_MATCHING_LENGTH = 2048;
-const MAX_MATCHING_KEYS = 7;
-const MATCHING_KEYS = Object.freeze(['closing', 'cycle', 'saas', 'resilience', 'salestech', 'outbound', 'drive']);
+const MAX_MATCHING_KEYS = 8;
+// Les trois clés legacy restent acceptées pour ne pas casser un ancien client,
+// mais compatibilityScore les ignore entièrement.
+const MATCHING_KEYS = Object.freeze(['closing', 'resilience', 'salestech', 'drive', 'ecoute', 'cycle', 'saas', 'outbound']);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function httpError(message, code, status = 400) {

@@ -12,6 +12,7 @@ const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
 const { normalizeCandidateProfileStructuredFields, buildAxesMetaPatch } = require('../utils/candidateProfileWrite');
+const { compatibilityScore } = require('../utils/recruiterMatching');
 const {
   parseCandidateDeckQuery,
   applySupabaseCandidateDeckFilters,
@@ -433,24 +434,6 @@ function normalizeAxes(axes) {
     return Object.fromEntries(axes.resultat.axes.map((axis) => [axis.l, axis.v]));
   }
   return axes;
-}
-
-function compatibilityScore(candidateAxes = {}, matching = {}) {
-  const entries = Object.entries(matching);
-  if (!entries.length) return Number(candidateAxes.score || candidateAxes.Closing || 70);
-
-  let total = 0;
-  let weightTotal = 0;
-  for (const [key, weight] of entries) {
-    const normalizedKey = key.toLowerCase();
-    const found = Object.entries(candidateAxes).find(([axis]) =>
-      axis.toLowerCase().includes(normalizedKey) ||
-      normalizedKey.includes(axis.toLowerCase())
-    );
-    total += Number(found?.[1] ?? 50) * Number(weight || 0);
-    weightTotal += Number(weight || 0);
-  }
-  return weightTotal ? Math.round(total / weightTotal) : 0;
 }
 
 function uniqueValues(values = []) {

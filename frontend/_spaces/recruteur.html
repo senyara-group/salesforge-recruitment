@@ -1506,7 +1506,8 @@ let SELECTED_QUESTIONS = [];
 let OF_TYPE = '', OF_REMOTE = '', OF_TAGS = [], EDITING_OFFER_ID = '', EDITING_OFFER_STATUS = 'active', MY_OFFERS = [];
 let HAS_PLAN = false;
 let CURRENT_PLAN = '';
-let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
+let MATCHING = { closing:70, resilience:55, salestech:50, drive:65, ecoute:50 };
+const SWIPE_IN_FLIGHT = new Set();
 let NOTIFICATIONS = [];
 let NOTIF_CHANNEL_MSG = null;
 let NOTIF_CHANNEL_CAND = null;
@@ -2475,35 +2476,73 @@ function attachDrag(card, cand) {
   window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2); window.addEventListener('touchcancel',e2);
 }
 async function fly(card, dir, cand) {
-  if (!card || !cand) return;
+  if (!card || !cand || card.classList.contains('swiping')) return;
+  const generation = CAND_DECK_LOAD_GEN;
   card.classList.add('swiping');
   card.style.transition='transform .55s cubic-bezier(.22,.8,.25,1),opacity .5s ease';
   card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0);
   if (dir==='r') {
     card.querySelector('.sw-lbl.like').style.opacity=1;
     card.style.transform='translateX(110vw) rotate(28deg)';
-    await doSwipe('like',cand);
+    if (!await doSwipe('like',cand)) return restoreSwipeCard(card);
   }
   else if (dir==='l') {
     card.querySelector('.sw-lbl.pass').style.opacity=1;
     card.style.transform='translateX(-110vw) rotate(-28deg)';
-    await doSwipe('pass',cand);
+    if (!await doSwipe('pass',cand)) return restoreSwipeCard(card);
   }
   else {
     card.querySelector('.sw-lbl.super').style.opacity=1;
     card.style.transform='translateY(-110vh) scale(.96)';
-    await doSwipe('super',cand);
+    if (!await doSwipe('super',cand)) return restoreSwipeCard(card);
   }
   card.style.opacity='0';
-  setTimeout(() => { card.remove(); DECK_IDX++; renderDeck(); }, 380);
+  setTimeout(() => {
+    if (generation !== CAND_DECK_LOAD_GEN) return;
+    card.remove();
+    DECK_IDX++;
+    renderDeck();
+  }, 380);
+}
+function restoreSwipeCard(card) {
+  if (!card) return;
+  card.classList.remove('swiping');
+  card.style.transition='transform .25s ease,opacity .2s ease';
+  card.style.transform='';
+  card.style.opacity='1';
+  card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0);
 }
 async function doSwipe(action, cand) {
-  rememberSeenCandidate(cand);
+  const key = String(cand?.id || cand?.user_id || '');
+  if (!key || SWIPE_IN_FLIGHT.has(key)) return false;
+  SWIPE_IN_FLIGHT.add(key);
+  let result = null;
   try {
-    const r = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
-    if (r.match) showMatch(cand, r);
-    else if (r.interest_recorded) toast(action === 'super' ? 'Profil ajouté à vos intérêts prioritaires' : 'Intérêt enregistré — aucune candidature créée');
-  } catch(e) { console.error(e); }
+    result = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
+  } catch (e) {
+    console.error(e);
+    try { toast('Action non enregistrée. Réessayez.'); } catch (toastErr) { console.warn(toastErr); }
+    return false;
+  } finally {
+    SWIPE_IN_FLIGHT.delete(key);
+  }
+
+  // Succès serveur = vérité métier. Les effets UI / localStorage sont best-effort :
+  // une exception ici ne doit jamais restaurer la carte ni relancer l’API.
+  try {
+    rememberSeenCandidate(cand);
+  } catch (err) {
+    console.warn(err);
+  }
+  try {
+    if (result && result.match) showMatch(cand, result);
+    else if (result && result.interest_recorded) {
+      toast(action === 'super' ? 'Profil ajouté à vos intérêts prioritaires' : 'Intérêt enregistré — aucune candidature créée');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+  return true;
 }
 function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', CANDS[DECK_IDX]); }
 function showMatch(cand, r) {
@@ -2519,10 +2558,11 @@ function closeOv(e) { if (e.target===document.getElementById('ov')||e.target.clo
 // MATCHING ENGINE
 // ------------------------------------------------------------
 const MATCHING_CRITERIA = [
-  { key:'closing', label:'Closing' }, { key:'cycle', label:'Cycle de vente court' },
-  { key:'saas', label:'Expérience SaaS' }, { key:'resilience', label:'Résilience' },
-  { key:'salestech', label:'Maîtrise SalesTech' }, { key:'outbound', label:'Outbound' },
-  { key:'drive', label:'Drive et autonomie' }
+  { key:'closing', label:'Closing' },
+  { key:'resilience', label:'Résilience' },
+  { key:'salestech', label:'Maîtrise SalesTech' },
+  { key:'drive', label:'Drive et autonomie' },
+  { key:'ecoute', label:'Écoute et découverte' }
 ];
 function renderMatching() {
   document.getElementById('matching-criteria').innerHTML = MATCHING_CRITERIA.map(c => `

@@ -7,6 +7,7 @@ const { ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
 const { recordCandidateLike, recordProfileView, countRecentLikes, countRecentProfileViews } = require('../utils/engagementTracking');
+const { compatibilityScore, hasContributingMatching } = require('../utils/recruiterMatching');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
@@ -394,14 +395,9 @@ router.post('/matching-count', authMiddleware, requireRecruiterPlan, async (req,
     if (error) return res.status(400).json({ error });
 
     const count = data.filter((candidate) => {
+      if (!hasContributingMatching(matching)) return true;
       const axes = candidate.axes?.resultat?.axes || candidate.axes || {};
-      const entries = Array.isArray(axes) ? axes : Object.entries(axes).map(([l, v]) => ({ l, v }));
-      const score = Object.entries(matching).reduce((sum, [key, weight]) => {
-        const axis = entries.find((item) => item.l?.toLowerCase().includes(key.toLowerCase()));
-        return sum + Number(axis?.v || 50) * Number(weight || 0);
-      }, 0);
-      const weights = Object.values(matching).reduce((sum, weight) => sum + Number(weight || 0), 0);
-      return weights ? Math.round(score / weights) >= 70 : true;
+      return compatibilityScore(axes, matching) >= 70;
     }).length;
 
     res.json({ count });
