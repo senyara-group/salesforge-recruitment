@@ -5,8 +5,15 @@ const authMiddleware = require('../middleware/auth');
 const { ensureCandidateProfile, ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
+const {
+  parseOfferDeckQuery,
+  encodeCursor,
+  applySupabaseDeckFilters,
+  applySupabaseCursor,
+} = require('../utils/offerDeckQuery');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
+const DECK_SELECT = 'id, titre, type, contract_type, lieu, salaire, description, tags, statut, auto_candidature, created_at, job_type, remote_mode, salary_fixed_min, salary_fixed_max, has_variable, variable_note, sales_styles, sector, customer_types, experience_min, experience_max, city_code, latitude, longitude, recruteur_id, recruteurs(entreprise, secteur, avatar_meta)';
 
 // Le logo recruteur n'est pas une simple colonne : c'est un chemin de stockage
 // (avatar_meta) qui doit etre transforme en URL signee via l'API Supabase Storage.
@@ -135,6 +142,7 @@ router.get('/', async (req, res) => {
 
 router.get('/deck', authMiddleware, async (req, res) => {
   try {
+    const filters = parseOfferDeckQuery(req.query || {});
     const candidat = await ensureCandidateProfile(req.user.id);
     const seenFromProfile = candidat.swipes_meta?.swiped_offer_ids || [];
 
@@ -152,15 +160,34 @@ router.get('/deck', authMiddleware, async (req, res) => {
       ...(matchs.data || []).map((row) => row.offre_id),
     ]);
 
-    const { data, error } = await supabase
-      .from('offres')
-      .select('*, recruteurs(entreprise, secteur, avatar_meta)')
-      .or('statut.eq.active,statut.is.null');
+    // Filtrage SQL + cursor + limit(+1) AVANT enrichissement (signed URLs).
+    let query = supabase.from('offres').select(DECK_SELECT);
+    query = applySupabaseDeckFilters(query, filters);
+    if (seenOfferIds.length) {
+      query = query.not('id', 'in', `(${seenOfferIds.join(',')})`);
+    }
+    query = applySupabaseCursor(query, filters.cursor);
+    query = query
+      .order('created_at', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .limit(filters.limit + 1);
 
+    const { data, error } = await query;
     if (error) return res.status(400).json({ error });
-    const withLogos = await attachRecruiterLogos(data || []);
-    res.json(withLogos.filter((offre) => !seenOfferIds.includes(String(offre.id))));
+
+    const rows = data || [];
+    const hasMore = rows.length > filters.limit;
+    const page = hasMore ? rows.slice(0, filters.limit) : rows;
+    const withLogos = await attachRecruiterLogos(page);
+    const last = page[page.length - 1];
+
+    res.json({
+      offers: withLogos,
+      next_cursor: hasMore && last ? encodeCursor(last) : null,
+      has_more: hasMore,
+    });
   } catch (error) {
+    if (error.status) return publicError(res, error);
     res.status(400).json({ error: error.message || error });
   }
 });

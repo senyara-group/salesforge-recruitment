@@ -2689,16 +2689,76 @@ async function joinCommunity() {
 // ------------------------------------------------------------
 // SWIPE
 // ------------------------------------------------------------
+let DECK_CURSOR = null;
+let DECK_HAS_MORE = false;
+let DECK_FETCHING_MORE = false;
+let DECK_SKILLS = [];
+let DECK_CLIENT_FILTER = 'all';
+const DECK_PREFETCH_REMAINING = 4;
+
+async function fetchDeckPage(cursor) {
+  const params = new URLSearchParams({ limit: '20' });
+  if (cursor) params.set('cursor', cursor);
+  const page = await api('GET', '/offres/deck?' + params.toString());
+  if (Array.isArray(page)) {
+    return { batch: page, next_cursor: null, has_more: false };
+  }
+  const batch = page && Array.isArray(page.offers) ? page.offers : [];
+  const next = page && page.has_more ? (page.next_cursor || null) : null;
+  return { batch, next_cursor: next, has_more: Boolean(next) };
+}
+
+function rebuildOffresFiltered(resetIdx) {
+  const normalized = String(DECK_CLIENT_FILTER).toLowerCase();
+  OFFRES_F = DECK_CLIENT_FILTER === 'all'
+    ? [...OFFRES]
+    : OFFRES.filter(o => o.tags.some(t => String(t).toLowerCase() === normalized));
+  if (resetIdx) DECK_IDX = 0;
+  renderDeck();
+}
+
+async function maybePrefetchDeck() {
+  if (DECK_FETCHING_MORE || !DECK_HAS_MORE || !DECK_CURSOR) return;
+  const rem = Math.max(0, OFFRES_F.length - DECK_IDX);
+  if (rem > DECK_PREFETCH_REMAINING) return;
+  DECK_FETCHING_MORE = true;
+  try {
+    const page = await fetchDeckPage(DECK_CURSOR);
+    const mapped = page.batch.map(o => normOffre(o, DECK_SKILLS)).filter(o => !isOfferLocallySeen(o));
+    const seen = new Set(OFFRES.map(o => String(o.id)));
+    mapped.forEach(o => {
+      if (!seen.has(String(o.id))) {
+        OFFRES.push(o);
+        seen.add(String(o.id));
+      }
+    });
+    DECK_CURSOR = page.next_cursor;
+    DECK_HAS_MORE = page.has_more;
+    rebuildOffresFiltered(false);
+  } catch (e) {
+    // Échec prefetch : on laisse le deck actuel ; un prochain swipe pourra retenter.
+  } finally {
+    DECK_FETCHING_MORE = false;
+  }
+}
+
 async function loadOffres() {
   DECK_IDX = 0;
+  DECK_CURSOR = null;
+  DECK_HAS_MORE = false;
+  DECK_FETCHING_MORE = false;
+  DECK_CLIENT_FILTER = 'all';
   const empty = document.getElementById('deck-empty');
   const area = document.getElementById('deck-area');
   if (empty) { empty.classList.remove('on'); empty.hidden = true; }
   if (area) { area.classList.remove('is-empty'); area.classList.add('is-loading'); }
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    const mySkills = await getMySkillsFlat();
-    OFFRES = (await api('GET', '/offres/deck')).map(o => normOffre(o, mySkills)).filter(o => !isOfferLocallySeen(o));
+    DECK_SKILLS = await getMySkillsFlat();
+    const page = await fetchDeckPage(null);
+    OFFRES = page.batch.map(o => normOffre(o, DECK_SKILLS)).filter(o => !isOfferLocallySeen(o));
+    DECK_CURSOR = page.next_cursor;
+    DECK_HAS_MORE = page.has_more;
     applyFilter('all');
   } catch(e) {
     document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>';
@@ -2707,9 +2767,11 @@ async function loadOffres() {
   }
 }
 function applyFilter(f) {
+  DECK_CLIENT_FILTER = f;
   const normalized = String(f).toLowerCase();
   OFFRES_F = f === 'all' ? [...OFFRES] : OFFRES.filter(o => o.tags.some(t => String(t).toLowerCase() === normalized));
   DECK_IDX = 0; renderDeck();
+  maybePrefetchDeck();
 }
 function setFilt(btn, f) {
   document.querySelectorAll('#filter-row .fp:not(.fp-more)').forEach(b => b.classList.remove('on'));
@@ -2734,8 +2796,8 @@ function renderDeck() {
   if (!el) return;
   el.innerHTML = '';
   const rem = Math.max(0, OFFRES_F.length - DECK_IDX);
-  const isEmpty = rem === 0;
-  document.getElementById('deck-count').textContent = rem + ' offre' + (rem > 1 ? 's' : '');
+  const isEmpty = rem === 0 && !DECK_HAS_MORE && !DECK_FETCHING_MORE;
+  document.getElementById('deck-count').textContent = rem + ' offre' + (rem > 1 ? 's' : '') + (DECK_HAS_MORE ? '+' : '');
   // États mutuellement exclusifs : carte active XOR « Tout vu »
   if (empty) {
     empty.classList.toggle('on', isEmpty);
@@ -2747,9 +2809,10 @@ function renderDeck() {
     area.classList.remove('is-loading');
   }
   if (actions) actions.hidden = isEmpty;
-  if (!isEmpty) {
+  if (rem > 0) {
     OFFRES_F.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(o => el.appendChild(buildCard(o)));
   }
+  maybePrefetchDeck();
 }
 function toggleCardDesc(event, offreId) {
   event.stopPropagation();
