@@ -2698,7 +2698,19 @@ async function loadOffres() {
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
     const mySkills = await getMySkillsFlat();
-    OFFRES = (await api('GET', '/offres/deck')).map(o => normOffre(o, mySkills)).filter(o => !isOfferLocallySeen(o));
+    const collected = [];
+    let cursor = null;
+    let pages = 0;
+    do {
+      const params = new URLSearchParams({ limit: '50' });
+      if (cursor) params.set('cursor', cursor);
+      const page = await api('GET', '/offres/deck?' + params.toString());
+      const batch = Array.isArray(page) ? page : (page && Array.isArray(page.offers) ? page.offers : []);
+      collected.push(...batch);
+      cursor = Array.isArray(page) ? null : (page && page.has_more ? page.next_cursor : null);
+      pages += 1;
+    } while (cursor && pages < 100);
+    OFFRES = collected.map(o => normOffre(o, mySkills)).filter(o => !isOfferLocallySeen(o));
     applyFilter('all');
   } catch(e) {
     document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>';
