@@ -87,12 +87,20 @@ function parseTags(raw) {
 }
 
 /**
- * Cursor opaque base64url : { c: created_at|null, i: id }
- * Tri : created_at DESC NULLS LAST, id DESC.
+ * Cursor opaque base64url.
+ * Format : { p: 'd'|'n', c: created_at|null, i: id }
+ *   p='d' → phase dated (created_at non NULL)
+ *   p='n' → phase null (created_at IS NULL), suite uniquement via id DESC
+ * Tri serveur : created_at DESC NULLS LAST, id DESC.
  */
 function encodeCursor(row) {
   if (!row?.id) return null;
-  return Buffer.from(JSON.stringify({ c: row.created_at ?? null, i: String(row.id) }), 'utf8').toString('base64url');
+  const dated = row.created_at != null && row.created_at !== '';
+  return Buffer.from(JSON.stringify({
+    p: dated ? 'd' : 'n',
+    c: dated ? String(row.created_at) : null,
+    i: String(row.id),
+  }), 'utf8').toString('base64url');
 }
 
 function decodeCursor(raw) {
@@ -102,8 +110,10 @@ function decodeCursor(raw) {
     if (!parsed || typeof parsed !== 'object' || !parsed.i) {
       throw new Error('missing id');
     }
+    const dated = parsed.p === 'd' || (parsed.p == null && parsed.c != null);
     return {
-      created_at: parsed.c == null ? null : String(parsed.c),
+      phase: dated ? 'd' : 'n',
+      created_at: dated ? String(parsed.c) : null,
       id: String(parsed.i),
     };
   } catch {
@@ -187,18 +197,20 @@ function compareOffersNewestFirst(a, b) {
 /** true si `row` est strictement après le curseur dans l’ordre newest-first. */
 function isAfterCursor(row, cursor) {
   if (!cursor) return true;
-  const rowTime = row.created_at ? new Date(row.created_at).getTime() : null;
-  const cursorTime = cursor.created_at ? new Date(cursor.created_at).getTime() : null;
-  if (cursorTime != null) {
+  const rowTime = row.created_at != null && row.created_at !== ''
+    ? new Date(row.created_at).getTime()
+    : null;
+  if (cursor.phase === 'd' || (cursor.phase == null && cursor.created_at != null)) {
+    const cursorTime = new Date(cursor.created_at).getTime();
     if (rowTime != null) {
       if (rowTime < cursorTime) return true;
       if (rowTime > cursorTime) return false;
       return String(row.id) < String(cursor.id);
     }
-    // nulls after dated rows
+    // Phase B : toutes les lignes created_at NULL viennent après la phase dated.
     return true;
   }
-  // cursor in null section
+  // Cursor déjà en phase NULL : uniquement NULL avec id < cursor.id (jamais created_at < NULL).
   if (rowTime != null) return false;
   return String(row.id) < String(cursor.id);
 }
@@ -262,16 +274,21 @@ function applySupabaseDeckFilters(query, filters) {
   return q;
 }
 
+/**
+ * Keyset PostgREST — deux phases explicites (pas de created_at < NULL).
+ * Phase dated : created_at < c OR (created_at = c AND id < i) OR created_at IS NULL
+ * Phase null  : created_at IS NULL AND id < i
+ */
 function applySupabaseCursor(query, cursor) {
   if (!cursor) return query;
-  if (cursor.created_at) {
-    const ts = cursor.created_at;
-    const id = cursor.id;
-    return query.or(
-      `created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${id}),created_at.is.null`,
-    );
+  if (cursor.phase === 'n' || cursor.created_at == null) {
+    return query.is('created_at', null).lt('id', cursor.id);
   }
-  return query.is('created_at', null).lt('id', cursor.id);
+  const ts = cursor.created_at;
+  const id = cursor.id;
+  return query.or(
+    `created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${id}),created_at.is.null`,
+  );
 }
 
 module.exports = {

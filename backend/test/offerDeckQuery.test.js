@@ -135,10 +135,64 @@ test('pagination cursor stable : pas de doublon, tri dates identiques, created_a
   assert.deepEqual(sorted.slice(0, 3), ['seen', 'b', 'a']);
 });
 
-test('encode/decode cursor round-trip', () => {
-  const cursor = encodeCursor({ id: 'uuid-1', created_at: '2026-01-01T00:00:00.000Z' });
-  assert.deepEqual(decodeCursor(cursor), { id: 'uuid-1', created_at: '2026-01-01T00:00:00.000Z' });
-  assert.deepEqual(decodeCursor(encodeCursor({ id: 'uuid-2', created_at: null })), { id: 'uuid-2', created_at: null });
+test('encode/decode cursor round-trip avec phases dated/null', () => {
+  const dated = decodeCursor(encodeCursor({ id: 'uuid-1', created_at: '2026-01-01T00:00:00.000Z' }));
+  assert.deepEqual(dated, { phase: 'd', id: 'uuid-1', created_at: '2026-01-01T00:00:00.000Z' });
+  const nulled = decodeCursor(encodeCursor({ id: 'uuid-2', created_at: null }));
+  assert.deepEqual(nulled, { phase: 'n', id: 'uuid-2', created_at: null });
+});
+
+test('pagination phases dated puis NULL sans doublon ni omission', () => {
+  const rows = [
+    { id: 'd3', statut: 'active', created_at: '2026-03-03T00:00:00.000Z' },
+    { id: 'd2', statut: 'active', created_at: '2026-03-02T00:00:00.000Z' },
+    { id: 'd1b', statut: 'active', created_at: '2026-03-01T00:00:00.000Z' },
+    { id: 'd1a', statut: 'active', created_at: '2026-03-01T00:00:00.000Z' },
+    { id: 'n3', statut: 'active', created_at: null },
+    { id: 'n2', statut: 'active', created_at: null },
+    { id: 'n1', statut: 'active', created_at: null },
+  ];
+  const pages = [];
+  let cursor = null;
+  for (let i = 0; i < 10; i += 1) {
+    const page = paginateOfferDeck(rows, filters({ limit: '2', cursor: cursor || undefined }));
+    pages.push(page);
+    if (!page.has_more) break;
+    cursor = page.next_cursor;
+    assert.ok(cursor);
+    const decoded = decodeCursor(cursor);
+    if (i === 0) assert.equal(decoded.phase, 'd');
+  }
+  assert.deepEqual(pages.map((p) => p.offers.map((o) => o.id)), [
+    ['d3', 'd2'],
+    ['d1b', 'd1a'],
+    ['n3', 'n2'],
+    ['n1'],
+  ]);
+  assert.equal(pages[2].offers.every((o) => o.created_at == null), true);
+  assert.equal(decodeCursor(pages[2].next_cursor).phase, 'n');
+  assert.equal(pages[3].has_more, false);
+  assert.equal(pages[3].next_cursor, null);
+  const flat = pages.flatMap((p) => p.offers.map((o) => o.id));
+  assert.equal(new Set(flat).size, flat.length);
+  assert.equal(flat.length, 7);
+});
+
+test('applySupabaseCursor : phase null n’utilise jamais created_at < NULL', () => {
+  const { applySupabaseCursor } = require('../utils/offerDeckQuery');
+  const calls = [];
+  const fake = {
+    or(...args) { calls.push(['or', ...args]); return this; },
+    is(...args) { calls.push(['is', ...args]); return this; },
+    lt(...args) { calls.push(['lt', ...args]); return this; },
+  };
+  applySupabaseCursor(fake, { phase: 'n', created_at: null, id: 'abc' });
+  assert.deepEqual(calls, [['is', 'created_at', null], ['lt', 'id', 'abc']]);
+  calls.length = 0;
+  applySupabaseCursor(fake, { phase: 'd', created_at: '2026-01-01T00:00:00.000Z', id: 'abc' });
+  assert.equal(calls[0][0], 'or');
+  assert.match(calls[0][1], /created_at\.is\.null/);
+  assert.doesNotMatch(calls[0][1], /created_at\.lt\.null/);
 });
 
 test('smoke volume : 120 offres paginées sans doublon ni omission hors exclusions', () => {
@@ -177,10 +231,16 @@ test('route deck : pagination avant enrichissement, pas de deep ADN / abonnement
   assert.ok(idxFilter >= 0 && idxEnrich > idxFilter);
 });
 
-test('frontend consomme offers[] paginé sans exiger l’ancien tableau brut seul', () => {
+test('frontend pagination progressive : première page puis prefetch, pas de boucle 100 pages', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
-  assert.match(html, /page\.offers/);
-  assert.match(html, /page\.has_more/);
-  assert.match(html, /page\.next_cursor/);
-  assert.match(html, /Array\.isArray\(page\)/);
+  assert.match(html, /async function fetchDeckPage\(cursor\)/);
+  assert.match(html, /async function maybePrefetchDeck\(\)/);
+  assert.match(html, /DECK_FETCHING_MORE/);
+  assert.match(html, /DECK_HAS_MORE/);
+  assert.match(html, /DECK_PREFETCH_REMAINING = 4/);
+  assert.match(html, /const page = await fetchDeckPage\(null\)/);
+  assert.doesNotMatch(html, /pages < 100/);
+  assert.doesNotMatch(html, /do \{[\s\S]*fetchDeckPage[\s\S]*\} while/);
+  assert.match(html, /if \(DECK_FETCHING_MORE \|\| !DECK_HAS_MORE \|\| !DECK_CURSOR\) return;/);
+  assert.match(html, /OFFRES\.push\(o\)/);
 });
