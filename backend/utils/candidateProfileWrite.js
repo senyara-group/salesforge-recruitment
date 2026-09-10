@@ -11,6 +11,14 @@ const MAX_MULTI = 12;
 const MAX_TEXT = 80;
 const MAX_MOBILITY_KM = 500;
 
+const AXES_META_PATCH_KEYS = Object.freeze([
+  'motivation',
+  'anonyme',
+  'avatar_label',
+  'ville',
+  'competences',
+]);
+
 function httpError(message, code = 'CANDIDATE_PROFILE_INVALID', status = 400) {
   const error = new Error(message);
   error.code = code;
@@ -37,22 +45,26 @@ function parseOptionalText(raw, { label, maxLen = MAX_TEXT }) {
   return token;
 }
 
+/**
+ * Ordre : array → trim → vides → dédup → MAX_MULTI → longueur.
+ * 13× "SaaS" → ["SaaS"] (accepté).
+ */
 function parseOptionalStringList(raw, { label, max = MAX_MULTI, maxLen = MAX_TEXT, allowed = null }) {
   if (raw == null) return [];
   if (!Array.isArray(raw)) {
     throw httpError(`${label} doit être un tableau`, 'CANDIDATE_PROFILE_ARRAY_INVALID');
   }
-  if (raw.length > max) {
+  const values = [...new Set(raw.map((item) => normalizeToken(item)).filter(Boolean))];
+  if (values.length > max) {
     throw httpError(`${label}: trop de valeurs (max ${max})`, 'CANDIDATE_PROFILE_MULTI_MAX');
   }
-  const values = raw.map((item) => normalizeToken(item)).filter(Boolean);
   for (const value of values) {
     if (value.length > maxLen) {
       throw httpError(`${label}: valeur trop longue`, 'CANDIDATE_PROFILE_VALUE_TOO_LONG');
     }
   }
   if (allowed) return assertAllowedList(values, allowed, label);
-  return [...new Set(values)];
+  return values;
 }
 
 /**
@@ -106,6 +118,29 @@ function normalizeCandidateProfileStructuredFields(body = {}) {
   return out;
 }
 
+/** Patch ciblé axes.meta — uniquement les clés présentes dans body. */
+function buildAxesMetaPatch(body = {}) {
+  const patch = {};
+  for (const key of AXES_META_PATCH_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      patch[key] = body[key];
+    }
+  }
+  return patch;
+}
+
+/**
+ * Sémantique PostgreSQL : coalesce(axes,'{}') + jsonb_set meta || patch.
+ * Utilisé pour tests de non-écrasement concurrent sans DB.
+ */
+function applyAxesMetaMerge(axes, metaPatch) {
+  const base = axes && typeof axes === 'object' && !Array.isArray(axes) ? { ...axes } : {};
+  const meta = base.meta && typeof base.meta === 'object' && !Array.isArray(base.meta)
+    ? { ...base.meta }
+    : {};
+  return { ...base, meta: { ...meta, ...metaPatch } };
+}
+
 module.exports = {
   MIN_YEARS,
   MAX_YEARS,
@@ -113,5 +148,9 @@ module.exports = {
   MAX_TEXT,
   MAX_MOBILITY_KM,
   CONTRACT_TYPES,
+  AXES_META_PATCH_KEYS,
   normalizeCandidateProfileStructuredFields,
+  parseOptionalStringList,
+  buildAxesMetaPatch,
+  applyAxesMetaMerge,
 };

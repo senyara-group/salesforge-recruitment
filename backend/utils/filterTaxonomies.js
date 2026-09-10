@@ -101,7 +101,7 @@ function assertAllowedList(values, allowed, label) {
     error.status = 400;
     throw error;
   }
-  return values.map((value) => assertAllowedValue(value, allowed, label));
+  return [...new Set(values.map((value) => assertAllowedValue(value, allowed, label)))];
 }
 
 /** Canonicalise une valeur contrat connue ; sinon null (n’altère pas le legacy). */

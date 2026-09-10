@@ -36,6 +36,8 @@ test('profil structuré : invalides / arrays trop longs', () => {
     () => normalizeCandidateProfileStructuredFields({ sectors: Array.from({ length: MAX_MULTI + 1 }, (_, i) => `S${i}`) }),
     /trop de valeurs/
   );
+  assert.doesNotThrow(() => normalizeCandidateProfileStructuredFields({ sectors: Array(MAX_MULTI + 5).fill('SaaS') }));
+  assert.deepEqual(normalizeCandidateProfileStructuredFields({ sectors: Array(MAX_MULTI + 5).fill('SaaS') }).sectors, ['SaaS']);
   assert.throws(() => normalizeCandidateProfileStructuredFields({ tools: 'HubSpot' }), /doit être un tableau/);
 });
 
@@ -52,12 +54,15 @@ test('PUT profil : isolation user_id, pas de deep ADN / CV IA, score préservé'
   const end = source.indexOf("router.get('/stats'", start);
   const block = source.slice(start, end);
   assert.match(block, /normalizeCandidateProfileStructuredFields/);
+  assert.match(block, /merge_candidat_axes_meta/);
+  assert.match(block, /buildAxesMetaPatch/);
   assert.match(block, /req\.body\?\.user_id/);
   assert.match(block, /\.eq\('user_id', req\.user\.id\)/);
   assert.doesNotMatch(block, /score_adn\s*:/);
+  assert.doesNotMatch(block, /axes:\s*nextAxes/);
+  assert.doesNotMatch(block, /\.\.\.\(current\.axes/);
   assert.doesNotMatch(block, /deep_adn|bilans_carriere|ai_cv_analyses|getCandidatePlan/);
   assert.doesNotMatch(block, /from\('deep_adn/);
-  assert.match(block, /\.\.\.\(current\.axes \|\| \{\}\)/);
 });
 
 test('candidateProfileWrite ne lit pas deep ADN / CV IA', () => {

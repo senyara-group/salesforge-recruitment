@@ -4321,7 +4321,10 @@ function handleRankClick() {
 function toggleProfileEdit() {
   document.getElementById('profile-edit-panel').classList.toggle('on');
 }
+let PROFILE_SAVE_IN_FLIGHT = false;
 async function saveProfileEdit() {
+  if (PROFILE_SAVE_IN_FLIGHT) return;
+  const saveBtn = document.querySelector('#profile-edit-panel .save-btn');
   const prenom = document.getElementById('edit-prenom').value.trim();
   const nom = document.getElementById('edit-nom').value.trim();
   const ville = document.getElementById('edit-ville').value.trim();
@@ -4334,6 +4337,11 @@ async function saveProfileEdit() {
       return;
     }
     years_experience = n;
+  }
+  PROFILE_SAVE_IN_FLIGHT = true;
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Enregistrement…';
   }
   try {
     const payload = {
@@ -4366,6 +4374,12 @@ async function saveProfileEdit() {
     toast('Profil mis à jour');
   } catch(e) {
     toast(e.message || 'Erreur profil');
+  } finally {
+    PROFILE_SAVE_IN_FLIGHT = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Enregistrer';
+    }
   }
 }
 function renderProfileCV(p) {

@@ -11,7 +11,7 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkA
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
-const { normalizeCandidateProfileStructuredFields } = require('../utils/candidateProfileWrite');
+const { normalizeCandidateProfileStructuredFields, buildAxesMetaPatch } = require('../utils/candidateProfileWrite');
 const {
   parseCandidateDeckQuery,
   applySupabaseCandidateDeckFilters,
@@ -813,34 +813,39 @@ router.put('/profil', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'FORBIDDEN', message: 'Profil non modifiable' });
     }
 
-    const { nom, prenom, titre, motivation, anonyme, avatar_label, ville, competences } = req.body || {};
+    const { nom, prenom, titre } = req.body || {};
     const structured = normalizeCandidateProfileStructuredFields(req.body || {});
-    const nextAxes = { ...(current.axes || {}) };
-    if (motivation !== undefined || anonyme !== undefined || avatar_label !== undefined || ville !== undefined || competences !== undefined) {
-      nextAxes.meta = {
-        ...(current.axes?.meta || {}),
-        ...(motivation !== undefined ? { motivation } : {}),
-        ...(anonyme !== undefined ? { anonyme } : {}),
-        ...(avatar_label !== undefined ? { avatar_label } : {}),
-        ...(ville !== undefined ? { ville } : {}),
-        ...(competences !== undefined ? { competences } : {}),
-      };
+    const metaPatch = buildAxesMetaPatch(req.body || {});
+    const columnPatch = definedOnly({
+      nom,
+      prenom,
+      titre,
+      ...structured,
+    });
+
+    // Jamais de read→merge→UPDATE axes complet : les colonnes structurées
+    // s’écrivent sans toucher axes ; meta legacy (ville/compétences/…) via RPC atomique.
+    let data = current;
+    if (Object.keys(columnPatch).length) {
+      const updated = await supabase
+        .from('candidats')
+        .update(columnPatch)
+        .eq('user_id', req.user.id)
+        .select('*')
+        .single();
+      if (updated.error) return res.status(400).json({ error: updated.error });
+      data = updated.data;
     }
 
-    const { data, error } = await supabase
-      .from('candidats')
-      .update(definedOnly({
-        nom,
-        prenom,
-        titre,
-        axes: nextAxes,
-        ...structured,
-      }))
-      .eq('user_id', req.user.id)
-      .select('*')
-      .single();
+    if (Object.keys(metaPatch).length) {
+      const { data: mergedAxes, error: rpcError } = await supabase.rpc('merge_candidat_axes_meta', {
+        p_user_id: req.user.id,
+        p_meta_patch: metaPatch,
+      });
+      if (rpcError) return res.status(400).json({ error: rpcError });
+      data = { ...data, axes: mergedAxes };
+    }
 
-    if (error) return res.status(400).json({ error });
     res.json({
       ...data,
       ville: data.axes?.meta?.ville || '',
