@@ -2327,7 +2327,8 @@ function normOffre(o, mySkills = []) {
   const co = o.co || o.recruteurs?.entreprise || 'Entreprise';
   const axes = asAxesList(o.axes);
   const rawTags = Array.isArray(o.tags) ? o.tags.filter(Boolean) : [];
-  const offerTags = rawTags.length ? rawTags : ['Closing', 'Cold Calling', 'SaaS', 'Outbound', 'HubSpot', 'Salesforce', 'Négociation'];
+  // Une offre sans tags ne doit pas prétendre posséder les 7 compétences du vocabulaire UI.
+  const offerTags = rawTags;
   const { score, matched } = computeCompat(offerTags, mySkills);
   const secteur = String(o.sz || o.recruteurs?.secteur || '').trim();
   const lieu = String(o.lieu || '').trim();
@@ -2347,7 +2348,7 @@ function normOffre(o, mySkills = []) {
     bn: String(o.bn || '').trim(),
     description: o.description || '',
     tags:offerTags,
-    tagsDisplay: rawTags.length ? rawTags : offerTags,
+    tagsDisplay: rawTags,
     ai: String(o.ai || '').trim(),
     axes: axes.length ? axes : [{l:'Fit',v:score},{l:'Drive',v:80},{l:'Closing',v:75}],
     auto:Boolean(o.auto_candidature ?? o.auto), dur:o.dur || type, excl:Boolean(o.excl)
