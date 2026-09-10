@@ -2116,14 +2116,22 @@ async function api(method, path, body, allowRefresh = true) {
   }
   const text = await r.text();
   let d = null;
-  try { d = text ? JSON.parse(text) : null; } catch (e) { d = null; }
+  let parseFailed = false;
+  try { d = text ? JSON.parse(text) : null; } catch (e) { parseFailed = true; }
 
   const success = r.ok || r.status === 304; // 304 avec corps valide = OK
-  if (!success || d === null) {
+  // JSON null est une réponse valide (ex. GET /adn-approfondi/current sans évaluation).
+  if (!success) {
     const error = new Error(d?.message || d?.error?.message || d?.error || 'Erreur serveur');
     error.code = d?.code || 'REQUEST_FAILED';
     error.status = r.status;
     if (d && typeof d === 'object') Object.assign(error, d);
+    throw error;
+  }
+  if (parseFailed) {
+    const error = new Error('Erreur serveur');
+    error.code = 'REQUEST_FAILED';
+    error.status = r.status;
     throw error;
   }
   return d;
