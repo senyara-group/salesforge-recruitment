@@ -8,6 +8,7 @@ const {
   parseOptionalStringList,
   buildAxesMetaPatch,
   applyAxesMetaMerge,
+  resolveMergeCandidatAxesMeta,
   MAX_YEARS,
   MAX_MULTI,
 } = require('../utils/candidateProfileWrite');
@@ -239,13 +240,66 @@ test('merge axes.meta préserve clés concurrentes (ADN/CV)', () => {
     resultat: { closing: 80 },
     meta: { ville: 'Lyon', cv_path: 'old.pdf' },
   };
-  const afterConcurrent = applyAxesMetaMerge(before, { cv_path: 'new-concurrent.pdf', adn_note: 'fresh' });
-  const afterSave = applyAxesMetaMerge(afterConcurrent, { ville: 'Paris', competences: { Vente: ['Closing'] } });
+  const afterConcurrent = resolveMergeCandidatAxesMeta(before, { cv_path: 'new-concurrent.pdf', adn_note: 'fresh' });
+  const afterSave = resolveMergeCandidatAxesMeta(afterConcurrent, { ville: 'Paris', competences: { Vente: ['Closing'] } });
   assert.equal(afterSave.meta.ville, 'Paris');
   assert.equal(afterSave.meta.cv_path, 'new-concurrent.pdf');
   assert.equal(afterSave.meta.adn_note, 'fresh');
   assert.deepEqual(afterSave.resultat, { closing: 80 });
   assert.deepEqual(afterSave.meta.competences, { Vente: ['Closing'] });
+});
+
+test('contrat RPC jsonb : NULL / {} / meta null / merge / types invalides', () => {
+  assert.deepEqual(
+    resolveMergeCandidatAxesMeta(null, { ville: 'Paris' }),
+    { meta: { ville: 'Paris' } }
+  );
+  assert.deepEqual(
+    resolveMergeCandidatAxesMeta({}, { ville: 'Lyon' }),
+    { meta: { ville: 'Lyon' } }
+  );
+  assert.deepEqual(
+    resolveMergeCandidatAxesMeta({ meta: null }, { ville: 'Nantes' }),
+    { meta: { ville: 'Nantes' } }
+  );
+  assert.deepEqual(
+    resolveMergeCandidatAxesMeta({ meta: {} }, { ville: 'Lille' }),
+    { meta: { ville: 'Lille' } }
+  );
+  assert.deepEqual(
+    resolveMergeCandidatAxesMeta({ meta: { ville: 'Lille', foo: 'bar' }, resultat: { closing: 80 } }, { ville: 'Paris' }),
+    { meta: { ville: 'Paris', foo: 'bar' }, resultat: { closing: 80 } }
+  );
+
+  assert.throws(() => resolveMergeCandidatAxesMeta({ meta: [] }, { ville: 'X' }), /axes\.meta must be a jsonb object/);
+  assert.throws(() => resolveMergeCandidatAxesMeta({ meta: 'bad' }, { ville: 'X' }), /axes\.meta must be a jsonb object/);
+  assert.throws(() => resolveMergeCandidatAxesMeta([], { ville: 'X' }), /axes must be a jsonb object/);
+  assert.throws(() => resolveMergeCandidatAxesMeta('bad', { ville: 'X' }), /axes must be a jsonb object/);
+  assert.throws(() => resolveMergeCandidatAxesMeta({ meta: {} }, []), /meta_patch must be a jsonb object/);
+  assert.throws(() => resolveMergeCandidatAxesMeta({ meta: {} }, null), /meta_patch must be a jsonb object/);
+});
+
+test('migration RPC merge_candidat_axes_meta présente et sûre', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'merge_candidat_axes_meta_migration.sql'), 'utf8');
+  assert.match(sql, /create or replace function public\.merge_candidat_axes_meta/);
+  assert.match(sql, /jsonb_typeof/);
+  assert.match(sql, /jsonb_typeof\(v_raw\) = 'null'/);
+  assert.match(sql, /jsonb_typeof\(v_raw\) = 'object'/);
+  assert.match(sql, /axes\.meta must be a jsonb object/);
+  assert.match(sql, /axes must be a jsonb object/);
+  assert.match(sql, /set search_path = ''/);
+  assert.match(sql, /from public\.candidats/);
+  assert.match(sql, /for update/);
+  assert.match(sql, /jsonb_set/);
+  assert.match(sql, /v_base_meta \|\| p_meta_patch/);
+  assert.match(sql, /grant execute[\s\S]*service_role/);
+  assert.match(sql, /revoke all[\s\S]*from public/);
+  assert.match(sql, /revoke all[\s\S]*from anon/);
+  assert.match(sql, /revoke all[\s\S]*from authenticated/);
+  const bodyStart = sql.indexOf('as $$');
+  const body = sql.slice(bodyStart);
+  assert.doesNotMatch(body, /score_adn|deep_adn|drop table|delete from/i);
+  assert.ok(fs.existsSync(path.join(__dirname, '..', 'merge_candidat_axes_meta_smoke.sql')));
 });
 
 test('PUT profil : user_id forgé → 403', async () => {
@@ -324,17 +378,6 @@ test('ownership : UPDATE / RPC toujours scoped au JWT user_id', async () => {
 test('buildAxesMetaPatch ignore champs structurés', () => {
   assert.deepEqual(buildAxesMetaPatch({ sales_style: 'hunter', ville: 'Lyon' }), { ville: 'Lyon' });
   assert.deepEqual(buildAxesMetaPatch({ target_job_types: ['SDR'] }), {});
-});
-
-test('migration RPC merge_candidat_axes_meta présente et sûre', () => {
-  const sql = fs.readFileSync(path.join(__dirname, '..', 'merge_candidat_axes_meta_migration.sql'), 'utf8');
-  assert.match(sql, /create or replace function public\.merge_candidat_axes_meta/);
-  assert.match(sql, /jsonb_set/);
-  assert.match(sql, /\|\| p_meta_patch/);
-  assert.match(sql, /grant execute[\s\S]*service_role/);
-  const bodyStart = sql.indexOf('as $$');
-  const body = sql.slice(bodyStart);
-  assert.doesNotMatch(body, /score_adn|deep_adn|drop table|delete from/i);
 });
 
 test('PUT profil route : pas de merge JS axes complet', () => {

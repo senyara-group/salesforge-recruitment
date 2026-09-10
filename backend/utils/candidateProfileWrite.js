@@ -130,15 +130,50 @@ function buildAxesMetaPatch(body = {}) {
 }
 
 /**
- * Sémantique PostgreSQL : coalesce(axes,'{}') + jsonb_set meta || patch.
- * Utilisé pour tests de non-écrasement concurrent sans DB.
+ * Sémantique PostgreSQL merge_candidat_axes_meta (miroir unit-testable).
+ * JSON null / JS null → {} ; array|scalar → throw avant « UPDATE ».
  */
+function resolveMergeCandidatAxesMeta(axes, metaPatch) {
+  if (metaPatch == null || typeof metaPatch !== 'object' || Array.isArray(metaPatch)) {
+    const got = metaPatch == null ? 'sql-null' : (Array.isArray(metaPatch) ? 'array' : typeof metaPatch);
+    const error = new Error(`meta_patch must be a jsonb object (got ${got})`);
+    error.code = 'AXES_META_PATCH_INVALID';
+    error.status = 400;
+    throw error;
+  }
+
+  let baseAxes;
+  if (axes == null) {
+    baseAxes = {};
+  } else if (typeof axes === 'object' && !Array.isArray(axes)) {
+    baseAxes = { ...axes };
+  } else {
+    const got = Array.isArray(axes) ? 'array' : typeof axes;
+    const error = new Error(`axes must be a jsonb object (got ${got})`);
+    error.code = 'AXES_TYPE_INVALID';
+    error.status = 400;
+    throw error;
+  }
+
+  let baseMeta;
+  if (!Object.prototype.hasOwnProperty.call(baseAxes, 'meta') || baseAxes.meta == null) {
+    baseMeta = {};
+  } else if (typeof baseAxes.meta === 'object' && !Array.isArray(baseAxes.meta)) {
+    baseMeta = { ...baseAxes.meta };
+  } else {
+    const got = Array.isArray(baseAxes.meta) ? 'array' : typeof baseAxes.meta;
+    const error = new Error(`axes.meta must be a jsonb object (got ${got})`);
+    error.code = 'AXES_META_TYPE_INVALID';
+    error.status = 400;
+    throw error;
+  }
+
+  return { ...baseAxes, meta: { ...baseMeta, ...metaPatch } };
+}
+
+/** @deprecated alias — utilise resolveMergeCandidatAxesMeta (contrat RPC). */
 function applyAxesMetaMerge(axes, metaPatch) {
-  const base = axes && typeof axes === 'object' && !Array.isArray(axes) ? { ...axes } : {};
-  const meta = base.meta && typeof base.meta === 'object' && !Array.isArray(base.meta)
-    ? { ...base.meta }
-    : {};
-  return { ...base, meta: { ...meta, ...metaPatch } };
+  return resolveMergeCandidatAxesMeta(axes, metaPatch);
 }
 
 module.exports = {
@@ -153,4 +188,5 @@ module.exports = {
   parseOptionalStringList,
   buildAxesMetaPatch,
   applyAxesMetaMerge,
+  resolveMergeCandidatAxesMeta,
 };
