@@ -2797,6 +2797,8 @@ let PIPELINE = {};
 let PIPELINE_CURSOR = null;
 let PIPELINE_HAS_MORE = false;
 let PIPELINE_LOADING = false;
+let PIPELINE_LOAD_GEN = 0;
+let PIPELINE_ABORT = null;
 
 function emptyPipelineState() {
   return Object.fromEntries(PIPE_STAGES.map((stage) => [stage.key, []]));
@@ -2838,13 +2840,20 @@ function pipelineStateHtml(title, copy, options = {}) {
   return `<div class="pipe-state${kind}" role="status">${spin}<b>${title}</b><span>${copy}</span>${action}</div>`;
 }
 
-async function fetchPipelinePage(cursor) {
+async function fetchPipelinePage(cursor, fetchOpts) {
   const params = new URLSearchParams({ limit: '20' });
   if (cursor) params.set('cursor', cursor);
-  return api('GET', '/recruteurs/pipeline?' + params.toString());
+  return api('GET', '/recruteurs/pipeline?' + params.toString(), null, true, fetchOpts || null);
 }
 
 async function loadPipeline() {
+  const gen = ++PIPELINE_LOAD_GEN;
+  if (PIPELINE_ABORT) {
+    try { PIPELINE_ABORT.abort(); } catch (e) {}
+  }
+  PIPELINE_ABORT = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const signal = PIPELINE_ABORT ? PIPELINE_ABORT.signal : undefined;
+
   const offersList = document.getElementById('pipeline-offers-list');
   document.getElementById('pipe-cols').innerHTML = pipelineStateHtml('Chargement', 'Récupération des candidatures…', { loading: true });
   if (offersList) offersList.innerHTML = pipelineStateHtml('Chargement', 'Récupération des offres actives…', { loading: true });
@@ -2860,16 +2869,25 @@ async function loadPipeline() {
   let offersError = null;
 
   try {
-    pipelinePage = await fetchPipelinePage(null);
+    pipelinePage = await fetchPipelinePage(null, { signal });
   } catch (e) {
+    if (e && e.name === 'AbortError') {
+      if (gen !== PIPELINE_LOAD_GEN) return;
+      return;
+    }
     pipelineError = e;
   }
   try {
-    offers = await api('GET', '/offres/mine');
+    offers = await api('GET', '/offres/mine', null, true, { signal });
   } catch (e) {
+    if (e && e.name === 'AbortError') {
+      if (gen !== PIPELINE_LOAD_GEN) return;
+      return;
+    }
     offersError = e;
   }
 
+  if (gen !== PIPELINE_LOAD_GEN) return;
   PIPELINE_LOADING = false;
 
   if (!offersError) {
@@ -2898,17 +2916,26 @@ async function loadPipeline() {
 
 async function loadMorePipeline() {
   if (PIPELINE_LOADING || !PIPELINE_HAS_MORE || !PIPELINE_CURSOR) return;
+  const gen = PIPELINE_LOAD_GEN;
+  const cursor = PIPELINE_CURSOR;
   PIPELINE_LOADING = true;
   syncPipelineLoadMore();
   try {
-    const page = await fetchPipelinePage(PIPELINE_CURSOR);
+    const page = await fetchPipelinePage(cursor, {
+      signal: PIPELINE_ABORT ? PIPELINE_ABORT.signal : undefined,
+    });
+    if (gen !== PIPELINE_LOAD_GEN) return;
     mergePipelinePage(page);
     renderPipeline();
   } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    if (gen !== PIPELINE_LOAD_GEN) return;
     toast(e.message || 'Impossible de charger la suite du pipeline');
   } finally {
-    PIPELINE_LOADING = false;
-    syncPipelineLoadMore();
+    if (gen === PIPELINE_LOAD_GEN) {
+      PIPELINE_LOADING = false;
+      syncPipelineLoadMore();
+    }
   }
 }
 

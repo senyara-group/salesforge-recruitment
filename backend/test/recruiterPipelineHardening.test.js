@@ -104,17 +104,140 @@ test('route pipeline : pagination + signed URL dedup + pas de Promise.all front 
   assert.match(loadBlock, /pipelineError/);
 });
 
-test('migration candidat_likes : contrat upsert engagement', () => {
+test('migration tracking : RLS + revoke anon/authenticated, pas de grant public', () => {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'marketing_automation_tracking_migration.sql'), 'utf8');
   assert.match(sql, /create table if not exists public\.candidat_likes/);
   assert.match(sql, /unique \(candidat_id, recruteur_id\)/);
   assert.match(sql, /create table if not exists public\.candidat_profile_views/);
   assert.match(sql, /last_login_at/);
+  assert.match(sql, /alter table public\.candidat_likes enable row level security/);
+  assert.match(sql, /alter table public\.candidat_profile_views enable row level security/);
+  assert.match(sql, /revoke all on table public\.candidat_likes from anon,\s*authenticated/i);
+  assert.match(sql, /revoke all on table public\.candidat_profile_views from anon,\s*authenticated/i);
+  assert.doesNotMatch(sql, /grant\s+(select|insert|update|delete|all)\b[^;]*\bon\s+(table\s+)?public\.candidat_likes\b[^;]*\b(to\s+)?(anon|authenticated)/i);
+  assert.doesNotMatch(sql, /grant\s+(select|insert|update|delete|all)\b[^;]*\bon\s+(table\s+)?public\.candidat_profile_views\b[^;]*\b(to\s+)?(anon|authenticated)/i);
+  assert.doesNotMatch(sql, /create policy/i);
+  assert.doesNotMatch(sql, /revoke\s+all\b[^;]*\bfrom\s+service_role/i);
   assert.doesNotMatch(sql, /drop table|delete from/i);
+  assert.doesNotMatch(sql, /drop column/i);
 
   const tracking = fs.readFileSync(path.join(__dirname, '..', 'utils', 'engagementTracking.js'), 'utf8');
   assert.match(tracking, /onConflict: 'candidat_id,recruteur_id'/);
   assert.match(tracking, /marketing_automation_tracking_migration\.sql/);
+  assert.match(tracking, /require\('\.\.\/supabase'\)/);
+  const supabaseClient = fs.readFileSync(path.join(__dirname, '..', 'supabase.js'), 'utf8');
+  assert.match(supabaseClient, /SUPABASE_SERVICE_KEY/);
+});
+
+test('pipeline race : loadMore stale ignoré après refresh (gen + AbortController)', async () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
+  assert.match(html, /let PIPELINE_LOAD_GEN = 0/);
+  assert.match(html, /let PIPELINE_ABORT = null/);
+  assert.match(html, /AbortController/);
+
+  const loadStart = html.indexOf('async function loadPipeline');
+  const moreStart = html.indexOf('async function loadMorePipeline', loadStart);
+  const moreEnd = html.indexOf('\nfunction renderPipeline', moreStart);
+  const loadBlock = html.slice(loadStart, moreStart);
+  const moreBlock = html.slice(moreStart, moreEnd);
+
+  assert.match(loadBlock, /const gen = \+\+PIPELINE_LOAD_GEN/);
+  assert.match(loadBlock, /PIPELINE_ABORT\.abort\(\)/);
+  assert.match(loadBlock, /new AbortController/);
+  assert.match(loadBlock, /if \(gen !== PIPELINE_LOAD_GEN\) return/);
+  assert.match(loadBlock, /e\.name === 'AbortError'/);
+  assert.match(loadBlock, /fetchPipelinePage\(null, \{ signal \}\)/);
+  assert.doesNotMatch(loadBlock, /toast\([^\)]*AbortError/);
+
+  assert.match(moreBlock, /const gen = PIPELINE_LOAD_GEN/);
+  assert.match(moreBlock, /const cursor = PIPELINE_CURSOR/);
+  assert.match(moreBlock, /await fetchPipelinePage\(cursor/);
+  assert.match(moreBlock, /if \(gen !== PIPELINE_LOAD_GEN\) return/);
+  assert.match(moreBlock, /e\.name === 'AbortError'/);
+  assert.match(moreBlock, /if \(gen === PIPELINE_LOAD_GEN\) \{\s*PIPELINE_LOADING = false/s);
+  const genGuardAt = moreBlock.search(/if \(gen !== PIPELINE_LOAD_GEN\) return/);
+  const mergeAt = moreBlock.indexOf('mergePipelinePage(page)');
+  assert.ok(genGuardAt >= 0 && mergeAt > genGuardAt, 'mergePipelinePage après garde génération');
+
+  // Comportement A/B/C : loadMore en vol → refresh → réponse stale ignorée
+  const stages = ['nouveau', 'vu', 'contacte', 'entretien', 'offre', 'termine'];
+  const empty = () => Object.fromEntries(stages.map((k) => [k, []]));
+  let PIPELINE = empty();
+  let PIPELINE_CURSOR = 'cursor-old';
+  let PIPELINE_HAS_MORE = true;
+  let PIPELINE_LOADING = false;
+  let PIPELINE_LOAD_GEN = 0;
+  let uiFingerprint = 'initial';
+  const merge = (page) => {
+    const next = empty();
+    stages.forEach((key) => {
+      const prev = PIPELINE[key] || [];
+      const incoming = (page && page[key]) || [];
+      const seen = new Set(prev.map((c) => String(c.id)));
+      next[key] = prev.concat(incoming.filter((c) => !seen.has(String(c.id))));
+    });
+    PIPELINE = next;
+    PIPELINE_CURSOR = page?.next_cursor || null;
+    PIPELINE_HAS_MORE = Boolean(page?.has_more && page?.next_cursor);
+    uiFingerprint = 'merged:' + (PIPELINE.nouveau || []).map((c) => c.id).join(',');
+  };
+
+  PIPELINE.nouveau = [{ id: 'already' }];
+  // A. loadMore démarre
+  const moreGen = PIPELINE_LOAD_GEN;
+  const moreCursor = PIPELINE_CURSOR;
+  PIPELINE_LOADING = true;
+  let moreResolve;
+  const moreFetch = new Promise((resolve) => { moreResolve = resolve; });
+
+  // B. refresh loadPipeline avant réponse
+  const refreshGen = ++PIPELINE_LOAD_GEN;
+  PIPELINE = empty();
+  PIPELINE.nouveau = [{ id: 'fresh' }];
+  PIPELINE_CURSOR = 'cursor-new';
+  PIPELINE_HAS_MORE = true;
+  PIPELINE_LOADING = true;
+  uiFingerprint = 'refresh';
+
+  // C. ancienne réponse revient
+  const stalePage = {
+    nouveau: [{ id: 'stale-from-old-page' }],
+    next_cursor: 'cursor-stale',
+    has_more: false,
+  };
+  moreResolve(stalePage);
+  const page = await moreFetch;
+  assert.equal(moreCursor, 'cursor-old');
+  if (moreGen !== PIPELINE_LOAD_GEN) {
+    // ignore completely
+  } else {
+    merge(page);
+    PIPELINE_LOADING = false;
+  }
+  if (moreGen === PIPELINE_LOAD_GEN) {
+    PIPELINE_LOADING = false;
+  }
+
+  assert.equal(refreshGen, 1);
+  assert.equal(PIPELINE_LOAD_GEN, 1);
+  assert.deepEqual((PIPELINE.nouveau || []).map((c) => c.id), ['fresh']);
+  assert.equal(PIPELINE_CURSOR, 'cursor-new');
+  assert.equal(PIPELINE_HAS_MORE, true);
+  assert.equal(PIPELINE_LOADING, true);
+  assert.equal(uiFingerprint, 'refresh');
+  assert.equal(String(PIPELINE.nouveau.map((c) => c.id)).includes('stale'), false);
+});
+
+test('pipeline AbortError volontaire : silencieux, sans toast', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
+  const moreStart = html.indexOf('async function loadMorePipeline');
+  const moreEnd = html.indexOf('\nfunction renderPipeline', moreStart);
+  const moreBlock = html.slice(moreStart, moreEnd);
+  const catchStart = moreBlock.indexOf('} catch (e)');
+  const catchBlock = moreBlock.slice(catchStart, moreBlock.indexOf('} finally', catchStart));
+  assert.match(catchBlock, /AbortError/);
+  assert.match(catchBlock, /return/);
+  assert.ok(catchBlock.indexOf('AbortError') < catchBlock.indexOf('toast'));
 });
 
 test('migration matchs unique : garde-fou doublons + diagnostic read-only', () => {

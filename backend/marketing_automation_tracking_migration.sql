@@ -31,6 +31,13 @@ create table if not exists public.candidat_profile_views (
 create index if not exists candidat_profile_views_candidat_created_idx
   on public.candidat_profile_views (candidat_id, created_at desc);
 
+-- Server-only : pas de policy authenticated. Accès via service_role backend uniquement.
+alter table public.candidat_likes enable row level security;
+alter table public.candidat_profile_views enable row level security;
+
+revoke all on table public.candidat_likes from anon, authenticated;
+revoke all on table public.candidat_profile_views from anon, authenticated;
+
 -- Dernière connexion (touchLastLogin).
 alter table public.candidats add column if not exists last_login_at timestamptz;
 alter table public.recruteurs add column if not exists last_login_at timestamptz;
