@@ -30,7 +30,7 @@ test('migration filtres est additive et ne détruit rien', () => {
 
 test('migration ajoute les colonnes offres et candidats nullable', () => {
   for (const column of [
-    'job_type', 'remote_mode', 'salary_fixed_min', 'salary_fixed_max', 'has_variable', 'variable_note',
+    'job_type', 'contract_type', 'remote_mode', 'salary_fixed_min', 'salary_fixed_max', 'has_variable', 'variable_note',
     'sales_styles', 'sector', 'customer_types', 'experience_min', 'experience_max',
     'city_code', 'latitude', 'longitude', 'created_at',
   ]) {
@@ -42,20 +42,27 @@ test('migration ajoute les colonnes offres et candidats nullable', () => {
   ]) {
     assert.match(sql, new RegExp(`alter table public\\.candidats add column if not exists ${column}`, 'i'));
   }
-  assert.match(sql, /alter table public\.offres alter column created_at set default now\(\)/i);
-  assert.match(sql, /update public\.offres\s+set created_at = now\(\)\s+where created_at is null/i);
 });
 
-test('migration conserve les champs legacy et n’écrase pas recruteurs.secteur vers offres.sector', () => {
+test('created_at : default pour nouvelles offres, aucun backfill now() sur NULL historiques', () => {
+  assert.match(sql, /alter table public\.offres add column if not exists created_at timestamptz/i);
+  assert.match(sql, /alter table public\.offres alter column created_at set default now\(\)/i);
+  assert.doesNotMatch(sql, /update\s+public\.offres\s+set\s+created_at\s*=\s*now\(\)/i);
+  assert.doesNotMatch(sql, /created_at\s*=\s*now\(\)\s+where\s+created_at\s+is\s+null/i);
+});
+
+test('migration conserve legacy type/lieu et n’écrase pas recruteurs.secteur', () => {
   assert.doesNotMatch(sql, /offres\.sector\s*=\s*.*recruteurs/i);
   assert.doesNotMatch(sql, /set\s+sector\s*=\s*.*from\s+public\.recruteurs/i);
-  assert.match(sql, /Canonicalisation type de contrat/);
+  assert.doesNotMatch(sql, /update\s+public\.offres\s+set\s+type\s*=/i);
+  assert.match(sql, /set contract_type = 'CDI'/i);
 });
 
 test('index attendus présents sans contrainte enum irréversible sur taxonomies pending', () => {
   for (const indexName of [
     'offres_statut_created_at_idx',
     'offres_type_idx',
+    'offres_contract_type_idx',
     'offres_remote_mode_idx',
     'offres_salary_fixed_min_idx',
     'offres_sales_styles_gin_idx',
@@ -71,35 +78,53 @@ test('index attendus présents sans contrainte enum irréversible sur taxonomies
   assert.doesNotMatch(sql, /check\s*\(\s*sales_style/i);
   assert.doesNotMatch(sql, /check\s*\(\s*availability/i);
   assert.doesNotMatch(sql, /check\s*\(\s*customer_types/i);
+  assert.doesNotMatch(sql, /check\s*\(\s*contract_type/i);
+  assert.doesNotMatch(sql, /check\s*\(\s*remote_mode/i);
 });
 
-test('backfills migration restent déterministes (remote + contrat casse)', () => {
+test('remote_mode V1 sans nationwide ; France entière ne devient pas remote', () => {
+  assert.deepEqual(REMOTE_MODES, ['onsite', 'hybrid', 'remote']);
+  assert.ok(!REMOTE_MODES.includes('nationwide'));
+  assert.doesNotMatch(sql, /set\s+remote_mode\s*=\s*'nationwide'/i);
+  assert.doesNotMatch(sql, /lower\(lieu\).{0,80}france/i);
   assert.match(sql, /set remote_mode = 'remote'/i);
-  assert.match(sql, /set remote_mode = 'nationwide'/i);
-  assert.match(sql, /set type = 'CDI'/i);
-  assert.doesNotMatch(sql, /description/i);
+  assert.equal(inferRemoteModeFromLieu('Remote / Télétravail'), 'remote');
+  assert.equal(inferRemoteModeFromLieu('France entière'), null);
+  assert.equal(inferRemoteModeFromLieu('France entiere'), null);
+  assert.equal(inferRemoteModeFromLieu('Lyon'), null);
+  assert.equal(inferRemoteModeFromLieu('Hybride Paris'), 'hybrid');
 });
 
-test('taxonomies stables et pending sont exposées côté backend', () => {
+test('contract_type backfill déterministe sans modifier offres.type', () => {
+  assert.equal(canonicalizeContractType('cdi'), 'CDI');
+  assert.equal(canonicalizeContractType('  FreelANCE '), 'Freelance');
+  assert.equal(canonicalizeContractType('Stage'), null);
+  assert.equal(canonicalizeContractType(''), null);
+  assert.match(sql, /set contract_type = 'CDI'/i);
+  assert.match(sql, /set contract_type = 'Alternance'/i);
+  assert.match(sql, /set contract_type = 'Mission'/i);
+  assert.match(sql, /set contract_type = 'Freelance'/i);
+  assert.doesNotMatch(sql, /update\s+public\.offres\s+set\s+type\s*=/i);
+});
+
+test('taxonomies stables enforceables ; pending Yannis non enforceables', () => {
   assert.deepEqual(CONTRACT_TYPES, ['CDI', 'Alternance', 'Mission', 'Freelance']);
-  assert.deepEqual(REMOTE_MODES, ['remote', 'nationwide', 'onsite', 'hybrid']);
   assert.equal(OFFER_TAG_VOCABULARY.length, 7);
-  assert.equal(STABLE_TAXONOMIES.contract_type.pendingYannis, false);
-  assert.equal(STABLE_TAXONOMIES.remote_mode.pendingYannis, false);
+  assert.equal(STABLE_TAXONOMIES.contract_type.enforceable, true);
+  assert.equal(STABLE_TAXONOMIES.remote_mode.enforceable, true);
+  assert.equal(STABLE_TAXONOMIES.remote_mode.values.includes('nationwide'), false);
   for (const key of ['job_type', 'sales_style', 'customer_types', 'availability', 'sectors']) {
     assert.equal(PENDING_TAXONOMIES[key].pendingYannis, true);
-    assert.ok(PENDING_TAXONOMIES[key].values.length >= 3);
+    assert.equal(PENDING_TAXONOMIES[key].enforceable, false);
+    assert.equal(PENDING_TAXONOMIES[key].values, null);
   }
 });
 
-test('validation taxonomies et règle OR intra-famille / AND inter-familles', () => {
-  assert.equal(canonicalizeContractType('cdi'), 'CDI');
-  assert.equal(canonicalizeContractType('Stage'), null);
-  assert.equal(inferRemoteModeFromLieu('Remote / Télétravail'), 'remote');
-  assert.equal(inferRemoteModeFromLieu('France entière'), 'nationwide');
-  assert.equal(inferRemoteModeFromLieu('Lyon'), 'onsite');
+test('validation taxonomies stables et règle OR intra-famille / AND inter-familles', () => {
   assert.equal(assertAllowedValue('CDI', CONTRACT_TYPES, 'contrat'), 'CDI');
   assert.throws(() => assertAllowedValue('Stage', CONTRACT_TYPES, 'contrat'), { code: 'FILTER_TAXONOMY_INVALID' });
+  assert.throws(() => assertAllowedValue('nationwide', REMOTE_MODES, 'remote_mode'), { code: 'FILTER_TAXONOMY_INVALID' });
+  assert.equal(assertAllowedValue('onsite', REMOTE_MODES, 'remote_mode'), 'onsite');
   assert.deepEqual(assertAllowedList(['Mission', 'Freelance'], CONTRACT_TYPES, 'contrat'), ['Mission', 'Freelance']);
 
   const contractOk = familyMatchesAny(['CDI', 'Freelance'], ['Freelance']);

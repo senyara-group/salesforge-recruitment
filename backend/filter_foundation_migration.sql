@@ -6,6 +6,7 @@
 -- OFFRES : colonnes structurées nullable (legacy titre/type/lieu/salaire/tags conservés)
 -- ============================================================
 alter table public.offres add column if not exists job_type text;
+alter table public.offres add column if not exists contract_type text;
 alter table public.offres add column if not exists remote_mode text;
 alter table public.offres add column if not exists salary_fixed_min integer;
 alter table public.offres add column if not exists salary_fixed_max integer;
@@ -20,15 +21,12 @@ alter table public.offres add column if not exists city_code text;
 alter table public.offres add column if not exists latitude double precision;
 alter table public.offres add column if not exists longitude double precision;
 
--- created_at : non prouvé dans les migrations du repo. Garantie additive :
--- - ajoute la colonne si absente ;
--- - remplit uniquement les NULL (nouvelle colonne ou legacy) avec now() best-effort ;
--- - fixe un default pour les inserts futurs ;
--- - reste nullable pour éviter toute rupture si des lignes échappent au update.
+-- created_at : non prouvé dans les migrations du repo.
+-- - ADD COLUMN IF NOT EXISTS si absente ;
+-- - DEFAULT now() pour les NOUVELLES offres uniquement ;
+-- - ne remplit PAS les NULL historiques (évite de falsifier la date de publication) ;
+-- - reste nullable pendant la transition.
 alter table public.offres add column if not exists created_at timestamptz;
-update public.offres
-set created_at = now()
-where created_at is null;
 alter table public.offres alter column created_at set default now();
 
 -- ============================================================
@@ -53,28 +51,38 @@ alter table public.candidats add column if not exists availability text;
 -- Backfills déterministes uniquement (sinon NULL)
 -- ============================================================
 
--- remote_mode depuis lieu (libellés UI offre exacts / proches)
+-- remote_mode = mode de travail uniquement (onsite | hybrid | remote).
+-- "France entière" n'est PAS un remote_mode : lieu legacy conservé, remote_mode reste NULL.
 update public.offres
 set remote_mode = 'remote'
 where remote_mode is null
   and lieu is not null
   and lower(lieu) like '%remote%';
 
+-- contract_type = source canonique contrat (ne modifie PAS offres.type legacy)
 update public.offres
-set remote_mode = 'nationwide'
-where remote_mode is null
-  and lieu is not null
-  and (
-    lower(lieu) like '%france enti%'
-    or lower(lieu) = 'france entière'
-    or lower(lieu) = 'france entiere'
-  );
+set contract_type = 'CDI'
+where contract_type is null
+  and type is not null
+  and lower(trim(type)) = 'cdi';
 
--- Canonicalisation type de contrat (valeurs UI connues, casse seulement)
-update public.offres set type = 'CDI' where type is not null and lower(trim(type)) = 'cdi' and type is distinct from 'CDI';
-update public.offres set type = 'Alternance' where type is not null and lower(trim(type)) = 'alternance' and type is distinct from 'Alternance';
-update public.offres set type = 'Mission' where type is not null and lower(trim(type)) = 'mission' and type is distinct from 'Mission';
-update public.offres set type = 'Freelance' where type is not null and lower(trim(type)) = 'freelance' and type is distinct from 'Freelance';
+update public.offres
+set contract_type = 'Alternance'
+where contract_type is null
+  and type is not null
+  and lower(trim(type)) = 'alternance';
+
+update public.offres
+set contract_type = 'Mission'
+where contract_type is null
+  and type is not null
+  and lower(trim(type)) = 'mission';
+
+update public.offres
+set contract_type = 'Freelance'
+where contract_type is null
+  and type is not null
+  and lower(trim(type)) = 'freelance';
 
 -- ============================================================
 -- Index justifiés pour futures requêtes (pas de sur-indexation)
@@ -84,6 +92,9 @@ create index if not exists offres_statut_created_at_idx
 
 create index if not exists offres_type_idx
   on public.offres (type);
+
+create index if not exists offres_contract_type_idx
+  on public.offres (contract_type);
 
 create index if not exists offres_remote_mode_idx
   on public.offres (remote_mode);
