@@ -10,6 +10,7 @@ const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkAndConsumeUsage } = require('../utils/profiles');
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
+const { accessibleEbooks } = require('../utils/ebookAccess');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -1062,22 +1063,22 @@ router.delete('/compte', authMiddleware, async (req, res) => {
 // Carrière / Carrière Coaching — historique, export PDF, benchmark, certification
 // ------------------------------------------------------------
 
-// Bibliothèque de ressources (ebooks) — palier Carrière. Service autonome, distinct
+// Bibliothèque de ressources (ebooks) — accès progressif selon le plan candidat.
+// Service autonome, distinct
 // du placement (voir LISEZ-MOI fourni avec les fichiers) : ne conditionne jamais
 // l'accès aux offres, swipes ou candidatures.
-router.get('/ressources', authMiddleware, requireCandidatePlan('carriere'), async (req, res) => {
+router.get('/ressources', authMiddleware, async (req, res) => {
   try {
-    const ressources = await Promise.all(EBOOK_CATALOG.map(async (ebook, index) => {
-      const { data } = await supabase.storage.from(EBOOKS_BUCKET).createSignedUrl(ebook.file, 60 * 30);
-      return {
-        id: index,
-        titre: ebook.titre,
-        description: ebook.desc,
-        categorie: ebook.categorie,
-        url: data?.signedUrl || null,
-      };
-    }));
-    res.json({ ressources });
+    const plan = await getCandidatePlan(req.user.id);
+    const result = await accessibleEbooks(EBOOK_CATALOG, plan, (file) => (
+      supabase.storage.from(EBOOKS_BUCKET).createSignedUrl(file, 60 * 30)
+    ));
+    res.json({
+      ressources: result.ressources,
+      plan: result.plan,
+      available_count: result.availableCount,
+      total_count: result.totalCount,
+    });
   } catch (error) {
     publicError(res, error);
   }

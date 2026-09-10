@@ -1225,7 +1225,7 @@ button,input,textarea,select{font-family:inherit}
         <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Entraînement</div><h2 class="sf">Coach commercial</h2><p>Préparez vos entretiens, améliorez votre pitch et entraînez-vous à des situations de vente.</p></div><span class="tool-action">Ouvrir le coach</span>
       </article>
     </div>
-    <div class="section-divider library-intro"><div><div class="sec-t sf">Bibliothèque Carrière</div><p class="library-lead">Développez vos compétences commerciales</p><p>Guides pratiques pour progresser : prospection, closing, méthodes et outils. Réservés aux formules Carrière et Carrière Coaching.</p></div></div>
+    <div class="section-divider library-intro"><div><div class="sec-t sf">Bibliothèque Carrière</div><p class="library-lead">Développez vos compétences commerciales</p><p>Guides pratiques pour progresser : prospection, closing, méthodes et outils.</p><p id="resource-access-note"></p></div></div>
     <div class="resource-controls" id="resource-controls" hidden>
       <label class="sr-only" for="resource-search">Rechercher un guide</label>
       <input class="resource-search" id="resource-search" type="search" placeholder="Rechercher un guide" oninput="filterResources()">
@@ -2592,6 +2592,7 @@ async function loadCoaching() {
 }
 let CAREER_RESOURCES = [];
 let RESOURCE_CATEGORY = 'Toutes';
+let CAREER_RESOURCE_ACCESS = { plan: 'freemium', available_count: 0, total_count: 15 };
 async function loadResources() {
   const list = document.getElementById('resource-list');
   const controls = document.getElementById('resource-controls');
@@ -2601,13 +2602,31 @@ async function loadResources() {
   try {
     const result = await api('GET', '/candidats/ressources');
     CAREER_RESOURCES = Array.isArray(result.ressources) ? result.ressources : [];
-    const categories = ['Toutes', ...new Set(CAREER_RESOURCES.map(item => item.categorie).filter(Boolean))];
+    CAREER_RESOURCE_ACCESS = {
+      plan: result.plan || 'freemium',
+      available_count: Number(result.available_count ?? CAREER_RESOURCES.length),
+      total_count: Number(result.total_count ?? 15),
+    };
+    const accessNote = document.getElementById('resource-access-note');
+    if (accessNote) {
+      if (CAREER_RESOURCE_ACCESS.available_count >= CAREER_RESOURCE_ACCESS.total_count) {
+        accessNote.textContent = `${CAREER_RESOURCE_ACCESS.total_count} ebooks inclus · bibliothèque complète`;
+      } else {
+        const targetPlan = CAREER_RESOURCE_ACCESS.plan === 'freemium' ? 'Carrière' : 'Carrière Coaching';
+        accessNote.innerHTML = `${CAREER_RESOURCE_ACCESS.available_count} ebooks inclus sur ${CAREER_RESOURCE_ACCESS.total_count}. <button type="button" class="resource-access-link" onclick="go('pricing')">Voir l’offre ${targetPlan}</button>`;
+      }
+    }
+    const availableCategories = [...new Set(CAREER_RESOURCES.map(item => item.categorie).filter(Boolean))];
+    // Si les droits baissent dans la session, l’ancien filtre peut pointer une catégorie disparue.
+    if (RESOURCE_CATEGORY !== 'Toutes' && !availableCategories.includes(RESOURCE_CATEGORY)) {
+      RESOURCE_CATEGORY = 'Toutes';
+    }
+    const categories = ['Toutes', ...availableCategories];
     document.getElementById('resource-filters').innerHTML = categories.map(category => `<button type="button" class="resource-filter${category === RESOURCE_CATEGORY ? ' on' : ''}" data-category="${esc(category)}" onclick="setResourceCategory(this.dataset.category)">${esc(category)}</button>`).join('');
     if (controls) controls.hidden = CAREER_RESOURCES.length === 0;
     filterResources();
   } catch (error) {
-    const restricted = /abonnement|plan|carri.re|requis/i.test(error.message || '');
-    list.innerHTML = `<div class="resource-state"><strong>${restricted ? 'Bibliothèque réservée au plan Carrière' : 'Bibliothèque indisponible'}</strong><span>${restricted ? 'Passez à Carrière pour consulter les 15 guides.' : esc(error.message || 'Impossible de charger les ressources.')}</span>${restricted ? '<div style="margin-top:14px"><button type="button" class="btn bp bsm" onclick="go(\'pricing\')">Voir les formules</button></div>' : '<div style="margin-top:14px"><button type="button" class="btn bo bsm" onclick="loadResources()">Réessayer</button></div>'}</div>`;
+    list.innerHTML = `<div class="resource-state"><strong>Bibliothèque indisponible</strong><span>${esc(error.message || 'Impossible de charger les ressources.')}</span><div style="margin-top:14px"><button type="button" class="btn bo bsm" onclick="loadResources()">Réessayer</button></div></div>`;
   }
 }
 function setResourceCategory(category) {
@@ -4563,14 +4582,14 @@ async function restartCoachConversation() {
 // ------------------------------------------------------------
 const PLANS = {
   month:[
-    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
-    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Passer à Carrière',pop:true},
-    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Passer à Carrière Coaching',dk:true}
+    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','3 ebooks commerciaux','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
+    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','8 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Passer à Carrière',pop:true},
+    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Bibliothèque complète : 15 ebooks','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Passer à Carrière Coaching',dk:true}
   ],
   year:[
-    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
-    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · Économie 48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','15 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Choisir Carrière',pop:true},
-    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Carrière inclus','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Choisir Carrière Coaching',dk:true}
+    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','3 ebooks commerciaux','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
+    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · Économie 48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','8 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Choisir Carrière',pop:true},
+    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Carrière inclus','Bibliothèque complète : 15 ebooks','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Choisir Carrière Coaching',dk:true}
   ]
 };
 function activeSubscriptionPlan(abonnement) {

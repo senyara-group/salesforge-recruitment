@@ -1557,6 +1557,22 @@ body.auth .shell, body.product-gateway .shell {
   font-size: 14px !important;
   font-weight: 750;
 }
+.resource-access-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--b);
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.resource-access-link:focus-visible {
+  outline: 2px solid var(--b);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 #p-coaching .doc-item {
   align-items: flex-start;
 }
