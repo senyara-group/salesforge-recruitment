@@ -279,6 +279,125 @@ button,input,textarea,select{font-family:inherit}
 .pc-tags{display:flex;gap:4px}
 .pc-tag{font-size:10px;font-weight:600;background:var(--bg);color:var(--ink2);padding:2px 6px;border-radius:5px}
 
+/* Pipeline page — densification UI (scopée #p-pipeline, n’altère pas #p-offres) */
+#p-pipeline{overflow-x:clip}
+#p-pipeline .pipeline-offers{padding:0 18px 10px}
+#p-pipeline .page-intro{max-width:42ch}
+#p-pipeline .pipeline-offers .offers-list{
+  display:grid;grid-template-columns:1fr;gap:8px;
+}
+#p-pipeline .po-card{
+  background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px 13px;
+  display:flex;flex-direction:column;gap:8px;box-shadow:var(--sh-sm);min-width:0;
+}
+#p-pipeline .po-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+#p-pipeline .po-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;line-height:1.3;letter-spacing:-.2px;min-width:0;overflow-wrap:anywhere}
+#p-pipeline .po-badges{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+#p-pipeline .po-badge{
+  font-size:10px;font-weight:700;border-radius:999px;padding:3px 8px;border:1px solid var(--bd);
+  background:var(--bg);color:var(--ink3);line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#p-pipeline .po-badge.status{background:var(--gs);color:var(--g);border-color:transparent}
+#p-pipeline .po-badge.status.paused,#p-pipeline .po-badge.status.inactive,#p-pipeline .po-badge.status.closed{background:var(--rs);color:var(--r)}
+#p-pipeline .po-badge.contract{background:var(--bs);color:var(--b);border-color:transparent}
+#p-pipeline .po-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px}
+#p-pipeline .po-actions .btn{min-height:36px;padding:7px 11px;font-size:12px;border-radius:9px}
+#p-pipeline .po-actions .btn.po-primary{background:var(--bs);border:1px solid var(--bm);color:var(--b)}
+#p-pipeline .po-actions .btn.po-secondary{background:var(--w);border:1px solid var(--bd);color:var(--ink2)}
+#p-pipeline .po-actions .btn.po-danger{background:var(--w);border:1px solid var(--bd);color:var(--ink3);margin-left:auto}
+#p-pipeline .po-actions .btn.po-danger:hover{color:var(--r);border-color:var(--r)}
+
+#p-pipeline .pipeline-cands-hd{padding:4px 18px 8px}
+#p-pipeline .pipeline-cands-hd .sec-t{font-size:15px}
+#p-pipeline .pipeline-cands-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+
+#p-pipeline .pipe-cols{gap:10px;padding:0 18px 4px}
+#p-pipeline .pipe-col{width:min(268px,82vw);background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:10px;min-width:0}
+#p-pipeline .pipe-col-hd{margin-bottom:10px;padding:0 2px}
+#p-pipeline .pipe-col-t{font-size:12px;letter-spacing:.01em}
+#p-pipeline .pipe-count{background:var(--w);border:1px solid var(--bd);color:var(--ink3)}
+#p-pipeline .pipe-card{
+  background:var(--w);border:1px solid var(--bd);border-radius:11px;padding:11px;margin-bottom:8px;
+  box-shadow:var(--sh-sm);cursor:pointer;transition:border-color .15s,box-shadow .15s;
+}
+#p-pipeline .pipe-card:last-child{margin-bottom:0}
+#p-pipeline .pipe-card:hover{border-color:var(--bm);box-shadow:var(--sh-md)}
+#p-pipeline .pipe-card-top{margin-bottom:7px;gap:8px}
+#p-pipeline .pc-av{width:34px;height:34px;border-radius:9px;font-size:11px}
+#p-pipeline .pc-n{font-size:13px}
+#p-pipeline .pc-r{font-size:11px;margin-top:1px}
+#p-pipeline .pc-score-box{text-align:right;flex-shrink:0}
+#p-pipeline .pc-score{font-size:15px;line-height:1;display:block}
+#p-pipeline .pc-score-l{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+#p-pipeline .pc-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+#p-pipeline .pc-chip{
+  font-size:10px;font-weight:700;border-radius:999px;padding:3px 8px;background:var(--bg);
+  color:var(--ink3);border:1px solid var(--bd);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#p-pipeline .pc-chip.status{background:var(--bs);color:var(--b);border-color:transparent}
+#p-pipeline .pc-chip.adn{background:var(--pus);color:var(--pu);border-color:transparent}
+#p-pipeline .pc-foot{gap:8px;align-items:center}
+#p-pipeline .pc-tags{display:flex;flex-wrap:wrap;gap:4px;min-width:0;flex:1}
+#p-pipeline .pc-tag{max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#p-pipeline .pc-cta{font-size:11px;font-weight:800;color:var(--b);flex-shrink:0;white-space:nowrap}
+#p-pipeline .pipe-col-empty{
+  border:1px dashed var(--bd2);border-radius:10px;padding:14px 10px;text-align:center;
+  color:var(--mu);font-size:11px;line-height:1.45;background:rgba(255,255,255,.45);
+}
+
+#p-pipeline .pipe-state{
+  border:1px dashed var(--bd2);border-radius:12px;background:rgba(255,255,255,.7);
+  padding:22px 16px;text-align:center;color:var(--ink3);font-size:13px;line-height:1.55;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;
+}
+#p-pipeline .pipe-state b{font-family:'Sora',sans-serif;color:var(--ink);font-size:14px}
+#p-pipeline .pipe-state.error{border-color:#f0c4c4;background:var(--rs);color:var(--r)}
+#p-pipeline .pipe-state.error b{color:var(--r)}
+#p-pipeline .pipe-state .btn{margin-top:8px;min-height:40px}
+#p-pipeline #pipeline-load-more{padding:8px 18px 22px}
+#p-pipeline #pipeline-load-more-btn{min-height:42px;width:100%;max-width:420px;margin:0 auto;display:block}
+#p-pipeline .pipeline-end{
+  text-align:center;font-size:12px;color:var(--mu);font-weight:600;padding:4px 18px 20px;
+}
+#p-pipeline .pipe-state .spinner{margin:0 auto 4px}
+
+@media (max-width:440px){
+  #p-pipeline .pipeline-offers,#p-pipeline .pipeline-cands-hd{padding-left:14px;padding-right:14px}
+  #p-pipeline .pipe-cols{padding-left:14px;padding-right:14px}
+  #p-pipeline .pipe-col{width:min(252px,86vw)}
+  #p-pipeline .po-actions .btn.po-danger{margin-left:0}
+  #p-pipeline #pipeline-load-more{padding-left:14px;padding-right:14px}
+}
+
+@media (min-width:720px){
+  #p-pipeline .pipe-cols{padding-left:42px;padding-right:42px;padding-bottom:8px}
+  #p-pipeline #pipeline-load-more{padding:4px 42px 20px}
+  #p-pipeline .pipeline-end{padding-left:42px;padding-right:42px}
+}
+
+@media (min-width:860px){
+  #p-pipeline .pipeline-offers .offers-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #p-pipeline .po-card{padding:12px 14px}
+  #p-pipeline .pipe-cols{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;
+    gap:12px;scroll-snap-type:none;
+  }
+  #p-pipeline .pipe-col{width:auto;min-width:0;flex-shrink:1}
+}
+
+@media (min-width:1100px){
+  #p-pipeline .pipeline-offers .offers-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #p-pipeline .pipe-cols{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+  #p-pipeline .pipe-col{padding:9px}
+  #p-pipeline .pc-n{font-size:12.5px}
+}
+
+@media (min-width:1180px){
+  #p-pipeline .pipe-cols{padding-left:64px;padding-right:64px}
+  #p-pipeline #pipeline-load-more{padding-left:64px;padding-right:64px}
+  #p-pipeline .pipeline-end{padding-left:64px;padding-right:64px}
+}
+
 /* MESSAGES */
 .msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
 .msg-th.ur{background:var(--bs);border-color:var(--bm)}
@@ -1020,15 +1139,21 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       </div>
       <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
     </div>
-    <div id="pipeline-offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
+    <div id="pipeline-offers-list" class="offers-list"><div class="pipe-state"><div class="spinner"></div>Chargement des offres…</div></div>
   </div>
-  <div class="sec" style="padding-bottom:9px">
-    <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div></div>
+  <div class="sec pipeline-cands-hd">
+    <div class="sec-hd" style="margin-bottom:0">
+      <div>
+        <div class="sec-t sf">Candidatures reçues</div>
+        <div class="pipeline-cands-sub">Classées par étape — ouvrez une carte pour qualifier et contacter.</div>
+      </div>
+    </div>
   </div>
-  <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
-  <div id="pipeline-load-more" class="sec" style="display:none;padding:12px 18px 24px">
+  <div class="pipe-cols" id="pipe-cols"><div class="pipe-state"><div class="spinner"></div>Chargement des candidatures…</div></div>
+  <div id="pipeline-load-more" class="sec" style="display:none">
     <button class="btn bo blk" type="button" id="pipeline-load-more-btn" onclick="loadMorePipeline()">Charger plus de candidatures</button>
   </div>
+  <div id="pipeline-end" class="pipeline-end" hidden>Fin de la liste chargée</div>
 </div>
 
 <!-- POST OFFRE -->
@@ -2693,12 +2818,24 @@ function mergePipelinePage(page) {
 function syncPipelineLoadMore() {
   const bar = document.getElementById('pipeline-load-more');
   const btn = document.getElementById('pipeline-load-more-btn');
+  const end = document.getElementById('pipeline-end');
+  const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
   if (!bar) return;
   bar.style.display = PIPELINE_HAS_MORE ? '' : 'none';
   if (btn) {
     btn.disabled = PIPELINE_LOADING;
     btn.textContent = PIPELINE_LOADING ? 'Chargement…' : 'Charger plus de candidatures';
   }
+  if (end) {
+    end.hidden = !(total > 0 && !PIPELINE_HAS_MORE && !PIPELINE_LOADING);
+  }
+}
+
+function pipelineStateHtml(title, copy, options = {}) {
+  const kind = options.error ? ' error' : '';
+  const action = options.actionHtml || '';
+  const spin = options.loading ? '<div class="spinner" aria-hidden="true"></div>' : '';
+  return `<div class="pipe-state${kind}" role="status">${spin}<b>${title}</b><span>${copy}</span>${action}</div>`;
 }
 
 async function fetchPipelinePage(cursor) {
@@ -2708,9 +2845,9 @@ async function fetchPipelinePage(cursor) {
 }
 
 async function loadPipeline() {
-  document.getElementById('pipe-cols').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   const offersList = document.getElementById('pipeline-offers-list');
-  if (offersList) offersList.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  document.getElementById('pipe-cols').innerHTML = pipelineStateHtml('Chargement', 'Récupération des candidatures…', { loading: true });
+  if (offersList) offersList.innerHTML = pipelineStateHtml('Chargement', 'Récupération des offres actives…', { loading: true });
   PIPELINE = emptyPipelineState();
   PIPELINE_CURSOR = null;
   PIPELINE_HAS_MORE = false;
@@ -2738,7 +2875,11 @@ async function loadPipeline() {
   if (!offersError) {
     renderPipelineOffers(offers || []);
   } else if (offersList) {
-    offersList.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+    offersList.innerHTML = pipelineStateHtml(
+      'Impossible de charger vos offres',
+      'Les candidatures restent disponibles si le pipeline a répondu.',
+      { error: true, actionHtml: '<button class="btn bo bsm" type="button" onclick="loadPipeline()">Réessayer</button>' }
+    );
   }
 
   if (!pipelineError) {
@@ -2746,7 +2887,11 @@ async function loadPipeline() {
     renderPipeline();
     syncPipelineLoadMore();
   } else {
-    document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Impossible de charger le pipeline</div>';
+    document.getElementById('pipe-cols').innerHTML = pipelineStateHtml(
+      'Impossible de charger le pipeline',
+      'Vos offres actives restent visibles ci-dessus.',
+      { error: true, actionHtml: '<button class="btn bo bsm" type="button" onclick="loadPipeline()">Réessayer</button>' }
+    );
     syncPipelineLoadMore();
   }
 }
@@ -2770,39 +2915,64 @@ async function loadMorePipeline() {
 function renderPipeline() {
   const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
   if (!total) {
-    document.getElementById('pipe-cols').innerHTML = `
-      <div class="empty-state">
-        <b>Aucune candidature reçue</b>
-        Les candidats qui postulent à vos offres apparaîtront ici.
-      </div>`;
+    document.getElementById('pipe-cols').innerHTML = pipelineStateHtml(
+      'Aucune candidature reçue',
+      'Les candidats qui postulent à vos offres apparaîtront ici.',
+      { actionHtml: '<button class="btn bp bsm" type="button" onclick="go(\'swipe\')">Sourcer des candidats</button>' }
+    );
+    syncPipelineLoadMore();
     return;
   }
   PIPELINE_CARDS = {};
   PIPE_STAGES.forEach(stage => (PIPELINE[stage.key] || []).forEach(c => { PIPELINE_CARDS[c.id] = c; }));
-  document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => `
-    <div class="pipe-col">
+  document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => {
+    const cards = PIPELINE[stage.key] || [];
+    return `
+    <div class="pipe-col" data-stage="${stage.key}">
       <div class="pipe-col-hd">
         <div class="pipe-col-t sf"><span class="pipe-dot" style="background:${stage.color}"></span>${stage.label}</div>
-        <span class="pipe-count">${(PIPELINE[stage.key]||[]).length}</span>
+        <span class="pipe-count">${cards.length}</span>
       </div>
-      ${(PIPELINE[stage.key]||[]).map(c => `
-        <div class="pipe-card" draggable="false" ondragstart="return false" onclick="openPipelineCandidate('${c.id}')" style="cursor:pointer">
+      ${cards.length ? cards.map(c => {
+        const matchScore = Number(c.score);
+        const scoreColor = matchScore >= 90 ? 'var(--pu)' : matchScore >= 80 ? 'var(--b)' : 'var(--a)';
+        const statusLabel = PIPELINE_LABELS[c.statut] || c.statut || 'Candidature';
+        const adn = c.score_adn != null && c.score_adn !== '' ? Number(c.score_adn) : null;
+        const tags = (c.tags || []).slice(0, 3);
+        const id = esc(String(c.id));
+        return `
+        <div class="pipe-card" draggable="false" ondragstart="return false" onclick="openPipelineCandidate('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPipelineCandidate('${id}')}">
           <div class="pipe-card-top">
-            <div class="pc-av" style="background:${c.bg}">${c.av}</div>
-            <div class="pc-info"><div class="pc-n sf">${c.name}</div><div class="pc-r">${c.role}</div></div>
-            <div class="pc-score sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div>
+            <div class="pc-av" style="background:${esc(c.bg || 'var(--b)')}">${esc(c.av || '?')}</div>
+            <div class="pc-info">
+              <div class="pc-n sf">${esc(c.name)}</div>
+              <div class="pc-r">${esc(c.role || 'Commercial')}</div>
+            </div>
+            <div class="pc-score-box">
+              <span class="pc-score sf" style="color:${scoreColor}">${Number.isFinite(matchScore) ? esc(String(matchScore)) : '—'}</span>
+              <div class="pc-score-l">Match</div>
+            </div>
+          </div>
+          <div class="pc-meta">
+            <span class="pc-chip status">${esc(statusLabel)}</span>
+            ${Number.isFinite(adn) ? `<span class="pc-chip adn">ADN ${esc(String(adn))}</span>` : ''}
+            ${c.offre_title ? `<span class="pc-chip">${esc(c.offre_title)}</span>` : ''}
           </div>
           <div class="pc-foot">
-            <div class="pc-tags">${c.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
+            <div class="pc-tags">${tags.map(t => `<span class="pc-tag">${esc(t)}</span>`).join('')}</div>
+            <span class="pc-cta">Voir →</span>
           </div>
-        </div>`).join('')}
-    </div>`).join('');
+        </div>`;
+      }).join('') : `<div class="pipe-col-empty">Aucune candidature</div>`}
+    </div>`;
+  }).join('');
 
   const focusId = localStorage.getItem('sf_focus_candidature');
   if (focusId) {
     localStorage.removeItem('sf_focus_candidature');
     if (PIPELINE_CARDS[focusId]) openPipelineCandidate(focusId);
   }
+  syncPipelineLoadMore();
 }
 
 let PIPELINE_CARDS = {};
@@ -3097,7 +3267,41 @@ async function setOfferStatus(id, statut) {
 }
 function renderPipelineOffers(offers = []) {
   const activeOffers = offers.filter(o => String(o.statut || 'active').toLowerCase() === 'active');
-  renderOffers(activeOffers, 'pipeline-offers-list', 'Aucune offre active pour le moment.');
+  activeOffers.forEach((offer) => {
+    if (!MY_OFFERS.some((item) => String(item.id) === String(offer.id))) MY_OFFERS.push(offer);
+  });
+  const list = document.getElementById('pipeline-offers-list');
+  if (!list) return;
+  if (!activeOffers.length) {
+    list.innerHTML = pipelineStateHtml(
+      'Aucune offre active',
+      'Publiez un poste pour recevoir des candidatures dans le pipeline.',
+      { actionHtml: '<button class="btn bp bsm" type="button" onclick="go(\'post-offre\')">Publier une offre</button>' }
+    );
+    return;
+  }
+  list.innerHTML = activeOffers.map((o) => {
+    const status = String(o.statut || 'active').toLowerCase();
+    const id = esc(String(o.id));
+    const contract = o.type || o.contract_type || '';
+    return `
+      <article class="po-card">
+        <div class="po-card-hd">
+          <div class="po-title">${esc(o.titre || 'Offre sans titre')}</div>
+        </div>
+        <div class="po-badges">
+          <span class="po-badge status ${esc(status)}">${esc(offerStatusLabel(status))}</span>
+          ${contract ? `<span class="po-badge contract">${esc(contract)}</span>` : ''}
+          ${o.lieu ? `<span class="po-badge">${esc(o.lieu)}</span>` : ''}
+          ${o.salaire ? `<span class="po-badge">${esc(o.salaire)}</span>` : ''}
+        </div>
+        <div class="po-actions">
+          <button class="btn bsm po-primary" type="button" onclick="document.getElementById('pipe-cols')?.scrollIntoView({behavior:'smooth',block:'start'})">Voir candidatures</button>
+          <button class="btn bsm po-secondary" type="button" onclick="editOffer('${id}')">Modifier</button>
+          <button class="btn bsm po-danger" type="button" onclick="setOfferStatus('${id}','closed')">Clôturer</button>
+        </div>
+      </article>`;
+  }).join('');
 }
 function renderOffers(offers = [], targetId = 'offers-list', emptyText = 'Aucune offre publiée pour le moment.') {
   offers.forEach(offer => { if (!MY_OFFERS.some(item => String(item.id) === String(offer.id))) MY_OFFERS.push(offer); });

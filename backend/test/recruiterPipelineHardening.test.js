@@ -91,6 +91,10 @@ test('route pipeline : pagination + signed URL dedup + pas de Promise.all front 
   assert.match(html, /fetchPipelinePage/);
   assert.match(html, /Impossible de charger le pipeline/);
   assert.match(html, /Impossible de charger vos offres/);
+  assert.match(html, /po-card/);
+  assert.match(html, /pipe-state/);
+  assert.match(html, /pipeline-end/);
+  assert.match(html, /function renderPipelineOffers/);
   // Plus de Promise.all qui couple pipeline + offres
   const loadStart = html.indexOf('async function loadPipeline');
   const loadEnd = html.indexOf('async function loadMorePipeline', loadStart);
