@@ -118,6 +118,10 @@ function validateAnswer(questionId, optionId) {
   return { question, option };
 }
 
+function normalizeBlockScore(rawTotal) {
+  return Math.max(0, Math.min(100, Math.round(((Number(rawTotal) - 8) / 24) * 100)));
+}
+
 function scoreAnswers(answers, presentation = []) {
   if (!Array.isArray(answers)) throw new Error('Réponses invalides');
   const seen = new Set();
@@ -134,7 +138,7 @@ function scoreAnswers(answers, presentation = []) {
   const blocks = BLOCKS.map((block) => {
     const blockAnswers = selected.filter((answer) => answer.question.blockId === block.id);
     const raw = blockAnswers.reduce((sum, answer) => sum + answer.option.weight, 0);
-    const score = Math.round((raw / 32) * 100);
+    const score = normalizeBlockScore(raw);
     const profile = block.id === 'B1' && score >= 40 && score <= 60 ? block.mid : score > 60 ? block.high : block.low;
     return { id: block.id, label: block.label, score: Math.max(0, Math.min(100, score)), profile };
   });
@@ -156,5 +160,5 @@ function scoreAnswers(answers, presentation = []) {
 
 module.exports = {
   QUESTIONNAIRE_VERSION, SCORING_VERSION, BLOCKS, QUESTIONS,
-  createPresentation, publicQuestionnaire, validateAnswer, scoreAnswers,
+  createPresentation, publicQuestionnaire, validateAnswer, normalizeBlockScore, scoreAnswers,
 };

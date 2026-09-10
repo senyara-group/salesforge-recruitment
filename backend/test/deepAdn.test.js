@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   QUESTIONS, BLOCKS, QUESTIONNAIRE_VERSION, SCORING_VERSION,
-  createPresentation, publicQuestionnaire, scoreAnswers, validateAnswer,
+  createPresentation, publicQuestionnaire, scoreAnswers, validateAnswer, normalizeBlockScore,
 } = require('../utils/deepAdnQuestionnaire');
 
 function answersForWeight(weight) {
@@ -35,8 +35,14 @@ test('scores de chaque bloc restent bornés entre 0 et 100', () => {
     const result = scoreAnswers(answersForWeight(weight), createPresentation(() => 0));
     for (const block of result.blocks) assert.ok(block.score >= 0 && block.score <= 100);
   }
-  assert.ok(scoreAnswers(answersForWeight(1)).blocks.every((block) => block.score === 25));
+  assert.ok(scoreAnswers(answersForWeight(1)).blocks.every((block) => block.score === 0));
   assert.ok(scoreAnswers(answersForWeight(4)).blocks.every((block) => block.score === 100));
+});
+
+test('normalisation des blocs place exactement minimum, milieu et maximum à 0, 50 et 100', () => {
+  assert.equal(normalizeBlockScore(8), 0);
+  assert.equal(normalizeBlockScore(20), 50);
+  assert.equal(normalizeBlockScore(32), 100);
 });
 
 test('randomisation change l’ordre mais jamais le scoring', () => {
