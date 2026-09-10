@@ -221,7 +221,7 @@ button.kpi:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 
 /* SWIPE RECRUTEUR */
 .swipe-hd{padding:12px 18px;background:var(--w);border-top:0;border-bottom:1px solid var(--bd);position:sticky;top:58px;z-index:40}
-.deck-area{position:relative;height:calc(100dvh - 240px);min-height:460px;max-height:600px;margin:12px 18px 0}
+.deck-area{position:relative;height:calc(100dvh - 285px);min-height:440px;max-height:570px;margin:0}
 .swipe-card{position:absolute;inset:0;background:var(--w);border:1px solid var(--bd);border-radius:22px 22px 0 0;overflow:hidden;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;box-shadow:var(--sh-lg);will-change:transform;z-index:0}
 .swipe-card.swiping{pointer-events:none}
 .swipe-card:nth-last-child(2){transform:scale(.963) translateY(10px);z-index:1;pointer-events:none}
@@ -290,7 +290,8 @@ button.kpi:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .cand-predict-box{flex:1;background:var(--gs);border-radius:10px;padding:9px;text-align:center}
 .cand-predict-v{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--g)}
 .cand-predict-l{font-size:9px;color:var(--g);opacity:.8;margin-top:2px;font-weight:600}
-.deck-actions{position:sticky;bottom:70px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30}
+.deck-actions{position:static;bottom:auto;background:var(--w);border-top:1px solid var(--bd);box-shadow:none;padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30;flex-shrink:0}
+.deck-actions[hidden]{display:none !important}
 .db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
 button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .db:focus-visible{outline:2px solid var(--b);outline-offset:2px}
@@ -299,16 +300,57 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 8px 18px rgba(19,64,224,.25)}.db-like:hover{background:var(--b2);box-shadow:0 10px 22px rgba(19,64,224,.32)}
 .db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
-.deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px;box-shadow:var(--sh-sm)}
+.deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:none;border-radius:0;padding:36px;box-shadow:none}
 .deck-empty.on{display:flex}
+.deck-empty[hidden]{display:none !important}
+.deck-area.has-offer .deck-empty{display:none !important}
+.deck-area.is-empty #deck-cards{display:none}
 .deck-empty-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
 .deck-empty-actions .btn{min-height:44px}
-.swipe-intro{margin:4px 0 0;font-size:12px;max-width:42ch}
-.settings-logout{margin-top:22px;padding-top:18px;border-top:1px solid var(--bd)}
-.settings-logout-btn{color:var(--r)!important;border-color:#f0c4c4!important}
-#p-pipeline .pipe-state{width:100%;max-width:100%;box-sizing:border-box}
+.filter-row,.cand-filter-bar{display:flex;align-items:center;gap:6px;overflow-x:auto;margin-top:9px;scrollbar-width:thin}
+.fp{padding:5px 11px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11px;font-weight:700;color:var(--ink2);cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:6px}
+.fp-filters{border-color:var(--bm);background:var(--bs);color:var(--b)}
+.fp-count,.comp-filter-badge{min-width:18px;height:18px;border-radius:999px;background:var(--b);color:#fff;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.fp-count[hidden],.comp-filter-badge[hidden],#cand-filters-reset-quick[hidden]{display:none !important}
+.fp-more{border-style:dashed}
+.cand-filter-summary{font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.deck-wrap{margin:12px 18px 0;border-radius:22px;background:var(--w);box-shadow:var(--sh-lg);overflow:hidden;display:flex;flex-direction:column}
+#p-settings .account-logout{justify-self:start;margin-top:8px;color:var(--r)!important;border-color:#f0c4c4!important}
+#p-pipeline .pipe-state{width:100%;max-width:100%;box-sizing:border-box;min-height:160px}
+#p-pipeline .pipe-kanban-wrap .pipe-state{min-height:260px}
+#p-pipeline .pipe-kanban-wrap{min-width:0;width:100%}
+#p-pipeline .pipe-kanban-wrap > .pipe-state.is-surface,
+#p-pipeline .pipe-cols > .pipe-state.is-surface{
+  min-height:min(420px,55dvh);margin:0 18px 18px;padding:40px 24px;
+  border:1px solid var(--bd);border-radius:16px;background:var(--w);box-shadow:var(--sh-sm);
+  border-style:solid;
+}
+#p-pipeline .pipe-state-ico{
+  width:48px;height:48px;border-radius:14px;background:var(--bs);color:var(--b);
+  display:flex;align-items:center;justify-content:center;margin-bottom:6px;
+}
+#p-pipeline .pipe-state.is-surface b{font-size:16px}
+#p-pipeline .pipe-offers-context{opacity:.96}
+#p-pipeline .pipe-offers-context .sec-t{font-size:14px}
+#p-pipeline .pipe-kanban-hd .sec-t{font-size:16px}
 #p-offres .offer-card{box-shadow:var(--sh-sm)}
 #p-offres .page-intro{max-width:48ch}
+#p-dashboard.page.on{display:block !important;padding:0 0 96px;background:var(--bg);max-width:none;margin:0;min-height:calc(100dvh - 59px)}
+#p-dashboard .dash-actions .btn{width:auto}
+.dash-action-list{display:flex;flex-direction:column;gap:8px}
+.dash-action-item{
+  display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 12px;
+  border:1px solid var(--bd);border-radius:12px;background:var(--w);cursor:pointer;text-align:left;font:inherit;color:var(--ink);
+  transition:border-color .15s,background .15s;
+}
+.dash-action-item:hover{border-color:var(--bm);background:var(--bg)}
+.dash-action-item.is-primary{background:var(--b);border-color:var(--b);color:#fff;box-shadow:var(--sh-brand)}
+.dash-action-item.is-primary:hover{background:var(--b2)}
+.dash-action-ico{width:32px;height:32px;border-radius:9px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dash-action-item.is-primary .dash-action-ico{background:rgba(255,255,255,.16)}
+.dash-action-ico svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.dash-action-label{flex:1;min-width:0;font-size:13px;font-weight:700}
+.dash-action-chev{opacity:.45;font-weight:800}
 
 /* MATCHING ENGINE */
 .match-engine{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:10px}
@@ -453,6 +495,8 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 }
 
 @media (min-width:720px){
+  #p-pipeline .pipe-kanban-wrap > .pipe-state.is-surface,
+  #p-pipeline .pipe-cols > .pipe-state.is-surface{margin-left:42px;margin-right:42px}
   #p-pipeline .pipe-cols{padding-left:42px;padding-right:42px;padding-bottom:8px}
   #p-pipeline #pipeline-load-more{padding:4px 42px 20px}
   #p-pipeline .pipeline-end{padding-left:42px;padding-right:42px}
@@ -560,18 +604,19 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .pipeline-offers{padding:0 18px 14px}
 .pipeline-offers .offers-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 
-/* Sur desktop, "Offres actives" passe en liste dense (une ligne par offre) plutôt
-   qu'une grille de cartes : plus lisible et moins "blocs géants" avec beaucoup d'offres. */
+/* Sur desktop, cartes d’offres en grille (finition type candidat) — pas de bande horizontale fine. */
 @media (min-width:860px){
-  #p-offres .offers-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--bd);border-radius:13px;overflow:hidden;background:var(--w)}
-  #p-offres .offer-card{flex-direction:row;align-items:center;gap:18px;padding:13px 18px;border:none;border-radius:0;border-bottom:1px solid var(--bg)}
-  #p-offres .offers-list .offer-card:last-child{border-bottom:none}
-  #p-offres .offer-card:hover{background:var(--bg)}
-  #p-offres .offer-card-hd{flex-direction:column;align-items:flex-start;gap:2px;flex:1 1 220px;min-width:0}
-  #p-offres .offer-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  #p-offres .offer-meta{flex-shrink:0;flex:0 0 auto;width:220px}
-  #p-offres .offer-tags{flex:1 1 160px;min-width:0}
-  #p-offres .offer-actions{flex:0 0 auto;margin-top:0;padding-top:0;border-top:none;gap:16px}
+  #p-offres .offers-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  #p-offres .offer-card{flex-direction:column;align-items:stretch;gap:10px;padding:16px 18px;border:1px solid var(--bd);border-radius:14px;background:var(--w);box-shadow:var(--sh-sm)}
+  #p-offres .offer-card:hover{border-color:var(--bd2);background:var(--w)}
+  #p-offres .offer-card-hd{flex-direction:row;align-items:flex-start;gap:12px}
+  #p-offres .offer-title{white-space:normal;overflow:visible;text-overflow:unset;font-size:15px}
+  #p-offres .offer-meta{width:auto;flex:none}
+  #p-offres .offer-tags{flex:none;min-width:0}
+  #p-offres .offer-actions{margin-top:2px;padding-top:10px;border-top:1px solid var(--bg);gap:14px}
+}
+@media (min-width:1180px){
+  #p-offres .offers-list{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
 /* PRICING */
@@ -634,8 +679,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .comp-cat.on .comp-cat-body{display:flex}
 .comp-pill{padding:6px 12px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11.5px;font-weight:700;color:var(--ink3);cursor:pointer;transition:.15s}
 .comp-pill.on{background:var(--b);border-color:var(--b);color:#fff}
-.comp-filter-badge{font-size:10px;background:#fff;color:var(--b);border-radius:999px;padding:1px 7px;font-weight:900}
-.cand-filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .cand-filter-summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0;flex:1}
 .cand-filter-chip{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bs);color:var(--b);border:1px solid var(--bm);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cand-filter-meta{font-size:11px;font-weight:700;color:var(--ink3)}
@@ -665,6 +708,12 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .deck-actions{padding:8px 18px;gap:9px}
   .db-pass,.db-super{width:44px;height:44px}
   .db-like{width:52px;height:52px}
+  #p-swipe .swipe-hd{padding:10px 16px}
+  #p-swipe .page-title{font-size:18px}
+  #p-swipe .deck-wrap{margin:10px 16px 0}
+  #p-swipe .deck-area{min-height:min(440px,calc(100dvh - 250px));height:calc(100dvh - 250px)}
+  #p-swipe .deck-area.is-empty{min-height:360px;height:min(400px,calc(100dvh - 220px))}
+  #p-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
 @media (max-width:380px){
@@ -678,7 +727,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .kpi{padding:10px}
   .kpi-v{font-size:20px}
   .swipe-hd{top:54px;padding:10px 14px}
-  .deck-area{margin-left:12px;margin-right:12px;min-height:420px;height:calc(100dvh - 230px)}
+  .deck-wrap{margin-left:12px;margin-right:12px}
+  .deck-area{margin-left:0;margin-right:0;min-height:420px;height:calc(100dvh - 270px)}
   .deck-actions{padding:10px 12px;gap:9px}
   .cand-name{font-size:16px}
   .cand-adn-section{padding:12px}
@@ -755,19 +805,25 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .dash-hero{padding-top:24px;background:var(--w);border:1px solid var(--bd);border-radius:16px}
   .kpi-grid{grid-template-columns:repeat(4,1fr)}
   .cand-recue,.alert-card,.match-engine,.q-preset-card,.menu-list,.chat-panel{max-width:none;margin-left:0;margin-right:0}
-  #p-dashboard.page.on{display:grid;grid-template-columns:minmax(330px,440px) minmax(0,1fr);gap:18px;padding:24px 28px 96px}
-  #p-dashboard .dash-hero{grid-row:span 2;padding:22px}
+  #p-dashboard.page.on{display:block !important;padding:0 0 96px;background:var(--bg);max-width:none}
+  #p-dashboard .dash-shell{padding:22px 28px 40px}
   #p-dashboard>.sec{padding:0}
   #p-dashboard .hscroll{margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
   #p-dashboard .cand-recue,#p-dashboard .alert-card{width:100%}
-  #p-swipe.page.on{display:grid !important;grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto auto;grid-template-areas:"sidebar card" "sidebar actions";column-gap:24px;align-items:start;padding:24px 28px 96px}
-  #p-swipe .swipe-hd{grid-area:sidebar;position:static;background:none;border:none;padding:0;top:auto}
-  #p-swipe .deck-area{grid-area:card;width:100%;max-width:480px;height:min(820px,calc(100dvh - 260px));margin:0 auto}
-  #p-swipe .deck-actions{grid-area:actions;width:100%;max-width:480px;margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);border-radius:0 0 18px 18px}
-  #p-swipe .cand-top{height:220px}
-  #p-swipe .cand-avatar{width:112px;height:112px;font-size:38px;border-width:3px}
-  #p-swipe .cand-match-box{top:18px;right:18px}
-  #p-swipe .cand-anon-badge{top:18px;left:18px}
+  #p-swipe.page.on{display:flex !important;flex-direction:column;gap:10px;align-items:center;padding:24px 28px 96px;width:100%;max-width:1200px;margin:0 auto}
+  #p-swipe .swipe-hd{grid-area:auto;position:static;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;top:auto;width:100%;max-width:1100px}
+  #p-swipe .filter-row{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin-top:8px;gap:6px;scrollbar-width:thin}
+  #p-swipe .fp{width:auto;text-align:center;padding:7px 12px;flex-shrink:0}
+  #p-swipe .fp-more{border-style:dashed}
+  #p-swipe .deck-wrap{width:100%;max-width:1180px;margin:0;border-radius:22px}
+  #p-swipe .deck-area{grid-area:auto;width:100%;max-width:none;height:min(520px,calc(100dvh - 260px));min-height:360px;max-height:calc(100dvh - 220px);margin:0}
+  #p-swipe .deck-area.is-empty{min-height:360px;height:400px}
+  #p-swipe .deck-empty{position:absolute;inset:0;min-height:0}
+  #p-swipe .deck-actions{grid-area:auto;width:100%;max-width:none;margin:0;border-left:none;border-right:none;border-radius:0;position:static}
+  #p-swipe .cand-top{height:140px}
+  #p-swipe .cand-avatar{width:72px;height:72px;font-size:26px;border-width:3px}
+  #p-swipe .cand-match-box{top:14px;right:14px}
+  #p-swipe .cand-anon-badge{top:14px;left:14px}
   #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
   #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
   #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
@@ -786,11 +842,13 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .bnav,.overlay{max-width:none}
   .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
   #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
-  #p-dashboard.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
-  #p-dashboard .dash-hero{grid-row:span 1}
+  #p-dashboard.page.on{display:block !important;padding-left:0;padding-right:0;max-width:none}
+  #p-dashboard .dash-shell{padding:24px clamp(28px,4vw,64px) 48px}
   #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #p-swipe.page.on{grid-template-columns:260px minmax(0,1fr);padding-left:42px;padding-right:42px}
+  #p-swipe.page.on{grid-template-columns:none;padding-left:42px;padding-right:42px;max-width:1200px}
   #p-swipe .deck-area,#p-swipe .deck-actions{width:100%}
+  #p-swipe .deck-area{height:min(480px,calc(100dvh - 240px));max-height:480px}
+  #p-swipe .deck-area.is-empty{min-height:360px;height:400px}
   #p-swipe .cand-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:11px;align-items:start}
   #p-swipe .cand-name,#p-swipe .cand-role,#p-swipe .cand-rank{grid-column:1/-1}
   #p-swipe .cand-adn-section{grid-column:1;grid-row:4}
@@ -892,7 +950,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard .dash-shell{padding-top:20px;padding-bottom:40px}
   #p-dashboard .dash-hero-card{margin:0}
   #p-dashboard .dash-panel .sec-t{font-size:16px}
-  #p-dashboard .dash-actions .btn{width:100%}
   #p-dashboard .kpi-card{min-height:118px;padding:16px 14px}
   #p-dashboard .kpi-v{font-size:28px}
 }
@@ -1117,10 +1174,28 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="dash-mid">
       <section class="dash-panel dash-actions">
         <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
-        <button class="btn bp blk dash-action-primary" type="button" onclick="go('post-offre')">+ Publier une offre</button>
-        <button class="btn bo blk dash-action-row" type="button" onclick="go('swipe')">Sourcer des candidats <span aria-hidden="true">→</span></button>
-        <button class="btn bo blk dash-action-row" type="button" onclick="go('offres')">Voir mes offres <span aria-hidden="true">→</span></button>
-        <button class="btn bo blk dash-action-row" type="button" onclick="go('pipeline')">Accéder au pipeline <span aria-hidden="true">→</span></button>
+        <div class="dash-action-list">
+          <button class="dash-action-item is-primary" type="button" onclick="go('post-offre')">
+            <span class="dash-action-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+            <span class="dash-action-label sf">Publier une offre</span>
+            <span class="dash-action-chev" aria-hidden="true">→</span>
+          </button>
+          <button class="dash-action-item" type="button" onclick="go('swipe')">
+            <span class="dash-action-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <span class="dash-action-label">Sourcer des candidats</span>
+            <span class="dash-action-chev" aria-hidden="true">→</span>
+          </button>
+          <button class="dash-action-item" type="button" onclick="go('offres')">
+            <span class="dash-action-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M9 7V4h6v3"/></svg></span>
+            <span class="dash-action-label">Voir mes offres</span>
+            <span class="dash-action-chev" aria-hidden="true">→</span>
+          </button>
+          <button class="dash-action-item" type="button" onclick="go('pipeline')">
+            <span class="dash-action-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+            <span class="dash-action-label">Accéder au pipeline</span>
+            <span class="dash-action-chev" aria-hidden="true">→</span>
+          </button>
+        </div>
       </section>
       <section class="dash-panel dash-sourcing">
         <div class="dash-sourcing-badge">Prêt à recruter ?</div>
@@ -1161,36 +1236,36 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div>
         <div class="page-kicker">Sourcing</div>
         <div class="sec-t sf page-title">Sourcing candidats</div>
-        <p class="page-intro swipe-intro">Parcourez les profils compatibles et affinez avec vos filtres.</p>
       </div>
       <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
-    <div class="cand-filter-bar">
-      <button class="btn bg2 bsm comp-filter-btn" type="button" onclick="openCandFilterModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    <div class="filter-row cand-filter-bar" id="cand-filter-row" role="toolbar" aria-label="Filtres candidats">
+      <button class="fp fp-filters comp-filter-btn" type="button" onclick="openCandFilterModal()">
         Filtres
-        <span class="comp-filter-badge" id="comp-filter-badge" style="display:none">0</span>
+        <span class="fp-count comp-filter-badge" id="comp-filter-badge" hidden>0</span>
       </button>
       <div class="cand-filter-summary" id="cand-filters-summary" aria-live="polite"></div>
-      <button class="btn bo bsm" type="button" id="cand-filters-reset-quick" style="display:none" onclick="resetCandFiltersQuick()">Réinitialiser</button>
+      <button class="fp fp-more" type="button" id="cand-filters-reset-quick" hidden onclick="resetCandFiltersQuick()">Réinitialiser</button>
     </div>
   </div>
-  <div class="deck-area" id="deck-area">
-    <div id="deck-cards"></div>
-    <div class="deck-empty" id="deck-empty">
-      <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="sf deck-empty-title">Tous les profils ont été consultés</div>
-      <p class="deck-empty-copy">Ajustez vos filtres pour découvrir d’autres candidats, ou affinez le moteur de matching.</p>
-      <div class="deck-empty-actions">
-        <button class="btn bp" type="button" onclick="openCandFilterModal()">Ajuster les filtres</button>
-        <button class="btn bo" type="button" onclick="go('matching')">Moteur de matching</button>
+  <div class="deck-wrap">
+    <div class="deck-area" id="deck-area">
+      <div id="deck-cards"></div>
+      <div class="deck-empty" id="deck-empty" hidden>
+        <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="sf deck-empty-title">Tous les profils ont été consultés</div>
+        <p class="deck-empty-copy">Ajustez vos filtres pour découvrir d’autres candidats, ou affinez le moteur de matching.</p>
+        <div class="deck-empty-actions">
+          <button class="btn bp bsm" type="button" onclick="openCandFilterModal()">Ajuster les filtres</button>
+          <button class="btn bo bsm" type="button" onclick="go('matching')">Moteur de matching</button>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="deck-actions">
-    <button type="button" class="db db-pass" onclick="swipe('pass')" aria-label="Passer"><svg width="21" height="21" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <button type="button" class="db db-like" onclick="swipe('like')" aria-label="Like"><svg width="25" height="25" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
-    <button type="button" class="db db-super" onclick="swipe('super')" aria-label="Super like"><svg width="21" height="21" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    <div class="deck-actions" id="deck-actions">
+      <button type="button" class="db db-pass" onclick="swipe('pass')" aria-label="Passer"><svg width="21" height="21" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button type="button" class="db db-like" onclick="swipe('like')" aria-label="Like"><svg width="25" height="25" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
+      <button type="button" class="db db-super" onclick="swipe('super')" aria-label="Super like"><svg width="21" height="21" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    </div>
   </div>
 </div>
 
@@ -1215,26 +1290,37 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 
 <!-- PIPELINE -->
 <div id="p-pipeline" class="page">
-  <div class="sec pipeline-offers">
+  <div class="sec pipe-workspace-hd">
     <div class="sec-hd page-heading">
       <div>
         <div class="page-kicker">Pipeline</div>
-        <div class="sec-t sf page-title">Offres actives</div>
-        <p class="page-intro">Suivez vos postes ouverts et les candidatures associées.</p>
+        <div class="sec-t sf page-title">Suivez vos recrutements</div>
+        <p class="page-intro">Offres actives en contexte, candidatures classées par étape.</p>
       </div>
       <button class="btn bp bsm" onclick="go('post-offre')">+ Publier</button>
     </div>
+  </div>
+  <div class="sec pipeline-offers pipe-offers-context">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-t sf">Offres actives</div>
+        <div class="pipeline-cands-sub">Contexte de vos postes ouverts</div>
+      </div>
+      <button class="btn bg2 bsm" type="button" onclick="go('offres')">Voir toutes</button>
+    </div>
     <div id="pipeline-offers-list" class="offers-list"><div class="pipe-state"><div class="spinner"></div>Chargement des offres…</div></div>
   </div>
-  <div class="sec pipeline-cands-hd">
+  <div class="sec pipeline-cands-hd pipe-kanban-hd">
     <div class="sec-hd" style="margin-bottom:0">
       <div>
-        <div class="sec-t sf">Candidatures reçues</div>
+        <div class="sec-t sf">Candidatures</div>
         <div class="pipeline-cands-sub">Classées par étape — ouvrez une carte pour qualifier et contacter.</div>
       </div>
     </div>
   </div>
-  <div class="pipe-cols" id="pipe-cols"><div class="pipe-state"><div class="spinner"></div>Chargement des candidatures…</div></div>
+  <div class="pipe-kanban-wrap">
+    <div class="pipe-cols" id="pipe-cols"><div class="pipe-state"><div class="spinner"></div>Chargement des candidatures…</div></div>
+  </div>
   <div id="pipeline-load-more" class="sec" style="display:none">
     <button class="btn bo blk" type="button" id="pipeline-load-more-btn" onclick="loadMorePipeline()">Charger plus de candidatures</button>
   </div>
@@ -1478,28 +1564,9 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <!-- SETTINGS -->
 <div id="p-settings" class="page">
   <div class="sec account-layout">
-    <div class="page-heading">
-      <div>
-        <div class="page-kicker">Paramètres</div>
-        <h1 class="page-title sf">Réglages</h1>
-        <p class="page-intro">Compte, abonnement et raccourcis — sans modification des droits.</p>
-      </div>
-    </div>
-    <section class="account-section">
-      <h2 class="sf">Mon compte</h2>
-      <p>Adresse utilisée pour accéder à SwipSales.</p>
-      <div class="account-value" id="account-email-display">—</div>
-      <button type="button" class="btn bo" onclick="requestPasswordReset()">Changer mon mot de passe</button>
-    </section>
-    <section class="account-section">
-      <h2 class="sf">Mon abonnement</h2>
-      <p>Consultez votre formule actuelle et gérez-la.</p>
-      <div class="account-value" id="subscription-status-display">—</div>
-      <div class="account-actions">
-        <button type="button" class="btn bo" style="display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
-        <button type="button" class="btn bg2 bsm" onclick="go('pricing')">Voir les tarifs</button>
-      </div>
-    </section>
+    <div class="page-heading"><div><div class="page-kicker">Préférences</div><h1 class="page-title sf">Compte</h1><p class="page-intro">Gérez vos accès et votre abonnement sans modifier les droits recruteur.</p></div></div>
+    <section class="account-section"><h2 class="sf">Connexion</h2><p>Adresse utilisée pour accéder à SwipSales.</p><div class="account-value" id="account-email-display">—</div><button type="button" class="btn bo" onclick="requestPasswordReset()">Changer mon mot de passe</button></section>
+    <section class="account-section"><h2 class="sf">Abonnement</h2><p>Consultez votre formule actuelle et gérez-la.</p><div class="account-value" id="subscription-status-display">—</div><div class="account-actions"><button type="button" class="btn bp" onclick="go('pricing')">Voir les formules</button><button type="button" class="btn bo" style="display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier</button></div></section>
     <section class="account-section" id="settings-entreprise-section">
       <h2 class="sf">Entreprise</h2>
       <p>Informations déjà présentes sur votre profil recruteur.</p>
@@ -1514,9 +1581,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div></div>
       </div>
     </section>
-    <div class="settings-logout">
-      <button type="button" class="btn bo blk settings-logout-btn" onclick="doLogout()">Déconnexion</button>
-    </div>
+    <button class="btn bo account-logout" type="button" onclick="doLogout()">Se déconnecter</button>
   </div>
 </div>
 
@@ -1972,16 +2037,30 @@ async function loadSubscriptionStatus() {
   try {
     const a = await api('GET', '/abonnements/current?t=' + Date.now());
     const plan = String(a?.plan || 'freemium').toLowerCase();
+    const label = a?.plan_label || (plan === 'freemium' ? 'Plan Freemium' : `Plan ${plan.charAt(0).toUpperCase()}${plan.slice(1)}`);
+    const status = String(a?.statut || a?.status || 'actif').toLowerCase();
     if (plan === 'freemium') {
-      statusEl.textContent = 'Plan Freemium (gratuit)';
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Compte gratuit</span>`;
       cancelBtn.style.display = 'none';
     } else if (a.resiliation_programmee && a.date_fin) {
       const d = new Date(a.date_fin).toLocaleDateString('fr-FR');
-      statusEl.textContent = `Plan ${plan} — résiliation prévue le ${d}`;
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Résiliation prévue le ${esc(d)}</span>`;
       cancelBtn.style.display = 'none';
-    } else {
-      statusEl.textContent = `Plan ${plan} — actif`;
+    } else if (status === 'trialing') {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Période d’essai</span>`;
       cancelBtn.style.display = 'block';
+    } else if (['incomplete', 'incomplete_expired', 'past_due'].includes(status)) {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Paiement incomplet</span>`;
+      cancelBtn.style.display = 'none';
+    } else if (['inactif', 'inactive', 'expired', 'canceled', 'cancelled'].includes(status)) {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Abonnement expiré</span>`;
+      cancelBtn.style.display = 'none';
+    } else if (status === 'actif' || status === 'active') {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>Abonnement actif</span>`;
+      cancelBtn.style.display = 'block';
+    } else {
+      statusEl.innerHTML = `<strong>${esc(label)}</strong><span>État de l’abonnement indisponible</span>`;
+      cancelBtn.style.display = 'none';
     }
   } catch (e) {
     statusEl.textContent = 'Impossible de charger votre abonnement';
@@ -2392,7 +2471,7 @@ function syncCandFilterChrome() {
   const count = countActiveCandFilters();
   const badge = document.getElementById('comp-filter-badge');
   if (badge) {
-    badge.style.display = count ? 'inline-block' : 'none';
+    badge.hidden = !count;
     badge.textContent = String(count);
   }
   const summary = document.getElementById('cand-filters-summary');
@@ -2407,7 +2486,7 @@ function syncCandFilterChrome() {
         labels.map((l) => `<span class="cand-filter-chip">${esc(l)}</span>`).join('');
     }
   }
-  if (resetQuick) resetQuick.style.display = count ? '' : 'none';
+  if (resetQuick) resetQuick.hidden = !count;
 }
 
 function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
@@ -2655,14 +2734,30 @@ async function loadCandidates(options = {}) {
   }
 }
 function renderDeck() {
-  const el = document.getElementById('deck-cards'); el.innerHTML = '';
+  const el = document.getElementById('deck-cards');
+  if (!el) return;
+  el.innerHTML = '';
   const rem = Math.max(0, CANDS.length - DECK_IDX);
   const loaded = CANDS.length;
+  const isEmpty = rem === 0 && !CAND_DECK_HAS_MORE && !CAND_DECK_FETCHING_MORE;
+  const area = document.getElementById('deck-area');
+  const empty = document.getElementById('deck-empty');
+  const actions = document.getElementById('deck-actions') || document.querySelector('#p-swipe .deck-actions');
   document.getElementById('deck-count').textContent = loaded
     ? (loaded + ' chargé' + (loaded > 1 ? 's' : '') + (CAND_DECK_HAS_MORE ? '+' : ''))
-    : (rem + ' profil' + (rem > 1 ? 's' : ''));
-  document.getElementById('deck-empty').classList.toggle('on', rem === 0 && !CAND_DECK_HAS_MORE && !CAND_DECK_FETCHING_MORE);
-  CANDS.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(c => el.appendChild(buildCandCard(c)));
+    : (isEmpty ? '0' : (rem + ' profil' + (rem > 1 ? 's' : '')));
+  if (empty) {
+    empty.classList.toggle('on', isEmpty);
+    empty.hidden = !isEmpty;
+  }
+  if (area) {
+    area.classList.toggle('is-empty', isEmpty);
+    area.classList.toggle('has-offer', !isEmpty);
+  }
+  if (actions) actions.hidden = isEmpty;
+  if (rem > 0) {
+    CANDS.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(c => el.appendChild(buildCandCard(c)));
+  }
   maybePrefetchCandidates();
 }
 function candDocs(c) {
@@ -3000,9 +3095,13 @@ function syncPipelineLoadMore() {
 
 function pipelineStateHtml(title, copy, options = {}) {
   const kind = options.error ? ' error' : '';
+  const surface = options.surface ? ' is-surface' : '';
   const action = options.actionHtml || '';
   const spin = options.loading ? '<div class="spinner" aria-hidden="true"></div>' : '';
-  return `<div class="pipe-state${kind}" role="status">${spin}<b>${title}</b><span>${copy}</span>${action}</div>`;
+  const icon = options.icon
+    ? `<div class="pipe-state-ico" aria-hidden="true">${options.icon}</div>`
+    : '';
+  return `<div class="pipe-state${kind}${surface}" role="status">${spin}${icon}<b>${title}</b><span>${copy}</span>${action}</div>`;
 }
 
 async function fetchPipelinePage(cursor, fetchOpts) {
@@ -3110,7 +3209,11 @@ function renderPipeline() {
     document.getElementById('pipe-cols').innerHTML = pipelineStateHtml(
       'Aucune candidature reçue',
       'Les candidats qui postulent à vos offres apparaîtront ici.',
-      { actionHtml: '<button class="btn bp bsm" type="button" onclick="go(\'swipe\')">Sourcer des candidats</button>' }
+      {
+        surface: true,
+        icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+        actionHtml: '<button class="btn bp bsm" type="button" onclick="go(\'swipe\')">Sourcer des candidats</button>'
+      }
     );
     syncPipelineLoadMore();
     return;
