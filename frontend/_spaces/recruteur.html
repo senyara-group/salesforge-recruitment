@@ -433,6 +433,24 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .comp-pill{padding:6px 12px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11.5px;font-weight:700;color:var(--ink3);cursor:pointer;transition:.15s}
 .comp-pill.on{background:var(--b);border-color:var(--b);color:#fff}
 .comp-filter-badge{font-size:10px;background:#fff;color:var(--b);border-radius:999px;padding:1px 7px;font-weight:900}
+.cand-filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.cand-filter-summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0;flex:1}
+.cand-filter-chip{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bs);color:var(--b);border:1px solid var(--bm);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cand-filter-meta{font-size:11px;font-weight:700;color:var(--ink3)}
+.filters-sheet{max-height:min(78dvh,640px);overflow:auto;width:100%;max-width:520px;box-sizing:border-box}
+.filters-sheet .filt-section{margin:14px 0 0}
+.filters-sheet .filt-section:first-of-type{margin-top:8px}
+.filters-sheet .filt-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin-bottom:8px}
+.filters-sheet .form-chips{display:flex;flex-wrap:wrap;gap:6px}
+.filters-sheet .form-chip{border:1px solid var(--bd);background:var(--w);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink2)}
+.filters-sheet .form-chip.on{border-color:var(--b);background:rgba(37,99,235,.08);color:var(--b);font-weight:600}
+.filters-sheet .form-field{width:100%;min-height:44px;border:1px solid var(--bd);background:var(--w);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;box-sizing:border-box}
+.filters-sheet .filt-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--w) 28%);padding-top:12px}
+.filters-sheet .filt-actions .btn{flex:1;min-width:0}
+@media (max-width:440px){
+  .filters-sheet{max-width:100%;max-height:min(86dvh,720px);border-radius:18px 18px 0 0}
+  .cand-filter-bar{gap:6px}
+}
 .q-ask-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
 .q-ask-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px}
 .q-ask-list{display:flex;flex-direction:column;gap:5px}
@@ -946,11 +964,15 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       </div>
       <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
-    <button class="btn bg2 bsm comp-filter-btn" type="button" onclick="openCompFilterModal()">
-      <svg width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-      Filtres
-      <span class="comp-filter-badge" id="comp-filter-badge" style="display:none">0</span>
-    </button>
+    <div class="cand-filter-bar">
+      <button class="btn bg2 bsm comp-filter-btn" type="button" onclick="openCandFilterModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        Filtres
+        <span class="comp-filter-badge" id="comp-filter-badge" style="display:none">0</span>
+      </button>
+      <div class="cand-filter-summary" id="cand-filters-summary" aria-live="polite"></div>
+      <button class="btn bo bsm" type="button" id="cand-filters-reset-quick" style="display:none" onclick="resetCandFiltersQuick()">Réinitialiser</button>
+    </div>
   </div>
   <div class="deck-area" id="deck-area">
     <div id="deck-cards"></div>
@@ -1349,15 +1371,109 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
-<div class="overlay" id="comp-filter-ov" onclick="closeCompFilterOv(event)">
-  <div class="bottom-sheet" style="max-width:520px">
-    <div class="sh-handle"></div>
-    <div class="match-title sf" style="margin-bottom:4px">Filtrer par compétences</div>
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Sélectionnez une ou plusieurs compétences pour affiner le sourcing.</div>
-    <div id="comp-filter-accordion" style="max-height:50vh;overflow-y:auto"></div>
-    <div class="sh-actions">
-      <button class="btn bp blk" onclick="applyCompFilter()">Appliquer</button>
-      <button class="btn bo blk" onclick="resetCompFilter()">Réinitialiser</button>
+<div class="overlay" id="comp-filter-ov" onclick="closeCandFilterOv(event)">
+  <div class="bottom-sheet filters-sheet" role="dialog" aria-modal="true" aria-labelledby="cand-filters-title" onclick="event.stopPropagation()">
+    <div class="sh-handle" aria-hidden="true"></div>
+    <div class="sec-hd" style="margin-bottom:4px">
+      <div>
+        <div class="page-kicker">Sourcing</div>
+        <div class="sec-t sf" id="cand-filters-title">Filtres</div>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Score ADN minimum</div>
+      <div class="form-chips" id="filt-score-adn">
+        <button type="button" class="form-chip on" data-filter-value="" onclick="setCandScorePreset(this,'')">Tous</button>
+        <button type="button" class="form-chip" data-filter-value="50" onclick="setCandScorePreset(this,'50')">50+</button>
+        <button type="button" class="form-chip" data-filter-value="70" onclick="setCandScorePreset(this,'70')">70+</button>
+        <button type="button" class="form-chip" data-filter-value="85" onclick="setCandScorePreset(this,'85')">85+</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Poste recherché</div>
+      <div class="form-chips" id="filt-job-types">
+        <button type="button" class="form-chip" data-filter-value="SDR / BDR" onclick="toggleCandFilterChip(this)">SDR / BDR</button>
+        <button type="button" class="form-chip" data-filter-value="Account Executive" onclick="toggleCandFilterChip(this)">Account Executive</button>
+        <button type="button" class="form-chip" data-filter-value="Account Manager" onclick="toggleCandFilterChip(this)">Account Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Sales Manager" onclick="toggleCandFilterChip(this)">Sales Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Customer Success" onclick="toggleCandFilterChip(this)">Customer Success</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Style commercial</div>
+      <div class="form-chips" id="filt-sales-style">
+        <button type="button" class="form-chip" data-filter-value="hunter" onclick="toggleCandFilterChip(this)">Hunter</button>
+        <button type="button" class="form-chip" data-filter-value="farmer" onclick="toggleCandFilterChip(this)">Farmer</button>
+        <button type="button" class="form-chip" data-filter-value="full" onclick="toggleCandFilterChip(this)">Full cycle</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Expérience minimum (années)</div>
+      <input class="form-field" id="filt-years-min" type="number" min="0" max="80" step="1" inputmode="numeric" placeholder="Ex : 3">
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Contrats souhaités</div>
+      <div class="form-chips" id="filt-contracts">
+        <button type="button" class="form-chip" data-filter-value="CDI" onclick="toggleCandFilterChip(this)">CDI</button>
+        <button type="button" class="form-chip" data-filter-value="Alternance" onclick="toggleCandFilterChip(this)">Alternance</button>
+        <button type="button" class="form-chip" data-filter-value="Mission" onclick="toggleCandFilterChip(this)">Mission</button>
+        <button type="button" class="form-chip" data-filter-value="Freelance" onclick="toggleCandFilterChip(this)">Freelance</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Secteurs</div>
+      <div class="form-chips" id="filt-sectors">
+        <button type="button" class="form-chip" data-filter-value="SaaS / Tech" onclick="toggleCandFilterChip(this)">SaaS / Tech</button>
+        <button type="button" class="form-chip" data-filter-value="Industrie" onclick="toggleCandFilterChip(this)">Industrie</button>
+        <button type="button" class="form-chip" data-filter-value="Services B2B" onclick="toggleCandFilterChip(this)">Services B2B</button>
+        <button type="button" class="form-chip" data-filter-value="Assurance / Banque" onclick="toggleCandFilterChip(this)">Assurance / Banque</button>
+        <button type="button" class="form-chip" data-filter-value="Retail" onclick="toggleCandFilterChip(this)">Retail</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Compétences</div>
+      <div id="comp-filter-accordion" style="max-height:28vh;overflow-y:auto"></div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Outils</div>
+      <div class="form-chips" id="filt-tools">
+        <button type="button" class="form-chip" data-filter-value="Salesforce" onclick="toggleCandFilterChip(this)">Salesforce</button>
+        <button type="button" class="form-chip" data-filter-value="HubSpot" onclick="toggleCandFilterChip(this)">HubSpot</button>
+        <button type="button" class="form-chip" data-filter-value="LinkedIn Sales Navigator" onclick="toggleCandFilterChip(this)">Sales Navigator</button>
+        <button type="button" class="form-chip" data-filter-value="Lemlist" onclick="toggleCandFilterChip(this)">Lemlist</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Méthodologies</div>
+      <div class="form-chips" id="filt-methodologies">
+        <button type="button" class="form-chip" data-filter-value="MEDDIC" onclick="toggleCandFilterChip(this)">MEDDIC</button>
+        <button type="button" class="form-chip" data-filter-value="BANT" onclick="toggleCandFilterChip(this)">BANT</button>
+        <button type="button" class="form-chip" data-filter-value="SPIN Selling" onclick="toggleCandFilterChip(this)">SPIN</button>
+        <button type="button" class="form-chip" data-filter-value="Challenger Sale" onclick="toggleCandFilterChip(this)">Challenger</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Disponibilité</div>
+      <div class="form-chips" id="filt-availability">
+        <button type="button" class="form-chip" data-filter-value="immediate" onclick="toggleCandFilterChip(this)">Immédiate</button>
+        <button type="button" class="form-chip" data-filter-value="1_month" onclick="toggleCandFilterChip(this)">Sous 1 mois</button>
+        <button type="button" class="form-chip" data-filter-value="3_months" onclick="toggleCandFilterChip(this)">Sous 3 mois</button>
+        <button type="button" class="form-chip" data-filter-value="open" onclick="toggleCandFilterChip(this)">À l’écoute</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Types de clients</div>
+      <div class="form-chips" id="filt-customer-types">
+        <button type="button" class="form-chip" data-filter-value="B2B" onclick="toggleCandFilterChip(this)">B2B</button>
+        <button type="button" class="form-chip" data-filter-value="PME" onclick="toggleCandFilterChip(this)">PME</button>
+        <button type="button" class="form-chip" data-filter-value="ETI" onclick="toggleCandFilterChip(this)">ETI</button>
+        <button type="button" class="form-chip" data-filter-value="Grand compte" onclick="toggleCandFilterChip(this)">Grand compte</button>
+        <button type="button" class="form-chip" data-filter-value="Startup" onclick="toggleCandFilterChip(this)">Startup</button>
+      </div>
+    </div>
+    <div class="filt-actions">
+      <button class="btn bo" type="button" onclick="resetCandFiltersPanel()">Réinitialiser</button>
+      <button class="btn bp" type="button" onclick="applyCandFiltersFromPanel()">Appliquer</button>
     </div>
   </div>
 </div>
@@ -1911,10 +2027,123 @@ const COMPETENCES_TAXONOMY = {
   'Autres outils': ['Aircall', 'Modjo / Gong', 'Notion'],
   "Secteurs d'expérience": ['SaaS / Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance / Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile'],
 };
-let SELECTED_COMP_FILTER = [];
+function emptyCandFilters() {
+  return {
+    score_adn_min: null,
+    target_job_types: [],
+    sales_style: [],
+    years_experience_min: null,
+    desired_contracts: [],
+    sectors: [],
+    skills: [],
+    tools: [],
+    methodologies: [],
+    availability: [],
+    customer_types: [],
+  };
+}
+let APPLIED_CAND_FILTERS = emptyCandFilters();
+let DRAFT_SKILLS = [];
+
+function cloneCandFilters(filters) {
+  filters = filters || APPLIED_CAND_FILTERS;
+  return {
+    ...filters,
+    target_job_types: [...(filters.target_job_types || [])],
+    sales_style: [...(filters.sales_style || [])],
+    desired_contracts: [...(filters.desired_contracts || [])],
+    sectors: [...(filters.sectors || [])],
+    skills: [...(filters.skills || [])],
+    tools: [...(filters.tools || [])],
+    methodologies: [...(filters.methodologies || [])],
+    availability: [...(filters.availability || [])],
+    customer_types: [...(filters.customer_types || [])],
+  };
+}
+
+function countActiveCandFilters(filters = APPLIED_CAND_FILTERS) {
+  let n = 0;
+  if (filters.score_adn_min != null) n += 1;
+  if (filters.years_experience_min != null) n += 1;
+  n += (filters.target_job_types || []).length;
+  n += (filters.sales_style || []).length;
+  n += (filters.desired_contracts || []).length;
+  n += (filters.sectors || []).length;
+  n += (filters.skills || []).length;
+  n += (filters.tools || []).length;
+  n += (filters.methodologies || []).length;
+  n += (filters.availability || []).length;
+  n += (filters.customer_types || []).length;
+  return n;
+}
+
+function activeCandFilterLabels(filters = APPLIED_CAND_FILTERS) {
+  const labels = [];
+  if (filters.score_adn_min != null) labels.push('ADN ' + filters.score_adn_min + '+');
+  if (filters.years_experience_min != null) labels.push(filters.years_experience_min + '+ ans');
+  (filters.target_job_types || []).forEach((v) => labels.push(v));
+  (filters.sales_style || []).forEach((v) => labels.push(v === 'full' ? 'Full cycle' : (v.charAt(0).toUpperCase() + v.slice(1))));
+  (filters.desired_contracts || []).forEach((v) => labels.push(v));
+  (filters.sectors || []).forEach((v) => labels.push(v));
+  (filters.skills || []).slice(0, 3).forEach((v) => labels.push(v));
+  (filters.tools || []).forEach((v) => labels.push(v));
+  (filters.methodologies || []).forEach((v) => labels.push(v));
+  const availMap = { immediate: 'Immédiate', '1_month': 'Sous 1 mois', '3_months': 'Sous 3 mois', open: 'À l’écoute' };
+  (filters.availability || []).forEach((v) => labels.push(availMap[v] || v));
+  (filters.customer_types || []).forEach((v) => labels.push(v));
+  return labels;
+}
+
+function syncCandFilterChrome() {
+  const count = countActiveCandFilters();
+  const badge = document.getElementById('comp-filter-badge');
+  if (badge) {
+    badge.style.display = count ? 'inline-block' : 'none';
+    badge.textContent = String(count);
+  }
+  const summary = document.getElementById('cand-filters-summary');
+  const resetQuick = document.getElementById('cand-filters-reset-quick');
+  if (summary) {
+    if (!count) {
+      summary.innerHTML = '';
+    } else {
+      const labels = activeCandFilterLabels().slice(0, 4);
+      summary.innerHTML =
+        `<span class="cand-filter-meta" id="cand-filters-count">${count} filtre${count > 1 ? 's' : ''} actif${count > 1 ? 's' : ''}</span>` +
+        labels.map((l) => `<span class="cand-filter-chip">${esc(l)}</span>`).join('');
+    }
+  }
+  if (resetQuick) resetQuick.style.display = count ? '' : 'none';
+}
+
 function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
-function openCompFilterModal() {
+
+function toggleCandFilterChip(el) {
+  el.classList.toggle('on');
+}
+
+function setCandScorePreset(el, value) {
+  document.querySelectorAll('#filt-score-adn .form-chip').forEach((chip) => chip.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function readChipValues(rootId) {
+  return [...document.querySelectorAll(`#${rootId} .form-chip.on`)]
+    .map((btn) => btn.getAttribute('data-filter-value'))
+    .filter((value) => value != null && value !== '');
+}
+
+function markChipValues(rootId, values) {
+  document.querySelectorAll(`#${rootId} .form-chip`).forEach((btn) => {
+    const value = btn.getAttribute('data-filter-value') || '';
+    btn.classList.toggle('on', values.includes(value) || (rootId === 'filt-score-adn' && !APPLIED_CAND_FILTERS.score_adn_min && value === ''));
+  });
+}
+
+function renderDraftSkillsAccordion(selected = []) {
   const el = document.getElementById('comp-filter-accordion');
+  if (!el) return;
+  DRAFT_SKILLS = [...selected];
   el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
     <div class="comp-cat" id="filter-cat-${compCatId(cat)}">
       <div class="comp-cat-hd" onclick="this.parentElement.classList.toggle('on')">
@@ -1922,45 +2151,127 @@ function openCompFilterModal() {
         <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="comp-cat-body">
-        ${items.map(item => `<span class="comp-pill${SELECTED_COMP_FILTER.includes(item)?' on':''}" onclick="toggleCompFilterItem('${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
+        ${items.map(item => `<span class="comp-pill${DRAFT_SKILLS.includes(item)?' on':''}" onclick="toggleDraftSkill('${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
       </div>
     </div>`).join('');
-  document.getElementById('comp-filter-ov').classList.add('on');
 }
-function closeCompFilterOv(e) {
+
+function toggleDraftSkill(item, el) {
+  el.classList.toggle('on');
+  if (DRAFT_SKILLS.includes(item)) DRAFT_SKILLS = DRAFT_SKILLS.filter((i) => i !== item);
+  else DRAFT_SKILLS.push(item);
+}
+
+function syncCandFilterPanelFromState() {
+  const f = APPLIED_CAND_FILTERS;
+  document.querySelectorAll('#filt-score-adn .form-chip').forEach((btn) => {
+    const value = btn.getAttribute('data-filter-value') || '';
+    const current = f.score_adn_min == null ? '' : String(f.score_adn_min);
+    btn.classList.toggle('on', value === current);
+  });
+  markChipValues('filt-job-types', f.target_job_types);
+  markChipValues('filt-sales-style', f.sales_style);
+  markChipValues('filt-contracts', f.desired_contracts);
+  markChipValues('filt-sectors', f.sectors);
+  markChipValues('filt-tools', f.tools);
+  markChipValues('filt-methodologies', f.methodologies);
+  markChipValues('filt-availability', f.availability);
+  markChipValues('filt-customer-types', f.customer_types);
+  const years = document.getElementById('filt-years-min');
+  if (years) years.value = f.years_experience_min != null ? f.years_experience_min : '';
+  renderDraftSkillsAccordion(f.skills);
+}
+
+function openCandFilterModal() {
+  syncCandFilterPanelFromState();
+  document.getElementById('comp-filter-ov')?.classList.add('on');
+}
+function closeCandFilterOv(e) {
   if (e.target === document.getElementById('comp-filter-ov')) e.target.classList.remove('on');
 }
-function toggleCompFilterItem(item, el) {
-  el.classList.toggle('on');
-  if (SELECTED_COMP_FILTER.includes(item)) SELECTED_COMP_FILTER = SELECTED_COMP_FILTER.filter(i => i !== item);
-  else SELECTED_COMP_FILTER.push(item);
+
+function readCandFiltersFromPanel() {
+  const yearsRaw = String(document.getElementById('filt-years-min')?.value || '').trim();
+  let years = null;
+  if (yearsRaw) {
+    const n = Number(yearsRaw);
+    if (!Number.isInteger(n) || n < 0 || n > 80) {
+      toast('Expérience minimum invalide');
+      return null;
+    }
+    years = n;
+  }
+  const scoreBtn = document.querySelector('#filt-score-adn .form-chip.on');
+  const scoreRaw = scoreBtn ? (scoreBtn.getAttribute('data-filter-value') || '') : '';
+  const score = scoreRaw ? Number(scoreRaw) : null;
+  return {
+    score_adn_min: Number.isInteger(score) ? score : null,
+    target_job_types: readChipValues('filt-job-types'),
+    sales_style: readChipValues('filt-sales-style'),
+    years_experience_min: years,
+    desired_contracts: readChipValues('filt-contracts'),
+    sectors: readChipValues('filt-sectors'),
+    skills: [...DRAFT_SKILLS],
+    tools: readChipValues('filt-tools'),
+    methodologies: readChipValues('filt-methodologies'),
+    availability: readChipValues('filt-availability'),
+    customer_types: readChipValues('filt-customer-types'),
+  };
 }
-function updateCompFilterBadge() {
-  const badge = document.getElementById('comp-filter-badge');
-  if (!badge) return;
-  badge.style.display = SELECTED_COMP_FILTER.length ? 'inline-block' : 'none';
-  badge.textContent = SELECTED_COMP_FILTER.length;
+
+function applyCandFiltersFromPanel() {
+  const next = readCandFiltersFromPanel();
+  if (!next) return;
+  APPLIED_CAND_FILTERS = next;
+  document.getElementById('comp-filter-ov')?.classList.remove('on');
+  syncCandFilterChrome();
+  loadCandidates({ preserveFilters: true });
 }
-function applyCompFilter() {
-  document.getElementById('comp-filter-ov').classList.remove('on');
-  updateCompFilterBadge();
-  loadCandidates();
+
+function resetCandFiltersPanel() {
+  // Vide uniquement le brouillon du panneau. Appliquer ensuite recharge sans filtres.
+  DRAFT_SKILLS = [];
+  document.querySelectorAll('#filt-score-adn .form-chip').forEach((btn) => {
+    btn.classList.toggle('on', (btn.getAttribute('data-filter-value') || '') === '');
+  });
+  ['filt-job-types', 'filt-sales-style', 'filt-contracts', 'filt-sectors', 'filt-tools', 'filt-methodologies', 'filt-availability', 'filt-customer-types']
+    .forEach((id) => document.querySelectorAll(`#${id} .form-chip`).forEach((btn) => btn.classList.remove('on')));
+  const years = document.getElementById('filt-years-min');
+  if (years) years.value = '';
+  renderDraftSkillsAccordion([]);
 }
-function resetCompFilter() {
-  SELECTED_COMP_FILTER = [];
-  document.getElementById('comp-filter-ov').classList.remove('on');
-  updateCompFilterBadge();
-  loadCandidates();
+
+function resetCandFiltersQuick() {
+  APPLIED_CAND_FILTERS = emptyCandFilters();
+  syncCandFilterChrome();
+  loadCandidates({ preserveFilters: true });
 }
-function buildCandidateDeckParams(cursor) {
+
+function buildCandidateDeckParams(cursor, filters) {
+  filters = filters || APPLIED_CAND_FILTERS;
   const params = new URLSearchParams({ matching: JSON.stringify(MATCHING), limit: '20' });
-  if (SELECTED_COMP_FILTER.length) params.set('competences', SELECTED_COMP_FILTER.join(','));
   if (cursor) params.set('cursor', cursor);
+  if (filters.score_adn_min != null) params.set('score_adn_min', String(filters.score_adn_min));
+  if (filters.years_experience_min != null) params.set('years_experience_min', String(filters.years_experience_min));
+  const setCsv = (key, list) => {
+    const uniq = [...new Set((list || []).map((v) => String(v).trim()).filter(Boolean))];
+    if (uniq.length) params.set(key, uniq.join(','));
+  };
+  setCsv('target_job_types', filters.target_job_types);
+  setCsv('sales_style', filters.sales_style);
+  setCsv('desired_contracts', filters.desired_contracts);
+  setCsv('sectors', filters.sectors);
+  setCsv('competences', filters.skills);
+  setCsv('tools', filters.tools);
+  setCsv('methodologies', filters.methodologies);
+  setCsv('availability', filters.availability);
+  setCsv('customer_types', filters.customer_types);
   return params;
 }
 
 async function fetchCandidateDeckPage(cursor, fetchOpts) {
-  const params = buildCandidateDeckParams(cursor);
+  const filters = (fetchOpts && fetchOpts.filters) || APPLIED_CAND_FILTERS;
+  const params = buildCandidateDeckParams(cursor, filters);
   const page = await api('GET', '/candidats/deck?' + params.toString(), null, true, fetchOpts || null);
   if (Array.isArray(page)) {
     return { batch: page, next_cursor: null, has_more: false };
@@ -1976,13 +2287,14 @@ async function maybePrefetchCandidates() {
   if (rem > CAND_DECK_PREFETCH_REMAINING) return;
   const gen = CAND_DECK_LOAD_GEN;
   const cursor = CAND_DECK_CURSOR;
+  const filtersSnapshot = cloneCandFilters(APPLIED_CAND_FILTERS);
   CAND_DECK_FETCHING_MORE = true;
   try {
     let continuation = cursor;
     let emptyPages = 0;
     let added = 0;
     do {
-      const page = await fetchCandidateDeckPage(continuation);
+      const page = await fetchCandidateDeckPage(continuation, { filters: filtersSnapshot });
       if (gen !== CAND_DECK_LOAD_GEN) return;
       if (page.has_more && page.next_cursor === continuation) return;
       const seenIds = new Set(CANDS.map(c => String(c.id)));
@@ -2009,7 +2321,9 @@ async function maybePrefetchCandidates() {
   if (gen === CAND_DECK_LOAD_GEN) renderDeck();
 }
 
-async function loadCandidates() {
+async function loadCandidates(options = {}) {
+  const preserveFilters = Boolean(options.preserveFilters);
+  if (!preserveFilters) APPLIED_CAND_FILTERS = emptyCandFilters();
   const gen = ++CAND_DECK_LOAD_GEN;
   if (CAND_DECK_ABORT) {
     try { CAND_DECK_ABORT.abort(); } catch (e) {}
@@ -2020,9 +2334,14 @@ async function loadCandidates() {
   CAND_DECK_HAS_MORE = false;
   CAND_DECK_FETCHING_MORE = false;
   CANDS = [];
+  syncCandFilterChrome();
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    const page = await fetchCandidateDeckPage(null, CAND_DECK_ABORT ? { signal: CAND_DECK_ABORT.signal } : null);
+    const filtersSnapshot = cloneCandFilters(APPLIED_CAND_FILTERS);
+    const page = await fetchCandidateDeckPage(null, {
+      signal: CAND_DECK_ABORT ? CAND_DECK_ABORT.signal : undefined,
+      filters: filtersSnapshot,
+    });
     if (gen !== CAND_DECK_LOAD_GEN) return;
     const firstPageUsers = new Set();
     CANDS = page.batch.filter(c => {
