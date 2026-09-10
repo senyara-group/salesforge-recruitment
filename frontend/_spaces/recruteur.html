@@ -1026,6 +1026,9 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div></div>
   </div>
   <div class="pipe-cols" id="pipe-cols"><div class="loading-state"><div class="spinner"></div></div></div>
+  <div id="pipeline-load-more" class="sec" style="display:none;padding:12px 18px 24px">
+    <button class="btn bo blk" type="button" id="pipeline-load-more-btn" onclick="loadMorePipeline()">Charger plus de candidatures</button>
+  </div>
 </div>
 
 <!-- POST OFFRE -->
@@ -2666,23 +2669,104 @@ const PIPE_STAGES = [
   { key:'termine', label:'Terminées', color:'var(--ink3)' },
 ];
 let PIPELINE = {};
+let PIPELINE_CURSOR = null;
+let PIPELINE_HAS_MORE = false;
+let PIPELINE_LOADING = false;
+
+function emptyPipelineState() {
+  return Object.fromEntries(PIPE_STAGES.map((stage) => [stage.key, []]));
+}
+
+function mergePipelinePage(page) {
+  const next = emptyPipelineState();
+  PIPE_STAGES.forEach((stage) => {
+    const prev = PIPELINE[stage.key] || [];
+    const incoming = (page && page[stage.key]) || [];
+    const seen = new Set(prev.map((c) => String(c.id)));
+    next[stage.key] = prev.concat(incoming.filter((c) => !seen.has(String(c.id))));
+  });
+  PIPELINE = next;
+  PIPELINE_CURSOR = page?.next_cursor || null;
+  PIPELINE_HAS_MORE = Boolean(page?.has_more && page?.next_cursor);
+}
+
+function syncPipelineLoadMore() {
+  const bar = document.getElementById('pipeline-load-more');
+  const btn = document.getElementById('pipeline-load-more-btn');
+  if (!bar) return;
+  bar.style.display = PIPELINE_HAS_MORE ? '' : 'none';
+  if (btn) {
+    btn.disabled = PIPELINE_LOADING;
+    btn.textContent = PIPELINE_LOADING ? 'Chargement…' : 'Charger plus de candidatures';
+  }
+}
+
+async function fetchPipelinePage(cursor) {
+  const params = new URLSearchParams({ limit: '20' });
+  if (cursor) params.set('cursor', cursor);
+  return api('GET', '/recruteurs/pipeline?' + params.toString());
+}
+
 async function loadPipeline() {
   document.getElementById('pipe-cols').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   const offersList = document.getElementById('pipeline-offers-list');
   if (offersList) offersList.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  PIPELINE = emptyPipelineState();
+  PIPELINE_CURSOR = null;
+  PIPELINE_HAS_MORE = false;
+  PIPELINE_LOADING = true;
+  syncPipelineLoadMore();
+
+  let pipelinePage = null;
+  let pipelineError = null;
+  let offers = null;
+  let offersError = null;
+
   try {
-    const [pipeline, offers] = await Promise.all([
-      api('GET', '/recruteurs/pipeline'),
-      api('GET', '/offres/mine')
-    ]);
-    PIPELINE = pipeline;
-    renderPipelineOffers(offers);
+    pipelinePage = await fetchPipelinePage(null);
+  } catch (e) {
+    pipelineError = e;
+  }
+  try {
+    offers = await api('GET', '/offres/mine');
+  } catch (e) {
+    offersError = e;
+  }
+
+  PIPELINE_LOADING = false;
+
+  if (!offersError) {
+    renderPipelineOffers(offers || []);
+  } else if (offersList) {
+    offersList.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+  }
+
+  if (!pipelineError) {
+    mergePipelinePage(pipelinePage || emptyPipelineState());
     renderPipeline();
-  } catch(e) {
-    if (offersList) offersList.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
-    document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Erreur</div>';
+    syncPipelineLoadMore();
+  } else {
+    document.getElementById('pipe-cols').innerHTML = '<div class="loading-state">Impossible de charger le pipeline</div>';
+    syncPipelineLoadMore();
   }
 }
+
+async function loadMorePipeline() {
+  if (PIPELINE_LOADING || !PIPELINE_HAS_MORE || !PIPELINE_CURSOR) return;
+  PIPELINE_LOADING = true;
+  syncPipelineLoadMore();
+  try {
+    const page = await fetchPipelinePage(PIPELINE_CURSOR);
+    mergePipelinePage(page);
+    renderPipeline();
+  } catch (e) {
+    toast(e.message || 'Impossible de charger la suite du pipeline');
+  } finally {
+    PIPELINE_LOADING = false;
+    syncPipelineLoadMore();
+  }
+}
+
 function renderPipeline() {
   const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
   if (!total) {
