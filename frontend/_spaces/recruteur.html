@@ -109,23 +109,82 @@ button,input,textarea,select{font-family:inherit}
 .confirm-mail p{font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:16px}
 
 /* DASHBOARD */
-.dash-hero{padding:18px;background:linear-gradient(180deg,#EEF1F8 0%,var(--w) 100%)}
-.dash-co{display:flex;align-items:center;gap:11px;margin-bottom:14px}
-.photo-nudge{background:var(--bs);border:1px solid var(--bm);border-radius:14px;padding:13px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.dash-shell{padding:14px 16px 28px;display:flex;flex-direction:column;gap:14px;background:var(--bg);min-height:calc(100dvh - 120px)}
+.dash-hero-card{
+  position:relative;overflow:hidden;display:grid;gap:16px;
+  background:linear-gradient(135deg,#E8EEFF 0%,#F7F9FC 48%,#fff 100%);
+  border:1px solid var(--bd);border-radius:18px;padding:18px 16px;box-shadow:var(--sh-sm);
+}
+.dash-hero-card::before{
+  content:'';position:absolute;right:-40px;top:-50px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(19,64,224,.16),transparent 68%);pointer-events:none;
+}
+.dash-hero-card::after{
+  content:'';position:absolute;right:40px;bottom:-60px;width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle,rgba(19,64,224,.08),transparent 70%);pointer-events:none;
+}
+.dash-hero-main{position:relative;z-index:1;min-width:0}
+.dash-hello{font-size:13px;font-weight:700;color:var(--ink3);margin-bottom:6px}
+.dash-hero-card .page-title{font-size:clamp(22px,4.5vw,30px);margin:0 0 6px}
+.dash-hero-card .page-intro{margin:0 0 14px;max-width:42ch}
+.dash-hero-aside{
+  position:relative;z-index:1;background:var(--ink);color:#fff;border-radius:14px;padding:14px 14px 16px;
+  box-shadow:var(--sh-md);
+}
+.dash-aside-ico{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.dash-aside-ico svg{width:18px;height:18px;stroke:#F6C945;fill:#F6C945;stroke-width:1}
+.dash-aside-t{font-size:14px;font-weight:800;letter-spacing:-.2px;margin-bottom:6px}
+.dash-aside-s{font-size:12px;line-height:1.55;color:rgba(255,255,255,.72);margin:0}
+.dash-co{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.photo-nudge{background:var(--bs);border:1px solid var(--bm);border-radius:14px;padding:13px;display:flex;align-items:center;gap:12px;margin-bottom:0}
 .photo-nudge-ico{width:38px;height:38px;border-radius:10px;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .photo-nudge-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
 .photo-nudge-txt{flex:1;min-width:0}
 .photo-nudge-t{font-size:13px;font-weight:800}
 .photo-nudge-s{font-size:11px;color:var(--ink3);margin-top:1px;line-height:1.4}
-.dash-co-logo{width:46px;height:46px;border-radius:11px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:900;flex-shrink:0}
+.dash-co-logo{width:46px;height:46px;border-radius:11px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:900;flex-shrink:0;overflow:hidden}
 .dash-co-n{font-family:'Sora',sans-serif;font-size:16px;font-weight:900;letter-spacing:-.3px}
 .dash-co-s{font-size:12px;color:var(--ink3);margin-top:1px}
-.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.kpi{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px}
-.kpi-l{font-size:10px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.kpi-v{font-family:'Sora',sans-serif;font-size:23px;font-weight:900;letter-spacing:-.5px;margin-top:3px}
-.kpi-t{font-size:11px;font-weight:600;margin-top:3px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px 12px;box-shadow:var(--sh-sm);text-align:left}
+button.kpi{cursor:pointer;font:inherit;color:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
+button.kpi:hover{border-color:var(--bm);box-shadow:var(--sh-md)}
+button.kpi:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.kpi-card{display:flex;flex-direction:column;gap:4px;min-height:108px;position:relative}
+.kpi-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.kpi-ico svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.kpi-tone-purple .kpi-ico{background:var(--pus);color:var(--pu)}
+.kpi-tone-amber .kpi-ico{background:var(--as);color:var(--a)}
+.kpi-tone-blue .kpi-ico{background:var(--bs);color:var(--b)}
+.kpi-tone-green .kpi-ico{background:var(--gs);color:var(--g)}
+.kpi-l{font-size:11px;color:var(--ink3);font-weight:700}
+.kpi-v{font-family:'Sora',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.6px;line-height:1.1;order:-1;margin-top:2px}
+.kpi-card .kpi-v{order:0}
+.kpi-t{font-size:11px;font-weight:600;margin-top:2px}
 .tu{color:var(--g)}.tf{color:var(--mu)}
+.dash-mid,.dash-bottom{display:grid;grid-template-columns:1fr;gap:12px}
+.dash-panel{background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:var(--sh-sm);min-width:0}
+.dash-panel .sec-hd{margin-bottom:12px}
+.dash-actions .dash-action-primary{margin-bottom:10px;min-height:46px}
+.dash-actions .dash-action-row{margin-bottom:8px;min-height:44px;justify-content:space-between;display:inline-flex;align-items:center}
+.dash-actions .dash-action-row span{opacity:.55;font-weight:800}
+.dash-sourcing{background:linear-gradient(160deg,#EEF2FF 0%,#fff 55%);position:relative;overflow:hidden}
+.dash-sourcing-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--b);background:var(--bs);border-radius:999px;padding:4px 10px;margin-bottom:10px}
+.dash-sourcing-title{font-size:clamp(18px,3.5vw,22px);font-weight:900;letter-spacing:-.4px;margin:0 0 8px;line-height:1.25;max-width:16ch}
+.dash-sourcing-copy{font-size:13px;color:var(--ink3);line-height:1.55;margin:0 0 14px;max-width:36ch}
+.dash-sourcing-visual{position:absolute;right:12px;top:54px;width:110px;height:90px;pointer-events:none}
+.dsv-card{position:absolute;width:54px;height:68px;border-radius:12px;border:1px solid var(--bd);background:var(--w);box-shadow:var(--sh-md)}
+.dsv-a{right:36px;top:0;transform:rotate(-8deg);background:linear-gradient(180deg,#dbe4ff,#fff)}
+.dsv-b{right:8px;top:10px;transform:rotate(6deg)}
+.dsv-c{right:22px;top:28px;transform:rotate(-2deg);opacity:.9}
+.dash-sourcing .btn{position:relative;z-index:1;min-height:44px}
+.dash-recent-offer{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;background:var(--bg)}
+.dash-recent-offer:last-child{margin-bottom:0}
+.dash-ro-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px}
+.dash-ro-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.dash-ro-meta span{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--w);border:1px solid var(--bd);color:var(--ink3)}
+.dash-ro-meta .on{background:var(--gs);color:var(--g);border-color:transparent}
+.dash-ro-actions{display:flex;flex-wrap:wrap;gap:8px}
 .alert-card{background:linear-gradient(135deg,#3A0600,#C0330A);color:#fff;border-radius:14px;padding:15px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden}
 .alert-card::before{content:'';position:absolute;top:-30%;right:-15%;width:180px;height:180px;background:radial-gradient(circle,rgba(255,255,255,.1),transparent 65%)}
 .alert-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;background:rgba(255,255,255,.15);padding:3px 9px;border-radius:6px;text-transform:uppercase;margin-bottom:9px}
@@ -133,18 +192,32 @@ button,input,textarea,select{font-family:inherit}
 .alert-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;margin-bottom:5px}
 .alert-text{font-size:12px;color:rgba(255,255,255,.78);line-height:1.6;margin-bottom:11px}
 .alert-btn{background:#fff;color:var(--ink);border:none;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
-.cand-recue{background:var(--w);border:1px solid var(--bd);border-radius:13px;padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:.15s}
-.cand-recue:hover{border-color:var(--bd2)}.cand-recue.hot{border-left:3px solid var(--r)}
+.cand-recue{background:var(--bg);border:1px solid var(--bd);border-radius:13px;padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:.15s}
+.cand-recue:hover{border-color:var(--bd2);background:var(--w)}.cand-recue.hot{border-left:3px solid var(--r)}
+.cand-recue:last-child{margin-bottom:0}
 .cr-av{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:14px;font-weight:900;flex-shrink:0}
 .cr-info{flex:1;min-width:0}
 .cr-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px}
 .cr-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase}
 .cr-title{font-size:12px;color:var(--ink3);margin-top:2px}
-.cr-meta{display:flex;gap:8px;margin-top:5px}
-.cr-tag{font-size:10px;font-weight:600;color:var(--ink2);background:var(--bg);padding:2px 7px;border-radius:5px}
+.cr-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+.cr-tag{font-size:10px;font-weight:600;color:var(--ink2);background:var(--w);padding:2px 7px;border-radius:5px}
 .cr-score{text-align:center;flex-shrink:0}
 .cr-score-v{font-family:'Sora',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.5px}
 .cr-score-l{font-size:9px;color:var(--mu);font-weight:600;text-transform:uppercase}
+
+@media (min-width:720px){
+  .dash-shell{padding:22px 28px 40px;gap:16px}
+  .dash-hero-card{grid-template-columns:minmax(0,1fr) minmax(200px,260px);padding:22px 24px;align-items:stretch}
+  .dash-mid{grid-template-columns:minmax(240px,.9fr) minmax(0,1.3fr);gap:14px}
+  .dash-bottom{grid-template-columns:1fr 1fr;gap:14px}
+  .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .dash-sourcing-visual{right:18px;top:48px}
+}
+@media (min-width:1100px){
+  .dash-shell{padding:24px clamp(28px,4vw,64px) 48px;max-width:1440px;margin:0 auto;width:100%}
+  .dash-hero-card{padding:26px 28px}
+}
 
 /* SWIPE RECRUTEUR */
 .swipe-hd{padding:12px 18px;background:var(--w);border-top:0;border-bottom:1px solid var(--bd);position:sticky;top:58px;z-index:40}
@@ -219,13 +292,23 @@ button,input,textarea,select{font-family:inherit}
 .cand-predict-l{font-size:9px;color:var(--g);opacity:.8;margin-top:2px;font-weight:600}
 .deck-actions{position:sticky;bottom:70px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30}
 .db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
+button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
+.db:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .db:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
 .db-pass{width:50px;height:50px}.db-pass:hover{border-color:var(--r);color:var(--r)}
 .db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 8px 18px rgba(19,64,224,.25)}.db-like:hover{background:var(--b2);box-shadow:0 10px 22px rgba(19,64,224,.32)}
 .db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
-.deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px}
+.deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:22px;padding:36px;box-shadow:var(--sh-sm)}
 .deck-empty.on{display:flex}
+.deck-empty-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.deck-empty-actions .btn{min-height:44px}
+.swipe-intro{margin:4px 0 0;font-size:12px;max-width:42ch}
+.settings-logout{margin-top:22px;padding-top:18px;border-top:1px solid var(--bd)}
+.settings-logout-btn{color:var(--r)!important;border-color:#f0c4c4!important}
+#p-pipeline .pipe-state{width:100%;max-width:100%;box-sizing:border-box}
+#p-offres .offer-card{box-shadow:var(--sh-sm)}
+#p-offres .page-intro{max-width:48ch}
 
 /* MATCHING ENGINE */
 .match-engine{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:10px}
@@ -798,81 +881,20 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   }
 
   #p-dashboard.page.on{
-    display:grid !important;
-    grid-template-columns:minmax(320px,520px) minmax(360px,1fr);
-    column-gap:40px;
-    row-gap:26px;
-    align-items:start;
-    align-content:start;
+    display:block !important;
     background:var(--bg);
-    padding:24px clamp(32px,4vw,76px) 96px;
-    min-height:calc(100dvh - 52px);
+    padding:0 0 96px;
+    min-height:calc(100dvh - 64px);
     width:100%;
-    max-width:1500px;
-    margin:0 auto;
-  }
-  #p-dashboard .dash-hero{
-    order:1;
-    grid-column:1/-1;
-    margin:0;
-    padding:18px 20px;
-    background:var(--w);
-    border:1px solid var(--bd);
-    border-radius:12px;
-  }
-  #p-dashboard .dash-actions{
-    order:2;
-    grid-column:1;
-    width:100%;
-    max-width:480px;
-  }
-  #p-dashboard .dash-candidates{
-    order:3;
-    grid-column:2;
-    width:100%;
-    min-width:0;
-  }
-  #p-dashboard>.sec{
-    padding:0 !important;
     max-width:none;
-    width:100%;
+    margin:0;
   }
-  #p-dashboard .dash-candidates .sec-hd .btn{display:none}
-  #p-dashboard .sec-hd{margin-bottom:12px}
-  #p-dashboard .sec-t{font-size:17px}
-
-  #p-dashboard .dash-co{gap:16px;margin-bottom:14px}
-  #p-dashboard .dash-co-logo{width:54px;height:54px;border-radius:12px;font-size:18px}
-  #p-dashboard .dash-co-n{font-size:18px}
-  #p-dashboard .dash-co-s{font-size:12px}
-  #p-dashboard .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-  #p-dashboard .kpi{min-height:74px;padding:12px;border-radius:7px}
-  #p-dashboard .kpi-l{font-size:8px}
-  #p-dashboard .kpi-v{font-size:20px}
-  #p-dashboard .kpi-t{font-size:9px}
-
-  #p-dashboard .dash-actions .btn{
-    min-height:44px;
-    border-radius:10px;
-    font-size:13px;
-    line-height:1.2;
-    padding:11px 16px;
-    margin-bottom:10px !important;
-    width:100%;
-    white-space:normal;
-  }
-  #p-dashboard .dash-actions .bp{
-    box-shadow:0 8px 18px rgba(19,64,224,.16);
-  }
-  #p-dashboard .dash-actions .bo{
-    background:rgba(255,255,255,.45);
-    border-color:#C7D2E3;
-  }
-  #p-dashboard .dash-actions .bo:hover{
-    background:var(--w);
-    border-color:var(--b);
-    color:var(--b);
-  }
+  #p-dashboard .dash-shell{padding-top:20px;padding-bottom:40px}
+  #p-dashboard .dash-hero-card{margin:0}
+  #p-dashboard .dash-panel .sec-t{font-size:16px}
+  #p-dashboard .dash-actions .btn{width:100%}
+  #p-dashboard .kpi-card{min-height:118px;padding:16px 14px}
+  #p-dashboard .kpi-v{font-size:28px}
 }
 @media (min-width:720px){
   #p-offres.page.on{
@@ -1035,40 +1057,99 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 
 <!-- DASHBOARD -->
 <div id="p-dashboard" class="page">
-  <div class="dash-hero">
-    <div class="page-kicker">Espace recruteur</div>
-    <h1 class="page-title sf" id="dash-title">Tableau de bord recrutement</h1>
-    <p class="page-intro">Pilotez vos offres, vos candidatures et les prochaines actions de votre équipe.</p>
-    <div class="dash-co">
-      <div class="dash-co-logo sf" id="dash-logo">SC</div>
-      <div><div class="dash-co-n sf" id="dash-co-name">Chargement…</div><div class="dash-co-s" id="dash-co-plan">—</div></div>
-    </div>
-    <div class="photo-nudge" id="photo-nudge" style="display:none">
-      <div class="photo-nudge-ico"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-      <div class="photo-nudge-txt">
-        <div class="photo-nudge-t sf">Ajoutez le logo de votre entreprise</div>
-        <div class="photo-nudge-s">Un profil avec logo inspire davantage confiance aux candidats.</div>
+  <div class="dash-shell">
+    <section class="dash-hero-card" aria-label="Accueil recruteur">
+      <div class="dash-hero-main">
+        <div class="dash-hello sf" id="dash-hello">Bonjour</div>
+        <h1 class="page-title sf" id="dash-title">Trouvez vos futurs talents</h1>
+        <p class="page-intro">Publiez vos offres, sourcez les bons profils et pilotez votre recrutement au même endroit.</p>
+        <div class="dash-co">
+          <div class="dash-co-logo sf" id="dash-logo">SC</div>
+          <div>
+            <div class="dash-co-n sf" id="dash-co-name">Chargement…</div>
+            <div class="dash-co-s" id="dash-co-plan">—</div>
+          </div>
+        </div>
+        <div class="photo-nudge" id="photo-nudge" style="display:none">
+          <div class="photo-nudge-ico"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <div class="photo-nudge-txt">
+            <div class="photo-nudge-t sf">Ajoutez le logo de votre entreprise</div>
+            <div class="photo-nudge-s">Un profil avec logo inspire davantage confiance aux candidats.</div>
+          </div>
+          <button class="btn bp bsm" type="button" onclick="document.getElementById('avatar-file-prof').click()">Ajouter</button>
+        </div>
+        <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
       </div>
-      <button class="btn bp bsm" type="button" onclick="document.getElementById('avatar-file-prof').click()">Ajouter</button>
-    </div>
-    <input type="file" id="avatar-file-prof" style="display:none" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateAvatar(this)">
+      <aside class="dash-hero-aside" aria-hidden="false">
+        <div class="dash-aside-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 4.5L19 8.3l-3.5 3.4.8 4.8L12 14.8 7.7 16.5l.8-4.8L5 8.3l4.8-.8L12 3z"/></svg></div>
+        <div class="dash-aside-t sf">Attirez les meilleurs profils</div>
+        <p class="dash-aside-s">Le matching SwipSales s’appuie sur l’ADN commercial pour prioriser les candidats pertinents.</p>
+      </aside>
+    </section>
+
     <div class="kpi-grid dash-kpi-grid" aria-label="Indicateurs">
-      <div class="kpi kpi-tone-blue"><div class="kpi-l">Candidatures reçues</div><div class="kpi-v sf" id="kpi-recues">—</div><div class="kpi-t tf" id="kpi-recues-t">—</div></div>
-      <div class="kpi kpi-tone-amber"><div class="kpi-l">Candidats chauds</div><div class="kpi-v sf" id="kpi-chauds">—</div><div class="kpi-t tf">Score +85</div></div>
-      <div class="kpi kpi-tone-green"><div class="kpi-l">En pipeline</div><div class="kpi-v sf" id="kpi-pipeline">—</div><div class="kpi-t tf">Tous stades</div></div>
-      <div class="kpi kpi-tone-slate"><div class="kpi-l">Offres actives</div><div class="kpi-v sf" id="kpi-offres">—</div><div class="kpi-t tf">Publiées</div></div>
+      <button type="button" class="kpi kpi-card kpi-tone-purple" onclick="go('pipeline')">
+        <div class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="kpi-v sf" id="kpi-recues">—</div>
+        <div class="kpi-l">Candidatures reçues</div>
+        <div class="kpi-t tf" id="kpi-recues-t">—</div>
+      </button>
+      <button type="button" class="kpi kpi-card kpi-tone-amber" onclick="go('pipeline')">
+        <div class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div>
+        <div class="kpi-v sf" id="kpi-chauds">—</div>
+        <div class="kpi-l">Candidats chauds</div>
+        <div class="kpi-t tf" id="kpi-chauds-t">En réponse / entretien</div>
+      </button>
+      <button type="button" class="kpi kpi-card kpi-tone-blue" onclick="go('pipeline')">
+        <div class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+        <div class="kpi-v sf" id="kpi-pipeline">—</div>
+        <div class="kpi-l">En pipeline</div>
+        <div class="kpi-t tf">Tous stades</div>
+      </button>
+      <button type="button" class="kpi kpi-card kpi-tone-green" onclick="go('offres')">
+        <div class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M9 7V4h6v3"/></svg></div>
+        <div class="kpi-v sf" id="kpi-offres">—</div>
+        <div class="kpi-l">Offres actives</div>
+        <div class="kpi-t tf">Publiées</div>
+      </button>
     </div>
-  </div>
-  <div class="dash-panels">
-    <div class="sec dash-actions">
-      <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
-      <button class="btn bp blk" onclick="go('post-offre')">+ Publier une offre</button>
-      <button class="btn bo blk" onclick="go('pipeline')">Offres actives</button>
-      <button class="btn bo blk" onclick="go('swipe')">Sourcer des candidats</button>
+
+    <div class="dash-mid">
+      <section class="dash-panel dash-actions">
+        <div class="sec-hd"><div class="sec-t sf">Actions rapides</div></div>
+        <button class="btn bp blk dash-action-primary" type="button" onclick="go('post-offre')">+ Publier une offre</button>
+        <button class="btn bo blk dash-action-row" type="button" onclick="go('swipe')">Sourcer des candidats <span aria-hidden="true">→</span></button>
+        <button class="btn bo blk dash-action-row" type="button" onclick="go('offres')">Voir mes offres <span aria-hidden="true">→</span></button>
+        <button class="btn bo blk dash-action-row" type="button" onclick="go('pipeline')">Accéder au pipeline <span aria-hidden="true">→</span></button>
+      </section>
+      <section class="dash-panel dash-sourcing">
+        <div class="dash-sourcing-badge">Prêt à recruter ?</div>
+        <h2 class="dash-sourcing-title sf">Trouvez les bons profils, plus rapidement</h2>
+        <p class="dash-sourcing-copy">Parcourez des candidats commerciaux scorés et affinez avec vos filtres.</p>
+        <div class="dash-sourcing-visual" aria-hidden="true">
+          <span class="dsv-card dsv-a"></span>
+          <span class="dsv-card dsv-b"></span>
+          <span class="dsv-card dsv-c"></span>
+        </div>
+        <button class="btn bp" type="button" onclick="go('swipe')">Sourcer des candidats</button>
+      </section>
     </div>
-    <div class="sec dash-candidates">
-      <div class="sec-hd"><div class="sec-t sf">Candidatures reçues</div><button class="btn bg2 bsm" onclick="go('pipeline')">Pipeline</button></div>
-      <div id="cands-recues"><div class="loading-state"><div class="spinner"></div></div></div>
+
+    <div class="dash-bottom">
+      <section class="dash-panel dash-offers-recent">
+        <div class="sec-hd">
+          <div class="sec-t sf">Mes offres récentes</div>
+          <button class="btn bg2 bsm" type="button" onclick="go('offres')">Voir toutes</button>
+        </div>
+        <div id="dash-recent-offers"><div class="loading-state"><div class="spinner"></div></div></div>
+      </section>
+      <section class="dash-panel dash-candidates">
+        <div class="sec-hd">
+          <div class="sec-t sf">Candidatures récentes</div>
+          <button class="btn bg2 bsm" type="button" onclick="go('pipeline')">Voir toutes</button>
+        </div>
+        <div id="cands-recues"><div class="loading-state"><div class="spinner"></div></div></div>
+      </section>
     </div>
   </div>
 </div>
@@ -1080,6 +1161,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div>
         <div class="page-kicker">Sourcing</div>
         <div class="sec-t sf page-title">Sourcing candidats</div>
+        <p class="page-intro swipe-intro">Parcourez les profils compatibles et affinez avec vos filtres.</p>
       </div>
       <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
@@ -1097,15 +1179,18 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div id="deck-cards"></div>
     <div class="deck-empty" id="deck-empty">
       <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="sf deck-empty-title">Tous les profils vus</div>
-      <p class="deck-empty-copy">Ajustez votre moteur de matching ou revenez demain.</p>
-      <button class="btn bp" onclick="go('matching')">Ajuster le matching</button>
+      <div class="sf deck-empty-title">Tous les profils ont été consultés</div>
+      <p class="deck-empty-copy">Ajustez vos filtres pour découvrir d’autres candidats, ou affinez le moteur de matching.</p>
+      <div class="deck-empty-actions">
+        <button class="btn bp" type="button" onclick="openCandFilterModal()">Ajuster les filtres</button>
+        <button class="btn bo" type="button" onclick="go('matching')">Moteur de matching</button>
+      </div>
     </div>
   </div>
   <div class="deck-actions">
-    <div class="db db-pass" onclick="swipe('pass')"><svg width="21" height="21" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
-    <div class="db db-like" onclick="swipe('like')"><svg width="25" height="25" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
-    <div class="db db-super" onclick="swipe('super')"><svg width="21" height="21" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+    <button type="button" class="db db-pass" onclick="swipe('pass')" aria-label="Passer"><svg width="21" height="21" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button type="button" class="db db-like" onclick="swipe('like')" aria-label="Like"><svg width="25" height="25" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
+    <button type="button" class="db db-super" onclick="swipe('super')" aria-label="Super like"><svg width="21" height="21" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
   </div>
 </div>
 
@@ -1137,7 +1222,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <div class="sec-t sf page-title">Offres actives</div>
         <p class="page-intro">Suivez vos postes ouverts et les candidatures associées.</p>
       </div>
-      <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
+      <button class="btn bp bsm" onclick="go('post-offre')">+ Publier</button>
     </div>
     <div id="pipeline-offers-list" class="offers-list"><div class="pipe-state"><div class="spinner"></div>Chargement des offres…</div></div>
   </div>
@@ -1351,7 +1436,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <div class="sec-t sf page-title">Mes offres</div>
         <p class="page-intro">Retrouvez vos publications et leurs statuts.</p>
       </div>
-      <button class="btn bg2 bsm" onclick="go('post-offre')">+ Publier</button>
+      <button class="btn bp bsm" onclick="go('post-offre')">+ Publier</button>
     </div>
     <div id="offers-list" class="offers-list"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
@@ -1395,8 +1480,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <div class="sec account-layout">
     <div class="page-heading">
       <div>
-        <div class="page-kicker">Espace recruteur</div>
-        <h1 class="page-title sf">Paramètres</h1>
+        <div class="page-kicker">Paramètres</div>
+        <h1 class="page-title sf">Réglages</h1>
         <p class="page-intro">Compte, abonnement et raccourcis — sans modification des droits.</p>
       </div>
     </div>
@@ -1412,13 +1497,25 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="account-value" id="subscription-status-display">—</div>
       <div class="account-actions">
         <button type="button" class="btn bo" style="display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier mon abonnement</button>
+        <button type="button" class="btn bg2 bsm" onclick="go('pricing')">Voir les tarifs</button>
       </div>
     </section>
-    <div class="menu-list">
-      <div class="menu-i" onclick="go('post-offre')"><div class="menu-ico"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div class="menu-txt">Publier une offre</div></div>
-      <div class="menu-i" onclick="go('matching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div class="menu-txt">Moteur de matching</div></div>
-      <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div></div>
-      <div class="menu-i" onclick="doLogout()"><div class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="menu-txt">Déconnexion</div></div>
+    <section class="account-section" id="settings-entreprise-section">
+      <h2 class="sf">Entreprise</h2>
+      <p>Informations déjà présentes sur votre profil recruteur.</p>
+      <div class="account-value" id="settings-entreprise-display">—</div>
+      <div class="account-value" id="settings-secteur-display" style="margin-top:8px">—</div>
+    </section>
+    <section class="account-section">
+      <h2 class="sf">Raccourcis</h2>
+      <div class="menu-list settings-shortcuts">
+        <div class="menu-i" onclick="go('post-offre')"><div class="menu-ico"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div class="menu-txt">Publier une offre</div></div>
+        <div class="menu-i" onclick="go('matching')"><div class="menu-ico"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div class="menu-txt">Moteur de matching</div></div>
+        <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div></div>
+      </div>
+    </section>
+    <div class="settings-logout">
+      <button type="button" class="btn bo blk settings-logout-btn" onclick="doLogout()">Déconnexion</button>
     </div>
   </div>
 </div>
@@ -1447,6 +1544,12 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   <button class="bn bn-secondary" id="nav-offres" onclick="go('offres')"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M9 7V4h6v3"/></svg><span>Offres</span></button>
   <button class="bn" id="nav-messages" onclick="go('messages')"><span class="bn-ico-wrap"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><div class="nav-dot" id="msg-dot-nav" style="display:none">Nouveau</div></span><span>Messages</span></button>
   <button class="bn" id="nav-settings" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Réglages</span></button>
+  <div class="bnav-spacer" aria-hidden="true"></div>
+  <div class="bnav-credits bn-secondary" id="bnav-plan" hidden>
+    <div class="credits-label" id="bnav-plan-label">Plan</div>
+    <div class="credits-value" id="bnav-plan-meta">—</div>
+    <button type="button" class="btn bg2 bsm blk" onclick="go('pricing')">Voir mon abonnement</button>
+  </div>
 </nav>
 
 <!-- MATCH OVERLAY -->
@@ -1853,6 +1956,13 @@ function existingPageOrDashboard(page) {
 function renderAccountSettings() {
   const el = document.getElementById('account-email-display');
   if (el) el.textContent = USER?.email || 'Email indisponible';
+  const enterprise = document.getElementById('settings-entreprise-display');
+  const sector = document.getElementById('settings-secteur-display');
+  if (enterprise) enterprise.textContent = USER?.entreprise ? `Entreprise : ${USER.entreprise}` : 'Entreprise non renseignée';
+  if (sector) {
+    sector.textContent = USER?.secteur ? `Secteur : ${USER.secteur}` : 'Secteur non renseigné';
+    sector.style.display = USER?.secteur || USER?.entreprise ? '' : 'none';
+  }
   loadSubscriptionStatus();
 }
 async function loadSubscriptionStatus() {
@@ -2040,23 +2150,40 @@ async function loadDashboard() {
   const name = isGreetingPrenom(USER?.prenom, USER) ? String(USER.prenom).trim() : '';
   const greetEl = document.getElementById('topbar-greet');
   if (greetEl) greetEl.innerHTML = name ? `Bonjour, <b>${esc(name)}</b>` : 'Bonjour';
+  const hello = document.getElementById('dash-hello');
+  if (hello) hello.textContent = name ? `Bonjour ${name} 👋` : 'Bonjour 👋';
   const dashTitle = document.getElementById('dash-title');
-  if (dashTitle) dashTitle.textContent = name ? `Bonjour ${name}` : 'Tableau de bord recrutement';
+  if (dashTitle) dashTitle.textContent = 'Trouvez vos futurs talents';
   if (!USER) return;
   const init = ((USER.entreprise||'?')[0] + (USER.entreprise||'??')[1]).toUpperCase();
   document.getElementById('dash-logo').textContent = init;
   document.getElementById('dash-co-name').textContent = USER.entreprise || '—';
   try {
-    const [stats, recues] = await Promise.all([
+    const [stats, recues, offers] = await Promise.all([
       api('GET', '/recruteurs/stats'),
-      api('GET', '/candidatures/recues?limit=4')
+      api('GET', '/candidatures/recues?limit=4'),
+      api('GET', '/offres/mine')
     ]);
-    renderDashStats(stats); document.getElementById('dash-co-plan').textContent = stats.plan_label;
+    renderDashStats(stats);
+    document.getElementById('dash-co-plan').textContent = stats.plan_label;
     renderRecues(recues);
+    renderDashRecentOffers(offers || []);
     renderDashLogo(stats.avatar_url, init);
+    syncBnavPlan(stats);
     const nudge = document.getElementById('photo-nudge');
     if (nudge) nudge.style.display = stats.avatar_url ? 'none' : 'flex';
   } catch(e) { console.error(e); }
+}
+function syncBnavPlan(stats) {
+  const card = document.getElementById('bnav-plan');
+  const label = document.getElementById('bnav-plan-label');
+  const meta = document.getElementById('bnav-plan-meta');
+  if (!card || !stats) return;
+  const planText = String(stats.plan_label || '').trim();
+  if (!planText) { card.hidden = true; return; }
+  card.hidden = false;
+  if (label) label.textContent = planText.split('·')[0].trim() || 'Plan';
+  if (meta) meta.textContent = (stats.offres != null ? `${stats.offres} offre${Number(stats.offres) > 1 ? 's' : ''} active${Number(stats.offres) > 1 ? 's' : ''}` : planText);
 }
 function renderDashLogo(avatarUrl, initials) {
   const logo = document.getElementById('dash-logo');
@@ -2109,27 +2236,65 @@ function renderDashStats(s) {
   document.getElementById('kpi-recues-t').textContent = s.recues_new ? '+' + s.recues_new + ' nouvelles' : 'Aucune nouvelle';
   document.getElementById('kpi-recues-t').className = 'kpi-t ' + (s.recues_new > 0 ? 'tu' : 'tf');
   document.getElementById('kpi-chauds').textContent = s.chauds || '0';
+  const chaudsT = document.getElementById('kpi-chauds-t');
+  if (chaudsT) chaudsT.textContent = 'En réponse / entretien';
   document.getElementById('kpi-pipeline').textContent = s.pipeline || '0';
   document.getElementById('kpi-offres').textContent = s.offres || '0';
+}
+function renderDashRecentOffers(offers = []) {
+  const el = document.getElementById('dash-recent-offers');
+  if (!el) return;
+  const list = (offers || []).slice(0, 3);
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <b>Aucune offre pour le moment</b>
+        <span>Publiez votre premier poste pour démarrer le sourcing.</span>
+        <button class="btn bp bsm" type="button" onclick="go('post-offre')">Publier une offre</button>
+      </div>`;
+    return;
+  }
+  el.innerHTML = list.map((o) => {
+    const status = String(o.statut || 'active').toLowerCase();
+    const id = esc(String(o.id));
+    return `
+      <article class="dash-recent-offer">
+        <div class="dash-ro-title">${esc(o.titre || 'Offre sans titre')}</div>
+        <div class="dash-ro-meta">
+          <span class="on">${esc(offerStatusLabel(status))}</span>
+          ${o.type || o.contract_type ? `<span>${esc(o.type || o.contract_type)}</span>` : ''}
+          ${o.lieu ? `<span>${esc(o.lieu)}</span>` : ''}
+          ${o.salaire ? `<span>${esc(o.salaire)}</span>` : ''}
+        </div>
+        <div class="dash-ro-actions">
+          <button class="btn bg2 bsm" type="button" onclick="go('pipeline')">Voir les candidatures</button>
+          <button class="btn bo bsm" type="button" onclick="editOffer('${id}')">Modifier</button>
+        </div>
+      </article>`;
+  }).join('');
+  list.forEach((offer) => {
+    if (!MY_OFFERS.some((item) => String(item.id) === String(offer.id))) MY_OFFERS.push(offer);
+  });
 }
 function renderRecues(list) {
   if (!list.length) {
     document.getElementById('cands-recues').innerHTML = `
       <div class="empty-state">
         <b>Aucune candidature reçue</b>
-        Les nouveaux profils apparaîtront ici dès qu'ils postulent.
+        <span>Les nouveaux profils apparaîtront ici dès qu’ils postulent.</span>
+        <button class="btn bp bsm" type="button" onclick="go('swipe')">Sourcer des candidats</button>
       </div>`;
     return;
   }
   document.getElementById('cands-recues').innerHTML = list.map(c => `
-    <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${c.id}')">
+    <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${c.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();viewCandidate('${c.id}')}">
       <div class="cr-av" style="background:${c.bg}">${c.av}</div>
       <div class="cr-info">
-        <div class="cr-name sf">${c.name}${c.badge?`<span class="cr-badge" style="background:${c.badgeBg};color:${c.badgeColor}">${c.badge}</span>`:''}</div>
-        <div class="cr-title">${c.titre}</div>
-        <div class="cr-meta">${c.tags.map(t=>`<span class="cr-tag">${t}</span>`).join('')}</div>
+        <div class="cr-name sf">${esc(c.name)}${c.badge?`<span class="cr-badge" style="background:${c.badgeBg};color:${c.badgeColor}">${esc(c.badge)}</span>`:''}</div>
+        <div class="cr-title">${esc(c.titre || '')}</div>
+        <div class="cr-meta">${(c.tags||[]).map(t=>`<span class="cr-tag">${esc(t)}</span>`).join('')}</div>
       </div>
-      <div class="cr-score"><div class="cr-score-v sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${c.score}</div><div class="cr-score-l">match</div></div>
+      <div class="cr-score"><div class="cr-score-v sf" style="color:${c.score>=90?'var(--pu)':c.score>=80?'var(--b)':'var(--a)'}">${esc(String(c.score ?? '—'))}</div><div class="cr-score-l">match</div></div>
     </div>`).join('');
 }
 function viewCandidate(id) {
