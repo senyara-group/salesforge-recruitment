@@ -2516,19 +2516,33 @@ async function doSwipe(action, cand) {
   const key = String(cand?.id || cand?.user_id || '');
   if (!key || SWIPE_IN_FLIGHT.has(key)) return false;
   SWIPE_IN_FLIGHT.add(key);
+  let result = null;
   try {
-    const r = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
-    rememberSeenCandidate(cand);
-    if (r.match) showMatch(cand, r);
-    else if (r.interest_recorded) toast(action === 'super' ? 'Profil ajouté à vos intérêts prioritaires' : 'Intérêt enregistré — aucune candidature créée');
-    return true;
-  } catch(e) {
+    result = await api('POST', '/recruteurs/swipe', { candidat_id: cand.id, action });
+  } catch (e) {
     console.error(e);
-    toast('Action non enregistrée. Réessayez.');
+    try { toast('Action non enregistrée. Réessayez.'); } catch (toastErr) { console.warn(toastErr); }
     return false;
   } finally {
     SWIPE_IN_FLIGHT.delete(key);
   }
+
+  // Succès serveur = vérité métier. Les effets UI / localStorage sont best-effort :
+  // une exception ici ne doit jamais restaurer la carte ni relancer l’API.
+  try {
+    rememberSeenCandidate(cand);
+  } catch (err) {
+    console.warn(err);
+  }
+  try {
+    if (result && result.match) showMatch(cand, result);
+    else if (result && result.interest_recorded) {
+      toast(action === 'super' ? 'Profil ajouté à vos intérêts prioritaires' : 'Intérêt enregistré — aucune candidature créée');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+  return true;
 }
 function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', CANDS[DECK_IDX]); }
 function showMatch(cand, r) {

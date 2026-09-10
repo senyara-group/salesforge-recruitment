@@ -8,6 +8,8 @@ const {
   LEGACY_IGNORED_MATCHING_KEYS,
   hasContributingMatching,
   compatibilityScore,
+  sanitizeMatchingWeight,
+  clampAxisValue,
 } = require('../utils/recruiterMatching');
 
 test('matching fantôme : cycle, saas et outbound n’influencent jamais le score', () => {
@@ -39,11 +41,72 @@ test('matching vide ou legacy seul ne devient pas un filtre d’exclusion', () =
   assert.equal(hasContributingMatching({ cycle: 100, saas: 50, outbound: 75 }), false);
   assert.equal(hasContributingMatching({ closing: 0, drive: 0 }), false);
   assert.equal(hasContributingMatching({ ecoute: 1 }), true);
+  assert.equal(hasContributingMatching({ closing: Number.POSITIVE_INFINITY }), false);
+  assert.equal(hasContributingMatching({ closing: Number.NaN }), false);
+  assert.equal(hasContributingMatching({ closing: 1e309 }), false);
+  assert.equal(hasContributingMatching({ closing: -1 }), false);
+  assert.equal(hasContributingMatching({ closing: 101 }), false);
+});
+
+test('matching : clamp axes et ignore poids invalides ; score toujours fini 0–100', () => {
+  assert.equal(clampAxisValue(-20), 0);
+  assert.equal(clampAxisValue(200), 100);
+  assert.equal(sanitizeMatchingWeight(-1), null);
+  assert.equal(sanitizeMatchingWeight(101), null);
+  assert.equal(sanitizeMatchingWeight(Number.POSITIVE_INFINITY), null);
+  assert.equal(sanitizeMatchingWeight(Number.NaN), null);
+  assert.equal(sanitizeMatchingWeight(1e309), null);
+
+  // Axe négatif → contribution comme 0
+  assert.equal(compatibilityScore({ closing: -20 }, { closing: 100 }), 0);
+  // Axe >100 → contribution comme 100
+  assert.equal(compatibilityScore({ closing: 200 }, { closing: 100 }), 100);
+
+  // Poids invalides ignorés → même résultat que sans eux
+  const realOnly = compatibilityScore({ closing: 80, drive: 60 }, { closing: 50 });
+  assert.equal(
+    compatibilityScore({ closing: 80, drive: 60 }, {
+      closing: 50,
+      drive: -1,
+      resilience: 101,
+      salestech: Number.POSITIVE_INFINITY,
+      ecoute: Number.NaN,
+      cycle: 1e309,
+    }),
+    realOnly
+  );
+
+  // Fantômes seuls inertes vs réel + fantôme
+  const withGhosts = compatibilityScore(
+    { closing: 80 },
+    { closing: 40, cycle: 100, saas: 100, outbound: 100, drive: 1e309 }
+  );
+  assert.equal(withGhosts, compatibilityScore({ closing: 80 }, { closing: 40 }));
+
+  const samples = [
+    compatibilityScore({ closing: -20 }, { closing: 100 }),
+    compatibilityScore({ closing: 200 }, { closing: 100 }),
+    compatibilityScore({}, { closing: 1e309, cycle: 50 }),
+    compatibilityScore({ closing: 50 }, { closing: Number.NaN, drive: Number.POSITIVE_INFINITY }),
+  ];
+  for (const score of samples) {
+    assert.equal(Number.isFinite(score), true);
+    assert.ok(score >= 0 && score <= 100);
+  }
 });
 
 test('matching recruteur reste isolé du deep ADN', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'utils', 'recruiterMatching.js'), 'utf8');
   assert.doesNotMatch(source, /deep[_ -]?adn|bilan|assessment/i);
+});
+
+test('parité deck / matching-count : même module compatibilityScore', () => {
+  const deck = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
+  const rec = fs.readFileSync(path.join(__dirname, '..', 'routes', 'recruteurs.js'), 'utf8');
+  assert.match(deck, /require\('\.\.\/utils\/recruiterMatching'\)/);
+  assert.match(rec, /require\('\.\.\/utils\/recruiterMatching'\)/);
+  assert.match(rec, /compatibilityScore\(axes, matching\)/);
+  assert.match(deck, /compatibilityScore\(/);
 });
 
 const recruiterHtml = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
@@ -57,7 +120,7 @@ function loadDoSwipe(overrides = {}) {
     api: async () => ({}),
     showMatch() {},
     toast() {},
-    console: { error() {} },
+    console: { error() {}, warn() {} },
     ...overrides,
   };
   vm.runInNewContext(`${recruiterHtml.slice(start, end)}\nglobalThis.doSwipeUnderTest = doSwipe;`, context);
@@ -106,7 +169,71 @@ test('swipe double clic : une seule requête en cours et aucun doublon seen', as
   assert.equal(seen, 1);
 });
 
-test('swipe frontend : échec restaure la carte sans avancer le deck', () => {
+test('A: API succès + localStorage throw → succès métier, une seule API', async () => {
+  let calls = 0;
+  const warns = [];
+  const context = loadDoSwipe({
+    api: async () => { calls += 1; return { match: false }; },
+    rememberSeenCandidate: () => { throw new Error('QuotaExceededError'); },
+    console: { error() {}, warn: (err) => warns.push(String(err && err.message || err)) },
+  });
+  assert.equal(await context.doSwipeUnderTest('pass', { id: 'cand-ls' }), true);
+  assert.equal(calls, 1);
+  assert.ok(warns.some((message) => /QuotaExceededError/.test(message)));
+});
+
+test('B: API succès + toast throw → succès métier conservé', async () => {
+  let calls = 0;
+  const context = loadDoSwipe({
+    api: async () => { calls += 1; return { match: false, interest_recorded: true }; },
+    toast: () => { throw new Error('toast boom'); },
+    console: { error() {}, warn() {} },
+  });
+  assert.equal(await context.doSwipeUnderTest('like', { id: 'cand-toast' }), true);
+  assert.equal(calls, 1);
+});
+
+test('C: API succès + showMatch throw → succès métier conservé', async () => {
+  let calls = 0;
+  const context = loadDoSwipe({
+    api: async () => { calls += 1; return { match: true }; },
+    showMatch: () => { throw new Error('dom boom'); },
+    console: { error() {}, warn() {} },
+  });
+  assert.equal(await context.doSwipeUnderTest('like', { id: 'cand-match' }), true);
+  assert.equal(calls, 1);
+});
+
+test('D: premier API échoue puis retry → seen seulement après succès', async () => {
+  let calls = 0;
+  let seen = 0;
+  const context = loadDoSwipe({
+    api: async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('temp');
+      return { match: false };
+    },
+    rememberSeenCandidate: () => { seen += 1; },
+    toast() {},
+  });
+  assert.equal(await context.doSwipeUnderTest('pass', { id: 'cand-retry' }), false);
+  assert.equal(seen, 0);
+  assert.equal(await context.doSwipeUnderTest('pass', { id: 'cand-retry' }), true);
+  assert.equal(calls, 2);
+  assert.equal(seen, 1);
+});
+
+test('E: deck reload pendant promesse → ancienne action n’avance pas le nouveau deck', () => {
+  const html = recruiterHtml;
+  const flyStart = html.indexOf('async function fly(');
+  const flyEnd = html.indexOf('function restoreSwipeCard', flyStart);
+  const fly = html.slice(flyStart, flyEnd);
+  assert.match(fly, /const generation = CAND_DECK_LOAD_GEN/);
+  assert.match(fly, /if \(generation !== CAND_DECK_LOAD_GEN\) return/);
+  assert.match(fly, /if \(!await doSwipe\(/);
+});
+
+test('swipe frontend : échec restaure la carte ; succès API hors catch UI', () => {
   const html = recruiterHtml;
   const start = html.indexOf('async function doSwipe');
   const end = html.indexOf('function swipe(', start);
@@ -116,6 +243,11 @@ test('swipe frontend : échec restaure la carte sans avancer le deck', () => {
   assert.match(block, /SWIPE_IN_FLIGHT\.add\(key\)/);
   assert.match(block, /finally[\s\S]*SWIPE_IN_FLIGHT\.delete\(key\)/);
   assert.match(block, /toast\('Action non enregistrée\. Réessayez\.'\)/);
+  assert.match(block, /console\.warn/);
+  // rememberSeenCandidate / showMatch après le catch API, pas dedans
+  const apiCatchEnd = block.indexOf('return false;');
+  const seenAt = block.indexOf('rememberSeenCandidate(cand)');
+  assert.ok(seenAt > apiCatchEnd);
   assert.match(html, /if \(!await doSwipe\('like',cand\)\) return restoreSwipeCard\(card\)/);
   assert.match(html, /function restoreSwipeCard[\s\S]*classList\.remove\('swiping'\)[\s\S]*style\.transform=''/);
 });
