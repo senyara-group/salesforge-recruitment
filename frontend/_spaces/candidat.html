@@ -223,8 +223,19 @@ button,input,textarea,select{font-family:inherit}
 
 /* SWIPE */
 .swipe-hd{padding:12px 18px;background:var(--w);border-bottom:1px solid var(--bd);position:sticky;top:59px;z-index:40}
-.filter-row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:9px}
+.filter-row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:9px;align-items:center}
 .filter-row::-webkit-scrollbar{display:none}
+.fp-filters{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px}
+.fp-count{display:inline-flex;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--b);color:#fff;font-size:11px;font-weight:700;align-items:center;justify-content:center}
+.fp-count[hidden]{display:none!important}
+.filters-sheet{max-height:min(78dvh,640px);overflow:auto}
+.filters-sheet .filt-section{margin:14px 0 0}
+.filters-sheet .filt-section:first-of-type{margin-top:8px}
+.filters-sheet .filt-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin-bottom:8px}
+.filters-sheet .form-chips{display:flex;flex-wrap:wrap;gap:6px}
+.filters-sheet .form-chip{border:1px solid var(--bd);background:var(--w);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.filters-sheet .form-chip.on{border-color:var(--b);background:rgba(37,99,235,.08);color:var(--b);font-weight:600}
+.filters-sheet .filt-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--w) 28%);padding-top:12px}
 .fp{flex-shrink:0;padding:5px 11px;border:1.5px solid var(--bd);border-radius:18px;background:var(--w);font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;white-space:nowrap;transition:.15s}
 .fp.on{background:var(--b);color:#fff;border-color:var(--b)}
 .deck-wrap{margin:12px 18px 0;border-radius:22px;background:var(--w);box-shadow:var(--sh-lg);overflow:hidden;display:flex;flex-direction:column}
@@ -1246,15 +1257,12 @@ button,input,textarea,select{font-family:inherit}
       <span class="page-meta" id="deck-count">Chargement…</span>
     </div>
     <div class="filter-row" id="filter-row" role="toolbar" aria-label="Filtres d’offres">
-      <button class="fp on" type="button" onclick="setFilt(this,'all')">Toutes</button>
-      <button class="fp" type="button" onclick="setFilt(this,'Closing')">Closing</button>
-      <button class="fp" type="button" onclick="setFilt(this,'Cold Calling')">Cold Calling</button>
-      <button class="fp" type="button" onclick="setFilt(this,'SaaS')">SaaS</button>
-      <button class="fp" type="button" onclick="setFilt(this,'Outbound')">Outbound</button>
-      <button class="fp fp-secondary" type="button" onclick="setFilt(this,'HubSpot')" data-filter-extra hidden>HubSpot</button>
-      <button class="fp fp-secondary" type="button" onclick="setFilt(this,'Salesforce')" data-filter-extra hidden>Salesforce</button>
-      <button class="fp fp-secondary" type="button" onclick="setFilt(this,'Négociation')" data-filter-extra hidden>Négociation</button>
-      <button class="fp fp-more" type="button" id="filter-more-btn" aria-expanded="false" onclick="toggleMoreFilters()">+ Filtres</button>
+      <button class="fp" type="button" data-quick-filter="contract:CDI" onclick="toggleQuickFilter(this)">CDI</button>
+      <button class="fp" type="button" data-quick-filter="remote:hybrid" onclick="toggleQuickFilter(this)">Hybride</button>
+      <button class="fp" type="button" data-quick-filter="tag:SaaS" onclick="toggleQuickFilter(this)">SaaS</button>
+      <button class="fp" type="button" data-quick-filter="tag:Closing" onclick="toggleQuickFilter(this)">Closing</button>
+      <button class="fp fp-filters" type="button" id="open-filters-btn" onclick="openDeckFilters()">Filtres<span class="fp-count" id="filters-count" hidden>0</span></button>
+      <button class="fp fp-more" type="button" id="reset-filters-btn" hidden onclick="resetDeckFilters()">Réinitialiser</button>
     </div>
   </div>
   <div class="deck-wrap">
@@ -1262,8 +1270,9 @@ button,input,textarea,select{font-family:inherit}
       <div id="deck-cards"></div>
       <div class="deck-empty" id="deck-empty" hidden>
         <div class="deck-empty-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="sf deck-empty-title">Tout vu</div>
-        <p class="deck-empty-copy">Toutes les offres compatibles ont été vues. Revenez demain.</p>
+        <div class="sf deck-empty-title" id="deck-empty-title">Tout vu</div>
+        <p class="deck-empty-copy" id="deck-empty-copy">Toutes les offres compatibles ont été vues. Revenez demain.</p>
+        <button class="btn bo bsm" type="button" id="deck-empty-reset" hidden onclick="resetDeckFilters()">Réinitialiser les filtres</button>
       </div>
     </div>
     <div class="deck-actions">
@@ -1983,6 +1992,72 @@ button,input,textarea,select{font-family:inherit}
   </div>
 </div>
 
+<div class="overlay" id="filters-ov" onclick="closeDeckFilters(event)">
+  <div class="bottom-sheet filters-sheet" role="dialog" aria-modal="true" aria-labelledby="filters-title" onclick="event.stopPropagation()">
+    <div class="sh-handle" aria-hidden="true"></div>
+    <div class="sec-hd" style="margin-bottom:4px">
+      <div>
+        <div class="page-kicker">Opportunités</div>
+        <div class="sec-t sf" id="filters-title">Filtres</div>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Contrat</div>
+      <div class="form-chips" id="filt-contract">
+        <button type="button" class="form-chip" data-filter-value="CDI" onclick="toggleFilterChip(this,'contract_type')">CDI</button>
+        <button type="button" class="form-chip" data-filter-value="Alternance" onclick="toggleFilterChip(this,'contract_type')">Alternance</button>
+        <button type="button" class="form-chip" data-filter-value="Mission" onclick="toggleFilterChip(this,'contract_type')">Mission</button>
+        <button type="button" class="form-chip" data-filter-value="Freelance" onclick="toggleFilterChip(this,'contract_type')">Freelance</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Mode de travail</div>
+      <div class="form-chips" id="filt-remote">
+        <button type="button" class="form-chip" data-filter-value="onsite" onclick="toggleFilterChip(this,'remote_mode')">Sur site</button>
+        <button type="button" class="form-chip" data-filter-value="hybrid" onclick="toggleFilterChip(this,'remote_mode')">Hybride</button>
+        <button type="button" class="form-chip" data-filter-value="remote" onclick="toggleFilterChip(this,'remote_mode')">Télétravail</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Salaire fixe minimum (€ / an)</div>
+      <input class="form-field" id="filt-salary-min" type="number" min="0" max="500000" step="1000" inputmode="numeric" placeholder="Ex : 35000">
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Compétences</div>
+      <div class="form-chips" id="filt-tags">
+        <button type="button" class="form-chip" data-filter-value="Closing" onclick="toggleFilterChip(this,'tags')">Closing</button>
+        <button type="button" class="form-chip" data-filter-value="Cold Calling" onclick="toggleFilterChip(this,'tags')">Cold Calling</button>
+        <button type="button" class="form-chip" data-filter-value="SaaS" onclick="toggleFilterChip(this,'tags')">SaaS</button>
+        <button type="button" class="form-chip" data-filter-value="Outbound" onclick="toggleFilterChip(this,'tags')">Outbound</button>
+        <button type="button" class="form-chip" data-filter-value="HubSpot" onclick="toggleFilterChip(this,'tags')">HubSpot</button>
+        <button type="button" class="form-chip" data-filter-value="Salesforce" onclick="toggleFilterChip(this,'tags')">Salesforce</button>
+        <button type="button" class="form-chip" data-filter-value="Négociation" onclick="toggleFilterChip(this,'tags')">Négociation</button>
+      </div>
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Type de poste</div>
+      <input class="form-field" id="filt-job-type" maxlength="80" placeholder="Ex : Account Executive">
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Secteur</div>
+      <input class="form-field" id="filt-sector" maxlength="80" placeholder="Ex : SaaS">
+    </div>
+    <div class="filt-section">
+      <div class="filt-label">Date de publication</div>
+      <div class="form-chips" id="filt-published">
+        <button type="button" class="form-chip on" data-filter-value="" onclick="setPublishedPreset(this,'')">Toutes</button>
+        <button type="button" class="form-chip" data-filter-value="24h" onclick="setPublishedPreset(this,'24h')">24 h</button>
+        <button type="button" class="form-chip" data-filter-value="7d" onclick="setPublishedPreset(this,'7d')">7 jours</button>
+        <button type="button" class="form-chip" data-filter-value="30d" onclick="setPublishedPreset(this,'30d')">30 jours</button>
+      </div>
+    </div>
+    <div class="filt-actions">
+      <button class="btn bo" type="button" onclick="resetDeckFilters()">Réinitialiser</button>
+      <button class="btn bp" type="button" onclick="applyDeckFiltersFromPanel()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast">Action réalisée</div>
 <script>
 // ------------------------------------------------------------
@@ -2102,17 +2177,18 @@ function refreshAccessToken() {
   }
   return REFRESH_PROMISE;
 }
-async function api(method, path, body, allowRefresh = true) {
+async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, {
     method,
     headers: h,
     body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store'
+    cache: 'no-store',
+    signal: fetchOpts && fetchOpts.signal,
   });
   if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
-    return api(method, path, body, false);
+    return api(method, path, body, false, fetchOpts);
   }
   const text = await r.text();
   let d = null;
@@ -2701,13 +2777,73 @@ let DECK_CURSOR = null;
 let DECK_HAS_MORE = false;
 let DECK_FETCHING_MORE = false;
 let DECK_SKILLS = [];
-let DECK_CLIENT_FILTER = 'all';
+let DECK_LOAD_GEN = 0;
+let DECK_ABORT = null;
 const DECK_PREFETCH_REMAINING = 4;
+const DECK_TAG_VOCAB = Object.freeze(['Closing', 'Cold Calling', 'SaaS', 'Outbound', 'HubSpot', 'Salesforce', 'Négociation']);
 
-async function fetchDeckPage(cursor) {
-  const params = new URLSearchParams({ limit: '20' });
+function emptyDeckFilters() {
+  return {
+    contract_type: [],
+    remote_mode: [],
+    salary_fixed_min: null,
+    tags: [],
+    job_type: '',
+    sector: '',
+    published_preset: '',
+  };
+}
+let DECK_FILTERS = emptyDeckFilters();
+
+function publishedSinceFromPreset(preset, now = new Date()) {
+  const days = { '24h': 1, '7d': 7, '30d': 30 }[preset];
+  if (!days) return null;
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function countActiveDeckFilters(filters = DECK_FILTERS) {
+  let n = 0;
+  n += (filters.contract_type || []).length;
+  n += (filters.remote_mode || []).length;
+  n += (filters.tags || []).length;
+  if (filters.salary_fixed_min != null && filters.salary_fixed_min !== '') n += 1;
+  if (String(filters.job_type || '').trim()) n += 1;
+  if (String(filters.sector || '').trim()) n += 1;
+  if (filters.published_preset) n += 1;
+  return n;
+}
+
+function buildDeckQueryParams(filters, options) {
+  filters = filters || DECK_FILTERS;
+  options = options || {};
+  const limit = options.limit == null ? 20 : options.limit;
+  const cursor = options.cursor == null ? null : options.cursor;
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
   if (cursor) params.set('cursor', cursor);
-  const page = await api('GET', '/offres/deck?' + params.toString());
+  if (filters.contract_type?.length) params.set('contract_type', filters.contract_type.join(','));
+  if (filters.remote_mode?.length) params.set('remote_mode', filters.remote_mode.join(','));
+  if (filters.tags?.length) params.set('tags', filters.tags.join(','));
+  if (filters.salary_fixed_min != null && filters.salary_fixed_min !== '') {
+    params.set('salary_fixed_min', String(filters.salary_fixed_min));
+  }
+  const jobType = String(filters.job_type || '').trim();
+  if (jobType) params.set('job_type', jobType);
+  const sector = String(filters.sector || '').trim();
+  if (sector) params.set('sector', sector);
+  const published = publishedSinceFromPreset(filters.published_preset);
+  if (published) params.set('published_since', published);
+  return params;
+}
+
+async function fetchDeckPage(cursor, options) {
+  options = options || {};
+  const filters = options.filters || DECK_FILTERS;
+  const signal = options.signal || null;
+  const params = buildDeckQueryParams(filters, { limit: 20, cursor });
+  const page = await api('GET', '/offres/deck?' + params.toString(), null, true, signal ? { signal } : null);
   if (Array.isArray(page)) {
     return { batch: page, next_cursor: null, has_more: false };
   }
@@ -2717,21 +2853,144 @@ async function fetchDeckPage(cursor) {
 }
 
 function rebuildOffresFiltered(resetIdx) {
-  const normalized = String(DECK_CLIENT_FILTER).toLowerCase();
-  OFFRES_F = DECK_CLIENT_FILTER === 'all'
-    ? [...OFFRES]
-    : OFFRES.filter(o => o.tags.some(t => String(t).toLowerCase() === normalized));
+  OFFRES_F = [...OFFRES];
   if (resetIdx) DECK_IDX = 0;
   renderDeck();
+}
+
+function syncQuickFilterChips() {
+  document.querySelectorAll('#filter-row [data-quick-filter]').forEach((btn) => {
+    const key = btn.getAttribute('data-quick-filter') || '';
+    const [family, value] = key.split(':');
+    let on = false;
+    if (family === 'contract') on = DECK_FILTERS.contract_type.includes(value);
+    if (family === 'remote') on = DECK_FILTERS.remote_mode.includes(value);
+    if (family === 'tag') on = DECK_FILTERS.tags.includes(value);
+    btn.classList.toggle('on', on);
+  });
+}
+
+function syncFilterChrome() {
+  const count = countActiveDeckFilters();
+  const badge = document.getElementById('filters-count');
+  const resetBtn = document.getElementById('reset-filters-btn');
+  if (badge) {
+    badge.hidden = count === 0;
+    badge.textContent = String(count);
+  }
+  if (resetBtn) resetBtn.hidden = count === 0;
+  syncQuickFilterChips();
+}
+
+function toggleListValue(list, value) {
+  const next = list.includes(value) ? list.filter((item) => item !== value) : list.concat(value);
+  return next;
+}
+
+function toggleQuickFilter(btn) {
+  const key = btn.getAttribute('data-quick-filter') || '';
+  const [family, value] = key.split(':');
+  if (family === 'contract') DECK_FILTERS.contract_type = toggleListValue(DECK_FILTERS.contract_type, value);
+  if (family === 'remote') DECK_FILTERS.remote_mode = toggleListValue(DECK_FILTERS.remote_mode, value);
+  if (family === 'tag') DECK_FILTERS.tags = toggleListValue(DECK_FILTERS.tags, value);
+  syncFilterChrome();
+  loadOffres({ preserveFilters: true });
+}
+
+function toggleFilterChip(btn) {
+  btn.classList.toggle('on');
+}
+
+function setPublishedPreset(btn) {
+  document.querySelectorAll('#filt-published .form-chip').forEach((el) => el.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function readChipValues(rootId) {
+  return [...document.querySelectorAll(`#${rootId} .form-chip.on`)]
+    .map((btn) => btn.getAttribute('data-filter-value'))
+    .filter((value) => value != null && value !== '');
+}
+
+function syncFilterPanelFromState() {
+  const mark = (rootId, values) => {
+    document.querySelectorAll(`#${rootId} .form-chip`).forEach((btn) => {
+      const value = btn.getAttribute('data-filter-value') || '';
+      btn.classList.toggle('on', values.includes(value) || (rootId === 'filt-published' && !DECK_FILTERS.published_preset && value === ''));
+    });
+  };
+  mark('filt-contract', DECK_FILTERS.contract_type);
+  mark('filt-remote', DECK_FILTERS.remote_mode);
+  mark('filt-tags', DECK_FILTERS.tags);
+  document.querySelectorAll('#filt-published .form-chip').forEach((btn) => {
+    btn.classList.toggle('on', (btn.getAttribute('data-filter-value') || '') === (DECK_FILTERS.published_preset || ''));
+  });
+  const salary = document.getElementById('filt-salary-min');
+  const jobType = document.getElementById('filt-job-type');
+  const sector = document.getElementById('filt-sector');
+  if (salary) salary.value = DECK_FILTERS.salary_fixed_min != null ? DECK_FILTERS.salary_fixed_min : '';
+  if (jobType) jobType.value = DECK_FILTERS.job_type || '';
+  if (sector) sector.value = DECK_FILTERS.sector || '';
+}
+
+function openDeckFilters() {
+  syncFilterPanelFromState();
+  document.getElementById('filters-ov')?.classList.add('on');
+}
+
+function closeDeckFilters(event) {
+  if (event && event.target !== document.getElementById('filters-ov')) return;
+  document.getElementById('filters-ov')?.classList.remove('on');
+}
+
+function applyDeckFiltersFromPanel() {
+  const salaryRaw = String(document.getElementById('filt-salary-min')?.value || '').trim();
+  let salary = null;
+  if (salaryRaw) {
+    const n = Number(salaryRaw);
+    if (!Number.isInteger(n) || n < 0 || n > 500000) {
+      toast('Salaire minimum invalide');
+      return;
+    }
+    salary = n;
+  }
+  const publishedBtn = document.querySelector('#filt-published .form-chip.on');
+  DECK_FILTERS = {
+    contract_type: readChipValues('filt-contract'),
+    remote_mode: readChipValues('filt-remote'),
+    tags: readChipValues('filt-tags').filter((tag) => DECK_TAG_VOCAB.includes(tag)),
+    salary_fixed_min: salary,
+    job_type: String(document.getElementById('filt-job-type')?.value || '').trim(),
+    sector: String(document.getElementById('filt-sector')?.value || '').trim(),
+    published_preset: publishedBtn ? (publishedBtn.getAttribute('data-filter-value') || '') : '',
+  };
+  document.getElementById('filters-ov')?.classList.remove('on');
+  syncFilterChrome();
+  loadOffres({ preserveFilters: true });
+}
+
+function resetDeckFilters() {
+  DECK_FILTERS = emptyDeckFilters();
+  document.getElementById('filters-ov')?.classList.remove('on');
+  syncFilterChrome();
+  loadOffres({ preserveFilters: true });
 }
 
 async function maybePrefetchDeck() {
   if (DECK_FETCHING_MORE || !DECK_HAS_MORE || !DECK_CURSOR) return;
   const rem = Math.max(0, OFFRES_F.length - DECK_IDX);
   if (rem > DECK_PREFETCH_REMAINING) return;
+  const gen = DECK_LOAD_GEN;
+  const filtersSnapshot = {
+    ...DECK_FILTERS,
+    contract_type: [...DECK_FILTERS.contract_type],
+    remote_mode: [...DECK_FILTERS.remote_mode],
+    tags: [...DECK_FILTERS.tags],
+  };
   DECK_FETCHING_MORE = true;
   try {
-    const page = await fetchDeckPage(DECK_CURSOR);
+    const page = await fetchDeckPage(DECK_CURSOR, { filters: filtersSnapshot });
+    if (gen !== DECK_LOAD_GEN) return;
     const mapped = page.batch.map(o => normOffre(o, DECK_SKILLS)).filter(o => !isOfferLocallySeen(o));
     const seen = new Set(OFFRES.map(o => String(o.id)));
     mapped.forEach(o => {
@@ -2746,16 +3005,25 @@ async function maybePrefetchDeck() {
   } catch (e) {
     // Échec prefetch : on laisse le deck actuel ; un prochain swipe pourra retenter.
   } finally {
-    DECK_FETCHING_MORE = false;
+    if (gen === DECK_LOAD_GEN) DECK_FETCHING_MORE = false;
   }
 }
 
-async function loadOffres() {
+async function loadOffres(options = {}) {
+  const preserveFilters = Boolean(options.preserveFilters);
+  if (!preserveFilters) DECK_FILTERS = emptyDeckFilters();
+  const gen = ++DECK_LOAD_GEN;
+  if (DECK_ABORT) {
+    try { DECK_ABORT.abort(); } catch (e) {}
+  }
+  DECK_ABORT = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   DECK_IDX = 0;
   DECK_CURSOR = null;
   DECK_HAS_MORE = false;
   DECK_FETCHING_MORE = false;
-  DECK_CLIENT_FILTER = 'all';
+  OFFRES = [];
+  OFFRES_F = [];
+  syncFilterChrome();
   const empty = document.getElementById('deck-empty');
   const area = document.getElementById('deck-area');
   if (empty) { empty.classList.remove('on'); empty.hidden = true; }
@@ -2763,39 +3031,22 @@ async function loadOffres() {
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
     DECK_SKILLS = await getMySkillsFlat();
-    const page = await fetchDeckPage(null);
+    if (gen !== DECK_LOAD_GEN) return;
+    const page = await fetchDeckPage(null, { signal: DECK_ABORT?.signal });
+    if (gen !== DECK_LOAD_GEN) return;
     OFFRES = page.batch.map(o => normOffre(o, DECK_SKILLS)).filter(o => !isOfferLocallySeen(o));
     DECK_CURSOR = page.next_cursor;
     DECK_HAS_MORE = page.has_more;
-    applyFilter('all');
-  } catch(e) {
+    rebuildOffresFiltered(true);
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    if (gen !== DECK_LOAD_GEN) return;
     document.getElementById('deck-cards').innerHTML = '<div class="loading-state">Erreur chargement</div>';
     if (empty) { empty.classList.remove('on'); empty.hidden = true; }
     if (area) area.classList.remove('is-loading', 'is-empty');
   }
 }
-function applyFilter(f) {
-  DECK_CLIENT_FILTER = f;
-  const normalized = String(f).toLowerCase();
-  OFFRES_F = f === 'all' ? [...OFFRES] : OFFRES.filter(o => o.tags.some(t => String(t).toLowerCase() === normalized));
-  DECK_IDX = 0; renderDeck();
-  maybePrefetchDeck();
-}
-function setFilt(btn, f) {
-  document.querySelectorAll('#filter-row .fp:not(.fp-more)').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  applyFilter(f);
-}
-function toggleMoreFilters() {
-  const btn = document.getElementById('filter-more-btn');
-  const extras = document.querySelectorAll('#filter-row [data-filter-extra]');
-  if (!btn || !extras.length) return;
-  const open = btn.getAttribute('aria-expanded') === 'true';
-  const next = !open;
-  btn.setAttribute('aria-expanded', String(next));
-  btn.textContent = next ? 'Moins' : '+ Filtres';
-  extras.forEach((el) => { el.hidden = !next; });
-}
+
 function renderDeck() {
   const el = document.getElementById('deck-cards');
   const empty = document.getElementById('deck-empty');
@@ -2805,8 +3056,24 @@ function renderDeck() {
   el.innerHTML = '';
   const rem = Math.max(0, OFFRES_F.length - DECK_IDX);
   const isEmpty = rem === 0 && !DECK_HAS_MORE && !DECK_FETCHING_MORE;
-  document.getElementById('deck-count').textContent = rem + ' offre' + (rem > 1 ? 's' : '') + (DECK_HAS_MORE ? '+' : '');
-  // États mutuellement exclusifs : carte active XOR « Tout vu »
+  const loaded = OFFRES.length;
+  const countEl = document.getElementById('deck-count');
+  if (countEl) {
+    countEl.textContent = loaded
+      ? (loaded + ' chargée' + (loaded > 1 ? 's' : '') + (DECK_HAS_MORE ? '+' : ''))
+      : (isEmpty ? '0' : '…');
+  }
+  const filteredEmpty = isEmpty && countActiveDeckFilters() > 0;
+  const title = document.getElementById('deck-empty-title');
+  const copy = document.getElementById('deck-empty-copy');
+  const reset = document.getElementById('deck-empty-reset');
+  if (title) title.textContent = filteredEmpty ? 'Aucun résultat' : 'Tout vu';
+  if (copy) {
+    copy.textContent = filteredEmpty
+      ? 'Aucune offre ne correspond à vos filtres.'
+      : 'Toutes les offres compatibles ont été vues. Revenez demain.';
+  }
+  if (reset) reset.hidden = !filteredEmpty;
   if (empty) {
     empty.classList.toggle('on', isEmpty);
     empty.hidden = !isEmpty;
@@ -2946,7 +3213,7 @@ async function doSwipe(action, offre, attempt = 1) {
   }
 }
 function swipe(dir) { const top = document.querySelector('#deck-cards .swipe-card:last-child'); if (!top) return; fly(top, dir==='like'?'r':dir==='pass'?'l':'u', OFFRES_F[DECK_IDX]); }
-async function reloadOffers() { DECK_IDX = 0; await loadOffres(); }
+async function reloadOffers() { DECK_IDX = 0; await loadOffres({ preserveFilters: true }); }
 function showMatch(o, r) {
   document.getElementById('ov-co').style.background = o.cc; document.getElementById('ov-co').textContent = o.ci;
   document.getElementById('ov-user').textContent = USER ? ((USER.prenom||'?')[0]+(USER.nom||'?')[0]).toUpperCase() : 'YS';

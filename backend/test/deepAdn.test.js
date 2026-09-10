@@ -53,7 +53,7 @@ function loadCandidateApi(fetchImpl) {
     refreshAccessToken: async () => false,
     fetch: fetchImpl,
   };
-  vm.runInNewContext(`${extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true)')}\nthis.api = api;`, sandbox);
+  vm.runInNewContext(`${extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true, fetchOpts = null)')}\nthis.api = api;`, sandbox);
   return sandbox.api;
 }
 
@@ -194,7 +194,7 @@ test('api() throw sur JSON invalide même en HTTP 200', async () => {
 });
 
 test('api() ne traite plus d === null comme erreur générique', () => {
-  const source = extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true)');
+  const source = extractFunction(candidateHtml, 'async function api(method, path, body, allowRefresh = true, fetchOpts = null)');
   assert.doesNotMatch(source, /if\s*\(\s*!success\s*\|\|\s*d\s*===\s*null\s*\)/);
   assert.match(source, /parseFailed/);
   assert.match(source, /if\s*\(\s*!success\s*\)/);
