@@ -1163,6 +1163,39 @@ body.auth .shell, body.product-gateway .shell {
   box-shadow: var(--sh-md);
 }
 
+/* ADN approfondi : parcours candidat isolé du test court. */
+#p-adn-deep .deep-adn-shell {
+  max-width: 820px;
+  margin-inline: auto;
+}
+.deep-adn-state { margin-top: 24px; }
+.deep-adn-intro,
+.deep-adn-question,
+.deep-adn-result {
+  background: var(--w);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: var(--sh-sm);
+}
+.deep-adn-intro p { color: var(--ink3); line-height: 1.65; }
+.deep-adn-intro ul { margin: 18px 0 22px 20px; color: var(--ink2); line-height: 1.8; }
+.deep-adn-progress { display:flex; justify-content:space-between; gap:16px; margin-bottom:10px; color:var(--ink3); font-size:12px; font-weight:700; }
+.deep-adn-question { margin-top: 18px; }
+.deep-adn-question h2 { font-size: 20px; line-height: 1.45; margin: 8px 0 20px; }
+.deep-adn-question .opt { width:100%; text-align:left; }
+.deep-adn-result .adn-row { grid-template-columns: minmax(190px, 1.3fr) minmax(120px, 2fr) 42px; }
+.deep-adn-result .adn-l { display:flex; flex-direction:column; gap:3px; }
+.deep-adn-result .adn-l small { color:var(--ink3); font-size:11px; font-weight:500; }
+.deep-adn-privacy { margin:22px 0; color:var(--ink3); font-size:12px; line-height:1.6; }
+@media (max-width: 600px) {
+  #p-adn-deep.page.on { padding-bottom: 96px; }
+  .deep-adn-intro,.deep-adn-question,.deep-adn-result { padding:18px; }
+  .deep-adn-progress { flex-direction:column; gap:3px; }
+  .deep-adn-result .adn-row { grid-template-columns:1fr 42px; }
+  .deep-adn-result .adn-tr { grid-column:1 / -1; grid-row:2; }
+}
+
 /* Recruiter pages */
 #p-dashboard .dash-actions .btn {
   margin-bottom: 0;

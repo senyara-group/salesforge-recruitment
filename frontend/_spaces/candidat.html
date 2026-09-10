@@ -1215,6 +1215,9 @@ button,input,textarea,select{font-family:inherit}
       <article class="tool-row" onclick="go('test')">
         <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Évaluation</div><h2 class="sf">Test ADN Commercial</h2><p>Identifiez votre profil et vos axes commerciaux à partir du questionnaire existant.</p></div><span class="tool-action">Accéder au test</span>
       </article>
+      <article class="tool-row" onclick="go('adn-deep')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('adn-deep')}">
+        <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Carrière</div><h2 class="sf">ADN approfondi</h2><p>Explorez votre fonctionnement commercial à travers 48 situations concrètes, sans impact sur votre matching.</p></div><span class="tool-action">Découvrir</span>
+      </article>
       <article class="tool-row" onclick="go('cv')" tabindex="0" role="link" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();go('cv')}">
         <div class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16.2 13.2l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg></div><div class="tool-copy"><div class="tool-eyebrow">Import assisté</div><h2 class="sf">Mon CV</h2><p>Importez le document original et complétez plus rapidement les informations de base de votre profil.</p></div><span class="tool-action">Gérer mon CV</span>
       </article>
@@ -1562,6 +1565,14 @@ button,input,textarea,select{font-family:inherit}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ADN APPROFONDI -->
+<div id="p-adn-deep" class="page">
+  <div class="sec deep-adn-shell">
+    <div class="page-heading"><div><div class="page-kicker">Évaluation personnelle</div><h1 class="page-title sf">ADN commercial approfondi</h1><p class="page-intro">48 situations pour mieux comprendre votre style. Ce résultat reste dans votre espace candidat et n’influence pas votre matching.</p></div></div>
+    <div id="deep-adn-state" class="deep-adn-state"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
 </div>
 
@@ -2202,7 +2213,7 @@ function adn(axes) {
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',nouveau:'chip-g',contacte:'chip-a',repondu:'chip-a',entretien:'chip-pu',offre:'chip-g',embauche:'chip-g',refusee:'chip-r',retiree:'chip-r'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
-const APP_PAGES = ['home','swipe','coaching','candidatures','test','messages','profile','cv','coach','account','pricing'];
+const APP_PAGES = ['home','swipe','coaching','candidatures','test','adn-deep','messages','profile','cv','coach','account','pricing'];
 let AI_AVAILABLE = false;
 let CV_ALLOWED = false;
 let COACH_ALLOWED = false;
@@ -2357,7 +2368,7 @@ function go(p, options = {}) {
   const pg = document.getElementById('p-' + p), nb = document.getElementById('nav-' + p);
   if (pg) pg.classList.add('on'); if (nb) nb.classList.add('on');
   window.scrollTo(0, 0);
-  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, test:loadAdnConsent, messages:loadMessages, profile:loadProfile, cv:loadCVTool, coach:loadCoach, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
+  const m = {home:loadHome, swipe:loadOffres, candidatures:loadCandidatures, test:loadAdnConsent, 'adn-deep':loadDeepAdn, messages:loadMessages, profile:loadProfile, cv:loadCVTool, coach:loadCoach, account:loadProfile, coaching:loadCoaching, pricing:renderPlans};
   if (m[p]) m[p]();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
@@ -2887,6 +2898,73 @@ async function withdrawApplication(id) {
 // ------------------------------------------------------------
 // TEST ADN
 // ------------------------------------------------------------
+let DEEP_ADN = null;
+let DEEP_ADN_INDEX = 0;
+let DEEP_ADN_ANSWERS = {};
+
+async function loadDeepAdn() {
+  const root = document.getElementById('deep-adn-state');
+  root.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    const current = await api('GET', '/adn-approfondi/current');
+    if (current?.status === 'completed') return renderDeepAdnResult(current);
+    root.innerHTML = `<div class="deep-adn-intro"><h2 class="sf">Votre façon de vendre, en situations réelles</h2><p>Le test comporte 6 blocs de 8 situations. Il n’y a pas de bonne réponse : choisissez ce que vous feriez réellement.</p><ul><li>Environ 12 minutes</li><li>Résultat descriptif et non jugeant</li><li>Sans effet sur votre classement ou votre visibilité</li></ul><button class="btn bp" type="button" onclick="startDeepAdn()">${current ? 'Reprendre' : 'Commencer'}</button></div>`;
+  } catch (error) {
+    const restricted = error.code === 'PLAN_REQUIRED' || /abonnement|Carrière/i.test(error.message || '');
+    root.innerHTML = `<div class="empty-state"><b>${restricted ? 'Disponible avec Carrière' : 'Évaluation indisponible'}</b><span>${restricted ? 'L’ADN approfondi est inclus dans les formules Carrière et Carrière Coaching.' : esc(error.message || 'Réessayez dans quelques instants.')}</span>${restricted ? '<button class="btn bp bsm" type="button" onclick="goToPricing()">Voir les formules</button>' : '<button class="btn bo bsm" type="button" onclick="loadDeepAdn()">Réessayer</button>'}</div>`;
+  }
+}
+
+async function startDeepAdn() {
+  const root = document.getElementById('deep-adn-state');
+  root.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  try {
+    DEEP_ADN = await api('POST', '/adn-approfondi/start');
+    DEEP_ADN_ANSWERS = Object.fromEntries((DEEP_ADN.answers || []).map(answer => [answer.question_id, answer.option_id]));
+    const questions = deepAdnQuestions();
+    DEEP_ADN_INDEX = questions.findIndex(question => !DEEP_ADN_ANSWERS[question.id]);
+    if (DEEP_ADN_INDEX < 0) DEEP_ADN_INDEX = questions.length - 1;
+    renderDeepAdnQuestion();
+  } catch (error) { root.innerHTML = `<div class="empty-state"><b>Impossible de démarrer</b><span>${esc(error.message || 'Réessayez dans quelques instants.')}</span><button class="btn bo bsm" onclick="loadDeepAdn()">Retour</button></div>`; }
+}
+
+function deepAdnQuestions() { return (DEEP_ADN?.questionnaire?.blocks || []).flatMap(block => block.questions.map(question => ({ ...question, block }))); }
+
+function renderDeepAdnQuestion() {
+  const root = document.getElementById('deep-adn-state');
+  const questions = deepAdnQuestions();
+  const question = questions[DEEP_ADN_INDEX];
+  if (!question) return loadDeepAdn();
+  const selected = DEEP_ADN_ANSWERS[question.id];
+  root.innerHTML = `<div class="deep-adn-progress"><span>${DEEP_ADN_INDEX + 1} / ${questions.length}</span><span>${esc(question.block.label)}</span></div><div class="test-pb"><div class="test-pf" style="width:${((DEEP_ADN_INDEX + 1) / questions.length) * 100}%"></div></div><section class="deep-adn-question"><div class="page-kicker">Situation ${DEEP_ADN_INDEX + 1}</div><h2 class="sf">${esc(question.text)}</h2><div class="opts">${question.options.map(option => `<button class="opt${selected === option.id ? ' sel' : ''}" type="button" onclick="answerDeepAdn('${question.id}','${option.id}')"><span class="ot">${esc(option.text)}</span></button>`).join('')}</div><div class="step-nav"><button class="btn bo" type="button" onclick="moveDeepAdn(-1)" ${DEEP_ADN_INDEX === 0 ? 'disabled' : ''}>Retour</button>${DEEP_ADN_INDEX === questions.length - 1 ? `<button class="btn bp" type="button" onclick="finalizeDeepAdn()" ${selected ? '' : 'disabled'}>Voir mes résultats</button>` : `<button class="btn bp" type="button" onclick="moveDeepAdn(1)" ${selected ? '' : 'disabled'}>Continuer</button>`}</div><div class="form-feedback" id="deep-adn-feedback" role="status"></div></section>`;
+}
+
+async function answerDeepAdn(questionId, optionId) {
+  DEEP_ADN_ANSWERS[questionId] = optionId;
+  renderDeepAdnQuestion();
+  try { await api('PUT', `/adn-approfondi/${encodeURIComponent(DEEP_ADN.id)}/progress`, { question_id: questionId, option_id: optionId }); }
+  catch (error) { delete DEEP_ADN_ANSWERS[questionId]; renderDeepAdnQuestion(); setFeedback('deep-adn-feedback', error.message || 'Réponse non enregistrée', true); }
+}
+
+function moveDeepAdn(delta) {
+  DEEP_ADN_INDEX = Math.max(0, Math.min(deepAdnQuestions().length - 1, DEEP_ADN_INDEX + delta));
+  renderDeepAdnQuestion(); window.scrollTo(0, 0);
+}
+
+async function finalizeDeepAdn() {
+  if (Object.keys(DEEP_ADN_ANSWERS).length !== 48) return setFeedback('deep-adn-feedback', 'Répondez aux 48 situations avant de terminer.', true);
+  setFeedback('deep-adn-feedback', 'Calcul de votre restitution…');
+  try { renderDeepAdnResult(await api('POST', `/adn-approfondi/${encodeURIComponent(DEEP_ADN.id)}/finalize`)); }
+  catch (error) { setFeedback('deep-adn-feedback', error.message || 'Finalisation impossible', true); }
+}
+
+function renderDeepAdnResult(assessment) {
+  const root = document.getElementById('deep-adn-state');
+  const result = assessment?.result;
+  if (!result?.blocks) return loadDeepAdn();
+  root.innerHTML = `<div class="deep-adn-result"><div class="sec-hd"><div><div class="page-kicker">Restitution</div><h2 class="sf">Votre profil approfondi</h2></div><span class="chip chip-g"><span class="chip-dot"></span>Complété</span></div>${result.blocks.map(block => `<div class="adn-row"><div class="adn-l"><strong>${esc(block.label)}</strong><small>${esc(block.profile)}</small></div><div class="adn-tr"><div class="adn-f" style="width:${Number(block.score) || 0}%"></div></div><div class="adn-s sf">${Number(block.score) || 0}</div></div>`).join('')}${result.consistency?.message ? `<p class="form-feedback on">${esc(result.consistency.message)}</p>` : ''}<p class="deep-adn-privacy">Ces résultats sont personnels et ne sont pas utilisés pour votre matching ou présentés aux recruteurs.</p><button class="btn bo" type="button" onclick="go('coaching')">Retour aux outils</button></div>`;
+}
+
 const CUSTOM_TEST_STEPS = ['ts-job', 'ts-huntfarm', 'ts-profileq1', 'ts-profileq2'];
 function hideAllTestSteps() {
   for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
