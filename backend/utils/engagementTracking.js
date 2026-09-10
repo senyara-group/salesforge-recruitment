@@ -1,6 +1,6 @@
 // Tracking d'engagement manquant côté produit, nécessaire aux scénarios 03 et 04
 // de marketing automation (likes reçus, consultations de profil, dernière connexion).
-// Nécessite la migration backend/migrations/2026_08_marketing_automation_tracking.sql.
+// Nécessite la migration backend/marketing_automation_tracking_migration.sql.
 
 const supabase = require('../supabase');
 

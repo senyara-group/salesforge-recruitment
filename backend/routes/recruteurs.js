@@ -8,6 +8,14 @@ const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
 const { recordCandidateLike, recordProfileView, countRecentLikes, countRecentProfileViews } = require('../utils/engagementTracking');
 const { compatibilityScore, hasContributingMatching } = require('../utils/recruiterMatching');
+const {
+  emptyPipelineStages,
+  parsePipelineQuery,
+  encodeCursor,
+  applySupabasePipelineCursor,
+  stageForStatut,
+  attachDedupedCvSignedUrls,
+} = require('../utils/pipelineQuery');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const MAX_AVATAR_BYTES = Number(process.env.MAX_AVATAR_UPLOAD_MB || 3) * 1024 * 1024;
@@ -408,6 +416,7 @@ router.post('/matching-count', authMiddleware, requireRecruiterPlan, async (req,
 
 router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
+    const { limit, cursor } = parsePipelineQuery(req.query || {});
     const recruteur = await ensureRecruiterProfile(req.user.id);
     const { data: offres, error: offresError } = await supabase
       .from('offres')
@@ -416,17 +425,29 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
     if (offresError) return res.status(400).json({ error: offresError });
 
     const offreIds = offres.map((offre) => offre.id);
-    const { data, error } = offreIds.length
-      ? await supabase
-        .from('candidatures')
-        .select('id, statut, snapshot, internal_note, candidat_id, offre_id, offres(id,titre), candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
-        .in('offre_id', offreIds)
-        .or('lettre_type.is.null,lettre_type.neq.recruteur_like')
-      : { data: [], error: null };
+    const empty = { ...emptyPipelineStages(), next_cursor: null, has_more: false };
+    if (!offreIds.length) return res.json(empty);
+
+    let candidaturesQuery = supabase
+      .from('candidatures')
+      .select('id, statut, snapshot, internal_note, candidat_id, offre_id, created_at, offres(id,titre), candidats(id, user_id, nom, prenom, titre, score_adn, axes)')
+      .in('offre_id', offreIds)
+      .or('lettre_type.is.null,lettre_type.neq.recruteur_like');
+    candidaturesQuery = applySupabasePipelineCursor(candidaturesQuery, cursor);
+    const { data, error } = await candidaturesQuery
+      .order('created_at', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .limit(limit + 1);
     if (error) return res.status(400).json({ error });
 
-    const candidatIds = [...new Set((data || []).map((row) => row.candidat_id).filter(Boolean))];
-    const { data: matchs, error: matchsError } = offreIds.length && candidatIds.length
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last ? encodeCursor(last) : null;
+
+    const candidatIds = [...new Set(pageRows.map((row) => row.candidat_id).filter(Boolean))];
+    const { data: matchs, error: matchsError } = candidatIds.length
       ? await supabase
         .from('matchs')
         .select('id, candidat_id, offre_id, score_match, score_compat, created_at')
@@ -456,33 +477,34 @@ router.get('/pipeline', authMiddleware, requireRecruiterPlan, async (req, res) =
       matchesByCandidate.get(candidateKey).push(match);
     });
 
-    await Promise.all((data || []).map(async (candidature) => {
-      const cv = candidature.snapshot?.cv;
-      if (!cv?.path) return;
-      const { data: signed, error } = await supabase.storage.from(cv.bucket || 'candidate-cvs').createSignedUrl(cv.path, 60 * 60);
-      if (!error && signed?.signedUrl) candidature.snapshot.cv.url = signed.signedUrl;
-    }));
+    await attachDedupedCvSignedUrls(pageRows, async (bucket, storagePath) => {
+      const { data: signed, error: signError } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(storagePath, 60 * 60);
+      if (signError || !signed?.signedUrl) return null;
+      return signed.signedUrl;
+    });
 
-    const pipeline = { nouveau: [], vu: [], contacte: [], entretien: [], offre: [], termine: [] };
-    data.forEach((candidature) => {
+    const pipeline = emptyPipelineStages();
+    pageRows.forEach((candidature) => {
       const candidateKey = String(candidature.candidat_id);
       const candidateMatches = matchesByCandidate.get(candidateKey) || [];
       const match = matchesByPair.get(`${candidature.offre_id}:${candidature.candidat_id}`) || candidateMatches[0] || null;
       const candidateMatchIds = candidateMatches.map((item) => item.id);
       const discussed = candidateMatchIds.some((id) => discussedMatchIds.has(String(id)));
-      const status = candidature.statut || 'envoyee';
-      const stage = ['envoyee', 'nouveau'].includes(status) ? 'nouveau'
-        : status === 'vu' ? 'vu'
-          : ['contacte', 'repondu'].includes(status) ? 'contacte'
-            : status === 'entretien' ? 'entretien'
-              : status === 'offre' ? 'offre' : 'termine';
+      const stage = stageForStatut(candidature.statut);
       pipeline[stage].push(normalizeCandidate(candidature, {
         match,
         matchIds: candidateMatchIds,
         discussed,
       }));
     });
-    res.json(pipeline);
+
+    res.json({
+      ...pipeline,
+      next_cursor: nextCursor,
+      has_more: Boolean(nextCursor),
+    });
   } catch (error) {
     publicError(res, error);
   }
