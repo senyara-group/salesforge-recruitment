@@ -233,12 +233,14 @@ test('route deck : pagination avant enrichissement, pas de deep ADN / abonnement
 
 test('frontend pagination progressive : première page puis prefetch, pas de boucle 100 pages', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
-  assert.match(html, /async function fetchDeckPage\(cursor\)/);
+  assert.match(html, /async function fetchDeckPage\(cursor/);
   assert.match(html, /async function maybePrefetchDeck\(\)/);
   assert.match(html, /DECK_FETCHING_MORE/);
   assert.match(html, /DECK_HAS_MORE/);
   assert.match(html, /DECK_PREFETCH_REMAINING = 4/);
-  assert.match(html, /const page = await fetchDeckPage\(null\)/);
+  assert.match(html, /buildDeckQueryParams/);
+  assert.match(html, /DECK_LOAD_GEN/);
+  assert.match(html, /await fetchDeckPage\(null/);
   assert.doesNotMatch(html, /pages < 100/);
   assert.doesNotMatch(html, /do \{[\s\S]*fetchDeckPage[\s\S]*\} while/);
   assert.match(html, /if \(DECK_FETCHING_MORE \|\| !DECK_HAS_MORE \|\| !DECK_CURSOR\) return;/);

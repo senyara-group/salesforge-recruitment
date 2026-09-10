@@ -11,6 +11,7 @@ const {
   applySupabaseDeckFilters,
   applySupabaseCursor,
 } = require('../utils/offerDeckQuery');
+const { normalizeOfferStructuredFields } = require('../utils/offerWrite');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const DECK_SELECT = 'id, titre, type, contract_type, lieu, salaire, description, tags, statut, auto_candidature, created_at, job_type, remote_mode, salary_fixed_min, salary_fixed_max, has_variable, variable_note, sales_styles, sector, customer_types, experience_min, experience_max, city_code, latitude, longitude, recruteur_id, recruteurs(entreprise, secteur, avatar_meta)';
@@ -55,7 +56,8 @@ function publicError(res, error) {
   });
 }
 
-function validateOfferPayload({ titre, type, lieu, salaire }) {
+function validateOfferPayload(body = {}) {
+  const { titre, type, lieu, salaire } = body;
   if (!String(titre || '').trim()) {
     const error = new Error('Titre requis');
     error.status = 400;
@@ -87,6 +89,7 @@ function validateOfferPayload({ titre, type, lieu, salaire }) {
     error.status = 400;
     throw error;
   }
+  return normalizeOfferStructuredFields(body);
 }
 
 function isPlausibleSalaire(s) {
@@ -240,8 +243,8 @@ router.patch('/:id/status', authMiddleware, requireRecruiterPlan, async (req, re
 router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { titre, type, lieu, salaire, description, tags, statut, auto_candidature } = req.body;
-    validateOfferPayload({ titre, type, lieu, salaire });
+    const { titre, type, lieu, salaire, description, statut, auto_candidature } = req.body;
+    const structured = validateOfferPayload(req.body);
 
     // Vérification limite offres actives selon le plan
     await assertOfferLimitNotReached(recruteur.id, req.recruiterPlan);
@@ -249,7 +252,14 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { data, error } = await supabase
       .from('offres')
       .insert({
-        titre, type, lieu, salaire, description, tags, statut, auto_candidature,
+        titre, type, lieu, salaire, description, statut, auto_candidature,
+        tags: structured.tags,
+        contract_type: structured.contract_type,
+        remote_mode: structured.remote_mode,
+        salary_fixed_min: structured.salary_fixed_min,
+        salary_fixed_max: structured.salary_fixed_max,
+        job_type: structured.job_type,
+        sector: structured.sector,
         recruteur_id: recruteur.id,
       })
       .select('*')
@@ -274,8 +284,8 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
 router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { titre, type, lieu, salaire, description, tags, statut, auto_candidature } = req.body;
-    validateOfferPayload({ titre, type, lieu, salaire });
+    const { titre, type, lieu, salaire, description, statut, auto_candidature } = req.body;
+    const structured = validateOfferPayload(req.body);
 
     let wasActive = false;
     if (statut === 'active') {
@@ -297,7 +307,16 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
 
     const { data, error } = await supabase
       .from('offres')
-      .update({ titre, type, lieu, salaire, description, tags, statut, auto_candidature })
+      .update({
+        titre, type, lieu, salaire, description, statut, auto_candidature,
+        tags: structured.tags,
+        contract_type: structured.contract_type,
+        remote_mode: structured.remote_mode,
+        salary_fixed_min: structured.salary_fixed_min,
+        salary_fixed_max: structured.salary_fixed_max,
+        job_type: structured.job_type,
+        sector: structured.sector,
+      })
       .eq('id', req.params.id)
       .eq('recruteur_id', recruteur.id)
       .select('*')

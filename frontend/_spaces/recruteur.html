@@ -1013,7 +1013,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div>
         <div class="page-kicker">Offres</div>
         <div class="sec-t sf page-title">Publier une offre</div>
-        <p class="page-intro">Renseignez les informations essentielles. Aucun champ métier n’est modifié.</p>
+        <p class="page-intro">Renseignez le contrat, le mode de travail et la rémunération structurée pour améliorer le matching des filtres candidats.</p>
       </div>
     </div>
     <div id="post-err" class="err"></div>
@@ -1130,30 +1130,56 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <option value="Sales Coach">
     </datalist>
     <div class="form-group"><label class="form-label sf">Type de contrat</label><div class="form-chips" id="of-type">
-      <button class="form-chip" onclick="ofPick(this,'of-type-v','CDI')">CDI</button>
-      <button class="form-chip" onclick="ofPick(this,'of-type-v','Alternance')">Alternance</button>
-      <button class="form-chip" onclick="ofPick(this,'of-type-v','Mission')">Mission</button>
-      <button class="form-chip" onclick="ofPick(this,'of-type-v','Freelance')">Freelance</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_TYPE','CDI')">CDI</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_TYPE','Alternance')">Alternance</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_TYPE','Mission')">Mission</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_TYPE','Freelance')">Freelance</button>
     </div></div>
+    <div class="form-group"><label class="form-label sf">Mode de travail</label><div class="form-chips" id="of-remote">
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_REMOTE','onsite')">Sur site</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_REMOTE','hybrid')">Hybride</button>
+      <button type="button" class="form-chip" onclick="ofPick(this,'OF_REMOTE','remote')">Télétravail</button>
+    </div></div>
+    <div class="form-group"><label class="form-label sf">Type de poste</label>
+      <input class="form-field" id="of-job-type" maxlength="80" placeholder="Ex : Account Executive Senior">
+      <button type="button" class="link-action" style="margin-top:6px;background:none;border:0;padding:0;color:var(--b);cursor:pointer;font:inherit" onclick="document.getElementById('of-job-type').value=document.getElementById('of-titre').value.trim()">Utiliser l’intitulé</button>
+    </div>
+    <div class="form-group"><label class="form-label sf">Secteur de l’offre</label>
+      <input class="form-field" id="of-sector" maxlength="80" placeholder="Ex : SaaS B2B">
+      <button type="button" class="link-action" id="of-sector-suggest" style="margin-top:6px;background:none;border:0;padding:0;color:var(--b);cursor:pointer;font:inherit;display:none" onclick="applyCompanySectorSuggestion()">Utiliser le secteur société</button>
+    </div>
     <div class="form-group" style="position:relative">
       <label class="form-label sf">Localisation</label>
       <input class="form-field" id="of-lieu" placeholder="Ex : Paris" autocomplete="off" oninput="searchVilles(this.value)" onfocus="searchVilles(this.value)">
       <div class="autocomplete-list" id="of-lieu-list"></div>
     </div>
     <div class="form-group">
-      <label class="form-label sf">Rémunération</label>
+      <label class="form-label sf">Rémunération (libellé libre)</label>
       <input class="form-field" id="of-salaire" maxlength="60" placeholder="Ex : 45-65K€ + variable, ou TJM 500€" oninput="document.getElementById('of-salaire-err').style.display='none'">
       <div class="form-hint-err" id="of-salaire-err" style="display:none">Précise un montant (ex: 45K€, 40-50K€, TJM 500€/jour, à négocier)</div>
     </div>
+    <div class="form-group">
+      <label class="form-label sf">Rémunération fixe annuelle brute (€)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="form-label" for="of-salary-min" style="font-size:12px;opacity:.75">Fixe minimum</label>
+          <input class="form-field" id="of-salary-min" type="number" min="0" max="500000" step="1000" inputmode="numeric" placeholder="35000">
+        </div>
+        <div>
+          <label class="form-label" for="of-salary-max" style="font-size:12px;opacity:.75">Fixe maximum</label>
+          <input class="form-field" id="of-salary-max" type="number" min="0" max="500000" step="1000" inputmode="numeric" placeholder="45000">
+        </div>
+      </div>
+    </div>
     <div class="form-group"><label class="form-label sf">Description</label><textarea class="form-field" id="of-desc" placeholder="Décrivez le poste, la mission, l'équipe…"></textarea></div>
     <div class="form-group"><label class="form-label sf">Compétences recherchées</label><div class="form-chips" id="of-skills">
-      <button class="form-chip" onclick="ofTag(this,'Closing')">Closing</button>
-      <button class="form-chip" onclick="ofTag(this,'Cold Calling')">Cold Calling</button>
-      <button class="form-chip" onclick="ofTag(this,'SaaS')">SaaS</button>
-      <button class="form-chip" onclick="ofTag(this,'Outbound')">Outbound</button>
-      <button class="form-chip" onclick="ofTag(this,'HubSpot')">HubSpot</button>
-      <button class="form-chip" onclick="ofTag(this,'Salesforce')">Salesforce</button>
-      <button class="form-chip" onclick="ofTag(this,'Négociation')">Négociation</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'Closing')">Closing</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'Cold Calling')">Cold Calling</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'SaaS')">SaaS</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'Outbound')">Outbound</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'HubSpot')">HubSpot</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'Salesforce')">Salesforce</button>
+      <button type="button" class="form-chip" onclick="ofTag(this,'Négociation')">Négociation</button>
     </div></div>
     <div class="form-group">
       <label class="form-label sf">Candidature automatique</label>
@@ -1354,7 +1380,7 @@ let CANDS = [], THREADS = [], DECK_IDX = 0, BILLING = 'year';
 let ACTIVE_THREAD = null;
 let REALTIME_CHANNEL = null;
 let SELECTED_QUESTIONS = [];
-let OF_TYPE = '', OF_TAGS = [], EDITING_OFFER_ID = '', EDITING_OFFER_STATUS = 'active', MY_OFFERS = [];
+let OF_TYPE = '', OF_REMOTE = '', OF_TAGS = [], EDITING_OFFER_ID = '', EDITING_OFFER_STATUS = 'active', MY_OFFERS = [];
 let HAS_PLAN = false;
 let CURRENT_PLAN = '';
 let MATCHING = { closing:70, cycle:50, saas:60, resilience:55, salestech:50, outbound:45, drive:65 };
@@ -1633,6 +1659,7 @@ function go(p, options = {}) {
   window.scrollTo(0, 0);
   const m = { dashboard:loadDashboard, swipe:loadCandidates, matching:renderMatching, pipeline:loadPipeline, offres:loadOffers, messages:loadMessages, pricing:renderPlans, settings:renderAccountSettings };
   if (m[p]) m[p]();
+  if (p === 'post-offre') refreshOfferSectorSuggestion();
   if (ui && p !== 'messages') refreshMessageBadge();
   if (ui && options.history !== false) syncPageHistory(p, options.replaceHistory);
 }
@@ -2348,8 +2375,34 @@ async function contactFromPipeline() {
 // ------------------------------------------------------------
 // POST OFFRE
 // ------------------------------------------------------------
-function ofPick(btn, varName, val) { btn.parentElement.querySelectorAll('.form-chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); OF_TYPE = val; }
+function ofPick(btn, varName, val) {
+  btn.parentElement.querySelectorAll('.form-chip').forEach(c => c.classList.remove('on'));
+  btn.classList.add('on');
+  if (varName === 'OF_REMOTE') OF_REMOTE = val;
+  else OF_TYPE = val;
+}
 function ofTag(btn, tag) { btn.classList.toggle('on'); if(OF_TAGS.includes(tag)) OF_TAGS=OF_TAGS.filter(t=>t!==tag); else OF_TAGS.push(tag); }
+function applyCompanySectorSuggestion() {
+  const sector = String(USER?.secteur || '').trim();
+  if (!sector) return;
+  document.getElementById('of-sector').value = sector;
+}
+function refreshOfferSectorSuggestion() {
+  const btn = document.getElementById('of-sector-suggest');
+  if (!btn) return;
+  const sector = String(USER?.secteur || '').trim();
+  btn.style.display = sector ? 'inline' : 'none';
+  btn.textContent = sector ? `Utiliser le secteur société (${sector})` : 'Utiliser le secteur société';
+}
+function parseOptionalSalaryInput(id) {
+  const raw = String(document.getElementById(id)?.value || '').trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 0 || n > 500000) {
+    throw new Error('Salaire fixe invalide (0 à 500 000 €)');
+  }
+  return n;
+}
 function isValidSalaire(v) {
   const s = v.trim().toLowerCase();
   if (!s) return true; // champ optionnel
@@ -2369,6 +2422,8 @@ async function postOffre() {
   const lieu = document.getElementById('of-lieu').value.trim();
   const salaire = document.getElementById('of-salaire').value.trim();
   const desc = document.getElementById('of-desc').value.trim();
+  const jobType = document.getElementById('of-job-type').value.trim();
+  const sector = document.getElementById('of-sector').value.trim();
   const auto = document.getElementById('of-auto').checked;
   if (!titre || !OF_TYPE || !lieu) { showErr('post-err', 'Titre, type et lieu sont requis'); return; }
   if (!LIEU_SELECTIONNE) { showErr('post-err', 'Sélectionnez une localisation dans la liste proposée'); document.getElementById('of-lieu').focus(); return; }
@@ -2377,9 +2432,37 @@ async function postOffre() {
     document.getElementById('of-salaire').focus();
     return;
   }
+  let salaryMin = null;
+  let salaryMax = null;
+  try {
+    salaryMin = parseOptionalSalaryInput('of-salary-min');
+    salaryMax = parseOptionalSalaryInput('of-salary-max');
+  } catch (error) {
+    showErr('post-err', error.message || 'Salaire fixe invalide');
+    return;
+  }
+  if (salaryMin != null && salaryMax != null && salaryMax < salaryMin) {
+    showErr('post-err', 'Le fixe maximum doit être supérieur ou égal au minimum');
+    return;
+  }
   setBtn('btn-post-offre', true);
   try {
-    const payload = { titre, type: OF_TYPE, lieu, salaire, description: desc, tags: OF_TAGS, auto_candidature: auto, statut: EDITING_OFFER_ID ? EDITING_OFFER_STATUS : 'active' };
+    const payload = {
+      titre,
+      type: OF_TYPE,
+      contract_type: OF_TYPE,
+      remote_mode: OF_REMOTE || null,
+      job_type: jobType || null,
+      sector: sector || null,
+      lieu,
+      salaire,
+      salary_fixed_min: salaryMin,
+      salary_fixed_max: salaryMax,
+      description: desc,
+      tags: OF_TAGS,
+      auto_candidature: auto,
+      statut: EDITING_OFFER_ID ? EDITING_OFFER_STATUS : 'active',
+    };
     if (EDITING_OFFER_ID) await api('PUT', '/offres/' + encodeURIComponent(EDITING_OFFER_ID), payload);
     else await api('POST', '/offres', payload);
     toast(EDITING_OFFER_ID ? 'Offre mise à jour' : 'Offre publiée !');
@@ -2526,13 +2609,26 @@ function editOffer(id) {
   document.getElementById('of-lieu').value = offer.lieu || '';
   document.getElementById('of-salaire').value = offer.salaire || '';
   document.getElementById('of-desc').value = offer.description || '';
+  document.getElementById('of-job-type').value = offer.job_type || '';
+  document.getElementById('of-sector').value = offer.sector || '';
+  document.getElementById('of-salary-min').value = offer.salary_fixed_min != null ? offer.salary_fixed_min : '';
+  document.getElementById('of-salary-max').value = offer.salary_fixed_max != null ? offer.salary_fixed_max : '';
   document.getElementById('of-auto').checked = Boolean(offer.auto_candidature);
-  OF_TYPE = offer.type || ''; OF_TAGS = offerTags(offer.tags);
+  OF_TYPE = offer.contract_type || offer.type || '';
+  OF_REMOTE = offer.remote_mode || '';
+  OF_TAGS = offerTags(offer.tags);
   LIEU_SELECTIONNE = true;
-  document.querySelectorAll('#p-post-offre .form-chip').forEach(button => {
-    const text = button.textContent.trim();
-    button.classList.toggle('on', text === OF_TYPE || OF_TAGS.includes(text));
+  const remoteLabels = { onsite: 'Sur site', hybrid: 'Hybride', remote: 'Télétravail' };
+  document.querySelectorAll('#of-type .form-chip').forEach(button => {
+    button.classList.toggle('on', button.textContent.trim() === OF_TYPE);
   });
+  document.querySelectorAll('#of-remote .form-chip').forEach(button => {
+    button.classList.toggle('on', button.textContent.trim() === (remoteLabels[OF_REMOTE] || ''));
+  });
+  document.querySelectorAll('#of-skills .form-chip').forEach(button => {
+    button.classList.toggle('on', OF_TAGS.includes(button.textContent.trim()));
+  });
+  refreshOfferSectorSuggestion();
   document.getElementById('btn-post-offre').textContent = 'Enregistrer les modifications';
   go('post-offre');
 }
