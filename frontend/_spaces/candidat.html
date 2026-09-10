@@ -2616,7 +2616,12 @@ async function loadResources() {
         accessNote.innerHTML = `${CAREER_RESOURCE_ACCESS.available_count} ebooks inclus sur ${CAREER_RESOURCE_ACCESS.total_count}. <button type="button" class="resource-access-link" onclick="go('pricing')">Voir l’offre ${targetPlan}</button>`;
       }
     }
-    const categories = ['Toutes', ...new Set(CAREER_RESOURCES.map(item => item.categorie).filter(Boolean))];
+    const availableCategories = [...new Set(CAREER_RESOURCES.map(item => item.categorie).filter(Boolean))];
+    // Si les droits baissent dans la session, l’ancien filtre peut pointer une catégorie disparue.
+    if (RESOURCE_CATEGORY !== 'Toutes' && !availableCategories.includes(RESOURCE_CATEGORY)) {
+      RESOURCE_CATEGORY = 'Toutes';
+    }
+    const categories = ['Toutes', ...availableCategories];
     document.getElementById('resource-filters').innerHTML = categories.map(category => `<button type="button" class="resource-filter${category === RESOURCE_CATEGORY ? ' on' : ''}" data-category="${esc(category)}" onclick="setResourceCategory(this.dataset.category)">${esc(category)}</button>`).join('');
     if (controls) controls.hidden = CAREER_RESOURCES.length === 0;
     filterResources();

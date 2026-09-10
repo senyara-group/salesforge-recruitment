@@ -94,3 +94,49 @@ test('le frontend consomme les compteurs backend et reste compatible avec 3 / 8 
   assert.match(source, /8 ebooks commerciaux/);
   assert.match(source, /Bibliothèque complète : 15 ebooks/);
 });
+
+/** Même règle que loadResources() : reset uniquement si la catégorie a disparu du catalogue accessible. */
+function resolveActiveResourceCategory(activeCategory, resources) {
+  const availableCategories = [...new Set(resources.map((item) => item.categorie).filter(Boolean))];
+  if (activeCategory !== 'Toutes' && !availableCategories.includes(activeCategory)) {
+    return 'Toutes';
+  }
+  return activeCategory;
+}
+
+test('filtre bibliothèque invalidé après réduction de catalogue revient à Toutes', async () => {
+  // 1. catalogue plus large (plan supérieur)
+  const wideCatalog = Array.from({ length: 8 }, (_, index) => ({
+    file: `ebook-${index + 1}.pdf`,
+    titre: `Ebook ${index + 1}`,
+    desc: `Description ${index + 1}`,
+    categorie: index < 3 ? 'Closing' : index < 6 ? 'Négociation' : 'SaaS',
+  }));
+  const wide = await accessibleEbooks(wideCatalog, 'carriere', async (file) => ({ data: { signedUrl: `https://signed.invalid/${file}` } }));
+  assert.equal(wide.ressources.length, 8);
+
+  // 2. filtre disponible sélectionné
+  let active = resolveActiveResourceCategory('Négociation', wide.ressources);
+  assert.equal(active, 'Négociation');
+  assert.ok(wide.ressources.some((ebook) => ebook.categorie === active));
+
+  // 3. droits / catalogue réduit (Freemium → 3 premiers, sans Négociation)
+  const reduced = await accessibleEbooks(wideCatalog, 'freemium', async (file) => ({ data: { signedUrl: `https://signed.invalid/${file}` } }));
+  assert.equal(reduced.ressources.length, 3);
+  assert.equal(reduced.ressources.every((ebook) => ebook.categorie === 'Closing'), true);
+
+  // 4-5. ancien filtre devenu invalide → retour automatique sur Toutes
+  active = resolveActiveResourceCategory(active, reduced.ressources);
+  assert.equal(active, 'Toutes');
+
+  // 6. affichage des ebooks encore autorisés
+  const visible = reduced.ressources.filter((ebook) => active === 'Toutes' || ebook.categorie === active);
+  assert.deepEqual(visible.map((ebook) => ebook.id), [0, 1, 2]);
+
+  // un filtre encore présent dans le catalogue réduit ne doit pas être réinitialisé
+  assert.equal(resolveActiveResourceCategory('Closing', reduced.ressources), 'Closing');
+
+  const source = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
+  assert.match(source, /availableCategories\.includes\(RESOURCE_CATEGORY\)/);
+  assert.match(source, /RESOURCE_CATEGORY = 'Toutes'/);
+});
