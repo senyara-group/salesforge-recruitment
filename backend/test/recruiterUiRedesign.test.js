@@ -150,3 +150,27 @@ test('recruiter predemo : pipeline empty pleine largeur', () => {
   assert.match(html, /surface: true/);
   assert.match(html, /Aucune candidature reçue/);
 });
+
+test('recruiter sourcing card polish : structure identité + handlers swipe', () => {
+  assert.match(html, /class="cand-top cand-identity/);
+  assert.match(html, /cand-identity-inner/);
+  assert.match(html, /cand-body-hd/);
+  assert.match(html, /cand-mid/);
+  assert.match(html, /Pitch \/ Synthèse/);
+  assert.match(html, /Analyse du profil disponible/);
+  assert.match(html, /Profil synchronisé avec les recruteurs/);
+  assert.match(html, /function isTechnicalDeckCopy/);
+  assert.match(html, /function deckSynthesisCopy/);
+  assert.match(html, /onclick="swipe\('pass'\)"/);
+  assert.match(html, /onclick="swipe\('like'\)"/);
+  assert.match(html, /onclick="swipe\('super'\)"/);
+  assert.match(html, /async function doSwipe/);
+  assert.match(html, /function attachDrag/);
+  assert.match(html, /closest\('\.cand-top'\)/);
+  assert.doesNotMatch(html, /Score calculé depuis les réponses du test ADN/);
+  assert.doesNotMatch(html, /enregistré dans Supabase/);
+  assert.match(html, /supabase\|score calcul/);
+  assert.match(html, /#p-swipe \.swipe-card\{[\s\S]*?flex-direction:row/);
+  assert.match(html, /#p-swipe \.cand-top\.cand-identity\{[\s\S]*?width:28%/);
+  assert.match(html, /@media \(max-width:719px\)\{[\s\S]*?#p-swipe \.cand-mid\{grid-template-columns:1fr\}/);
+});

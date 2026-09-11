@@ -233,39 +233,65 @@ button.kpi:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .sw-lbl.like{left:18px;color:var(--g);border-color:var(--g);transform:rotate(-13deg)}
 .sw-lbl.pass{right:18px;color:var(--r);border-color:var(--r);transform:rotate(13deg)}
 .sw-lbl.super{left:50%;transform:translateX(-50%);color:var(--a);border-color:var(--a);bottom:130px;top:auto}
-.cand-top{height:90px;position:relative;flex-shrink:0;background:linear-gradient(135deg,#091422,#1340E0);display:flex;align-items:center;justify-content:center}
-.cand-top.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
-.swipe-card .cand-top{border-radius:22px 22px 0 0}
-.cand-avatar{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;font-size:21px;font-weight:900;border:2px solid rgba(255,255,255,.25)}
+.cand-top.cand-identity{
+  position:relative;flex-shrink:0;overflow:hidden;color:#fff;
+  background:linear-gradient(135deg,#091422,#1340E0);
+  min-height:132px;display:block;height:auto;
+}
+.cand-top.cand-identity.anon{background:linear-gradient(135deg,#1A2433,#3D4D63)}
+.swipe-card .cand-top.cand-identity{border-radius:22px 22px 0 0}
+.cand-identity-inner{
+  position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;
+  height:100%;padding:14px 16px;box-sizing:border-box;
+  background:linear-gradient(180deg,rgba(9,20,34,.06),rgba(9,20,34,.42));
+}
+.cand-co-block{display:flex;align-items:center;gap:12px;margin-top:auto;padding-right:72px}
+.cand-co-copy{min-width:0}
+.cand-avatar{
+  width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Sora',sans-serif;
+  font-size:20px;font-weight:900;border:2px solid rgba(255,255,255,.28);flex-shrink:0;overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
 .cand-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
-.cand-match-box{position:absolute;top:12px;right:12px;background:var(--w);border-radius:12px;padding:7px 12px;text-align:center;box-shadow:var(--sh-md),0 0 0 1px rgba(255,255,255,.6)}
+.cand-match-box{
+  position:absolute;top:12px;right:12px;background:var(--w);border-radius:12px;padding:7px 12px;
+  text-align:center;box-shadow:var(--sh-md),0 0 0 1px rgba(255,255,255,.6);z-index:3;
+}
+.cand-match-inline{position:static;flex-shrink:0;box-shadow:var(--sh-sm)}
+.cand-identity .cand-match-inline{display:none}
 .cand-match-n{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;line-height:1}
-.cand-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px}
-.cand-anon-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#fff;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;display:flex;align-items:center;gap:4px}
-.cand-anon-badge svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5}
-.cand-body{flex:1;padding:13px 17px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;touch-action:pan-y}
-.cand-body::-webkit-scrollbar{width:3px}.cand-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
-.cand-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;text-align:center}
-.cand-role{font-size:12px;color:var(--ink3);text-align:center;margin-top:-7px}
-.cand-rank{display:flex;justify-content:center}
+.cand-match-l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:700;margin-top:1px;white-space:nowrap}
+.cand-identity-facts{display:flex;flex-wrap:wrap;gap:6px}
+.cand-fact{
+  display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);color:#fff;
+  font-size:11px;font-weight:700;
+}
+.cand-body{flex:1;padding:14px 16px;overflow:visible;display:flex;flex-direction:column;gap:12px;touch-action:pan-y;min-width:0}
+.cand-body-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cand-body-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.4px;line-height:1.2}
+.cand-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:900;letter-spacing:-.3px;text-align:left;color:#fff}
+.cand-role{font-size:12px;color:rgba(255,255,255,.78);text-align:left;margin-top:2px}
+.cand-rank{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .cand-rank-badge{display:inline-flex;align-items:center;gap:4px;background:var(--bs);color:var(--b);padding:4px 11px;border-radius:7px;font-size:11px;font-weight:700}
-.cand-adn-section{background:var(--ink);color:#fff;border-radius:13px;padding:14px}
-.cand-adn-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.cand-adn-score{font-family:'Sora',sans-serif;font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1}
-.cand-adn-lbl{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.cand-adn-type{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;text-align:right}
-.cand-adn-bars{display:flex;flex-direction:column;gap:7px}
-.cadn-row{display:flex;align-items:center;gap:9px}
-.cadn-l{font-size:11px;color:rgba(255,255,255,.7);width:75px;flex-shrink:0}
+.cand-mid{display:grid;grid-template-columns:1fr;gap:10px}
+.cand-adn-section{background:var(--ink);color:#fff;border-radius:13px;padding:11px 12px}
+.cand-adn-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.cand-adn-score{font-family:'Sora',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;line-height:1}
+.cand-adn-score-u{font-size:12px;font-weight:700;opacity:.55;margin-left:2px}
+.cand-adn-lbl{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.cand-adn-bars{display:flex;flex-direction:column;gap:6px}
+.cadn-row{display:flex;align-items:center;gap:8px}
+.cadn-l{font-size:11px;color:rgba(255,255,255,.72);width:72px;flex-shrink:0}
 .cadn-tr{flex:1;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
 .cadn-f{height:100%;background:#5B8DEF;border-radius:2px}
-.cadn-v{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;width:24px;text-align:right;color:#fff}
-.cand-pitch{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:12px;padding:12px}
-.cand-pitch-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.cand-pitch-t{font-size:12px;font-weight:700;color:var(--pu);display:flex;align-items:center;gap:5px}
-.cand-pitch-t svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
-.cand-pitch-score{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--pu)}
-.cand-pitch-text{font-size:12px;color:var(--ink2);line-height:1.6;font-style:italic;padding:8px 10px;background:var(--w);border-radius:8px}
+.cadn-v{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;width:22px;text-align:right;color:#fff}
+.cand-pitch{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.cand-pitch-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.cand-pitch-t{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.cand-pitch-score{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--b)}
+.cand-pitch-text{font-size:13px;color:var(--ink2);line-height:1.55;font-style:normal}
 .cand-letter{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
 .cand-letter-tabs{display:flex;border-bottom:1px solid var(--bd)}
 .clt{flex:1;padding:9px;border:none;background:var(--w);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--ink3);transition:.15s}
@@ -285,22 +311,19 @@ button.kpi:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .cand-doc:hover{border-color:var(--b);color:var(--b);background:var(--bs)}
 .cand-doc svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 .cand-doc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cand-ai{background:var(--bs);border:1px solid var(--bm);border-radius:11px;padding:11px}
-.cand-ai-t{font-size:11px;font-weight:700;color:var(--b);margin-bottom:5px;display:flex;align-items:center;gap:5px}
-.cand-ai-text{font-size:12px;color:var(--ink2);line-height:1.6}
 .cand-predict{display:flex;gap:8px}
-.cand-predict-box{flex:1;background:var(--gs);border-radius:10px;padding:9px;text-align:center}
-.cand-predict-v{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;color:var(--g)}
-.cand-predict-l{font-size:9px;color:var(--g);opacity:.8;margin-top:2px;font-weight:600}
-.deck-actions{position:static;bottom:auto;background:var(--w);border-top:1px solid var(--bd);box-shadow:none;padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30;flex-shrink:0}
+.cand-predict-box{flex:1;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 6px;text-align:center}
+.cand-predict-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:900;color:var(--ink)}
+.cand-predict-l{font-size:9px;color:var(--mu);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.deck-actions{position:static;bottom:auto;background:var(--w);border-top:1px solid var(--bd);box-shadow:none;padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:11px;z-index:30;flex-shrink:0;min-height:68px}
 .deck-actions[hidden]{display:none !important}
 .db{background:var(--w);border:1.5px solid var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--ink)}
 button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .db:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .db:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
-.db-pass{width:50px;height:50px}.db-pass:hover{border-color:var(--r);color:var(--r)}
-.db-like{width:58px;height:58px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 8px 18px rgba(19,64,224,.25)}.db-like:hover{background:var(--b2);box-shadow:0 10px 22px rgba(19,64,224,.32)}
-.db-super{width:50px;height:50px}.db-super:hover{border-color:var(--a);color:var(--a)}
+.db-pass{width:46px;height:46px}.db-pass:hover{border-color:var(--r);color:var(--r)}
+.db-like{width:52px;height:52px;background:var(--b);border-color:var(--b);color:#fff;box-shadow:0 8px 18px rgba(19,64,224,.25)}.db-like:hover{background:var(--b2);box-shadow:0 10px 22px rgba(19,64,224,.32)}
+.db-super{width:46px;height:46px}.db-super:hover{border-color:var(--a);color:var(--a)}
 .db svg{stroke:currentColor;fill:none;stroke-width:2.2}.db-like svg{fill:currentColor;stroke:none}
 .deck-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--w);border:none;border-radius:0;padding:36px;box-shadow:none}
 .deck-empty.on{display:flex}
@@ -719,11 +742,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 @media (max-width:719px){
   .deck-actions{padding:8px 18px;gap:9px}
   .db-pass,.db-super{width:44px;height:44px}
-  .db-like{width:52px;height:52px}
+  .db-like{width:48px;height:48px}
   #p-swipe .swipe-hd{padding:10px 16px}
   #p-swipe .page-title{font-size:18px}
   #p-swipe .deck-wrap{margin:10px 16px 0}
-  #p-swipe .deck-area{min-height:min(440px,calc(100dvh - 250px));height:calc(100dvh - 250px)}
+  #p-swipe .deck-area{min-height:360px;height:auto;max-height:none}
   #p-swipe .deck-area.is-empty{min-height:360px;height:min(400px,calc(100dvh - 220px))}
   #p-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -742,10 +765,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .deck-wrap{margin-left:12px;margin-right:12px}
   .deck-area{margin-left:0;margin-right:0;min-height:420px;height:calc(100dvh - 270px)}
   .deck-actions{padding:10px 12px;gap:9px}
-  .cand-name{font-size:16px}
-  .cand-adn-section{padding:12px}
+  .cand-name{font-size:15px}
   .cadn-l{width:66px}
-  .cand-predict{flex-direction:column}
   .q-custom-input{gap:6px}
   .pipe-cols{padding-left:14px;padding-right:14px}
   .pipe-col{width:232px}
@@ -756,52 +777,25 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 }
 
 @media (max-width:719px){
-  #p-swipe .cand-body{
-    overflow:hidden !important;
-    scrollbar-width:none;
-    padding:8px 14px;
-    gap:6px;
+  #p-swipe .deck-area{height:auto;min-height:360px;max-height:none}
+  #p-swipe .swipe-card{position:relative;inset:auto;height:auto;min-height:0;max-height:none;overflow:visible;border-radius:22px}
+  #p-swipe .cand-top.cand-identity{min-height:0;border-radius:22px 22px 0 0}
+  #p-swipe .cand-identity-inner{
+    gap:10px;padding:12px 14px;flex-direction:row;flex-wrap:wrap;align-items:center;
+    background:linear-gradient(90deg,rgba(9,20,34,.08),rgba(9,20,34,.35));
   }
-  #p-swipe .cand-body::-webkit-scrollbar{display:none}
-  #p-swipe .cand-top{height:90px}
-  #p-swipe .cand-avatar{width:56px;height:56px;font-size:21px}
-  #p-swipe .cand-match-box{top:9px;right:9px;padding:5px 8px}
-  #p-swipe .cand-match-n{font-size:16px}
-  #p-swipe .cand-match-l{font-size:8px}
-  #p-swipe .cand-name{font-size:17px}
-  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
-  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
-  #p-swipe .cand-adn-section{padding:8px 10px;border-radius:10px}
-  #p-swipe .cand-adn-hd{margin-bottom:6px}
-  #p-swipe .cand-adn-score{font-size:24px}
-  #p-swipe .cand-adn-lbl{font-size:8px}
-  #p-swipe .cand-adn-type{font-size:11px}
-  #p-swipe .cand-adn-bars{gap:3px}
-  #p-swipe .cadn-row{gap:6px}
-  #p-swipe .cadn-l{width:64px;font-size:9px}
-  #p-swipe .cadn-tr{height:3px}
-  #p-swipe .cadn-v{font-size:10px;width:20px}
-  #p-swipe .cand-skills{gap:4px}
-  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
-  #p-swipe .cand-docs{gap:5px}
-  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
-  #p-swipe .cand-doc svg{width:11px;height:11px}
-  #p-swipe .cand-pitch,
-  #p-swipe .cand-ai{padding:7px;border-radius:9px}
-  #p-swipe .cand-pitch-hd{margin-bottom:5px}
-  #p-swipe .cand-pitch-t,
-  #p-swipe .cand-ai-t{font-size:10px}
-  #p-swipe .cand-pitch-score{font-size:13px}
-  #p-swipe .cand-pitch-text,
-  #p-swipe .cand-ai-text{font-size:10px;line-height:1.25;padding:5px 7px}
-  #p-swipe .cand-letter{border-radius:9px}
-  #p-swipe .clt{padding:6px;font-size:9px}
-  #p-swipe .cand-letter-body{padding:7px}
-  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
-  #p-swipe .cand-predict{gap:6px}
-  #p-swipe .cand-predict-box{padding:5px}
-  #p-swipe .cand-predict-v{font-size:12px}
-  #p-swipe .cand-predict-l{font-size:7px}
+  #p-swipe .cand-co-block{padding-right:70px;margin-top:0;flex:1;min-width:0}
+  #p-swipe .cand-identity-facts{width:100%;order:3}
+  #p-swipe .cand-avatar{width:52px;height:52px;font-size:18px}
+  #p-swipe .cand-name{font-size:15px}
+  #p-swipe .cand-role{font-size:12px}
+  #p-swipe .cand-body{overflow:visible;padding:12px 14px;gap:10px}
+  #p-swipe .cand-body-title{font-size:16px}
+  #p-swipe .cand-body-hd .cand-match-inline{display:none}
+  #p-swipe .cand-mid{grid-template-columns:1fr}
+  #p-swipe .cand-adn-score{font-size:18px}
+  #p-swipe .db-pass,.db-super{width:44px;height:44px}
+  #p-swipe .db-like{width:48px;height:48px}
 }
 
 @media (min-width:720px){
@@ -828,14 +822,34 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .fp{width:auto;text-align:center;padding:7px 12px;flex-shrink:0}
   #p-swipe .fp-more{border-style:dashed}
   #p-swipe .deck-wrap{width:100%;max-width:1180px;margin:0;border-radius:22px}
-  #p-swipe .deck-area{grid-area:auto;width:100%;max-width:none;height:min(520px,calc(100dvh - 260px));min-height:360px;max-height:calc(100dvh - 220px);margin:0}
+  #p-swipe .deck-area{grid-area:auto;width:100%;max-width:none;height:auto;min-height:380px;max-height:none;margin:0}
   #p-swipe .deck-area.is-empty{min-height:360px;height:400px}
   #p-swipe .deck-empty{position:absolute;inset:0;min-height:0}
-  #p-swipe .deck-actions{grid-area:auto;width:100%;max-width:none;margin:0;border-left:none;border-right:none;border-radius:0;position:static}
-  #p-swipe .cand-top{height:140px}
+  #p-swipe .deck-actions{grid-area:auto;width:100%;max-width:none;margin:0;border-left:none;border-right:none;border-radius:0;position:static;padding:10px 16px}
+  #p-swipe #deck-cards{position:relative;height:auto;min-height:0}
+  #p-swipe .swipe-card{
+    position:relative;inset:auto;width:100%;height:auto;min-height:360px;max-height:none;
+    flex-direction:row;align-items:stretch;border-radius:22px;overflow:hidden;
+  }
+  #p-swipe .swipe-card:nth-last-child(2),#p-swipe .swipe-card:nth-last-child(3){display:none}
+  #p-swipe .swipe-card:last-child{position:relative;z-index:10}
+  #p-swipe .cand-top.cand-identity{
+    width:28%;min-width:210px;max-width:280px;height:auto;align-self:stretch;flex-shrink:0;
+    border-radius:22px 0 0 22px;min-height:100%;
+  }
+  #p-swipe .cand-identity-inner{padding:18px 16px;justify-content:flex-end;gap:14px}
+  #p-swipe .cand-co-block{flex-direction:row;align-items:center;padding-right:0;margin-top:auto;gap:12px}
   #p-swipe .cand-avatar{width:72px;height:72px;font-size:26px;border-width:3px}
-  #p-swipe .cand-match-box{top:14px;right:14px}
-  #p-swipe .cand-anon-badge{top:14px;left:14px}
+  #p-swipe .cand-name{font-size:18px}
+  #p-swipe .cand-role{font-size:13px}
+  #p-swipe .cand-body{flex:1 1 72%;gap:12px;padding:16px 20px;overflow:visible;justify-content:flex-start}
+  #p-swipe .cand-body-title{font-size:20px}
+  #p-swipe .cand-body-hd .cand-match-inline{display:block}
+  #p-swipe .cand-identity .cand-match-box{display:none}
+  #p-swipe .cand-mid{grid-template-columns:1.05fr .95fr;gap:12px;align-items:start}
+  #p-swipe .cand-adn-score{font-size:18px}
+  #p-swipe .db-pass,.db-super{width:44px;height:44px}
+  #p-swipe .db-like{width:48px;height:48px}
   #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
   #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
   #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
@@ -859,17 +873,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
   #p-swipe.page.on{grid-template-columns:none;padding-left:42px;padding-right:42px;max-width:1200px}
   #p-swipe .deck-area,#p-swipe .deck-actions{width:100%}
-  #p-swipe .deck-area{height:min(480px,calc(100dvh - 240px));max-height:480px}
+  #p-swipe .deck-area{height:auto;min-height:380px;max-height:none}
   #p-swipe .deck-area.is-empty{min-height:360px;height:400px}
-  #p-swipe .cand-body{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:11px;align-items:start}
-  #p-swipe .cand-name,#p-swipe .cand-role,#p-swipe .cand-rank{grid-column:1/-1}
-  #p-swipe .cand-adn-section{grid-column:1;grid-row:4}
-  #p-swipe .cand-skills{grid-column:1;grid-row:5}
-  #p-swipe .cand-docs{grid-column:1;grid-row:6}
-  #p-swipe .cand-pitch{grid-column:2;grid-row:4}
-  #p-swipe .cand-letter{grid-column:2;grid-row:5}
-  #p-swipe .cand-ai{grid-column:2;grid-row:6}
-  #p-swipe .cand-predict{grid-column:1/-1;grid-row:7}
+  #p-swipe .cand-top.cand-identity{width:26%;max-width:260px}
+  #p-swipe .cand-mid{column-gap:14px}
   .pipe-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
   #p-messages #msgs-list{grid-template-columns:1fr}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
@@ -895,10 +902,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .cand-recue,.msg-th,.menu-i{padding:17px 18px}
   .cr-name,.pc-n,.msg-n{font-size:16px}
   .cr-title,.cr-tag,.msg-prev{font-size:14px}
-  .cand-top{height:108px}
-  .cand-avatar{width:64px;height:64px;font-size:24px}
-  .cand-name{font-size:24px}
-  .cand-body{padding:18px 22px;gap:14px}
   #p-matching>.sec{display:block}
   #p-matching .match-engine,#p-matching .q-preset-card{margin-bottom:14px}
   .pipe-cols{display:flex;overflow-x:auto;padding:0 42px;gap:14px;scroll-snap-type:x mandatory}
@@ -1041,52 +1044,16 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 }
 
 @media (min-width:720px) and (max-width:1023px){
-  #p-swipe .cand-body{
-    overflow:hidden;
-    scrollbar-width:none;
-    padding:10px 16px;
-    gap:7px;
+  #p-swipe .deck-area{height:auto;min-height:380px;max-height:none}
+  #p-swipe .swipe-card{position:relative;inset:auto;height:auto;overflow:visible;flex-direction:column}
+  #p-swipe .cand-top.cand-identity{
+    width:100%;max-width:none;min-width:0;border-radius:22px 22px 0 0;min-height:0;
   }
-  #p-swipe .cand-body::-webkit-scrollbar{display:none}
-  #p-swipe .cand-top{height:100px}
-  #p-swipe .cand-avatar{width:60px;height:60px;font-size:22px}
-  #p-swipe .cand-match-box{top:10px;right:10px;padding:5px 9px}
-  #p-swipe .cand-match-n{font-size:16px}
-  #p-swipe .cand-match-l{font-size:8px}
-  #p-swipe .cand-name{font-size:18px}
-  #p-swipe .cand-role{font-size:10px;margin-top:-7px}
-  #p-swipe .cand-rank-badge{font-size:9px;padding:3px 8px}
-  #p-swipe .cand-adn-section{padding:9px 11px;border-radius:10px}
-  #p-swipe .cand-adn-hd{margin-bottom:6px}
-  #p-swipe .cand-adn-score{font-size:24px}
-  #p-swipe .cand-adn-lbl{font-size:8px}
-  #p-swipe .cand-adn-type{font-size:11px}
-  #p-swipe .cand-adn-bars{gap:4px}
-  #p-swipe .cadn-row{gap:6px}
-  #p-swipe .cadn-l{width:64px;font-size:9px}
-  #p-swipe .cadn-tr{height:3px}
-  #p-swipe .cadn-v{font-size:10px;width:20px}
-  #p-swipe .cand-skills{gap:4px}
-  #p-swipe .cand-skill{font-size:9px;padding:2px 7px}
-  #p-swipe .cand-docs{gap:5px}
-  #p-swipe .cand-doc{padding:5px 7px;font-size:9px;border-radius:9px}
-  #p-swipe .cand-doc svg{width:11px;height:11px}
-  #p-swipe .cand-pitch,
-  #p-swipe .cand-ai{padding:8px;border-radius:9px}
-  #p-swipe .cand-pitch-hd{margin-bottom:5px}
-  #p-swipe .cand-pitch-t,
-  #p-swipe .cand-ai-t{font-size:10px}
-  #p-swipe .cand-pitch-score{font-size:13px}
-  #p-swipe .cand-pitch-text,
-  #p-swipe .cand-ai-text{font-size:10px;line-height:1.3;padding:6px 8px}
-  #p-swipe .cand-letter{border-radius:9px}
-  #p-swipe .clt{padding:6px;font-size:9px}
-  #p-swipe .cand-letter-body{padding:7px}
-  #p-swipe .cand-letter-text{font-size:10px;line-height:1.3}
-  #p-swipe .cand-predict{gap:6px}
-  #p-swipe .cand-predict-box{padding:5px}
-  #p-swipe .cand-predict-v{font-size:12px}
-  #p-swipe .cand-predict-l{font-size:7px}
+  #p-swipe .cand-co-block{flex-direction:row;align-items:center;padding-right:72px}
+  #p-swipe .cand-identity .cand-match-box{display:block}
+  #p-swipe .cand-body{overflow:visible;padding:14px 16px}
+  #p-swipe .cand-body-hd .cand-match-inline{display:none}
+  #p-swipe .cand-mid{grid-template-columns:1fr 1fr}
 }
 /* Sur très grand écran, le contenu ne s'étire plus à l'infini : on recentre avec
    une largeur confortable plutôt que de laisser chaque section remplir tout l'écran. */
@@ -2796,51 +2763,105 @@ function renderDeck() {
   }
   maybePrefetchCandidates();
 }
+function isTechnicalDeckCopy(text) {
+  const t = String(text || '').trim();
+  if (!t) return true;
+  return /supabase|score calcul[ée]|enregistr[ée] dans|synchronis[ée] avec la base|analyse bas[ée]e? sur le score|profil candidat synchron|axes renseign|non renseign/i.test(t);
+}
+function deckSynthesisCopy(c) {
+  const parts = [c.pitch_text, c.ai, c.letter_text]
+    .map((t) => String(t || '').trim())
+    .filter((t) => t && !isTechnicalDeckCopy(t));
+  const unique = [];
+  parts.forEach((t) => { if (!unique.includes(t)) unique.push(t); });
+  return unique[0] || '';
+}
+function deckSyncBadge(c) {
+  const rank = String(c.rank || '').trim();
+  if (/profil verifi|synchronis/i.test(rank) || c.certifie) {
+    return 'Profil synchronisé avec les recruteurs';
+  }
+  return '';
+}
 function candDocs(c) {
   const docs = [];
   if (c.cv_url) docs.push({ label: c.cv_file_name || 'CV', url: c.cv_url, icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>' });
   if (c.motivation_url) docs.push({ label: c.motivation_file_name || 'Lettre de motivation', url: c.motivation_url, icon: '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>' });
   if (!docs.length) return '';
-  return `<div class="cand-docs">${docs.map(doc=>`<button class="cand-doc" type="button" onclick='window.open(${JSON.stringify(doc.url)},"_blank","noopener")'><svg viewBox="0 0 24 24">${doc.icon}</svg><span>${doc.label}</span></button>`).join('')}</div>`;
+  return `<div class="cand-docs">${docs.map(doc=>`<button class="cand-doc" type="button" onclick='window.open(${JSON.stringify(doc.url)},"_blank","noopener")'><svg viewBox="0 0 24 24">${doc.icon}</svg><span>${esc(doc.label)}</span></button>`).join('')}</div>`;
 }
 function buildCandCard(c) {
   const d = document.createElement('div'); d.className = 'swipe-card';
   const sc = c.m >= 90 ? 'var(--pu)' : c.m >= 80 ? 'var(--b)' : 'var(--a)';
+  const skills = [
+    ...(c.skills || []),
+    ...Object.values(c.competences || {}).flat().slice(0, 8),
+  ].filter(Boolean).slice(0, 10);
+  const synthesis = deckSynthesisCopy(c);
+  const hasRealPitchScore = Number(c.pitch_score) > 0 && !isTechnicalDeckCopy(c.pitch_text);
+  const letterOk = c.letter_text && !isTechnicalDeckCopy(c.letter_text) && c.letter_text !== synthesis;
+  const showLetter = Boolean(letterOk || c.letter_audio || c.letter_video);
+  const syncBadge = deckSyncBadge(c);
+  const rankLabel = String(c.rank || '').trim();
+  const showRankFact = rankLabel && !isTechnicalDeckCopy(rankLabel) && !syncBadge;
   d.innerHTML = `
     <div class="sw-lbl like">Intéressé</div><div class="sw-lbl pass">Passer</div><div class="sw-lbl super">Priorité</div>
-    <div class="cand-top${c.anon?' anon':''}">
-      <div class="cand-avatar"></div>
-      ${c.anon?'<div class="cand-anon-badge"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Anonyme</div>':''}
-      <div class="cand-match-box"><div class="cand-match-n sf" style="color:${sc}">${c.m}</div><div class="cand-match-l">Match</div></div>
-    </div>
+    <aside class="cand-top cand-identity${c.anon ? ' anon' : ''}">
+      <div class="cand-identity-inner">
+        <div class="cand-match-box" style="color:${sc}"><div class="cand-match-n sf" style="color:${sc}">${esc(String(c.m))}%</div><div class="cand-match-l">Match</div></div>
+        <div class="cand-co-block">
+          <div class="cand-avatar"></div>
+          <div class="cand-co-copy">
+            <div class="cand-name sf">${esc(c.name)}</div>
+            <div class="cand-role">${esc(c.role || 'Commercial')}</div>
+          </div>
+        </div>
+        <div class="cand-identity-facts">
+          ${c.anon ? '<span class="cand-fact"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Anonyme</span>' : ''}
+          ${showRankFact ? `<span class="cand-fact">${esc(rankLabel)}</span>` : ''}
+          ${c.adn_type ? `<span class="cand-fact">${esc(c.adn_type)}</span>` : ''}
+        </div>
+      </div>
+    </aside>
     <div class="cand-body">
-      <div class="cand-name sf">${c.name}</div>
-      <div class="cand-role">${c.role}</div>
-      <div class="cand-rank"><span class="cand-rank-badge">${c.rank} · ${c.adn_type}</span></div>
-      <div class="cand-adn-section">
-        <div class="cand-adn-hd"><div><div class="cand-adn-score sf">${c.adn_score}</div><div class="cand-adn-lbl">ADN Commercial</div></div><div class="cand-adn-type sf">${c.adn_type}</div></div>
-        <div class="cand-adn-bars">${c.axes.map(a=>`<div class="cadn-row"><div class="cadn-l">${a.l}</div><div class="cadn-tr"><div class="cadn-f" style="width:${a.v}%"></div></div><div class="cadn-v sf">${a.v}</div></div>`).join('')}</div>
+      <div class="cand-body-hd">
+        <div>
+          <div class="cand-body-title sf">${esc(c.role || 'Profil commercial')}</div>
+          ${syncBadge ? `<div class="cand-rank"><span class="cand-rank-badge">${esc(syncBadge)}</span></div>` : ''}
+        </div>
+        <div class="cand-match-box cand-match-inline" style="color:${sc}"><div class="cand-match-n sf" style="color:${sc}">${esc(String(c.m))}%</div><div class="cand-match-l">Match</div></div>
       </div>
-      <div class="cand-skills">${c.skills.map(s=>`<span class="cand-skill">${s}</span>`).join('')}${Object.values(c.competences||{}).flat().slice(0,8).map(s=>`<span class="cand-skill" style="background:var(--bs);color:var(--b)">${s}</span>`).join('')}</div>
+      ${skills.length ? `<div class="cand-skills">${skills.map(s => `<span class="cand-skill">${esc(s)}</span>`).join('')}</div>` : ''}
       ${candDocs(c)}
-      <div class="cand-pitch">
-        <div class="cand-pitch-hd"><div class="cand-pitch-t sf"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Simulation de pitch</div><div class="cand-pitch-score sf">${c.pitch_score}/100</div></div>
-        <div class="cand-pitch-text">${c.pitch_text}</div>
+      <div class="cand-mid">
+        <div class="cand-adn-section">
+          <div class="cand-adn-hd">
+            <div class="cand-adn-lbl">ADN Commercial</div>
+            <div class="cand-adn-score sf">${esc(String(c.adn_score ?? '—'))}<span class="cand-adn-score-u">/100</span></div>
+          </div>
+          <div class="cand-adn-bars">${(c.axes || []).map(a => `<div class="cadn-row"><div class="cadn-l">${esc(a.l)}</div><div class="cadn-tr"><div class="cadn-f" style="width:${Number(a.v) || 0}%"></div></div><div class="cadn-v sf">${esc(String(a.v))}</div></div>`).join('')}</div>
+        </div>
+        <div class="cand-pitch">
+          <div class="cand-pitch-hd">
+            <div class="cand-pitch-t sf">Pitch / Synthèse</div>
+            ${hasRealPitchScore ? `<div class="cand-pitch-score sf">${esc(String(c.pitch_score))}/100</div>` : ''}
+          </div>
+          <div class="cand-pitch-text">${synthesis ? esc(synthesis) : 'Analyse du profil disponible'}</div>
+        </div>
       </div>
-      <div class="cand-letter">
+      ${showLetter ? `<div class="cand-letter">
         <div class="cand-letter-tabs">
-          <button class="clt on" onclick="cltSwitch(this,'text-${c.id}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Écrite</button>
-          ${c.letter_audio?`<button class="clt" onclick="cltSwitch(this,'audio-${c.id}')"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>Audio</button>`:''}
-          ${c.letter_video?`<button class="clt" onclick="cltSwitch(this,'video-${c.id}')"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Vidéo</button>`:''}
+          <button class="clt on" type="button" onclick="cltSwitch(this,'text-${esc(String(c.id))}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Écrite</button>
+          ${c.letter_audio ? `<button class="clt" type="button" onclick="cltSwitch(this,'audio-${esc(String(c.id))}')"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>Audio</button>` : ''}
+          ${c.letter_video ? `<button class="clt" type="button" onclick="cltSwitch(this,'video-${esc(String(c.id))}')"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Vidéo</button>` : ''}
         </div>
         <div class="cand-letter-body">
-          <div class="cand-letter-text" id="text-${c.id}">${c.letter_text}</div>
-          <div class="cand-letter-media" id="audio-${c.id}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="clm-wave">${Array(28).fill(0).map(()=>`<div class="clm-bar" style="height:${20+Math.random()*70}%"></div>`).join('')}</div></div>
-          <div class="cand-letter-media" id="video-${c.id}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div style="flex:1;font-size:12px;color:var(--ink3)">Pitch vidéo · 48 sec</div></div>
+          <div class="cand-letter-text" id="text-${esc(String(c.id))}">${letterOk ? esc(c.letter_text) : 'Lettre disponible'}</div>
+          ${c.letter_audio ? `<div class="cand-letter-media" id="audio-${esc(String(c.id))}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="clm-wave">${Array(28).fill(0).map(() => `<div class="clm-bar" style="height:${20 + Math.random() * 70}%"></div>`).join('')}</div></div>` : ''}
+          ${c.letter_video ? `<div class="cand-letter-media" id="video-${esc(String(c.id))}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div style="flex:1;font-size:12px;color:var(--ink3)">Pitch vidéo</div></div>` : ''}
         </div>
-      </div>
-      <div class="cand-ai"><div class="cand-ai-t sf"><span class="chip-dot" style="background:var(--b)"></span>Analyse IA</div><div class="cand-ai-text">${c.ai}</div></div>
-      <div class="cand-predict">${c.predict.map(p=>`<div class="cand-predict-box"><div class="cand-predict-v sf">${p.v}</div><div class="cand-predict-l">${p.l}</div></div>`).join('')}</div>
+      </div>` : ''}
+      <div class="cand-predict">${(c.predict || []).map(p => `<div class="cand-predict-box"><div class="cand-predict-v sf">${esc(String(p.v))}</div><div class="cand-predict-l">${esc(String(p.l))}</div></div>`).join('')}</div>
     </div>`;
   const avatarEl = d.querySelector('.cand-avatar');
   if (c.avatar_url) {
