@@ -557,9 +557,11 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 }
 
 /* MESSAGES */
-.msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
-.msg-th.ur{background:var(--bs);border-color:var(--bm)}
-.msg-welcome{text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:30px 20px}
+.msg-th{background:transparent;border:none;border-radius:0;padding:12px 14px;margin-bottom:0;cursor:pointer;display:flex;gap:10px;transition:.15s;border-bottom:1px solid var(--bd)}
+.msg-th:last-child{border-bottom:none}
+.msg-th.ur{background:var(--bs)}
+.msg-th.on{background:var(--bs);box-shadow:inset 3px 0 0 var(--b)}
+.msg-welcome{text-align:center;background:transparent;border:none;border-radius:0;padding:30px 20px}
 .msg-welcome-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 .msg-welcome-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
 .msg-welcome h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:-.4px;margin-bottom:9px}
@@ -576,15 +578,29 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .msg-status{font-size:10px;font-weight:800;color:var(--mu)}
 .msg-status.unread{color:var(--b)}
 .ur-badge{align-self:flex-start;background:var(--b);color:#fff;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;flex-shrink:0}
-.chat-panel{display:none;background:var(--w);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-top:12px}
-.chat-placeholder{display:none}
-.chat-panel.on{display:block}
-.chat-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.messages-page{width:100%;max-width:1180px;margin:0 auto}
+.messages-workspace{
+  display:flex;flex-direction:column;background:var(--w);border:1px solid var(--bd);border-radius:16px;
+  overflow:hidden;min-height:420px;box-shadow:var(--sh-sm);
+}
+.conversations-panel{min-height:0;overflow-y:auto;background:var(--w)}
+.conversation-panel{display:none;flex-direction:column;min-width:0;min-height:0;background:var(--w)}
+#p-messages.thread-open .conversations-panel{display:none}
+#p-messages.thread-open .conversation-panel{display:flex;flex:1;min-height:420px}
+.chat-placeholder{
+  display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:10px;padding:30px;min-height:280px;
+}
+#p-messages:not(.thread-open) .chat-placeholder{display:none}
+.chat-placeholder.hidden{display:none !important}
+.chat-panel{display:none;flex:1;flex-direction:column;min-height:0;margin:0;border:none;border-radius:0;background:var(--w);overflow:hidden}
+.chat-panel.on{display:flex}
+.chat-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);background:var(--bg);flex-shrink:0}
 .chat-back{width:31px;height:31px;border-radius:8px;border:1px solid var(--bd);background:var(--w);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .chat-back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2}
 .chat-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
 .chat-sub{font-size:11px;color:var(--ink3);margin-top:1px}
-.chat-body{min-height:250px;max-height:390px;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
+.chat-body{flex:1;min-height:0;max-height:none;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
 .chat-body.has-messages::before{content:'';margin-top:auto}
 .chat-empty{margin:auto;text-align:center;color:var(--mu);font-size:12px;line-height:1.6;max-width:230px}
 .bubble{max-width:82%;padding:9px 11px;border-radius:13px;font-size:13px;line-height:1.45;word-break:break-word}
@@ -592,11 +608,15 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .bubble.theirs{align-self:flex-start;background:var(--w);border:1px solid var(--bd);color:var(--ink2);border-bottom-left-radius:4px}
 .bubble-time{font-size:9px;opacity:.65;margin-top:4px;text-align:right}
 .bubble-receipt{font-size:9px;font-weight:800;opacity:.78;margin-top:2px;text-align:right}
-.chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w)}
+.chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w);flex-shrink:0}
 .chat-input{flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:10px 11px;font-size:13px;outline:none;background:var(--bg);color:var(--ink)}
 .chat-input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs);background:var(--w)}
 .chat-send{width:42px;height:42px;border:none;border-radius:10px;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .chat-send svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4}
+.chat-placeholder-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center}
+.chat-placeholder-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+.chat-placeholder-t{font-size:15px;font-weight:900}
+.chat-placeholder-s{font-size:12.5px;color:var(--ink3);max-width:240px;line-height:1.5}
 
 /* POST OFFRE */
 .form-group{margin-bottom:15px}
@@ -837,8 +857,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     width:28%;min-width:210px;max-width:280px;height:auto;align-self:stretch;flex-shrink:0;
     border-radius:22px 0 0 22px;min-height:100%;
   }
-  #p-swipe .cand-identity-inner{padding:18px 16px;justify-content:flex-end;gap:14px}
-  #p-swipe .cand-co-block{flex-direction:row;align-items:center;padding-right:0;margin-top:auto;gap:12px}
+  #p-swipe .cand-identity-inner{padding:22px 16px 28px;justify-content:center;gap:12px}
+  #p-swipe .cand-co-block{flex-direction:row;align-items:center;padding-right:0;margin-top:0;gap:12px}
   #p-swipe .cand-avatar{width:72px;height:72px;font-size:26px;border-width:3px}
   #p-swipe .cand-name{font-size:18px}
   #p-swipe .cand-role{font-size:13px}
@@ -850,12 +870,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .cand-adn-score{font-size:18px}
   #p-swipe .db-pass,.db-super{width:44px;height:44px}
   #p-swipe .db-like{width:48px;height:48px}
-  #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
-  #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:0}
+  #p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-settings.page.on,#p-pricing.page.on{padding:24px 28px 96px}
+  #p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-settings>.sec{padding:0}
   #p-matching>.sec{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:16px;align-items:start}
   #p-matching .sec-hd{grid-column:1/-1}
   #p-matching .match-engine,#p-matching .q-preset-card{margin:0}
-  #p-messages #msgs-list{display:grid;grid-template-columns:1fr;gap:10px}
   .pipe-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;padding-left:0;padding-right:0}
   .pipe-col{width:auto;min-width:0}
   .plans-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:14px;width:100%;max-width:none;margin:0;padding-left:28px;padding-right:28px}
@@ -867,7 +886,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   .app{max-width:none}
   .bnav,.overlay{max-width:none}
   .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
-  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
+  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-settings.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
   #p-dashboard.page.on{display:block !important;padding-left:0;padding-right:0;max-width:none}
   #p-dashboard .dash-shell{padding:24px clamp(28px,4vw,64px) 48px}
   #p-dashboard .hscroll{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -878,15 +897,14 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-swipe .cand-top.cand-identity{width:26%;max-width:260px}
   #p-swipe .cand-mid{column-gap:14px}
   .pipe-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #p-messages #msgs-list{grid-template-columns:1fr}
   .plans-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-left:42px;padding-right:42px}
 }
 
 @media (min-width:720px){
   .page.on:not(#p-auth){display:block;padding-bottom:96px}
   .dash-hero{border-radius:0;border:none}
-  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-messages.page.on,#p-settings.page.on,#p-pricing.page.on{padding:0 0 96px}
-  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding:22px 42px}
+  #p-dashboard.page.on,#p-matching.page.on,#p-questions.page.on,#p-pipeline.page.on,#p-post-offre.page.on,#p-settings.page.on,#p-pricing.page.on{padding:0 0 96px}
+  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-settings>.sec{padding:22px 42px}
   #p-post-offre>.sec{max-width:640px;margin:0 auto}
   #p-dashboard .dash-hero{padding:34px 42px}
   .dash-co{gap:18px}
@@ -906,7 +924,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-matching .match-engine,#p-matching .q-preset-card{margin-bottom:14px}
   .pipe-cols{display:flex;overflow-x:auto;padding:0 42px;gap:14px;scroll-snap-type:x mandatory}
   .pipe-col{width:320px;flex-shrink:0}
-  #p-messages #msgs-list{display:grid;grid-template-columns:1fr}
   .plans-row{display:grid;grid-template-columns:1fr;gap:16px;padding:18px 42px 28px}
   .plan-card{width:100%;max-width:none}
   .pricing-hd{padding:34px 42px 14px}
@@ -914,7 +931,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 }
 
 @media (min-width:1180px){
-  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-messages>.sec,#p-settings>.sec{padding-left:64px;padding-right:64px}
+  #p-dashboard>.sec,#p-matching>.sec,#p-questions>.sec,#p-pipeline>.sec,#p-post-offre>.sec,#p-settings>.sec{padding-left:64px;padding-right:64px}
   #p-dashboard .dash-hero,.pricing-hd{padding-left:64px;padding-right:64px}
   .pipe-cols{padding-left:64px;padding-right:64px}
   .plans-row{padding-left:64px;padding-right:64px}
@@ -977,64 +994,71 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
   #p-messages.page.on{
     background:var(--bg);
     min-height:calc(100dvh - 52px);
-    padding:0 0 96px;
-  }
-  #p-offres>.sec{padding:22px 42px}
-  #p-messages>.sec{
-    display:grid;
-    grid-template-columns:minmax(320px,400px) minmax(0,1fr);
-    gap:14px;
-    align-items:start;
-  }
-  #p-messages .sec-hd{grid-column:1/-1}
-  #p-messages #msgs-list{
-    grid-column:1;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  #p-messages #msgs-list.empty{grid-column:1/-1}
-  #p-messages .msg-th{margin-bottom:0}
-  #p-messages #chat-panel{
-    grid-column:2;
-    margin-top:0;
-    align-self:start;
-    position:sticky;
-    top:68px;
-    max-height:calc(100dvh - 90px);
-  }
-  #p-messages #chat-panel.on{
-    display:flex;
-    flex-direction:column;
-    min-height:520px;
-    overflow:hidden;
-  }
-  #p-messages #chat-placeholder{
-    grid-column:2;
-    display:flex;
+    padding:24px 28px 96px;
+    display:flex !important;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
-    text-align:center;
-    gap:10px;
-    min-height:520px;
-    max-height:calc(100dvh - 90px);
-    background:var(--w);
-    border:1px solid var(--bd);
-    border-radius:14px;
-    padding:30px;
-    position:sticky;
-    top:68px;
   }
-  #p-messages #chat-placeholder.hidden{display:none}
-  .chat-placeholder-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center}
-  .chat-placeholder-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
-  .chat-placeholder-t{font-size:15px;font-weight:900}
-  .chat-placeholder-s{font-size:12.5px;color:var(--ink3);max-width:240px;line-height:1.5}
+  #p-offres>.sec{padding:22px 42px}
+  #p-messages>.messages-page{
+    width:100%;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0;
+  }
+  #p-messages .messages-workspace{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    height:min(680px,calc(100dvh - 190px));
+    min-height:480px;
+    max-height:calc(100dvh - 160px);
+  }
+  #p-messages .conversations-panel{
+    display:block !important;
+    border-right:1px solid var(--bd);
+    overflow-y:auto;
+    background:#f8fafc;
+    min-height:0;
+  }
+  #p-messages .conversation-panel{
+    display:flex !important;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    overflow:hidden;
+  }
+  #p-messages #msgs-list{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+  }
+  #p-messages #msgs-list.empty{grid-column:auto}
+  #p-messages .msg-th{margin-bottom:0}
+  #p-messages:not(.thread-open) .chat-placeholder{
+    display:flex;
+    flex:1;
+  }
+  #p-messages.thread-open .chat-placeholder,
+  #p-messages .chat-placeholder.hidden{
+    display:none !important;
+  }
+  #p-messages .chat-panel{
+    display:none;
+    flex:1;
+    min-height:0;
+    box-shadow:none;
+  }
+  #p-messages.thread-open .chat-panel.on,
+  #p-messages .chat-panel.on{
+    display:flex !important;
+    flex-direction:column;
+  }
+  #p-messages .chat-back{display:none}
   #p-messages .chat-head{flex-shrink:0}
   #p-messages .chat-body{
     flex:1;
     min-height:0;
+    max-height:none;
   }
   #p-messages .chat-compose{flex-shrink:0}
 }
@@ -1509,7 +1533,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
-  <div class="sec">
+  <div class="sec messages-page">
     <div class="sec-hd page-heading">
       <div>
         <div class="page-kicker">Inbox</div>
@@ -1517,25 +1541,31 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <p class="page-intro">Échangez avec les candidats après un match.</p>
       </div>
     </div>
-    <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
-    <div id="chat-placeholder" class="chat-placeholder">
-      <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
-      <div class="chat-placeholder-t sf">Sélectionnez une conversation</div>
-      <div class="chat-placeholder-s">Choisissez un échange dans la liste pour l'afficher ici.</div>
-    </div>
-    <div id="chat-panel" class="chat-panel">
-      <div class="chat-head">
-        <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div class="chat-head-copy">
-          <div class="chat-title" id="chat-title">Conversation</div>
-          <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
+    <div class="messages-workspace" id="messages-workspace">
+      <aside class="conversations-panel" id="conversations-panel">
+        <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
+      </aside>
+      <section class="conversation-panel" id="conversation-panel" aria-live="polite">
+        <div id="chat-placeholder" class="chat-placeholder">
+          <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+          <div class="chat-placeholder-t sf">Sélectionnez une conversation</div>
+          <div class="chat-placeholder-s">Choisissez un échange dans la liste pour l'afficher ici.</div>
         </div>
-      </div>
-      <div id="chat-body" class="chat-body"></div>
-      <form class="chat-compose" onsubmit="sendThreadMessage(event)">
-        <input id="chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
-        <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
-      </form>
+        <div id="chat-panel" class="chat-panel">
+          <div class="chat-head">
+            <button class="chat-back" type="button" onclick="closeThread()" aria-label="Retour aux conversations"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div class="chat-head-copy">
+              <div class="chat-title" id="chat-title">Conversation</div>
+              <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
+            </div>
+          </div>
+          <div id="chat-body" class="chat-body"></div>
+          <form class="chat-compose" onsubmit="sendThreadMessage(event)">
+            <input id="chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
+            <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </form>
+        </div>
+      </section>
     </div>
   </div>
 </div>
@@ -2783,6 +2813,18 @@ function deckSyncBadge(c) {
   }
   return '';
 }
+function deckPredictTiles(c) {
+  const tiles = (c.predict || []).filter((p) => {
+    const label = String(p?.l || '').trim().toLowerCase();
+    const value = String(p?.v || '').trim().toLowerCase();
+    if (!label && !value) return false;
+    if (label === 'source' || value === 'base') return false;
+    if (/supabase|synchronis|score calcul/i.test(`${label} ${value}`)) return false;
+    return true;
+  });
+  if (!tiles.length) return '';
+  return `<div class="cand-predict">${tiles.map(p => `<div class="cand-predict-box"><div class="cand-predict-v sf">${esc(String(p.v))}</div><div class="cand-predict-l">${esc(String(p.l))}</div></div>`).join('')}</div>`;
+}
 function candDocs(c) {
   const docs = [];
   if (c.cv_url) docs.push({ label: c.cv_file_name || 'CV', url: c.cv_url, icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>' });
@@ -2846,7 +2888,7 @@ function buildCandCard(c) {
             <div class="cand-pitch-t sf">Pitch / Synthèse</div>
             ${hasRealPitchScore ? `<div class="cand-pitch-score sf">${esc(String(c.pitch_score))}/100</div>` : ''}
           </div>
-          <div class="cand-pitch-text">${synthesis ? esc(synthesis) : 'Analyse du profil disponible'}</div>
+          <div class="cand-pitch-text">${synthesis ? esc(synthesis) : 'Pas encore de synthèse disponible'}</div>
         </div>
       </div>
       ${showLetter ? `<div class="cand-letter">
@@ -2861,7 +2903,7 @@ function buildCandCard(c) {
           ${c.letter_video ? `<div class="cand-letter-media" id="video-${esc(String(c.id))}" style="display:none"><div class="clm-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div style="flex:1;font-size:12px;color:var(--ink3)">Pitch vidéo</div></div>` : ''}
         </div>
       </div>` : ''}
-      <div class="cand-predict">${(c.predict || []).map(p => `<div class="cand-predict-box"><div class="cand-predict-v sf">${esc(String(p.v))}</div><div class="cand-predict-l">${esc(String(p.l))}</div></div>`).join('')}</div>
+      ${deckPredictTiles(c)}
     </div>`;
   const avatarEl = d.querySelector('.cand-avatar');
   if (c.avatar_url) {
@@ -3756,14 +3798,16 @@ async function loadMessages() {
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     if (!THREADS.length) {
       list.classList.add('empty');
-      document.getElementById('chat-placeholder')?.classList.add('hidden');
+      setMessagesThreadUi(false, { hidePlaceholder: true });
       list.innerHTML = await renderMessagesWelcome();
       return;
     }
     list.classList.remove('empty');
-    document.getElementById('chat-placeholder')?.classList.remove('hidden');
+    const keepOpen = ACTIVE_THREAD && THREADS.some(t => String(t.id) === String(ACTIVE_THREAD.id));
+    if (!keepOpen) ACTIVE_THREAD = null;
+    setMessagesThreadUi(Boolean(keepOpen));
     list.innerHTML = THREADS.map(t => `
-      <div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')">
+      <div class="msg-th${t.ur?' ur':''}${keepOpen && String(ACTIVE_THREAD.id) === String(t.id) ? ' on' : ''}" onclick="openThread('${t.id}')">
         <div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div>
         <div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-context">${esc(t.context || 'Offre')}</div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>
         ${t.ur?'<div class="ur-badge">Nouveau</div>':''}
@@ -3796,8 +3840,10 @@ async function openThread(id) {
   ACTIVE_THREAD = thread;
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
   document.getElementById('chat-sub').textContent = thread.context || thread.prev || 'Match Swip Sales';
-  document.getElementById('chat-panel').classList.add('on');
-  document.getElementById('chat-placeholder')?.classList.add('hidden');
+  setMessagesThreadUi(true);
+  document.querySelectorAll('#msgs-list .msg-th').forEach((el) => {
+    el.classList.toggle('on', el.getAttribute('onclick') === `openThread('${id}')`);
+  });
   const chatBody = document.getElementById('chat-body');
   chatBody.classList.remove('has-messages');
   chatBody.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
@@ -3958,10 +4004,24 @@ function renderThreadMessages(messages) {
   }).join('') : '<div class="chat-empty">Aucun message pour le moment. Envoyez le premier message au candidat.</div>';
   body.scrollTop = body.scrollHeight;
 }
+function setMessagesThreadUi(open, opts = {}) {
+  const page = document.getElementById('p-messages');
+  const panel = document.getElementById('chat-panel');
+  const placeholder = document.getElementById('chat-placeholder');
+  page?.classList.toggle('thread-open', Boolean(open));
+  if (open) {
+    panel?.classList.add('on');
+    placeholder?.classList.add('hidden');
+  } else {
+    panel?.classList.remove('on');
+    if (opts.hidePlaceholder) placeholder?.classList.add('hidden');
+    else placeholder?.classList.remove('hidden');
+  }
+}
 function closeThread() {
   ACTIVE_THREAD = null;
-  document.getElementById('chat-panel').classList.remove('on');
-  document.getElementById('chat-placeholder')?.classList.remove('hidden');
+  setMessagesThreadUi(false);
+  document.querySelectorAll('#msgs-list .msg-th.on').forEach((el) => el.classList.remove('on'));
 }
 async function sendThreadMessage(event) {
   event.preventDefault();

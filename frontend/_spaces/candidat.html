@@ -463,9 +463,11 @@ button,input,textarea,select{font-family:inherit}
 .mi-sc{font-family:'Sora',sans-serif;font-size:15px;font-weight:900;flex-shrink:0}
 
 /* MESSAGES */
-.msg-th{background:var(--w);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:7px;cursor:pointer;display:flex;gap:10px;transition:.15s}
-.msg-th.ur{background:var(--bs);border-color:var(--bm)}
-.msg-welcome{text-align:center;background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:30px 20px}
+.msg-th{background:transparent;border:none;border-radius:0;padding:12px 14px;margin-bottom:0;cursor:pointer;display:flex;gap:10px;transition:.15s;border-bottom:1px solid var(--bd)}
+.msg-th:last-child{border-bottom:none}
+.msg-th.ur{background:var(--bs)}
+.msg-th.on{background:var(--bs);box-shadow:inset 3px 0 0 var(--b)}
+.msg-welcome{text-align:center;background:transparent;border:none;border-radius:0;padding:30px 20px}
 .msg-welcome-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 .msg-welcome-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
 .msg-welcome h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:900;letter-spacing:-.4px;margin-bottom:9px}
@@ -485,26 +487,44 @@ button,input,textarea,select{font-family:inherit}
 .match-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .match-msg-btn{border:none;background:var(--bs);color:var(--b);border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .match-msg-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2}
-.chat-panel{display:none;background:var(--w);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-top:12px}
-.chat-placeholder{display:none}
-.chat-panel.on{display:block}
-.chat-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.messages-page{width:100%;max-width:1180px;margin:0 auto}
+.messages-workspace{
+  display:flex;flex-direction:column;background:var(--w);border:1px solid var(--bd);border-radius:16px;
+  overflow:hidden;min-height:420px;box-shadow:var(--sh-sm);
+}
+.conversations-panel{min-height:0;overflow-y:auto;background:var(--w)}
+.conversation-panel{display:none;flex-direction:column;min-width:0;min-height:0;background:var(--w)}
+#p-messages.thread-open .conversations-panel{display:none}
+#p-messages.thread-open .conversation-panel{display:flex;flex:1;min-height:420px}
+.chat-placeholder{
+  display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:10px;padding:30px;min-height:280px;
+}
+#p-messages:not(.thread-open) .chat-placeholder{display:none}
+.chat-placeholder.hidden{display:none !important}
+.chat-panel{display:none;flex:1;flex-direction:column;min-height:0;margin:0;border:none;border-radius:0;background:var(--w);overflow:hidden}
+.chat-panel.on{display:flex}
+.chat-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);background:var(--bg);flex-shrink:0}
 .chat-back{width:31px;height:31px;border-radius:8px;border:1px solid var(--bd);background:var(--w);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .chat-back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2}
 .chat-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800}
 .chat-sub{font-size:11px;color:var(--ink3);margin-top:1px}
-.chat-body{min-height:250px;max-height:390px;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
+.chat-body{flex:1;min-height:0;max-height:none;overflow-y:auto;padding:12px;background:#FAFCFF;display:flex;flex-direction:column;gap:8px}
 .chat-empty{margin:auto;text-align:center;color:var(--mu);font-size:12px;line-height:1.6;max-width:230px}
 .bubble{max-width:82%;padding:9px 11px;border-radius:13px;font-size:13px;line-height:1.45;word-break:break-word}
 .bubble.mine{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:4px}
 .bubble.theirs{align-self:flex-start;background:var(--w);border:1px solid var(--bd);color:var(--ink2);border-bottom-left-radius:4px}
 .bubble-time{font-size:9px;opacity:.65;margin-top:4px;text-align:right}
 .bubble-receipt{font-size:9px;font-weight:800;opacity:.78;margin-top:2px;text-align:right}
-.chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w)}
+.chat-compose{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);background:var(--w);flex-shrink:0}
 .chat-input{flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:10px 11px;font-size:13px;outline:none;background:var(--bg);color:var(--ink)}
 .chat-input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs);background:var(--w)}
 .chat-send{width:42px;height:42px;border:none;border-radius:10px;background:var(--b);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .chat-send svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4}
+.chat-placeholder-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center}
+.chat-placeholder-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+.chat-placeholder-t{font-size:15px;font-weight:900}
+.chat-placeholder-s{font-size:12.5px;color:var(--ink3);max-width:240px;line-height:1.5}
 
 /* PROFIL */
 .ph{background:var(--w);color:var(--ink);padding:18px;margin:15px 18px 10px;border:1px solid var(--bd);border-radius:16px;position:relative;overflow:hidden}
@@ -719,11 +739,11 @@ button,input,textarea,select{font-family:inherit}
   #p-coaching.page.on{padding:24px 28px 96px}
   #p-coaching>.sec{padding:0}
   #p-coaching .doc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-pricing.page.on{padding:24px 28px 96px}
-  #p-candidatures>.sec,#p-messages>.sec{padding:0}
+  #p-candidatures.page.on,#p-test.page.on,#p-pricing.page.on{padding:24px 28px 96px}
+  #p-candidatures>.sec{padding:0}
   #p-test .test-body{max-width:none;padding-left:0;padding-right:0}
   #p-test .test-sticky{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
-  #cands-list,#msgs-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
+  #cands-list{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
   #p-profile.page.on{display:flex;flex-direction:column;gap:16px;padding:24px 28px 96px;width:100%;max-width:960px;margin:0 auto}
   #p-profile .ph{border:1px solid var(--bd);border-radius:16px;padding:28px;position:static;margin:0;width:100%;max-width:none}
   #p-profile>.sec.profile-layout{padding:0;display:flex;flex-direction:column;gap:14px;align-items:stretch;width:100%;max-width:none}
@@ -748,11 +768,11 @@ button,input,textarea,select{font-family:inherit}
   .app{max-width:none}
   .bnav,.overlay{max-width:none}
   .topbar,.swipe-hd{padding-left:42px;padding-right:42px}
-  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-profile.page.on,#p-pricing.page.on{padding-left:42px;padding-right:42px}
   #p-home.page.on{grid-template-columns:minmax(360px,480px) minmax(0,1fr) minmax(0,1fr)}
   #p-home .home-hero{grid-row:span 1}
   #p-coaching .doc-list{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #cands-list,#msgs-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+  #cands-list{grid-template-columns:repeat(3,minmax(280px,1fr))}
   #p-profile.page.on{max-width:960px;padding:24px 28px 96px;width:100%;margin-left:auto;margin-right:auto}
   #p-profile .menu-list{align-self:stretch}
   #p-swipe.page.on{padding:14px 24px 20px;max-width:1200px;width:100%;margin-left:auto;margin-right:auto;gap:8px;align-items:center}
@@ -781,8 +801,8 @@ button,input,textarea,select{font-family:inherit}
 @media (min-width:720px){
   .page.on:not(#p-auth){display:block;padding-bottom:96px}
   .home-hero,.ph{border-radius:0;border:none}
-  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-messages.page.on,#p-profile.page.on,#p-pricing.page.on{padding:0 0 96px}
-  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding:22px 42px}
+  #p-home.page.on,#p-coaching.page.on,#p-candidatures.page.on,#p-test.page.on,#p-profile.page.on,#p-pricing.page.on{padding:0 0 96px}
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-profile>.sec{padding:22px 42px}
   #p-home .home-hero{padding:34px 42px}
   .score-card,.adn-bars,.tr-list,.doc-list,.card-sec,.plan-banner,.menu-list,.chat-panel{width:100%;max-width:none}
   .score-card{padding:22px;gap:18px}
@@ -793,7 +813,7 @@ button,input,textarea,select{font-family:inherit}
   .kpi{padding:18px}
   .kpi-v{font-size:30px}
   .sec-t{font-size:18px}
-  .adn-bars,#home-cands,#cands-list,#msgs-list{display:flex;flex-direction:column;gap:12px}
+  .adn-bars,#home-cands,#cands-list{display:flex;flex-direction:column;gap:12px}
   #p-coaching .doc-list{display:flex;flex-direction:column;gap:12px}
   .doc-item,.tr-item,.match-item,.msg-th,.menu-i{padding:17px 18px}
   .doc-title,.tr-title,.mi-t,.msg-n,.card-sec-t{font-size:16px}
@@ -823,7 +843,7 @@ button,input,textarea,select{font-family:inherit}
 }
 
 @media (min-width:1180px){
-  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-messages>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
+  #p-home>.sec,#p-coaching>.sec,#p-candidatures>.sec,#p-profile>.sec{padding-left:64px;padding-right:64px}
   #p-home .home-hero,#p-profile .ph,.pricing-hd{padding-left:64px;padding-right:64px}
   .plans-row{padding-left:64px;padding-right:64px}
 }
@@ -841,66 +861,78 @@ button,input,textarea,select{font-family:inherit}
   #p-pricing .plans-row{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media (min-width:720px){
-  #p-messages>.sec{
-    display:grid;
-    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
-    gap:14px;
-    align-items:start;
-  }
-  #p-messages .sec-hd{grid-column:1/-1}
-  #p-messages #msgs-list{
-    grid-column:1;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  #p-messages #msgs-list.empty{grid-column:1/-1}
-  #p-messages .msg-th{margin-bottom:0}
-  #p-messages #chat-panel{
-    grid-column:2;
-    margin-top:0;
-    align-self:start;
-    position:sticky;
-    top:68px;
-    max-height:calc(100dvh - 90px);
-  }
-  #p-messages #chat-panel.on{
-    display:flex;
-    flex-direction:column;
-    min-height:520px;
-    overflow:hidden;
-  }
-  #p-messages #chat-placeholder{
-    grid-column:2;
-    display:flex;
+  #p-messages.page.on{
+    background:var(--bg);
+    min-height:calc(100dvh - 52px);
+    padding:24px 28px 96px;
+    display:flex !important;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
-    text-align:center;
-    gap:10px;
-    min-height:520px;
-    max-height:calc(100dvh - 90px);
-    background:var(--w);
-    border:1px solid var(--bd);
-    border-radius:14px;
-    padding:30px;
-    position:sticky;
-    top:68px;
   }
-  #p-messages #chat-placeholder.hidden{display:none}
-  .chat-placeholder-ico{width:52px;height:52px;border-radius:14px;background:var(--bs);color:var(--b);display:flex;align-items:center;justify-content:center}
-  .chat-placeholder-ico svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
-  .chat-placeholder-t{font-size:15px;font-weight:900}
-  .chat-placeholder-s{font-size:12.5px;color:var(--ink3);max-width:240px;line-height:1.5}
+  #p-messages>.messages-page{
+    width:100%;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0;
+  }
+  #p-messages .messages-workspace{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    height:min(680px,calc(100dvh - 190px));
+    min-height:480px;
+    max-height:calc(100dvh - 160px);
+  }
+  #p-messages .conversations-panel{
+    display:block !important;
+    border-right:1px solid var(--bd);
+    overflow-y:auto;
+    background:#f8fafc;
+    min-height:0;
+  }
+  #p-messages .conversation-panel{
+    display:flex !important;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    overflow:hidden;
+  }
+  #p-messages #msgs-list{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+  }
+  #p-messages #msgs-list.empty{grid-column:auto}
+  #p-messages .msg-th{margin-bottom:0}
+  #p-messages:not(.thread-open) .chat-placeholder{
+    display:flex;
+    flex:1;
+  }
+  #p-messages.thread-open .chat-placeholder,
+  #p-messages .chat-placeholder.hidden{
+    display:none !important;
+  }
+  #p-messages .chat-panel{
+    display:none;
+    flex:1;
+    min-height:0;
+    box-shadow:none;
+  }
+  #p-messages.thread-open .chat-panel.on,
+  #p-messages .chat-panel.on{
+    display:flex !important;
+    flex-direction:column;
+  }
+  #p-messages .chat-back{display:none}
   #p-messages .chat-body{
     flex:1;
     min-height:0;
+    max-height:none;
   }
   #p-messages .chat-compose{flex-shrink:0}
 }
 
 @media (min-width:1080px){
-  #p-messages>.sec{grid-template-columns:minmax(320px,400px) minmax(0,1fr)}
+  #p-messages .messages-workspace{grid-template-columns:320px minmax(0,1fr)}
 }
 
 @media (min-width:1024px){
@@ -1593,7 +1625,7 @@ button,input,textarea,select{font-family:inherit}
 
 <!-- MESSAGES -->
 <div id="p-messages" class="page">
-  <div class="sec">
+  <div class="sec messages-page">
     <div class="sec-hd page-heading">
       <div>
         <div class="page-kicker">Inbox</div>
@@ -1601,25 +1633,31 @@ button,input,textarea,select{font-family:inherit}
         <p class="page-intro">Échangez avec les recruteurs après un match.</p>
       </div>
     </div>
-    <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
-    <div id="chat-placeholder" class="chat-placeholder">
-      <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
-      <div class="chat-placeholder-t sf">Sélectionnez une conversation</div>
-      <div class="chat-placeholder-s">Choisissez un échange dans la liste pour l'afficher ici.</div>
-    </div>
-    <div id="chat-panel" class="chat-panel">
-      <div class="chat-head">
-        <button class="chat-back" type="button" onclick="closeThread()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div class="chat-head-copy">
-          <div class="chat-title" id="chat-title">Conversation</div>
-          <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
+    <div class="messages-workspace" id="messages-workspace">
+      <aside class="conversations-panel" id="conversations-panel">
+        <div id="msgs-list"><div class="loading-state"><div class="spinner"></div></div></div>
+      </aside>
+      <section class="conversation-panel" id="conversation-panel" aria-live="polite">
+        <div id="chat-placeholder" class="chat-placeholder">
+          <div class="chat-placeholder-ico"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+          <div class="chat-placeholder-t sf">Sélectionnez une conversation</div>
+          <div class="chat-placeholder-s">Choisissez un échange dans la liste pour l'afficher ici.</div>
         </div>
-      </div>
-      <div id="chat-body" class="chat-body"></div>
-      <form class="chat-compose" onsubmit="sendThreadMessage(event)">
-        <input id="chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
-        <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
-      </form>
+        <div id="chat-panel" class="chat-panel">
+          <div class="chat-head">
+            <button class="chat-back" type="button" onclick="closeThread()" aria-label="Retour aux conversations"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div class="chat-head-copy">
+              <div class="chat-title" id="chat-title">Conversation</div>
+              <div class="chat-sub" id="chat-sub">Match Swip Sales</div>
+            </div>
+          </div>
+          <div id="chat-body" class="chat-body"></div>
+          <form class="chat-compose" onsubmit="sendThreadMessage(event)">
+            <input id="chat-input" class="chat-input" autocomplete="off" placeholder="Écrire un message...">
+            <button class="chat-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </form>
+        </div>
+      </section>
     </div>
   </div>
 </div>
@@ -3649,14 +3687,16 @@ async function loadMessages() {
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     if (!THREADS.length) {
       list.classList.add('empty');
-      document.getElementById('chat-placeholder')?.classList.add('hidden');
+      setMessagesThreadUi(false, { hidePlaceholder: true });
       list.innerHTML = await renderMessagesWelcome();
       return;
     }
     list.classList.remove('empty');
-    document.getElementById('chat-placeholder')?.classList.remove('hidden');
+    const keepOpen = ACTIVE_THREAD && THREADS.some(t => String(t.id) === String(ACTIVE_THREAD.id));
+    if (!keepOpen) ACTIVE_THREAD = null;
+    setMessagesThreadUi(Boolean(keepOpen));
     list.innerHTML = THREADS.map(t=>
-      `<div class="msg-th${t.ur?' ur':''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-context">${esc(t.context || 'Offre')}</div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
+      `<div class="msg-th${t.ur?' ur':''}${keepOpen && String(ACTIVE_THREAD.id) === String(t.id) ? ' on' : ''}" onclick="openThread('${t.id}')"><div class="msg-av" style="background:${esc(t.bg)}">${esc(t.av)}</div><div class="msg-b"><div class="msg-top"><span class="msg-n sf">${esc(t.nom)}</span><span class="msg-time">${esc(t.time)}</span></div><div class="msg-context">${esc(t.context || 'Offre')}</div><div class="msg-prev">${esc(t.prev)}</div>${t.status?`<div class="msg-foot"><span class="msg-status${t.ur?' unread':''}">${esc(messageStatusLabel(t.status))}</span></div>`:''}</div>${t.ur?'<div class="ur-badge">Nouveau</div>':''}</div>`
     ).join('');
   } catch(e) { document.getElementById('msgs-list').innerHTML = '<div class="loading-state">Erreur messages</div>'; }
 }
@@ -3689,8 +3729,10 @@ async function openThread(id, surface = 'messages') {
   const prefix = 'chat';
   document.getElementById('chat-title').textContent = thread.nom || 'Conversation';
   document.getElementById('chat-sub').textContent = thread.context || thread.prev || 'Conversation Swip Sales';
-  document.getElementById(prefix + '-panel').classList.add('on');
-  document.getElementById('chat-placeholder')?.classList.add('hidden');
+  setMessagesThreadUi(true);
+  document.querySelectorAll('#msgs-list .msg-th').forEach((el) => {
+    el.classList.toggle('on', el.getAttribute('onclick') === `openThread('${id}')`);
+  });
   document.getElementById(prefix + '-body').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   await loadThreadMessages();
   document.getElementById(prefix + '-input').focus();
@@ -3855,10 +3897,24 @@ function renderThreadMessages(messages) {
   }).join('') : '<div class="chat-empty">Aucun message pour le moment. Envoyez le premier message au recruteur.</div>';
   body.scrollTop = body.scrollHeight;
 }
+function setMessagesThreadUi(open, opts = {}) {
+  const page = document.getElementById('p-messages');
+  const panel = document.getElementById('chat-panel');
+  const placeholder = document.getElementById('chat-placeholder');
+  page?.classList.toggle('thread-open', Boolean(open));
+  if (open) {
+    panel?.classList.add('on');
+    placeholder?.classList.add('hidden');
+  } else {
+    panel?.classList.remove('on');
+    if (opts.hidePlaceholder) placeholder?.classList.add('hidden');
+    else placeholder?.classList.remove('hidden');
+  }
+}
 function closeThread() {
   ACTIVE_THREAD = null;
-  document.getElementById('chat-panel')?.classList.remove('on');
-  document.getElementById('chat-placeholder')?.classList.remove('hidden');
+  setMessagesThreadUi(false);
+  document.querySelectorAll('#msgs-list .msg-th.on').forEach((el) => el.classList.remove('on'));
 }
 async function sendThreadMessage(event) {
   event.preventDefault();

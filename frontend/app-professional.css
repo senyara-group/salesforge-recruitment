@@ -976,25 +976,38 @@ body.auth .shell, body.product-gateway .shell {
 
 /* Messages — shared candidat + recruteur */
 #p-messages .sec-hd { margin-bottom: 14px; }
+#p-messages .messages-workspace {
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+  background: var(--w);
+  overflow: hidden;
+}
 #p-messages #msgs-list {
-  gap: 8px;
+  gap: 0;
 }
 #p-messages .msg-th {
   padding: 14px 16px !important;
-  border: 1px solid var(--bd);
-  border-radius: 12px !important;
-  background: var(--w);
+  border: none;
+  border-bottom: 1px solid var(--bd);
+  border-radius: 0 !important;
+  background: transparent;
+  margin-bottom: 0;
 }
+#p-messages .msg-th:last-child { border-bottom: none; }
 #p-messages .msg-th:hover {
-  border-color: var(--bm) !important;
   background: #fafbff;
 }
+#p-messages .msg-th.on {
+  background: var(--bs);
+  box-shadow: inset 3px 0 0 var(--b);
+}
 #p-messages .chat-panel {
-  border: 1px solid var(--bd);
-  border-radius: 14px;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
   background: var(--w);
-  box-shadow: var(--sh-sm);
+  box-shadow: none;
+  margin-top: 0;
 }
 #p-messages .chat-head {
   border-bottom: 1px solid var(--bd);
