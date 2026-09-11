@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { candidatePlanLabel, isKnownCandidatePlan } = require('../utils/planLabels');
+const { isKnownCandidatePlan, isKnownRecruiterPlan, subscriptionPlanLabel } = require('../utils/planLabels');
 
 function currentMonthKey() {
   return new Date().toISOString().slice(0, 7);
@@ -43,13 +43,13 @@ router.get('/current', authMiddleware, async (req, res) => {
     }
 
     const swipesUsed = Math.max(Number(abonnement.swipes_u || 0), profileSwipesUsed);
-    if (!isKnownCandidatePlan(abonnement.plan)) {
-      console.warn('[subscription] Unknown candidate plan slug', { plan: String(abonnement.plan || '').slice(0, 80) });
+    if (!isKnownCandidatePlan(abonnement.plan) && !isKnownRecruiterPlan(abonnement.plan)) {
+      console.warn('[subscription] Unknown plan slug', { plan: String(abonnement.plan || '').slice(0, 80) });
     }
     // Swipes illimités pour tous les candidats, quel que soit le plan (contrainte légale, voir Notes.md).
     res.json({
       ...abonnement,
-      plan_label: candidatePlanLabel(abonnement.plan),
+      plan_label: subscriptionPlanLabel(abonnement.plan),
       swipes_u: swipesUsed,
       swipes_m: 999,
     });
