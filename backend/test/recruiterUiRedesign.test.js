@@ -157,7 +157,10 @@ test('recruiter sourcing card polish : structure identité + handlers swipe', ()
   assert.match(html, /cand-body-hd/);
   assert.match(html, /cand-mid/);
   assert.match(html, /Pitch \/ Synthèse/);
-  assert.match(html, /Analyse du profil disponible/);
+  assert.match(html, /Pas encore de synthèse disponible/);
+  assert.match(html, /function deckPredictTiles/);
+  assert.match(html, /label === 'source' \|\| value === 'base'/);
+  assert.doesNotMatch(html, /Analyse du profil disponible/);
   assert.match(html, /Profil synchronisé avec les recruteurs/);
   assert.match(html, /function isTechnicalDeckCopy/);
   assert.match(html, /function deckSynthesisCopy/);
