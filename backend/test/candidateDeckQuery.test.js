@@ -373,12 +373,36 @@ test('volume 5000 sparse termine sans omission, doublon ou faux has_more', async
   assert.equal(new Set(result.all.map((row) => row.id)).size, matches.size);
 });
 
-test('select deck restaure les URLs legacy et le frontend enchaîne les pages vides', () => {
+test('select deck n’utilise plus les colonnes URL fantômes (avatar/cv/motivation)', () => {
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
-  assert.match(route, /'avatar_url', 'cv_url', 'motivation_url'/);
+  const selectMatch = route.match(/const CANDIDATE_DECK_SELECT = \[([\s\S]*?)\]\.join/);
+  assert.ok(selectMatch, 'CANDIDATE_DECK_SELECT manquant');
+  const selectBody = selectMatch[1];
+  for (const col of ['avatar_url', 'cv_url', 'motivation_url']) {
+    assert.doesNotMatch(selectBody, new RegExp(`['"]${col}['"]`));
+  }
+  assert.match(selectBody, /['"]axes['"]/);
+  assert.match(route, /withFreshCvUrl/);
+  assert.match(route, /CANDIDATE_DECK_FORBIDDEN_COLUMNS/);
   assert.match(html, /CAND_DECK_EMPTY_PREFETCH_MAX/);
   assert.match(html, /do \{[\s\S]*fetchCandidateDeckPage\(continuation[\s\S]*\} while \(!added && CAND_DECK_HAS_MORE/);
   assert.match(html, /filtersSnapshot|cloneCandFilters/);
   assert.match(html, /seenUsers/);
+});
+
+test('CANDIDATE_DECK_SELECT ne réintroduit pas de colonnes URL inexistantes', () => {
+  const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
+  const selectMatch = route.match(/const CANDIDATE_DECK_SELECT = \[([\s\S]*?)\]\.join/);
+  assert.ok(selectMatch);
+  const selected = [...selectMatch[1].matchAll(/['"]([a-z_]+)['"]/g)].map((m) => m[1]);
+  const forbiddenMatch = route.match(/const CANDIDATE_DECK_FORBIDDEN_COLUMNS = Object\.freeze\(\[([\s\S]*?)\]\)/);
+  assert.ok(forbiddenMatch, 'CANDIDATE_DECK_FORBIDDEN_COLUMNS manquant');
+  const forbidden = [...forbiddenMatch[1].matchAll(/['"]([a-z_]+)['"]/g)].map((m) => m[1]);
+  assert.deepEqual(forbidden.sort(), ['avatar_url', 'cv_url', 'motivation_url'].sort());
+  for (const col of forbidden) {
+    assert.equal(selected.includes(col), false, `colonne interdite dans SELECT: ${col}`);
+  }
+  assert.ok(selected.includes('axes'));
+  assert.ok(selected.includes('score_adn'));
 });

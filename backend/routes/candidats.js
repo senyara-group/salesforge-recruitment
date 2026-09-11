@@ -28,12 +28,20 @@ const CV_BUCKET = process.env.CV_BUCKET || 'candidate-cvs';
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const EBOOKS_BUCKET = process.env.EBOOKS_BUCKET || 'ebooks';
 const CANDIDATE_DECK_SELECT = [
+  // Colonnes SQL réelles uniquement. avatar/cv/motivation sont dans axes.meta
+  // (*_path / *_bucket) puis signés via withFreshCvUrl — jamais des colonnes table.
   'id', 'user_id', 'prenom', 'nom', 'titre', 'score_adn', 'axes',
-  'avatar_url', 'cv_url', 'motivation_url',
   'target_job_types', 'sales_style', 'years_experience',
   'desired_contracts', 'sectors', 'tools', 'methodologies',
   'availability', 'customer_types',
 ].join(', ');
+
+/** Colonnes historiques inexistantes — ne jamais les réintroduire dans le SELECT deck. */
+const CANDIDATE_DECK_FORBIDDEN_COLUMNS = Object.freeze([
+  'avatar_url',
+  'cv_url',
+  'motivation_url',
+]);
 
 // Catalogue des ebooks (palier Carrière). Fichiers déjà uploadés dans le bucket
 // privé Supabase Storage "ebooks" — voir Notes.md pour l'origine des fichiers.
@@ -1426,6 +1434,6 @@ router.post('/optimiser-pitch', authMiddleware, requireCandidatePlan('carriere')
   }
 });
 
-router._test = { MAX_CV_BYTES, extractCvText, validateProfileDocument };
+router._test = { MAX_CV_BYTES, extractCvText, validateProfileDocument, CANDIDATE_DECK_SELECT, CANDIDATE_DECK_FORBIDDEN_COLUMNS };
 
 module.exports = router;

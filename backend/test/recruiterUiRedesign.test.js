@@ -116,13 +116,37 @@ test('recruiter UI polish #2 : settings / abonnement parité candidat', () => {
   assert.match(html, /Entreprise/);
   assert.match(html, /account-section/);
   assert.match(html, /account-layout/);
-  assert.match(html, /Abonnement actif/);
-  assert.match(html, /a\?\.plan_label/);
+  assert.match(html, /RECRUITER_PLAN_LABELS/);
+  assert.match(html, /Plan Enterprise/);
   assert.doesNotMatch(html, /settings-logout/);
+  assert.doesNotMatch(html, /Abonnement candidat/);
 });
 
 test('recruiter UI polish #2 : offres cartes (pas bande fine desktop)', () => {
-  assert.match(html, /#p-offres \.offers-list\{display:grid;grid-template-columns:repeat\(2/);
+  assert.match(html, /#p-offres \.offers-list\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,480px\),1fr\)\)/);
   assert.match(html, /Voir candidatures/);
   assert.match(html, /function renderOffers/);
+});
+
+test('recruiter predemo : topbar sans Bonjour doublon', () => {
+  assert.match(html, /\.topbar-greet\{display:none !important\}/);
+  assert.match(html, /greetEl\.hidden = true/);
+  assert.doesNotMatch(html, /greetEl\.innerHTML = name \? `Bonjour/);
+  assert.match(html, /Bonjour \$\{name\} 👋/);
+  assert.match(html, /Bonjour 👋/);
+});
+
+test('recruiter predemo : logo sans placeholder ??', () => {
+  assert.match(html, /function companyInitials/);
+  assert.match(html, /LOGO_PLACEHOLDER_SVG/);
+  assert.match(html, /Logo non renseigné/);
+  assert.doesNotMatch(html, /entreprise\|\|'??'/);
+  assert.doesNotMatch(html, /entreprise\|\|'\?\?'/);
+});
+
+test('recruiter predemo : pipeline empty pleine largeur', () => {
+  assert.match(html, /\.pipe-cols:has\(> \.pipe-state\)/);
+  assert.match(html, /display:block/);
+  assert.match(html, /surface: true/);
+  assert.match(html, /Aucune candidature reçue/);
 });
