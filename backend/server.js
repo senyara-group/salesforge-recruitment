@@ -56,7 +56,9 @@ app.use('/api/adn-approfondi', require('./routes/deepAdn'));
 // d'erreurs personnalise : capture les erreurs non gerees et les envoie a Sentry.
 const Sentry = require('@sentry/node');
 Sentry.setupExpressErrorHandler(app);
- 
+
+app.use(require('./middleware/apiErrorHandler'));
+
 const PORT = process.env.PORT || 3000;
  
 if (require.main === module) {

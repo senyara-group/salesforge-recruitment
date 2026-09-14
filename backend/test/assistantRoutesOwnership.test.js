@@ -276,3 +276,65 @@ test('réinitialisation Coach ne supprime jamais les messages d’un autre propr
   assert.equal(operations.some((operation) => operation.operation === 'delete'), false);
   assert.equal(rows.ai_conversation_messages.some((row) => row.id === 'message-b'), true);
 });
+
+// --- Hotfix mobile pré-démo : Optimiseur CV, champs facultatifs vides ---------
+// Repro exact remontée en recette (Safari mobile) : poste visé + années
+// d'expérience renseignés, secteur et offre ciblée laissés vides. Un payload de
+// ce type ne doit jamais échouer à cause des champs facultatifs eux-mêmes.
+test('CV : secteur et offre ciblée vides (repro recette mobile) n’empêchent pas l’analyse', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = false; providerError = null;
+  providerCalls = 0; providerRequest = null;
+  // Remet une valeur au format CV : les tests Coach précédents ont laissé
+  // providerValue au format {feedback,next}, sans rapport avec ce endpoint.
+  providerValue = {
+    score: { readability: 70, quantified_impact: 60, ats_compatibility: 65, commercial_relevance: 55, diagnostic: 'Diagnostic fictif.' },
+    title: { current: '', suggested: '', reason: '' },
+    summary: '', rewrites: [], missing_metrics: [], keywords: [], alerts: [], priorities: [], improved_cv: 'CV fictif amélioré',
+  };
+  const sourceText = 'EXPÉRIENCES PROFESSIONNELLES\n2021-2024 Business Developer, prospection et closing. '.repeat(4);
+  const response = await invoke('post', '/cv-analyses', {
+    body: {
+      source_text: sourceText,
+      // Valeurs telles qu'envoyées par le formulaire (value d'un <input>, donc
+      // une chaîne même pour "années d'expérience") : experience_years '3',
+      // secteur et offre ciblée laissés vides par le candidat.
+      target_role: 'Business developer',
+      experience_years: '3',
+      sector: '',
+      offer_text: '',
+    },
+  });
+  assert.equal(response.statusCode, 201);
+  assert.equal(providerCalls, 1);
+  const context = JSON.parse(providerRequest.messages.at(-1).content);
+  assert.equal(context.DONNEES_UTILISATEUR.annees_experience, 3);
+  assert.equal(context.DONNEES_UTILISATEUR.secteur, null);
+  assert.equal(context.DONNEES_UTILISATEUR.offre_cible, null);
+  quotaMode = 'exhausted';
+});
+
+// Une erreur qui n'a pas déjà été normalisée avec un .code (ex. un bug inattendu
+// dans le provider IA, indépendant de aiProvider.js qui est mocké ici) doit
+// quand même produire une réponse JSON propre côté client, et un log serveur
+// exploitable (route_stage + elapsed_ms) sans jamais contenir le texte du CV.
+test('CV : une erreur provider non normalisée reste diagnosticable sans fuite de contenu', async () => {
+  quotaMode = 'available'; providerCalls = 0;
+  const secretSourceText = 'CV avec un secret-de-test-a-ne-jamais-logger. '.repeat(8);
+  providerError = new Error('panne inattendue du provider');
+  const errors = []; const originalError = console.error; console.error = (...args) => errors.push(args);
+  try {
+    const response = await invoke('post', '/cv-analyses', { body: { source_text: secretSourceText } });
+    assert.equal(response.statusCode, 500);
+    assert.equal(typeof response.payload.error, 'string');
+    assert.ok(response.payload.error.length > 0);
+    assert.doesNotMatch(JSON.stringify(response.payload), /secret-de-test/);
+    const logged = JSON.stringify(errors);
+    assert.doesNotMatch(logged, /secret-de-test/);
+    assert.match(logged, /"route_stage":"ai_call"/);
+    assert.match(logged, /"elapsed_ms":\d+/);
+  } finally {
+    console.error = originalError;
+    providerError = null;
+    quotaMode = 'exhausted';
+  }
+});

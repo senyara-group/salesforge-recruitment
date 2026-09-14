@@ -28,6 +28,8 @@ function publicError(res, error) {
   // DIAG_CV_JSON: métadonnées non sensibles uniquement (pas de CV / prompt / réponse).
   if (error?.diagnostics && typeof error.diagnostics === 'object') {
     logPayload.diagnostics = {
+      route_stage: error.diagnostics.route_stage || null,
+      elapsed_ms: error.diagnostics.elapsed_ms ?? null,
       stage: error.diagnostics.stage || null,
       schema_stage: error.diagnostics.schema_stage ?? null,
       stop_reason: error.diagnostics.stop_reason ?? null,
@@ -102,6 +104,12 @@ router.post(
   aiRateLimit({ max: 4, windowMs: 60000 }),
   async (req, res) => {
     let reservation;
+    // Repere de diagnostic uniquement (aucun contenu candidat) : permet de savoir
+    // a quelle etape une erreur "Erreur serveur" cote frontend s'est produite,
+    // notamment pour distinguer un depassement du delai IA (route_stage:'ai_call'
+    // avec un elapsed_ms proche des 55s configures) d'un autre point de la chaine.
+    const cvAnalysisStartedAt = Date.now();
+    let cvAnalysisStage = 'validate';
     try {
       const access = await assertAiAccess(req.user.id, 'cv');
 
@@ -139,8 +147,10 @@ router.post(
 
       const factualContext = buildCvFacts({ sourceText, experienceYears, targetRole, sector, offerText });
 
+      cvAnalysisStage = 'reserve_usage';
       reservation = await reserveUsage(req.user.id, access.plan, 'cv');
 
+      cvAnalysisStage = 'ai_call';
       const aiResult = await callAi({
         json: true,
         returnMeta: true,
@@ -172,6 +182,7 @@ router.post(
         ],
       });
 
+      cvAnalysisStage = 'safety_check';
       const safety = inspectAssistantOutput(aiResult.value);
       if (!safety.safe) {
         console.warn('[ai-safety]', { feature: 'cv', incidentType: safety.incidentType });
@@ -181,8 +192,10 @@ router.post(
         throw safetyError;
       }
 
+      cvAnalysisStage = 'normalize';
       const normalized = normalizeCvAnalysis(aiResult.value, sourceText, { experienceYears });
 
+      cvAnalysisStage = 'db_insert';
       const { data, error } = await supabase
         .from('ai_cv_analyses')
         .insert(
@@ -206,6 +219,7 @@ router.post(
 
       if (error) throw error;
 
+      cvAnalysisStage = 'finalize_usage';
       await finalizeUsage(
         reservation,
         aiResult.meta,
@@ -217,6 +231,11 @@ router.post(
       res.status(201).json(data);
     } catch (error) {
       await releaseUsage(reservation);
+      error.diagnostics = {
+        route_stage: cvAnalysisStage,
+        elapsed_ms: Date.now() - cvAnalysisStartedAt,
+        ...(error.diagnostics || {}),
+      };
       publicError(res, error);
     }
   },
