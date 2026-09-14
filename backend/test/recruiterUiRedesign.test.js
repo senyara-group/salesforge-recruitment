@@ -177,3 +177,81 @@ test('recruiter sourcing card polish : structure identité + handlers swipe', ()
   assert.match(html, /#p-swipe \.cand-top\.cand-identity\{[\s\S]*?width:28%/);
   assert.match(html, /@media \(max-width:719px\)\{[\s\S]*?#p-swipe \.cand-mid\{grid-template-columns:1fr\}/);
 });
+
+test('sourcing mobile : une seule carte visible (CSS + renderDeck)', () => {
+  // Mobile relative layout must hide stacked siblings (bug: vertical list of candidats).
+  assert.match(
+    html,
+    /@media \(max-width:719px\)\{[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(2\),[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(3\)\{display:none/,
+  );
+  assert.match(html, /#p-swipe \.swipe-card:last-child\{display:flex;position:relative/);
+  // Desktop already hid peek cards.
+  assert.match(
+    html,
+    /@media \(min-width:720px\)\{[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(2\),#p-swipe \.swipe-card:nth-last-child\(3\)\{display:none\}/,
+  );
+  // Render only the current candidate — no slice(+3) stack in DOM.
+  assert.match(html, /el\.appendChild\(buildCandCard\(CANDS\[DECK_IDX\]\)\)/);
+  assert.doesNotMatch(html, /CANDS\.slice\(DECK_IDX,\s*DECK_IDX\s*\+\s*3\)/);
+
+  const start = html.indexOf('function renderDeck()');
+  assert.ok(start >= 0);
+  let depth = 0;
+  let end = -1;
+  for (let i = start; i < html.length; i += 1) {
+    if (html[i] === '{') depth += 1;
+    if (html[i] === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        end = i + 1;
+        break;
+      }
+    }
+  }
+  assert.ok(end > start);
+  const built = [];
+  const cardsEl = {
+    innerHTML: '',
+    appendChild(node) { built.push(node); },
+  };
+  const emptyEl = { classList: { toggle() {} }, hidden: false };
+  const areaEl = { classList: { toggle() {} } };
+  const actionsEl = { hidden: false };
+  const sandbox = {
+    CANDS: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }],
+    DECK_IDX: 0,
+    CAND_DECK_HAS_MORE: false,
+    CAND_DECK_FETCHING_MORE: false,
+    document: {
+      getElementById(id) {
+        if (id === 'deck-cards') return cardsEl;
+        if (id === 'deck-count') return { textContent: '' };
+        if (id === 'deck-empty') return emptyEl;
+        if (id === 'deck-area') return areaEl;
+        if (id === 'deck-actions') return actionsEl;
+        return null;
+      },
+      querySelector() { return null; },
+    },
+    buildCandCard(c) { return { id: c.id, className: 'swipe-card' }; },
+    maybePrefetchCandidates() {},
+  };
+  const vm = require('node:vm');
+  vm.runInNewContext(`${html.slice(start, end)}\nthis.renderDeck = renderDeck;`, sandbox);
+  sandbox.renderDeck();
+  assert.equal(built.length, 1);
+  assert.equal(built[0].id, 'c1');
+
+  sandbox.DECK_IDX = 1;
+  built.length = 0;
+  cardsEl.innerHTML = '';
+  sandbox.renderDeck();
+  assert.equal(built.length, 1);
+  assert.equal(built[0].id, 'c2');
+
+  sandbox.DECK_IDX = 3;
+  built.length = 0;
+  sandbox.renderDeck();
+  assert.equal(built.length, 0);
+  assert.equal(emptyEl.hidden, false);
+});

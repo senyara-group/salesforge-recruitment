@@ -798,7 +798,12 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 
 @media (max-width:719px){
   #p-swipe .deck-area{height:auto;min-height:360px;max-height:none}
+  /* position:relative pour hauteur naturelle — masquer les cartes non courantes
+     (sinon elles s’empilent en flux document et le scroll révèle le candidat suivant). */
   #p-swipe .swipe-card{position:relative;inset:auto;height:auto;min-height:0;max-height:none;overflow:visible;border-radius:22px}
+  #p-swipe .swipe-card:nth-last-child(2),
+  #p-swipe .swipe-card:nth-last-child(3){display:none !important;transform:none;opacity:0;pointer-events:none}
+  #p-swipe .swipe-card:last-child{display:flex;position:relative;z-index:10;transform:none;opacity:1}
   #p-swipe .cand-top.cand-identity{min-height:0;border-radius:22px 22px 0 0}
   #p-swipe .cand-identity-inner{
     gap:10px;padding:12px 14px;flex-direction:row;flex-wrap:wrap;align-items:center;
@@ -2795,7 +2800,8 @@ function renderDeck() {
   }
   if (actions) actions.hidden = isEmpty;
   if (rem > 0) {
-    CANDS.slice(DECK_IDX, DECK_IDX + 3).reverse().forEach(c => el.appendChild(buildCandCard(c)));
+    // Une seule carte visible (desktop + mobile). Préchargement mémoire via CANDS / prefetch.
+    el.appendChild(buildCandCard(CANDS[DECK_IDX]));
   }
   maybePrefetchCandidates();
 }
