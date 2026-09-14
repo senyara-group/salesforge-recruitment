@@ -409,7 +409,8 @@ test('sparse mixte skills[] + legacy aliases (150/280/490) avec filtre SQL secto
 
   const result = await collectFlow(rows, {
     limit: '20',
-    skills: 'Négociation,Cold calling,Gestion de portefeuille',
+    // Variantes non canoniques côté filtre — canonicalisation des deux côtés
+    skills: 'NEGOCIATION,COLD CALLING,developpement-de-portefeuille',
     sectors: 'SaaS',
   });
   const positions = result.all.map((row) => rows.indexOf(row) + 1);

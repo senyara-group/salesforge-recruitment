@@ -128,6 +128,31 @@ test('filtre deck : match sur skills dédiées ou legacy flat + aliases', () => 
   );
 });
 
+test('filtre recruteur : canonicalisation des deux côtés (casse / accents / tirets / aliases)', () => {
+  const withNego = { skills: ['Négociation'] };
+  const legacyNego = { axes: { meta: { competences: { X: ['Négociation commerciale'] } } } };
+  const legacyCold = { axes: { meta: { competences: { P: ['cold-calling'] } } } };
+  const legacyPortfolio = { axes: { meta: { competences: { P: ['Développement de portefeuille'] } } } };
+
+  for (const filter of ['Négociation', 'négociation', 'NEGOCIATION', 'negociation', 'négociation-commerciale', 'Négociation commerciale']) {
+    assert.equal(candidateMatchesSkills(withNego, [filter]), true, `filtre ${filter} vs skills[]`);
+    assert.equal(candidateMatchesSkills(legacyNego, [filter]), true, `filtre ${filter} vs legacy`);
+  }
+  for (const filter of ['cold-calling', 'Cold Calling', 'COLD CALLING', 'Cold calling']) {
+    assert.equal(candidateMatchesSkills(legacyCold, [filter]), true, `filtre ${filter}`);
+  }
+  for (const filter of ['Développement de portefeuille', 'developpement-de-portefeuille', 'Gestion de portefeuille']) {
+    assert.equal(candidateMatchesSkills(legacyPortfolio, [filter]), true, `filtre ${filter}`);
+  }
+  assert.equal(
+    candidateMatchesSkills(withNego, ['Closing', 'NEGOCIATION']),
+    true,
+    'OR multi-filtres mixte canonique / non canonique',
+  );
+  assert.equal(candidateMatchesSkills(withNego, ['CompétenceInconnueXYZ']), false);
+  assert.equal(candidateMatchesSkills(withNego, ['Closing']), false);
+});
+
 test('migration skills additive sans backfill destructif', () => {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'candidats_skills_migration.sql'), 'utf8');
   assert.match(sql, /add column if not exists skills text\[\]/i);
