@@ -187,7 +187,12 @@ test('api() throw sur HTTP 4xx/5xx avec JSON erreur', async () => {
 test('api() throw sur JSON invalide même en HTTP 200', async () => {
   const api = loadCandidateApi(async () => mockResponse(200, '{not-json'));
   await assert.rejects(() => api('GET', '/x'), (error) => {
-    assert.equal(error.message, 'Erreur serveur');
+    // Hotfix mobile pré-démo : message générique remplacé par un texte qui
+    // invite explicitement à réessayer (voir aussi backend/middleware/apiErrorHandler.js
+    // côté serveur, qui évite qu'une erreur échappée aux routes /api/* atteigne
+    // ce chemin en renvoyant du HTML non parsable).
+    assert.equal(error.message, 'Le service est temporairement indisponible. Vous pouvez réessayer.');
+    assert.equal(error.code, 'RESPONSE_UNREADABLE');
     assert.equal(error.status, 200);
     return true;
   });

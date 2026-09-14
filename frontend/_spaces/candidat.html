@@ -1857,7 +1857,7 @@ button,input,textarea,select{font-family:inherit}
 <!-- OPTIMISEUR DE CV -->
 <div id="p-cv" class="page">
   <div class="sec cv-layout">
-    <div class="page-heading"><div><div class="page-kicker">Candidature</div><h1 class="page-title sf">Optimiseur de CV</h1><p class="page-intro">Déposez votre CV, précisez le poste visé, puis obtenez un diagnostic actionnable — sans invention de faits.</p></div><div class="cv-toolbar"><span class="cv-quota-chip" id="cv-quota-chip" hidden></span><span class="ai-availability" id="cv-ai-availability">Vérification du service…</span></div></div>
+    <div class="page-heading"><div class="page-heading-title-row"><button class="page-back-btn" type="button" onclick="goBack()" aria-label="Retour"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button><div><div class="page-kicker">Candidature</div><h1 class="page-title sf">Optimiseur de CV</h1><p class="page-intro">Déposez votre CV, précisez le poste visé, puis obtenez un diagnostic actionnable — sans invention de faits.</p></div></div><div class="cv-toolbar"><span class="cv-quota-chip" id="cv-quota-chip" hidden></span><span class="ai-availability" id="cv-ai-availability">Vérification du service…</span></div></div>
     <section class="account-section is-upsell" id="cv-access-gate" hidden><h2 class="sf" id="cv-access-title">Optimisez votre CV avec SwipSales</h2><p id="cv-access-copy"></p><button class="btn bp" id="cv-access-cta" type="button" onclick="go('pricing')">Voir les formules</button></section>
     <div id="cv-tool-content">
     <nav class="cv-journey" aria-label="Parcours Optimiseur de CV">
@@ -1968,7 +1968,7 @@ button,input,textarea,select{font-family:inherit}
      Ne pas brancher l’UI sur /api/coaching (coaching.js / m1-m2-m3) sans contrat Codex final. -->
 <div id="p-coach" class="page">
   <div class="sec coach-layout">
-    <div class="page-heading"><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach commercial</h1><p class="page-intro">Entraînez-vous à l’entretien, aux objections et au pitch. Compteur mensuel, jamais quotidien. Ce coach n’est pas un recruteur réel.</p></div><div class="cv-toolbar"><span class="coach-quota-chip" id="coach-quota-chip" hidden></span><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div></div>
+    <div class="page-heading"><div class="page-heading-title-row"><button class="page-back-btn" type="button" onclick="goBack()" aria-label="Retour"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button><div><div class="page-kicker">Entraînement candidat</div><h1 class="page-title sf">Coach commercial</h1><p class="page-intro">Entraînez-vous à l’entretien, aux objections et au pitch. Compteur mensuel, jamais quotidien. Ce coach n’est pas un recruteur réel.</p></div></div><div class="cv-toolbar"><span class="coach-quota-chip" id="coach-quota-chip" hidden></span><span class="ai-availability" id="coach-ai-availability">Vérification du service…</span></div></div>
     <section class="account-section is-upsell" id="coach-access-gate" hidden><h2 class="sf" id="coach-access-title">Préparez vos entretiens avec le Coach SwipSales</h2><p id="coach-access-copy"></p><button class="btn bp" id="coach-access-cta" type="button" onclick="go('pricing')">Voir les formules</button></section>
     <div class="coach-shell" id="coach-tool-content">
       <aside class="coach-history"><div class="coach-history-head"><h2 class="sf">Conversations</h2><button class="btn bo bsm" type="button" onclick="showCoachSetup()">Nouvelle</button></div><div id="coach-history-list" class="coach-history-list"><div class="loading-state"><div class="spinner"></div></div></div></aside>
@@ -2290,15 +2290,21 @@ async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
   const success = r.ok || r.status === 304; // 304 avec corps valide = OK
   // JSON null est une réponse valide (ex. GET /adn-approfondi/current sans évaluation).
   if (!success) {
-    const error = new Error(d?.message || d?.error?.message || d?.error || 'Erreur serveur');
+    // d?.error est presque toujours renseigné par le backend (voir publicError côté
+    // serveur) ; le texte générique ne sert que de tout dernier filet si un jour ce
+    // contrat n'est pas respecté.
+    const error = new Error(d?.message || d?.error?.message || d?.error || 'Le service est temporairement indisponible. Vous pouvez réessayer.');
     error.code = d?.code || 'REQUEST_FAILED';
     error.status = r.status;
     if (d && typeof d === 'object') Object.assign(error, d);
     throw error;
   }
   if (parseFailed) {
-    const error = new Error('Erreur serveur');
-    error.code = 'REQUEST_FAILED';
+    // Réponse reçue mais illisible en JSON (page d'erreur de plateforme, coupure en
+    // cours de transfert...) : la requête a bien atteint un serveur, mais rien
+    // d'exploitable n'est revenu. Un nouvel essai est la seule action utile ici.
+    const error = new Error('Le service est temporairement indisponible. Vous pouvez réessayer.');
+    error.code = 'RESPONSE_UNREADABLE';
     error.status = r.status;
     throw error;
   }
@@ -2390,6 +2396,17 @@ function adn(axes) {
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',nouveau:'chip-g',contacte:'chip-a',repondu:'chip-a',entretien:'chip-pu',offre:'chip-g',embauche:'chip-g',refusee:'chip-r',retiree:'chip-r'}[s]||'chip-b'; }
 function initials(text='') { return text.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase() || 'SF'; }
 const APP_PAGES = ['home','swipe','coaching','candidatures','test','adn-deep','messages','profile','cv','coach','account','pricing'];
+// Pile de navigation interne (sous-pages avec bouton retour). Alimentee par go()
+// uniquement lors d'une navigation app (pas lors d'un popstate ou d'un chargement
+// direct), pour que "retour" reflete un enchainement de pages reellement visitees
+// dans cette session plutot que l'historique navigateur (qui peut sortir de la SPA).
+let NAV_STACK = [];
+function goBack() {
+  const previous = NAV_STACK.pop();
+  // history:false : un retour ne doit jamais réinjecter la page quittée dans NAV_STACK
+  // (sinon home→cv→coach→back→back oscille cv↔coach au lieu de revenir home).
+  go(APP_PAGES.includes(previous) ? previous : 'home', { history: false });
+}
 let AI_AVAILABLE = false;
 let CV_ALLOWED = false;
 let COACH_ALLOWED = false;
@@ -2537,6 +2554,10 @@ function normOffre(o, mySkills = []) {
 function go(p, options = {}) {
   p = normalizePage(p);
   const ui = p !== 'auth';
+  const current = document.querySelector('.page.on')?.id?.replace('p-', '');
+  if (options.history !== false && current && current !== p && current !== 'auth') {
+    NAV_STACK.push(current);
+  }
   saveLastPage(p);
   document.getElementById('topbar').style.display = ui ? 'flex' : 'none';
   document.getElementById('bnav').style.display = ui ? 'flex' : 'none';

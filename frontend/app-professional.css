@@ -2077,3 +2077,27 @@ body.auth .shell, body.product-gateway .shell {
   #p-profile.page.on { max-width: 960px; }
   #p-swipe .card-identity { width: 30%; }
 }
+
+/* Bouton retour interne (sous-pages Optimiseur CV / Coach commercial) — additif,
+   ne modifie aucune regle .page-heading existante. */
+.page-heading-title-row { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.page-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin-top: -2px;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  background: var(--w);
+  color: var(--ink2);
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.page-back-btn:hover, .page-back-btn:focus-visible { border-color: var(--b); color: var(--b); background: var(--bs); }
+.page-back-btn svg { display: block; }
+@media (max-width: 719px) {
+  .page-heading-title-row { gap: 10px; }
+}
