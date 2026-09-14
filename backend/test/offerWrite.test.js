@@ -86,4 +86,35 @@ test('routes offres branchent les champs structurés à l’écriture', () => {
   assert.match(source, /job_type: structured\.job_type/);
   assert.match(source, /sector: structured\.sector/);
   assert.match(source, /tags: structured\.tags/);
+  assert.match(source, /variable_share: structured\.variable_share/);
+  assert.match(source, /sales_styles: structured\.sales_styles/);
+  assert.match(source, /customer_types: structured\.customer_types/);
+  assert.match(source, /skills: structured\.skills/);
+  assert.match(source, /experience_min: structured\.experience_min/);
+  assert.match(source, /variable_share/);
+  assert.match(source, /skills/);
+});
+
+test('variable_share / skills / sales_styles / customer_types / experience à l’écriture', () => {
+  const out = normalizeOfferStructuredFields({
+    type: 'CDI',
+    variable_share: 'Équilibrée',
+    sales_styles: ['Chasseur', 'full'],
+    customer_types: ['PME', 'grand compte'],
+    skills: ['cold-calling', 'Closing', 'UnknownSkill'],
+    experience_min: 1,
+    experience_max: 5,
+  });
+  assert.equal(out.variable_share, 'balanced');
+  assert.equal(out.has_variable, true);
+  assert.deepEqual(out.sales_styles, ['hunter', 'full']);
+  assert.deepEqual(out.customer_types, ['PME', 'Grands comptes']);
+  assert.deepEqual(out.skills, ['Cold calling', 'Closing']);
+  assert.equal(out.experience_min, 1);
+  assert.equal(out.experience_max, 5);
+  assert.throws(() => normalizeOfferStructuredFields({ type: 'CDI', variable_share: 'xx' }), /variable_share invalide/);
+  assert.throws(
+    () => normalizeOfferStructuredFields({ type: 'CDI', experience_min: 5, experience_max: 2 }),
+    /experience_max/,
+  );
 });

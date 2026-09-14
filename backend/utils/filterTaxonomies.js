@@ -17,6 +17,8 @@ const {
   SALES_STYLE_OPTIONS,
   AVAILABILITY_OPTIONS,
   REMOTE_MODE_OPTIONS,
+  VARIABLE_SHARES,
+  VARIABLE_SHARE_OPTIONS,
 } = require('./yannisTaxonomies');
 
 /** Mode de travail uniquement — pas de couverture géo (France entière ≠ remote_mode). */
@@ -54,6 +56,7 @@ const YANNIS_TAXONOMIES = Object.freeze({
   sectors: Object.freeze({ pendingYannis: false, enforceable: false, values: SECTORS }),
   tools: Object.freeze({ pendingYannis: false, enforceable: false, values: TOOLS }),
   methodologies: Object.freeze({ pendingYannis: false, enforceable: false, values: METHODOLOGIES }),
+  variable_share: Object.freeze({ pendingYannis: false, enforceable: false, values: VARIABLE_SHARES }),
 });
 
 /** @deprecated alias — les listes Yannis sont dans YANNIS_TAXONOMIES. */
@@ -153,6 +156,8 @@ module.exports = {
   CUSTOMER_TYPES,
   TOOLS,
   METHODOLOGIES,
+  VARIABLE_SHARES,
+  VARIABLE_SHARE_OPTIONS,
   normalizeToken,
   isAllowedValue,
   assertAllowedValue,
