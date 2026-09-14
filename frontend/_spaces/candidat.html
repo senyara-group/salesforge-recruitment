@@ -2403,7 +2403,9 @@ const APP_PAGES = ['home','swipe','coaching','candidatures','test','adn-deep','m
 let NAV_STACK = [];
 function goBack() {
   const previous = NAV_STACK.pop();
-  go(APP_PAGES.includes(previous) ? previous : 'home');
+  // history:false : un retour ne doit jamais réinjecter la page quittée dans NAV_STACK
+  // (sinon home→cv→coach→back→back oscille cv↔coach au lieu de revenir home).
+  go(APP_PAGES.includes(previous) ? previous : 'home', { history: false });
 }
 let AI_AVAILABLE = false;
 let CV_ALLOWED = false;
