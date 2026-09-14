@@ -153,6 +153,37 @@ test('filtre recruteur : canonicalisation des deux côtés (casse / accents / ti
   assert.equal(candidateMatchesSkills(withNego, ['Closing']), false);
 });
 
+test('filtre skills : valeur inconnue jamais matchable (même identique côté candidat)', () => {
+  const unknown = 'CompétenceInconnueXYZ';
+  assert.equal(
+    candidateMatchesSkills({ skills: [unknown] }, [unknown]),
+    false,
+    'dedicated unknown identique',
+  );
+  assert.equal(
+    candidateMatchesSkills({
+      axes: { meta: { competences: { Divers: [unknown] } } },
+    }, [unknown]),
+    false,
+    'legacy unknown identique',
+  );
+  assert.equal(
+    candidateMatchesSkills({ skills: ['Négociation'] }, ['Négociation', unknown]),
+    true,
+    'canonical + unknown ⇒ MATCH via canonical',
+  );
+  assert.equal(
+    candidateMatchesSkills({ skills: ['Négociation'] }, [unknown, 'AutreInconnue']),
+    false,
+    'uniquement unknown ⇒ 0 match (≠ absence de filtre)',
+  );
+  assert.equal(
+    candidateMatchesSkills({ skills: ['Négociation'] }, []),
+    true,
+    'liste vide = pas de filtre skills',
+  );
+});
+
 test('migration skills additive sans backfill destructif', () => {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'candidats_skills_migration.sql'), 'utf8');
   assert.match(sql, /add column if not exists skills text\[\]/i);

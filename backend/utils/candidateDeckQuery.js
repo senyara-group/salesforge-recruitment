@@ -177,16 +177,17 @@ function flattenCompetences(metaCompetences) {
 }
 
 function skillMatchKey(value) {
-  return resolveCanonicalSkill(value) || normalizeToken(value);
+  // Filtre structuré skills : uniquement les valeurs Yannis reconnues (pas de fallback token).
+  return resolveCanonicalSkill(value);
 }
 
 function candidateMatchesSkills(candidate, skills) {
   if (!skills?.length) return true;
+  const requested = skills.map(skillMatchKey).filter(Boolean);
+  // Toutes les valeurs demandées inconnues ⇒ aucun match (≠ absence de filtre).
+  if (!requested.length) return false;
   const pool = new Set(resolveCandidateSkills(candidate).map(skillMatchKey).filter(Boolean));
-  return skills.some((skill) => {
-    const key = skillMatchKey(skill);
-    return Boolean(key) && pool.has(key);
-  });
+  return requested.some((skill) => pool.has(skill));
 }
 
 function arrayOverlaps(candidateValues, selected) {
