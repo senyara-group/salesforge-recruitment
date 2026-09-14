@@ -1725,8 +1725,8 @@ button,input,textarea,select{font-family:inherit}
         </div>
       </div>
       <div class="comp-section">
-        <div class="comp-section-t">Compétences</div>
-        <div class="comp-section-s">Cochez vos points forts dans chaque catégorie — rien n'est obligatoire.</div>
+        <div class="comp-section-t">Soft skills</div>
+        <div class="comp-section-s">Qualités relationnelles et mentales — distinctes des compétences sales déclarées ci-dessous.</div>
         <div id="comp-accordion"></div>
       </div>
       <div class="comp-section" id="prefs-edit-section">
@@ -1755,6 +1755,10 @@ button,input,textarea,select{font-family:inherit}
         <div class="prefs-block">
           <div class="prefs-label">Types de clients</div>
           <div class="form-chips" id="edit-customer-types"></div>
+        </div>
+        <div class="prefs-block">
+          <div class="prefs-label">Compétences maîtrisées</div>
+          <div class="form-chips" id="edit-skills"></div>
         </div>
         <div class="prefs-block">
           <div class="prefs-label">Outils</div>
@@ -3964,7 +3968,8 @@ function profileCompleteness(p) {
   const hasVille = Boolean(String(p.ville || '').trim());
   const hasCv = Boolean(p.cv_url || p.axes?.meta?.cv_path || p.axes?.meta?.cv_file_name);
   const hasMotiv = Boolean(p.motivation_url || p.axes?.meta?.motivation_path || p.axes?.meta?.motivation_file_name);
-  const hasSkills = Object.values(p.competences || {}).flat().filter(Boolean).length > 0;
+  const hasSkills = (Array.isArray(p.skills) && p.skills.filter(Boolean).length > 0)
+    || Object.values(p.competences || {}).flat().filter(Boolean).length > 0;
   const hasAdn = Boolean(p.score_adn);
   const items = [
     { id: 'photo', label: 'Photo de profil', done: hasPhoto, action: 'Ajouter', run: () => document.getElementById('avatar-file-prof')?.click() },
@@ -4120,39 +4125,36 @@ const COMPETENCES_TAXONOMY = {
   'Communication': ['Aisance orale', "Clarté dans l'expression", 'Capacité à vulgariser des sujets complexes', 'Storytelling', 'Questionnement stratégique'],
   'Mental commercial': ['Résilience', 'Persévérance', 'Confiance en soi', 'Gestion du stress', 'Goût du challenge', 'Orientation résultats'],
   'Organisation & performance': ['Discipline', 'Autonomie', 'Gestion du temps', 'Curiosité', "Capacité d'apprentissage rapide", 'Adaptabilité'],
-  'Négociation': ['Gestion des objections', 'Capacité à challenger un prospect', 'Recherche du compromis gagnant-gagnant', 'Capacité à défendre la valeur plutôt que le prix'],
-  'Prospection': ['Cold calling', 'Cold emailing', 'Social selling', 'Prospection terrain', 'Prise de rendez-vous'],
-  'Vente': ['Découverte du besoin', 'Qualification', 'Argumentation', 'Traitement des objections', 'Closing', 'Négociation commerciale'],
-  'Développement': ['Upsell / Cross-sell', 'Fidélisation', 'Gestion de comptes clés', 'Développement de portefeuille'],
-  'Pilotage': ['Gestion de pipeline', 'Prévisions de vente (forecast)', 'Reporting commercial'],
-  'Méthodologies': ['BANT', 'MEDDIC', 'SPIN Selling', 'Challenger Sale', 'Solution Selling', 'Inbound Sales'],
-  'Outils CRM': ['Salesforce', 'HubSpot', 'Pipedrive', 'Zoho'],
-  'Outils de prospection': ['LinkedIn Sales Navigator', 'Lemlist', 'Apollo', 'Waalaxy', 'Outreach / Salesloft'],
-  'Autres outils': ['Aircall', 'Modjo / Gong', 'Notion'],
-  "Secteurs d'expérience": ['SaaS / Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance / Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile'],
 };
+const YANNIS_SKILLS = Object.freeze([
+  'Closing', 'Cold calling', 'Prospection terrain', 'Négociation', 'Gestion de portefeuille', 'Social selling',
+]);
 let EDIT_COMPETENCES = {};
+/** Snapshot complet axes.meta.competences (toutes catégories, y compris legacy hors UI). */
+let PROFILE_COMPETENCES_BASE = {};
+/** true seulement si l’utilisateur a touché l’accordéon soft skills. */
+let SOFT_COMPETENCES_DIRTY = false;
 const PROFILE_PREF_SUGGESTIONS = Object.freeze({
-  target_job_types: ['SDR / BDR', 'Account Executive', 'Account Manager', 'Sales Manager', 'Customer Success'],
+  target_job_types: [
+    'SDR / BDR', 'Business Developer', 'Account Executive', 'Commercial terrain', 'Key Account Manager', 'Manager commercial',
+  ],
   sales_style: [
-    { value: 'hunter', label: 'Hunter' },
-    { value: 'farmer', label: 'Farmer' },
-    { value: 'full', label: 'Full cycle' },
+    { value: 'hunter', label: 'Chasseur' },
+    { value: 'farmer', label: 'Éleveur' },
+    { value: 'full', label: 'Cycle complet' },
   ],
-  desired_contracts: ['CDI', 'Alternance', 'Mission', 'Freelance'],
-  sectors: COMPETENCES_TAXONOMY["Secteurs d'expérience"],
-  customer_types: ['B2B', 'B2C', 'PME', 'ETI', 'Grand compte', 'Startup'],
-  tools: [
-    ...COMPETENCES_TAXONOMY['Outils CRM'],
-    ...COMPETENCES_TAXONOMY['Outils de prospection'],
-    ...COMPETENCES_TAXONOMY['Autres outils'],
+  desired_contracts: ['CDI', 'Alternance', 'Freelance', 'Mission'],
+  sectors: [
+    'SaaS et Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance et Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile',
   ],
-  methodologies: COMPETENCES_TAXONOMY['Méthodologies'],
+  customer_types: ['PME', 'ETI', 'Grands comptes', 'Particuliers'],
+  skills: YANNIS_SKILLS,
+  tools: ['Salesforce', 'HubSpot', 'Pipedrive', 'Sales Navigator', 'Lemlist', 'Apollo'],
+  methodologies: ['BANT', 'MEDDIC', 'SPIN', 'Challenger', 'Solution Selling', 'Inbound'],
   availability: [
     { value: 'immediate', label: 'Immédiate' },
     { value: '1_month', label: 'Sous 1 mois' },
     { value: '3_months', label: 'Sous 3 mois' },
-    { value: 'open', label: 'À l’écoute' },
   ],
 });
 let EDIT_PREFS = {
@@ -4162,6 +4164,7 @@ let EDIT_PREFS = {
   desired_contracts: [],
   sectors: [],
   customer_types: [],
+  skills: [],
   tools: [],
   methodologies: [],
   availability: null,
@@ -4175,6 +4178,7 @@ function emptyEditPrefs() {
     desired_contracts: [],
     sectors: [],
     customer_types: [],
+    skills: [],
     tools: [],
     methodologies: [],
     availability: null,
@@ -4227,6 +4231,7 @@ function buildPrefsEditor(p = {}) {
     desired_contracts: [...(p.desired_contracts || [])],
     sectors: [...(p.sectors || [])],
     customer_types: [...(p.customer_types || [])],
+    skills: [...(p.skills || [])],
     tools: [...(p.tools || [])],
     methodologies: [...(p.methodologies || [])],
     availability: p.availability || null,
@@ -4242,6 +4247,7 @@ function buildPrefsEditor(p = {}) {
   set('edit-desired-contracts', 'desired_contracts', PROFILE_PREF_SUGGESTIONS.desired_contracts, 'multi');
   set('edit-sectors', 'sectors', PROFILE_PREF_SUGGESTIONS.sectors, 'multi');
   set('edit-customer-types', 'customer_types', PROFILE_PREF_SUGGESTIONS.customer_types, 'multi');
+  set('edit-skills', 'skills', PROFILE_PREF_SUGGESTIONS.skills, 'multi');
   set('edit-tools', 'tools', PROFILE_PREF_SUGGESTIONS.tools, 'multi');
   set('edit-methodologies', 'methodologies', PROFILE_PREF_SUGGESTIONS.methodologies, 'multi');
   set('edit-availability', 'availability', PROFILE_PREF_SUGGESTIONS.availability, 'single');
@@ -4258,6 +4264,7 @@ function renderProfilePrefs(p = {}) {
   (p.desired_contracts || []).forEach((v) => chips.push(v));
   (p.sectors || []).forEach((v) => chips.push(v));
   (p.customer_types || []).forEach((v) => chips.push(v));
+  (p.skills || []).slice(0, 6).forEach((v) => chips.push(v));
   (p.tools || []).slice(0, 6).forEach((v) => chips.push(v));
   (p.methodologies || []).slice(0, 4).forEach((v) => chips.push(v));
   if (p.availability) chips.push(PROFILE_PREF_SUGGESTIONS.availability.find((o) => o.value === p.availability)?.label || p.availability);
@@ -4267,7 +4274,12 @@ function renderProfilePrefs(p = {}) {
 }
 
 function buildCompetencesAccordion(selected = {}) {
-  EDIT_COMPETENCES = Object.fromEntries(Object.keys(COMPETENCES_TAXONOMY).map(cat => [cat, [...(selected[cat] || [])]]));
+  const source = (selected && typeof selected === 'object' && !Array.isArray(selected)) ? selected : {};
+  PROFILE_COMPETENCES_BASE = Object.fromEntries(
+    Object.entries(source).map(([cat, items]) => [cat, Array.isArray(items) ? [...items] : []]),
+  );
+  SOFT_COMPETENCES_DIRTY = false;
+  EDIT_COMPETENCES = Object.fromEntries(Object.keys(COMPETENCES_TAXONOMY).map(cat => [cat, [...(source[cat] || [])]]));
   const el = document.getElementById('comp-accordion');
   if (!el) return;
   el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
@@ -4275,18 +4287,19 @@ function buildCompetencesAccordion(selected = {}) {
       <div class="comp-cat-hd" onclick="toggleCompCat('${compCatId(cat)}')">
         <span>${esc(cat)}</span>
         <span style="display:flex;align-items:center;gap:7px">
-          <span class="comp-cat-count" id="comp-count-${compCatId(cat)}">${(selected[cat]||[]).length}</span>
+          <span class="comp-cat-count" id="comp-count-${compCatId(cat)}">${(source[cat]||[]).length}</span>
           <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
       </div>
       <div class="comp-cat-body">
-        ${items.map(item => `<span class="comp-pill${(selected[cat]||[]).includes(item)?' on':''}" onclick="toggleCompItem('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
+        ${items.map(item => `<span class="comp-pill${(source[cat]||[]).includes(item)?' on':''}" onclick="toggleCompItem('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
       </div>
     </div>`).join('');
 }
 function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
 function toggleCompCat(id) { document.getElementById('comp-cat-' + id)?.classList.toggle('on'); }
 function toggleCompItem(cat, item, el) {
+  SOFT_COMPETENCES_DIRTY = true;
   el.classList.toggle('on');
   const list = EDIT_COMPETENCES[cat] || (EDIT_COMPETENCES[cat] = []);
   if (list.includes(item)) EDIT_COMPETENCES[cat] = list.filter(i => i !== item);
@@ -4404,23 +4417,30 @@ async function saveProfileEdit() {
       prenom,
       nom,
       ville,
-      competences: EDIT_COMPETENCES,
       target_job_types: EDIT_PREFS.target_job_types || [],
       sales_style: EDIT_PREFS.sales_style,
       years_experience,
       desired_contracts: EDIT_PREFS.desired_contracts || [],
       sectors: EDIT_PREFS.sectors || [],
       customer_types: EDIT_PREFS.customer_types || [],
+      skills: EDIT_PREFS.skills || [],
       tools: EDIT_PREFS.tools || [],
       methodologies: EDIT_PREFS.methodologies || [],
       availability: EDIT_PREFS.availability,
     };
+    // Soft skills seulement si touchés — sinon on n’écrit pas axes.meta.competences
+    // (préserve Prospection/Vente/Outils/… legacy). Backend overlay les catégories.
+    if (SOFT_COMPETENCES_DIRTY) {
+      payload.competences = { ...EDIT_COMPETENCES };
+    }
     const p = await api('PUT', '/candidats/profil', payload);
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
     document.getElementById('prof-name-text').textContent = profileDisplayName(p);
     renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
-    renderProfileCompetences(EDIT_COMPETENCES);
+    PROFILE_COMPETENCES_BASE = p.competences || {};
+    SOFT_COMPETENCES_DIRTY = false;
+    renderProfileCompetences(p.competences || {});
     renderProfilePrefs(p);
     document.getElementById('profile-edit-panel').classList.remove('on');
     // Sans ça, le score de compatibilité sur les offres restait calculé avec

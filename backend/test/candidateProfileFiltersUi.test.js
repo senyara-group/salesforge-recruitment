@@ -16,16 +16,19 @@ test('profil structuré : update champs valides', () => {
     desired_contracts: ['CDI', 'Freelance'],
     sectors: ['SaaS / Tech'],
     customer_types: ['PME'],
-    tools: ['HubSpot'],
-    methodologies: ['MEDDIC'],
+    skills: ['Closing', 'cold calling', 'UnknownSkill'],
+    tools: ['HubSpot', 'LinkedIn Sales Navigator'],
+    methodologies: ['MEDDIC', 'SPIN Selling'],
     availability: 'immediate',
   });
   assert.deepEqual(out.target_job_types, ['SDR', 'Account Executive']);
   assert.equal(out.sales_style, 'hunter');
   assert.equal(out.years_experience, 5);
   assert.deepEqual(out.desired_contracts, ['CDI', 'Freelance']);
-  assert.deepEqual(out.sectors, ['SaaS / Tech']);
-  assert.deepEqual(out.tools, ['HubSpot']);
+  assert.deepEqual(out.sectors, ['SaaS et Tech']);
+  assert.deepEqual(out.skills, ['Closing', 'Cold calling']);
+  assert.deepEqual(out.tools, ['HubSpot', 'Sales Navigator']);
+  assert.deepEqual(out.methodologies, ['MEDDIC', 'SPIN']);
   assert.equal(out.availability, 'immediate');
 });
 
@@ -55,7 +58,7 @@ test('PUT profil : isolation user_id, pas de deep ADN / CV IA, score préservé'
   const block = source.slice(start, end);
   assert.match(block, /normalizeCandidateProfileStructuredFields/);
   assert.match(block, /merge_candidat_axes_meta/);
-  assert.match(block, /buildAxesMetaPatch/);
+  assert.match(block, /prepareAxesMetaPatch/);
   assert.match(block, /req\.body\?\.user_id/);
   assert.match(block, /\.eq\('user_id', req\.user\.id\)/);
   assert.doesNotMatch(block, /score_adn\s*:/);
@@ -74,6 +77,12 @@ test('candidateProfileWrite ne lit pas deep ADN / CV IA', () => {
 test('UI candidat expose préférences professionnelles', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'), 'utf8');
   assert.match(html, /Préférences professionnelles/);
+  assert.match(html, /Compétences maîtrisées/);
+  assert.match(html, /id="edit-skills"/);
+  assert.match(html, /skills: EDIT_PREFS\.skills/);
+  assert.match(html, /SOFT_COMPETENCES_DIRTY/);
+  assert.match(html, /PROFILE_COMPETENCES_BASE/);
+  assert.match(html, /if \(SOFT_COMPETENCES_DIRTY\)/);
   assert.match(html, /target_job_types/);
   assert.match(html, /desired_contracts/);
   assert.match(html, /years_experience/);
@@ -102,7 +111,8 @@ test('UI recruteur filtres : draft/apply, snapshot, pas de fetch avant Appliquer
 test('buildCandidateDeckParams côté UI : CSV sans vides', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');
   assert.match(html, /setCsv\('target_job_types'/);
-  assert.match(html, /setCsv\('competences'/);
+  assert.match(html, /setCsv\('skills'/);
+  assert.match(html, /id="filt-skills"/);
   assert.match(html, /new Set/);
   assert.doesNotMatch(html, /params\.set\('plan'/);
   assert.doesNotMatch(html, /params\.set\('user_id'/);

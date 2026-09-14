@@ -11,13 +11,14 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkA
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
-const { normalizeCandidateProfileStructuredFields, buildAxesMetaPatch } = require('../utils/candidateProfileWrite');
+const { normalizeCandidateProfileStructuredFields, prepareAxesMetaPatch } = require('../utils/candidateProfileWrite');
 const { compatibilityScore } = require('../utils/recruiterMatching');
 const {
   parseCandidateDeckQuery,
   applySupabaseCandidateDeckFilters,
   applySupabaseScoreCursor,
   fetchCandidateDeckRows,
+  resolveCandidateSkills,
 } = require('../utils/candidateDeckQuery');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
@@ -31,7 +32,7 @@ const CANDIDATE_DECK_SELECT = [
   // Colonnes SQL réelles uniquement. avatar/cv/motivation sont dans axes.meta
   // (*_path / *_bucket) puis signés via withFreshCvUrl — jamais des colonnes table.
   'id', 'user_id', 'prenom', 'nom', 'titre', 'score_adn', 'axes',
-  'target_job_types', 'sales_style', 'years_experience',
+  'skills', 'target_job_types', 'sales_style', 'years_experience',
   'desired_contracts', 'sectors', 'tools', 'methodologies',
   'availability', 'customer_types',
 ].join(', ');
@@ -509,6 +510,7 @@ router.get('/profil', authMiddleware, async (req, res) => {
       ...withUrls,
       ville: profil.axes?.meta?.ville || '',
       competences: profil.axes?.meta?.competences || {},
+      skills: resolveCandidateSkills(profil),
       certifie,
       target_job_types: profil.target_job_types || [],
       sales_style: profil.sales_style || null,
@@ -806,7 +808,8 @@ router.put('/profil', authMiddleware, async (req, res) => {
 
     const { nom, prenom, titre } = req.body || {};
     const structured = normalizeCandidateProfileStructuredFields(req.body || {});
-    const metaPatch = buildAxesMetaPatch(req.body || {});
+    // competences : overlay catégories sur l’existant (préserve legacy hors UI soft skills).
+    const metaPatch = prepareAxesMetaPatch(req.body || {}, current.axes?.meta || {});
     const columnPatch = definedOnly({
       nom,
       prenom,
@@ -841,6 +844,7 @@ router.put('/profil', authMiddleware, async (req, res) => {
       ...data,
       ville: data.axes?.meta?.ville || '',
       competences: data.axes?.meta?.competences || {},
+      skills: resolveCandidateSkills(data),
       target_job_types: data.target_job_types || [],
       sales_style: data.sales_style || null,
       years_experience: data.years_experience ?? null,
@@ -895,7 +899,8 @@ function mapCandidateDeckCard(profile, matching) {
   const initials = anon
     ? '?'
     : `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() || 'SF';
-  const skills = Object.keys(axes).filter((key) => typeof axes[key] === 'number').slice(0, 5);
+  const declaredSkills = resolveCandidateSkills(profile);
+  const axisLabels = Object.keys(axes).filter((key) => typeof axes[key] === 'number').slice(0, 5);
   const fit = compatibilityScore(axes, matching);
 
   return {
@@ -924,7 +929,7 @@ function mapCandidateDeckCard(profile, matching) {
     cv_file_name: anon ? '' : (profile.axes?.meta?.cv_file_name || ''),
     motivation_url: anon ? '' : (profile.motivation_url || ''),
     motivation_file_name: anon ? '' : (profile.axes?.meta?.motivation_file_name || ''),
-    skills: skills.length ? skills : ['Sales', 'B2B'],
+    skills: declaredSkills.length ? declaredSkills.slice(0, 10) : (axisLabels.length ? axisLabels : ['Sales', 'B2B']),
     competences: profile.axes?.meta?.competences || {},
     ai: profile.axes?.resultat?.desc || 'Analyse basee sur le score ADN et les axes renseignes.',
     predict: [
@@ -1103,6 +1108,7 @@ router.delete('/compte', authMiddleware, async (req, res) => {
         titre: null,
         cv_url: null,
         score_adn: null,
+        skills: [],
         axes: {},
         swipes_meta: {},
         contacts_meta: {},

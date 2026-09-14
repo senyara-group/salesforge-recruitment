@@ -107,17 +107,25 @@ test('contract_type backfill déterministe sans modifier offres.type', () => {
   assert.doesNotMatch(sql, /update\s+public\.offres\s+set\s+type\s*=/i);
 });
 
-test('taxonomies stables enforceables ; pending Yannis non enforceables', () => {
+test('taxonomies stables enforceables ; Yannis V1 listées non enforceables DB', () => {
   assert.deepEqual(CONTRACT_TYPES, ['CDI', 'Alternance', 'Mission', 'Freelance']);
   assert.equal(OFFER_TAG_VOCABULARY.length, 7);
   assert.equal(STABLE_TAXONOMIES.contract_type.enforceable, true);
   assert.equal(STABLE_TAXONOMIES.remote_mode.enforceable, true);
   assert.equal(STABLE_TAXONOMIES.remote_mode.values.includes('nationwide'), false);
-  for (const key of ['job_type', 'sales_style', 'customer_types', 'availability', 'sectors']) {
-    assert.equal(PENDING_TAXONOMIES[key].pendingYannis, true);
+  for (const key of ['skills', 'target_job_types', 'sales_style', 'customer_types', 'availability', 'sectors', 'tools', 'methodologies']) {
+    assert.equal(PENDING_TAXONOMIES[key].pendingYannis, false);
     assert.equal(PENDING_TAXONOMIES[key].enforceable, false);
-    assert.equal(PENDING_TAXONOMIES[key].values, null);
+    assert.ok(Array.isArray(PENDING_TAXONOMIES[key].values));
+    assert.ok(PENDING_TAXONOMIES[key].values.length > 0);
   }
+  assert.deepEqual(PENDING_TAXONOMIES.skills.values, [
+    'Closing', 'Cold calling', 'Prospection terrain', 'Négociation', 'Gestion de portefeuille', 'Social selling',
+  ]);
+  assert.ok(!PENDING_TAXONOMIES.skills.values.includes('HubSpot'));
+  assert.ok(!PENDING_TAXONOMIES.skills.values.includes('MEDDIC'));
+  assert.ok(PENDING_TAXONOMIES.tools.values.includes('HubSpot'));
+  assert.ok(PENDING_TAXONOMIES.methodologies.values.includes('MEDDIC'));
 });
 
 test('validation taxonomies stables et règle OR intra-famille / AND inter-familles', () => {

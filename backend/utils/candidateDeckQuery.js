@@ -4,6 +4,11 @@
  */
 
 const { CONTRACT_TYPES, normalizeToken } = require('./filterTaxonomies');
+const {
+  resolveCandidateSkills,
+  flattenCompetencesMeta,
+  resolveCanonicalSkill,
+} = require('./yannisTaxonomies');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -168,14 +173,21 @@ function parseCandidateDeckQuery(query = {}) {
 
 /** Flat exact OR — comportement historique. */
 function flattenCompetences(metaCompetences) {
-  if (!metaCompetences || typeof metaCompetences !== 'object') return [];
-  return Object.values(metaCompetences).flat().map(String);
+  return flattenCompetencesMeta(metaCompetences);
+}
+
+function skillMatchKey(value) {
+  // Filtre structuré skills : uniquement les valeurs Yannis reconnues (pas de fallback token).
+  return resolveCanonicalSkill(value);
 }
 
 function candidateMatchesSkills(candidate, skills) {
   if (!skills?.length) return true;
-  const flat = flattenCompetences(candidate.axes?.meta?.competences);
-  return skills.some((skill) => flat.includes(skill));
+  const requested = skills.map(skillMatchKey).filter(Boolean);
+  // Toutes les valeurs demandées inconnues ⇒ aucun match (≠ absence de filtre).
+  if (!requested.length) return false;
+  const pool = new Set(resolveCandidateSkills(candidate).map(skillMatchKey).filter(Boolean));
+  return requested.some((skill) => pool.has(skill));
 }
 
 function arrayOverlaps(candidateValues, selected) {
@@ -402,5 +414,6 @@ module.exports = {
   applySupabaseCandidateDeckFilters,
   applySupabaseScoreCursor,
   fetchCandidateDeckRows,
+  resolveCandidateSkills,
   MATCHING_KEYS,
 };

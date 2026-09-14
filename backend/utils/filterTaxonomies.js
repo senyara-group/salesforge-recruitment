@@ -1,16 +1,26 @@
 /**
- * Taxonomies filtres — primitives backend (PR A).
- * Pas encore branchées aux routes deck ; validation centralisée pour les PR suivantes.
+ * Taxonomies filtres — primitives backend.
+ * Listes métier Yannis V1 : voir yannisTaxonomies.js (pas d’enum DB dur).
  *
- * Stables (UI actuelle) : contract_type, remote_mode, offer tags.
- * Pending Yannis : job_type, sales_style, customer_types, availability, sectors —
- * pas de valeurs fermées enforceables (ne bloquent pas un choix produit futur).
+ * Stables enforceables offres : contract_type, remote_mode, offer tags.
+ * Profil / filtres candidat : listes Yannis en app (skills, tools, …) sans contrainte SQL.
  */
 
-const CONTRACT_TYPES = Object.freeze(['CDI', 'Alternance', 'Mission', 'Freelance']);
+const {
+  CONTRACT_TYPES,
+  CANDIDATE_SKILLS,
+  TARGET_JOB_TYPES,
+  SECTORS,
+  CUSTOMER_TYPES,
+  TOOLS,
+  METHODOLOGIES,
+  SALES_STYLE_OPTIONS,
+  AVAILABILITY_OPTIONS,
+  REMOTE_MODE_OPTIONS,
+} = require('./yannisTaxonomies');
 
 /** Mode de travail uniquement — pas de couverture géo (France entière ≠ remote_mode). */
-const REMOTE_MODES = Object.freeze(['onsite', 'hybrid', 'remote']);
+const REMOTE_MODES = Object.freeze(REMOTE_MODE_OPTIONS.map((item) => item.value));
 
 /** Tags offre historiques (liste fermée UI actuelle). */
 const OFFER_TAG_VOCABULARY = Object.freeze([
@@ -24,41 +34,30 @@ const OFFER_TAG_VOCABULARY = Object.freeze([
 ]);
 
 /**
- * Concepts en attente de validation produit.
- * Aucune liste de valeurs fermée : enforceable=false.
+ * Familles Yannis V1 — valeurs documentées, enforceable=false en DB
+ * (validation / normalisation applicative uniquement).
  */
-const PENDING_TAXONOMIES = Object.freeze({
-  job_type: Object.freeze({
-    pendingYannis: true,
-    enforceable: false,
-    values: null,
-    note: 'Liste métier à confirmer par Yannis — ne pas enforce comme enum.',
-  }),
+const YANNIS_TAXONOMIES = Object.freeze({
+  skills: Object.freeze({ pendingYannis: false, enforceable: false, values: CANDIDATE_SKILLS }),
+  target_job_types: Object.freeze({ pendingYannis: false, enforceable: false, values: TARGET_JOB_TYPES }),
   sales_style: Object.freeze({
-    pendingYannis: true,
+    pendingYannis: false,
     enforceable: false,
-    values: null,
-    note: 'hunter/farmer/full existent dans l’ADN court mais la liste finale reste à valider.',
+    values: SALES_STYLE_OPTIONS.map((item) => item.value),
   }),
-  customer_types: Object.freeze({
-    pendingYannis: true,
-    enforceable: false,
-    values: null,
-    note: 'Taxonomie clientèle absente du produit actuel.',
-  }),
+  customer_types: Object.freeze({ pendingYannis: false, enforceable: false, values: CUSTOMER_TYPES }),
   availability: Object.freeze({
-    pendingYannis: true,
+    pendingYannis: false,
     enforceable: false,
-    values: null,
-    note: 'Disponibilité profil non modélisée aujourd’hui.',
+    values: AVAILABILITY_OPTIONS.map((item) => item.value),
   }),
-  sectors: Object.freeze({
-    pendingYannis: true,
-    enforceable: false,
-    values: null,
-    note: 'Secteurs fragmentés (prefs ADN / compétences / recruteur) — liste à unifier.',
-  }),
+  sectors: Object.freeze({ pendingYannis: false, enforceable: false, values: SECTORS }),
+  tools: Object.freeze({ pendingYannis: false, enforceable: false, values: TOOLS }),
+  methodologies: Object.freeze({ pendingYannis: false, enforceable: false, values: METHODOLOGIES }),
 });
+
+/** @deprecated alias — les listes Yannis sont dans YANNIS_TAXONOMIES. */
+const PENDING_TAXONOMIES = YANNIS_TAXONOMIES;
 
 const STABLE_TAXONOMIES = Object.freeze({
   contract_type: Object.freeze({ pendingYannis: false, enforceable: true, values: CONTRACT_TYPES }),
@@ -146,7 +145,14 @@ module.exports = {
   REMOTE_MODES,
   OFFER_TAG_VOCABULARY,
   PENDING_TAXONOMIES,
+  YANNIS_TAXONOMIES,
   STABLE_TAXONOMIES,
+  CANDIDATE_SKILLS,
+  TARGET_JOB_TYPES,
+  SECTORS,
+  CUSTOMER_TYPES,
+  TOOLS,
+  METHODOLOGIES,
   normalizeToken,
   isAllowedValue,
   assertAllowedValue,

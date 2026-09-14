@@ -27,7 +27,7 @@ function candidateAt(position, total, { skill = false, score = 80, userId } = {}
     id: uuid(total - position + 1),
     user_id: userId || uuid(total + position),
     score_adn: score,
-    axes: { meta: { competences: skill ? { Vente: ['RareSkill'] } : {} } },
+    axes: { meta: { competences: skill ? { Vente: ['Closing'] } : {} } },
     sectors: ['SaaS'],
   };
 }
@@ -317,7 +317,7 @@ test('cursor forgé est refusé avant toute interpolation PostgREST', () => {
 test('vrai fill-loop skills atteint les positions 150 / 280 / 490 sans fausse fin', async () => {
   const matches = new Set([150, 280, 490]);
   const rows = Array.from({ length: 500 }, (_, index) => candidateAt(index + 1, 500, { skill: matches.has(index + 1) }));
-  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  const result = await collectFlow(rows, { limit: '20', skills: 'Closing' });
   assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [150, 280, 490]);
   assert.equal(new Set(result.all.map((row) => row.id)).size, 3);
   assert.equal(result.pages[0].has_more, true);
@@ -326,7 +326,7 @@ test('vrai fill-loop skills atteint les positions 150 / 280 / 490 sans fausse fi
 
 test('page vide puis partielle conservent la continuation jusqu’au match sparse', async () => {
   const rows = Array.from({ length: 700 }, (_, index) => candidateAt(index + 1, 700, { skill: index + 1 === 650 }));
-  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  const result = await collectFlow(rows, { limit: '20', skills: 'Closing' });
   assert.equal(result.pages[0].page.length, 0);
   assert.equal(result.pages[0].has_more, true);
   assert.equal(result.all.length, 1);
@@ -336,7 +336,7 @@ test('page vide puis partielle conservent la continuation jusqu’au match spars
 
 test('le 21e match inspecté reste disponible sur la page suivante', async () => {
   const rows = Array.from({ length: 40 }, (_, index) => candidateAt(index + 1, 40, { skill: index < 21 }));
-  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' });
+  const result = await collectFlow(rows, { limit: '20', skills: 'Closing' });
   assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), Array.from({ length: 21 }, (_, index) => index + 1));
   assert.equal(new Set(result.all.map((row) => row.id)).size, 21);
 });
@@ -347,7 +347,7 @@ test('fill-loop gère égalités, transition NULL, filtre SQL et exclusions', as
     score: index < 400 ? 75 : null,
   }));
   rows[589].sectors = ['Industrie'];
-  const result = await collectFlow(rows, { limit: '2', skills: 'RareSkill', sectors: 'SaaS' }, {
+  const result = await collectFlow(rows, { limit: '2', skills: 'Closing', sectors: 'SaaS' }, {
     seenIds: [rows[309].id],
   });
   assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [20, 610]);
@@ -359,7 +359,7 @@ test('déduplication historique user_id est restaurée dans le flow et dans les 
     skill: [10, 11, 40].includes(index + 1),
   }));
   rows[10].user_id = rows[9].user_id;
-  const filters = parseCandidateDeckQuery({ limit: '20', skills: 'RareSkill' });
+  const filters = parseCandidateDeckQuery({ limit: '20', skills: 'Closing' });
   const result = await fetchCandidateDeckRows(filters, { fetchBatch: inMemoryBatchFetcher(rows, filters) });
   assert.deepEqual(result.page.map((row) => rows.indexOf(row) + 1), [10, 40]);
   assert.equal(new Set(result.page.map((row) => row.user_id)).size, result.page.length);
@@ -368,9 +368,56 @@ test('déduplication historique user_id est restaurée dans le flow et dans les 
 test('volume 5000 sparse termine sans omission, doublon ou faux has_more', async () => {
   const matches = new Set([1, 777, 2499, 4990]);
   const rows = Array.from({ length: 5000 }, (_, index) => candidateAt(index + 1, 5000, { skill: matches.has(index + 1) }));
-  const result = await collectFlow(rows, { limit: '20', skills: 'RareSkill' }, {}, 30);
+  const result = await collectFlow(rows, { limit: '20', skills: 'Closing' }, {}, 30);
   assert.deepEqual(result.all.map((row) => rows.indexOf(row) + 1), [...matches]);
   assert.equal(new Set(result.all.map((row) => row.id)).size, matches.size);
+});
+
+test('sparse mixte skills[] + legacy aliases (150/280/490) avec filtre SQL sectors', async () => {
+  const rows = Array.from({ length: 500 }, (_, index) => {
+    const position = index + 1;
+    return {
+      id: uuid(500 - position + 1),
+      user_id: uuid(500 + position),
+      score_adn: position <= 400 ? 85 : null,
+      skills: null,
+      axes: { meta: { competences: {} } },
+      sectors: ['SaaS'],
+    };
+  });
+
+  // 150 — skills[] dédiées
+  rows[149].skills = ['Négociation'];
+
+  // 280 — legacy-only alias Négociation commerciale
+  rows[279].axes = { meta: { competences: { Négociation: ['Négociation commerciale'] } } };
+
+  // 490 — legacy-only aliases (phase score NULL)
+  rows[489].axes = {
+    meta: {
+      competences: {
+        Prospection: ['cold-calling'],
+        Portefeuille: ['Développement de portefeuille'],
+      },
+    },
+  };
+
+  // Leurres : skills hors filtre / mauvais secteur
+  rows[99].skills = ['Closing'];
+  rows[119].axes = { meta: { competences: { X: ['Négociation commerciale'] } } };
+  rows[119].sectors = ['Industrie'];
+
+  const result = await collectFlow(rows, {
+    limit: '20',
+    // Variantes non canoniques côté filtre — canonicalisation des deux côtés
+    skills: 'NEGOCIATION,COLD CALLING,developpement-de-portefeuille',
+    sectors: 'SaaS',
+  });
+  const positions = result.all.map((row) => rows.indexOf(row) + 1);
+  assert.deepEqual(positions, [150, 280, 490]);
+  assert.equal(new Set(result.all.map((row) => row.id)).size, 3);
+  assert.equal(result.pages[0].has_more, true);
+  assert.equal(result.pages.at(-1).has_more, false);
 });
 
 test('select deck n’utilise plus les colonnes URL fantômes (avatar/cv/motivation)', () => {
