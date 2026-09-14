@@ -192,6 +192,36 @@ function buildAxesMetaPatch(body = {}) {
 }
 
 /**
+ * Overlay des catégories competences sans supprimer les clés absentes du patch UI.
+ * Le RPC merge meta remplace la clé `competences` entière : on prépare donc un blob
+ * complet (legacy + catégories réellement envoyées) avant l’appel atomique.
+ */
+function mergeCompetencesCategoryPatch(existing, incoming) {
+  if (incoming == null || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    throw httpError('competences doit être un objet', 'CANDIDATE_PROFILE_COMPETENCES_INVALID');
+  }
+  const base = (existing && typeof existing === 'object' && !Array.isArray(existing))
+    ? { ...existing }
+    : {};
+  return { ...base, ...incoming };
+}
+
+/**
+ * Prépare le patch RPC : si `competences` est présent, fusionne les catégories
+ * avec l’existant déjà chargé (pas d’UPDATE axes complet).
+ */
+function prepareAxesMetaPatch(body = {}, currentMeta = {}) {
+  const patch = buildAxesMetaPatch(body);
+  if (Object.prototype.hasOwnProperty.call(patch, 'competences')) {
+    patch.competences = mergeCompetencesCategoryPatch(
+      currentMeta && currentMeta.competences,
+      patch.competences,
+    );
+  }
+  return patch;
+}
+
+/**
  * Sémantique PostgreSQL merge_candidat_axes_meta (miroir unit-testable).
  * JSON null / JS null → {} ; array|scalar → throw avant « UPDATE ».
  */
@@ -251,6 +281,8 @@ module.exports = {
   normalizeCandidateProfileStructuredFields,
   parseOptionalStringList,
   buildAxesMetaPatch,
+  mergeCompetencesCategoryPatch,
+  prepareAxesMetaPatch,
   applyAxesMetaMerge,
   resolveMergeCandidatAxesMeta,
 };

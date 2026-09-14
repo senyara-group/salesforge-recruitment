@@ -373,6 +373,52 @@ test('volume 5000 sparse termine sans omission, doublon ou faux has_more', async
   assert.equal(new Set(result.all.map((row) => row.id)).size, matches.size);
 });
 
+test('sparse mixte skills[] + legacy aliases (150/280/490) avec filtre SQL sectors', async () => {
+  const rows = Array.from({ length: 500 }, (_, index) => {
+    const position = index + 1;
+    return {
+      id: uuid(500 - position + 1),
+      user_id: uuid(500 + position),
+      score_adn: position <= 400 ? 85 : null,
+      skills: null,
+      axes: { meta: { competences: {} } },
+      sectors: ['SaaS'],
+    };
+  });
+
+  // 150 — skills[] dédiées
+  rows[149].skills = ['Négociation'];
+
+  // 280 — legacy-only alias Négociation commerciale
+  rows[279].axes = { meta: { competences: { Négociation: ['Négociation commerciale'] } } };
+
+  // 490 — legacy-only aliases (phase score NULL)
+  rows[489].axes = {
+    meta: {
+      competences: {
+        Prospection: ['cold-calling'],
+        Portefeuille: ['Développement de portefeuille'],
+      },
+    },
+  };
+
+  // Leurres : skills hors filtre / mauvais secteur
+  rows[99].skills = ['Closing'];
+  rows[119].axes = { meta: { competences: { X: ['Négociation commerciale'] } } };
+  rows[119].sectors = ['Industrie'];
+
+  const result = await collectFlow(rows, {
+    limit: '20',
+    skills: 'Négociation,Cold calling,Gestion de portefeuille',
+    sectors: 'SaaS',
+  });
+  const positions = result.all.map((row) => rows.indexOf(row) + 1);
+  assert.deepEqual(positions, [150, 280, 490]);
+  assert.equal(new Set(result.all.map((row) => row.id)).size, 3);
+  assert.equal(result.pages[0].has_more, true);
+  assert.equal(result.pages.at(-1).has_more, false);
+});
+
 test('select deck n’utilise plus les colonnes URL fantômes (avatar/cv/motivation)', () => {
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'), 'utf8');

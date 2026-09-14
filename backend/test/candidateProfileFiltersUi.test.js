@@ -58,7 +58,7 @@ test('PUT profil : isolation user_id, pas de deep ADN / CV IA, score préservé'
   const block = source.slice(start, end);
   assert.match(block, /normalizeCandidateProfileStructuredFields/);
   assert.match(block, /merge_candidat_axes_meta/);
-  assert.match(block, /buildAxesMetaPatch/);
+  assert.match(block, /prepareAxesMetaPatch/);
   assert.match(block, /req\.body\?\.user_id/);
   assert.match(block, /\.eq\('user_id', req\.user\.id\)/);
   assert.doesNotMatch(block, /score_adn\s*:/);
@@ -80,6 +80,9 @@ test('UI candidat expose préférences professionnelles', () => {
   assert.match(html, /Compétences maîtrisées/);
   assert.match(html, /id="edit-skills"/);
   assert.match(html, /skills: EDIT_PREFS\.skills/);
+  assert.match(html, /SOFT_COMPETENCES_DIRTY/);
+  assert.match(html, /PROFILE_COMPETENCES_BASE/);
+  assert.match(html, /if \(SOFT_COMPETENCES_DIRTY\)/);
   assert.match(html, /target_job_types/);
   assert.match(html, /desired_contracts/);
   assert.match(html, /years_experience/);

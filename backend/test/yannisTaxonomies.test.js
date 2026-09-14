@@ -7,6 +7,8 @@ const {
   TOOLS,
   METHODOLOGIES,
   canonicalizeCandidateSkill,
+  resolveCanonicalSkill,
+  normalizeSkill,
   flattenCompetencesMeta,
   resolveCandidateSkills,
 } = require('../utils/yannisTaxonomies');
@@ -36,9 +38,12 @@ test('skills Yannis distinctes de tools et methodologies', () => {
   }
 });
 
-test('canonicalize skills : alias legacy + unknown drop', () => {
-  assert.equal(canonicalizeCandidateSkill('cold calling'), 'Cold calling');
-  assert.equal(canonicalizeCandidateSkill('Négociation commerciale'), 'Négociation');
+test('canonicalize / resolveCanonicalSkill : alias legacy + unknown drop', () => {
+  assert.equal(normalizeSkill('Cold-Calling'), 'cold calling');
+  assert.equal(resolveCanonicalSkill('cold calling'), 'Cold calling');
+  assert.equal(resolveCanonicalSkill('cold-calling'), 'Cold calling');
+  assert.equal(resolveCanonicalSkill('Négociation commerciale'), 'Négociation');
+  assert.equal(resolveCanonicalSkill('Développement de portefeuille'), 'Gestion de portefeuille');
   assert.equal(canonicalizeCandidateSkill('Unknown'), null);
   const out = normalizeCandidateProfileStructuredFields({
     skills: ['Closing', 'Closing', 'cold-calling', 'FooBar', 'HubSpot'],
@@ -46,7 +51,7 @@ test('canonicalize skills : alias legacy + unknown drop', () => {
   assert.deepEqual(out.skills, ['Closing', 'Cold calling']);
 });
 
-test('resolveCandidateSkills : colonne dédiée prioritaire, sinon axes.meta.competences', () => {
+test('resolveCandidateSkills : colonne dédiée prioritaire, sinon axes.meta.competences + aliases', () => {
   assert.deepEqual(
     resolveCandidateSkills({ skills: ['Closing', ' Closing ', 'Closing'] }),
     ['Closing'],
@@ -71,10 +76,24 @@ test('resolveCandidateSkills : colonne dédiée prioritaire, sinon axes.meta.com
     }),
     ['Closing', 'Écoute'],
   );
+  assert.deepEqual(
+    resolveCandidateSkills({
+      axes: {
+        meta: {
+          competences: {
+            Négociation: ['Négociation commerciale'],
+            Prospection: ['cold-calling'],
+            Portefeuille: ['Développement de portefeuille'],
+          },
+        },
+      },
+    }),
+    ['Négociation', 'Cold calling', 'Gestion de portefeuille'],
+  );
   assert.deepEqual(flattenCompetencesMeta({ A: ['x'], B: ['y', 'x'] }), ['x', 'y', 'x']);
 });
 
-test('filtre deck : match sur skills dédiées ou legacy flat', () => {
+test('filtre deck : match sur skills dédiées ou legacy flat + aliases', () => {
   assert.equal(
     candidateMatchesSkills({ skills: ['Closing'] }, ['Closing']),
     true,
@@ -83,6 +102,24 @@ test('filtre deck : match sur skills dédiées ou legacy flat', () => {
     candidateMatchesSkills({
       axes: { meta: { competences: { Vente: ['Social selling'] } } },
     }, ['Social selling']),
+    true,
+  );
+  assert.equal(
+    candidateMatchesSkills({
+      axes: { meta: { competences: { Négociation: ['Négociation commerciale'] } } },
+    }, ['Négociation']),
+    true,
+  );
+  assert.equal(
+    candidateMatchesSkills({
+      axes: { meta: { competences: { Prospection: ['cold-calling'] } } },
+    }, ['Cold calling']),
+    true,
+  );
+  assert.equal(
+    candidateMatchesSkills({
+      axes: { meta: { competences: { Portefeuille: ['Développement de portefeuille'] } } },
+    }, ['Gestion de portefeuille']),
     true,
   );
   assert.equal(

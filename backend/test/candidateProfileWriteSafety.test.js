@@ -7,6 +7,8 @@ const {
   normalizeCandidateProfileStructuredFields,
   parseOptionalStringList,
   buildAxesMetaPatch,
+  mergeCompetencesCategoryPatch,
+  prepareAxesMetaPatch,
   applyAxesMetaMerge,
   resolveMergeCandidatAxesMeta,
   MAX_YEARS,
@@ -367,6 +369,63 @@ test('PUT profil ville/competences : RPC atomique + clés concurrentes préserv�
   assert.equal(res.json.score_adn, 77);
 });
 
+test('PUT profil soft skills : catégories legacy axes.meta.competences préservées', async () => {
+  state.lastUpdatePatch = null;
+  state.lastRpc = null;
+  state.concurrentMetaInjection = null;
+  const legacy = {
+    Prospection: ['Cold calling'],
+    Vente: ['Closing'],
+    Négociation: ['Négociation commerciale'],
+    Outils: ['HubSpot'],
+    Méthodologies: ['MEDDIC'],
+    Secteurs: ['SaaS'],
+  };
+  state.rows['user-cand'].axes = {
+    resultat: { closing: 80 },
+    meta: { ville: 'Lyon', competences: { ...legacy } },
+  };
+  state.rows['user-cand'].skills = null;
+  const res = await putProfil({
+    skills: ['Closing', 'Social selling'],
+    competences: {
+      'Relation client & influence': ['Écoute active'],
+      Communication: [],
+      'Mental commercial': [],
+      'Organisation & performance': [],
+    },
+  });
+  assert.equal(res.status, 200);
+  assert.deepEqual(state.lastUpdatePatch.skills, ['Closing', 'Social selling']);
+  assert.equal(state.lastRpc?.name, 'merge_candidat_axes_meta');
+  const patchComp = state.lastRpc.args.p_meta_patch.competences;
+  for (const key of Object.keys(legacy)) {
+    assert.deepEqual(patchComp[key], legacy[key], `catégorie legacy perdue: ${key}`);
+  }
+  assert.deepEqual(patchComp['Relation client & influence'], ['Écoute active']);
+  assert.deepEqual(res.json.axes.meta.competences.Prospection, ['Cold calling']);
+  assert.deepEqual(res.json.axes.meta.competences.Outils, ['HubSpot']);
+  assert.deepEqual(res.json.skills, ['Closing', 'Social selling']);
+});
+
+test('PUT profil skills seuls : pas d’écriture axes.meta.competences', async () => {
+  state.lastUpdatePatch = null;
+  state.lastRpc = null;
+  state.concurrentMetaInjection = null;
+  const legacy = {
+    Prospection: ['Cold calling'],
+    Vente: ['Closing'],
+    Outils: ['HubSpot'],
+  };
+  state.rows['user-cand'].axes = { meta: { competences: { ...legacy } } };
+  const before = clone(state.rows['user-cand'].axes);
+  const res = await putProfil({ skills: ['Négociation'] });
+  assert.equal(res.status, 200);
+  assert.deepEqual(state.lastUpdatePatch.skills, ['Négociation']);
+  assert.equal(state.lastRpc, null);
+  assert.deepEqual(state.rows['user-cand'].axes, before);
+});
+
 test('ownership : UPDATE / RPC toujours scoped au JWT user_id', async () => {
   state.lastUpdatePatch = null;
   state.lastRpc = null;
@@ -380,16 +439,49 @@ test('buildAxesMetaPatch ignore champs structurés', () => {
   assert.deepEqual(buildAxesMetaPatch({ target_job_types: ['SDR'] }), {});
 });
 
+test('mergeCompetencesCategoryPatch préserve les catégories absentes du patch UI', () => {
+  const existing = {
+    Prospection: ['Cold calling'],
+    Vente: ['Closing'],
+    Outils: ['HubSpot'],
+  };
+  const merged = mergeCompetencesCategoryPatch(existing, {
+    'Relation client & influence': ['Empathie'],
+  });
+  assert.deepEqual(merged.Prospection, ['Cold calling']);
+  assert.deepEqual(merged.Vente, ['Closing']);
+  assert.deepEqual(merged.Outils, ['HubSpot']);
+  assert.deepEqual(merged['Relation client & influence'], ['Empathie']);
+  assert.deepEqual(
+    prepareAxesMetaPatch(
+      { competences: { Communication: ['Storytelling'] } },
+      { competences: existing },
+    ).competences.Prospection,
+    ['Cold calling'],
+  );
+});
+
 test('PUT profil route : pas de merge JS axes complet', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
   const start = source.indexOf("router.put('/profil'");
   const end = source.indexOf("router.get('/stats'", start);
   const block = source.slice(start, end);
   assert.match(block, /merge_candidat_axes_meta/);
-  assert.match(block, /buildAxesMetaPatch/);
+  assert.match(block, /prepareAxesMetaPatch/);
   assert.doesNotMatch(block, /axes:\s*nextAxes/);
   assert.doesNotMatch(block, /\.\.\.\(current\.axes/);
   assert.doesNotMatch(block, /score_adn\s*:/);
+});
+
+test('DELETE compte anonymise skills[]', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'routes', 'candidats.js'), 'utf8');
+  const start = source.indexOf("router.delete('/compte'");
+  const end = source.indexOf('// ------------------------------------------------------------', start + 1);
+  const block = source.slice(start, end > start ? end : start + 2500);
+  assert.match(block, /skills:\s*\[\]/);
+  assert.match(block, /axes:\s*\{\}/);
+  assert.match(block, /score_adn:\s*null/);
+  assert.match(block, /auth\.admin\.deleteUser/);
 });
 
 test('UI anti double-save profil', () => {

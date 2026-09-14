@@ -11,7 +11,7 @@ const { ensureCandidateProfile, ensureRecruiterProfile, getCandidatePlan, checkA
 const { askClaude } = require('../utils/anthropic');
 const { finalizeCvReplacement } = require('../utils/cvReplacement');
 const { accessibleEbooks } = require('../utils/ebookAccess');
-const { normalizeCandidateProfileStructuredFields, buildAxesMetaPatch } = require('../utils/candidateProfileWrite');
+const { normalizeCandidateProfileStructuredFields, prepareAxesMetaPatch } = require('../utils/candidateProfileWrite');
 const { compatibilityScore } = require('../utils/recruiterMatching');
 const {
   parseCandidateDeckQuery,
@@ -808,7 +808,8 @@ router.put('/profil', authMiddleware, async (req, res) => {
 
     const { nom, prenom, titre } = req.body || {};
     const structured = normalizeCandidateProfileStructuredFields(req.body || {});
-    const metaPatch = buildAxesMetaPatch(req.body || {});
+    // competences : overlay catégories sur l’existant (préserve legacy hors UI soft skills).
+    const metaPatch = prepareAxesMetaPatch(req.body || {}, current.axes?.meta || {});
     const columnPatch = definedOnly({
       nom,
       prenom,
@@ -1107,6 +1108,7 @@ router.delete('/compte', authMiddleware, async (req, res) => {
         titre: null,
         cv_url: null,
         score_adn: null,
+        skills: [],
         axes: {},
         swipes_meta: {},
         contacts_meta: {},

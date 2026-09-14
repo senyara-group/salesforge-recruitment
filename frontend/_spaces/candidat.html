@@ -4130,6 +4130,10 @@ const YANNIS_SKILLS = Object.freeze([
   'Closing', 'Cold calling', 'Prospection terrain', 'Négociation', 'Gestion de portefeuille', 'Social selling',
 ]);
 let EDIT_COMPETENCES = {};
+/** Snapshot complet axes.meta.competences (toutes catégories, y compris legacy hors UI). */
+let PROFILE_COMPETENCES_BASE = {};
+/** true seulement si l’utilisateur a touché l’accordéon soft skills. */
+let SOFT_COMPETENCES_DIRTY = false;
 const PROFILE_PREF_SUGGESTIONS = Object.freeze({
   target_job_types: [
     'SDR / BDR', 'Business Developer', 'Account Executive', 'Commercial terrain', 'Key Account Manager', 'Manager commercial',
@@ -4270,7 +4274,12 @@ function renderProfilePrefs(p = {}) {
 }
 
 function buildCompetencesAccordion(selected = {}) {
-  EDIT_COMPETENCES = Object.fromEntries(Object.keys(COMPETENCES_TAXONOMY).map(cat => [cat, [...(selected[cat] || [])]]));
+  const source = (selected && typeof selected === 'object' && !Array.isArray(selected)) ? selected : {};
+  PROFILE_COMPETENCES_BASE = Object.fromEntries(
+    Object.entries(source).map(([cat, items]) => [cat, Array.isArray(items) ? [...items] : []]),
+  );
+  SOFT_COMPETENCES_DIRTY = false;
+  EDIT_COMPETENCES = Object.fromEntries(Object.keys(COMPETENCES_TAXONOMY).map(cat => [cat, [...(source[cat] || [])]]));
   const el = document.getElementById('comp-accordion');
   if (!el) return;
   el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
@@ -4278,18 +4287,19 @@ function buildCompetencesAccordion(selected = {}) {
       <div class="comp-cat-hd" onclick="toggleCompCat('${compCatId(cat)}')">
         <span>${esc(cat)}</span>
         <span style="display:flex;align-items:center;gap:7px">
-          <span class="comp-cat-count" id="comp-count-${compCatId(cat)}">${(selected[cat]||[]).length}</span>
+          <span class="comp-cat-count" id="comp-count-${compCatId(cat)}">${(source[cat]||[]).length}</span>
           <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
       </div>
       <div class="comp-cat-body">
-        ${items.map(item => `<span class="comp-pill${(selected[cat]||[]).includes(item)?' on':''}" onclick="toggleCompItem('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
+        ${items.map(item => `<span class="comp-pill${(source[cat]||[]).includes(item)?' on':''}" onclick="toggleCompItem('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
       </div>
     </div>`).join('');
 }
 function compCatId(cat) { return cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-'); }
 function toggleCompCat(id) { document.getElementById('comp-cat-' + id)?.classList.toggle('on'); }
 function toggleCompItem(cat, item, el) {
+  SOFT_COMPETENCES_DIRTY = true;
   el.classList.toggle('on');
   const list = EDIT_COMPETENCES[cat] || (EDIT_COMPETENCES[cat] = []);
   if (list.includes(item)) EDIT_COMPETENCES[cat] = list.filter(i => i !== item);
@@ -4407,7 +4417,6 @@ async function saveProfileEdit() {
       prenom,
       nom,
       ville,
-      competences: EDIT_COMPETENCES,
       target_job_types: EDIT_PREFS.target_job_types || [],
       sales_style: EDIT_PREFS.sales_style,
       years_experience,
@@ -4419,12 +4428,19 @@ async function saveProfileEdit() {
       methodologies: EDIT_PREFS.methodologies || [],
       availability: EDIT_PREFS.availability,
     };
+    // Soft skills seulement si touchés — sinon on n’écrit pas axes.meta.competences
+    // (préserve Prospection/Vente/Outils/… legacy). Backend overlay les catégories.
+    if (SOFT_COMPETENCES_DIRTY) {
+      payload.competences = { ...EDIT_COMPETENCES };
+    }
     const p = await api('PUT', '/candidats/profil', payload);
     USER = { ...(USER || {}), prenom: p.prenom, nom: p.nom };
     localStorage.setItem('sf_user', JSON.stringify(USER));
     document.getElementById('prof-name-text').textContent = profileDisplayName(p);
     renderProfileAvatar({ ...USER, avatar_url: PROFILE_AVATAR_URL }, profileInitials(p));
-    renderProfileCompetences(EDIT_COMPETENCES);
+    PROFILE_COMPETENCES_BASE = p.competences || {};
+    SOFT_COMPETENCES_DIRTY = false;
+    renderProfileCompetences(p.competences || {});
     renderProfilePrefs(p);
     document.getElementById('profile-edit-panel').classList.remove('on');
     // Sans ça, le score de compatibilité sur les offres restait calculé avec

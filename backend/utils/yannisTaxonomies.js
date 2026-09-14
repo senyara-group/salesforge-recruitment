@@ -7,6 +7,17 @@ function normalizeToken(value) {
   return String(value || '').trim();
 }
 
+/** Clé de comparaison skills : trim, casse, accents, tirets/espaces. */
+function normalizeSkill(value) {
+  return normalizeToken(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-_/]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /** Compétences déclaratives candidat (≠ axes ADN court). */
 const CANDIDATE_SKILLS = Object.freeze([
   'Closing',
@@ -143,8 +154,32 @@ function canonicalizeFromList(value, allowed, aliases = {}) {
   return ci || null;
 }
 
+const NORMALIZED_SKILL_LOOKUP = (() => {
+  const map = new Map();
+  for (const skill of CANDIDATE_SKILLS) {
+    map.set(normalizeSkill(skill), skill);
+  }
+  for (const [alias, canonical] of Object.entries(LEGACY_SKILL_ALIASES)) {
+    if (CANDIDATE_SKILLS.includes(canonical)) {
+      map.set(normalizeSkill(alias), canonical);
+    }
+  }
+  return map;
+})();
+
+/**
+ * Trim + casse + accents + tirets → valeur canonique Yannis si connue, sinon null.
+ */
+function resolveCanonicalSkill(value) {
+  const token = normalizeToken(value);
+  if (!token) return null;
+  const fromList = canonicalizeFromList(token, CANDIDATE_SKILLS, LEGACY_SKILL_ALIASES);
+  if (fromList) return fromList;
+  return NORMALIZED_SKILL_LOOKUP.get(normalizeSkill(token)) || null;
+}
+
 function canonicalizeCandidateSkill(value) {
-  return canonicalizeFromList(value, CANDIDATE_SKILLS, LEGACY_SKILL_ALIASES);
+  return resolveCanonicalSkill(value);
 }
 
 function flattenCompetencesMeta(metaCompetences) {
@@ -157,20 +192,29 @@ function flattenCompetencesMeta(metaCompetences) {
     .filter(Boolean);
 }
 
+function projectSkillLabels(labels) {
+  return [...new Set(
+    labels
+      .map((item) => resolveCanonicalSkill(item) || normalizeToken(item))
+      .filter(Boolean),
+  )];
+}
+
 /**
  * Lecture skills dédiées prioritaire, sinon fallback axes.meta.competences (flat).
- * Pas de migration destructive : le fallback renvoie les libellés legacy tels quels.
+ * Fallback : aliases → canonique Yannis quand connu (filtre recruteur).
  */
 function resolveCandidateSkills(candidate = {}) {
   const dedicated = Array.isArray(candidate.skills)
     ? [...new Set(candidate.skills.map((item) => normalizeToken(item)).filter(Boolean))]
     : [];
-  if (dedicated.length) return dedicated;
-  return flattenCompetencesMeta(candidate.axes?.meta?.competences);
+  if (dedicated.length) return projectSkillLabels(dedicated);
+  return projectSkillLabels(flattenCompetencesMeta(candidate.axes?.meta?.competences));
 }
 
 module.exports = {
   normalizeToken,
+  normalizeSkill,
   CANDIDATE_SKILLS,
   TARGET_JOB_TYPES,
   CONTRACT_TYPES,
@@ -188,6 +232,7 @@ module.exports = {
   LEGACY_CUSTOMER_ALIASES,
   canonicalizeFromList,
   canonicalizeCandidateSkill,
+  resolveCanonicalSkill,
   flattenCompetencesMeta,
   resolveCandidateSkills,
 };
