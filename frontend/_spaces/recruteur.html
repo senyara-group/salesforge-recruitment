@@ -1698,18 +1698,19 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="filt-label">Poste recherché</div>
       <div class="form-chips" id="filt-job-types">
         <button type="button" class="form-chip" data-filter-value="SDR / BDR" onclick="toggleCandFilterChip(this)">SDR / BDR</button>
+        <button type="button" class="form-chip" data-filter-value="Business Developer" onclick="toggleCandFilterChip(this)">Business Developer</button>
         <button type="button" class="form-chip" data-filter-value="Account Executive" onclick="toggleCandFilterChip(this)">Account Executive</button>
-        <button type="button" class="form-chip" data-filter-value="Account Manager" onclick="toggleCandFilterChip(this)">Account Manager</button>
-        <button type="button" class="form-chip" data-filter-value="Sales Manager" onclick="toggleCandFilterChip(this)">Sales Manager</button>
-        <button type="button" class="form-chip" data-filter-value="Customer Success" onclick="toggleCandFilterChip(this)">Customer Success</button>
+        <button type="button" class="form-chip" data-filter-value="Commercial terrain" onclick="toggleCandFilterChip(this)">Commercial terrain</button>
+        <button type="button" class="form-chip" data-filter-value="Key Account Manager" onclick="toggleCandFilterChip(this)">Key Account Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Manager commercial" onclick="toggleCandFilterChip(this)">Manager commercial</button>
       </div>
     </div>
     <div class="filt-section">
-      <div class="filt-label">Style commercial</div>
+      <div class="filt-label">Style de vente</div>
       <div class="form-chips" id="filt-sales-style">
-        <button type="button" class="form-chip" data-filter-value="hunter" onclick="toggleCandFilterChip(this)">Hunter</button>
-        <button type="button" class="form-chip" data-filter-value="farmer" onclick="toggleCandFilterChip(this)">Farmer</button>
-        <button type="button" class="form-chip" data-filter-value="full" onclick="toggleCandFilterChip(this)">Full cycle</button>
+        <button type="button" class="form-chip" data-filter-value="hunter" onclick="toggleCandFilterChip(this)">Chasseur</button>
+        <button type="button" class="form-chip" data-filter-value="farmer" onclick="toggleCandFilterChip(this)">Éleveur</button>
+        <button type="button" class="form-chip" data-filter-value="full" onclick="toggleCandFilterChip(this)">Cycle complet</button>
       </div>
     </div>
     <div class="filt-section">
@@ -1721,40 +1722,57 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <div class="form-chips" id="filt-contracts">
         <button type="button" class="form-chip" data-filter-value="CDI" onclick="toggleCandFilterChip(this)">CDI</button>
         <button type="button" class="form-chip" data-filter-value="Alternance" onclick="toggleCandFilterChip(this)">Alternance</button>
-        <button type="button" class="form-chip" data-filter-value="Mission" onclick="toggleCandFilterChip(this)">Mission</button>
         <button type="button" class="form-chip" data-filter-value="Freelance" onclick="toggleCandFilterChip(this)">Freelance</button>
+        <button type="button" class="form-chip" data-filter-value="Mission" onclick="toggleCandFilterChip(this)">Mission</button>
       </div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Secteurs</div>
       <div class="form-chips" id="filt-sectors">
-        <button type="button" class="form-chip" data-filter-value="SaaS / Tech" onclick="toggleCandFilterChip(this)">SaaS / Tech</button>
+        <button type="button" class="form-chip" data-filter-value="SaaS et Tech" onclick="toggleCandFilterChip(this)">SaaS et Tech</button>
         <button type="button" class="form-chip" data-filter-value="Industrie" onclick="toggleCandFilterChip(this)">Industrie</button>
-        <button type="button" class="form-chip" data-filter-value="Services B2B" onclick="toggleCandFilterChip(this)">Services B2B</button>
-        <button type="button" class="form-chip" data-filter-value="Assurance / Banque" onclick="toggleCandFilterChip(this)">Assurance / Banque</button>
+        <button type="button" class="form-chip" data-filter-value="BTP" onclick="toggleCandFilterChip(this)">BTP</button>
+        <button type="button" class="form-chip" data-filter-value="Immobilier" onclick="toggleCandFilterChip(this)">Immobilier</button>
+        <button type="button" class="form-chip" data-filter-value="Assurance et Banque" onclick="toggleCandFilterChip(this)">Assurance et Banque</button>
         <button type="button" class="form-chip" data-filter-value="Retail" onclick="toggleCandFilterChip(this)">Retail</button>
+        <button type="button" class="form-chip" data-filter-value="Services B2B" onclick="toggleCandFilterChip(this)">Services B2B</button>
+        <button type="button" class="form-chip" data-filter-value="Télécom" onclick="toggleCandFilterChip(this)">Télécom</button>
+        <button type="button" class="form-chip" data-filter-value="Santé" onclick="toggleCandFilterChip(this)">Santé</button>
+        <button type="button" class="form-chip" data-filter-value="Automobile" onclick="toggleCandFilterChip(this)">Automobile</button>
       </div>
     </div>
     <div class="filt-section">
-      <div class="filt-label">Compétences</div>
-      <div id="comp-filter-accordion" style="max-height:28vh;overflow-y:auto"></div>
+      <div class="filt-label">Compétences maîtrisées</div>
+      <div class="form-chips" id="filt-skills">
+        <button type="button" class="form-chip" data-filter-value="Closing" onclick="toggleCandFilterChip(this)">Closing</button>
+        <button type="button" class="form-chip" data-filter-value="Cold calling" onclick="toggleCandFilterChip(this)">Cold calling</button>
+        <button type="button" class="form-chip" data-filter-value="Prospection terrain" onclick="toggleCandFilterChip(this)">Prospection terrain</button>
+        <button type="button" class="form-chip" data-filter-value="Négociation" onclick="toggleCandFilterChip(this)">Négociation</button>
+        <button type="button" class="form-chip" data-filter-value="Gestion de portefeuille" onclick="toggleCandFilterChip(this)">Gestion de portefeuille</button>
+        <button type="button" class="form-chip" data-filter-value="Social selling" onclick="toggleCandFilterChip(this)">Social selling</button>
+      </div>
+      <div id="comp-filter-accordion" hidden aria-hidden="true"></div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Outils</div>
       <div class="form-chips" id="filt-tools">
         <button type="button" class="form-chip" data-filter-value="Salesforce" onclick="toggleCandFilterChip(this)">Salesforce</button>
         <button type="button" class="form-chip" data-filter-value="HubSpot" onclick="toggleCandFilterChip(this)">HubSpot</button>
-        <button type="button" class="form-chip" data-filter-value="LinkedIn Sales Navigator" onclick="toggleCandFilterChip(this)">Sales Navigator</button>
+        <button type="button" class="form-chip" data-filter-value="Pipedrive" onclick="toggleCandFilterChip(this)">Pipedrive</button>
+        <button type="button" class="form-chip" data-filter-value="Sales Navigator" onclick="toggleCandFilterChip(this)">Sales Navigator</button>
         <button type="button" class="form-chip" data-filter-value="Lemlist" onclick="toggleCandFilterChip(this)">Lemlist</button>
+        <button type="button" class="form-chip" data-filter-value="Apollo" onclick="toggleCandFilterChip(this)">Apollo</button>
       </div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Méthodologies</div>
       <div class="form-chips" id="filt-methodologies">
-        <button type="button" class="form-chip" data-filter-value="MEDDIC" onclick="toggleCandFilterChip(this)">MEDDIC</button>
         <button type="button" class="form-chip" data-filter-value="BANT" onclick="toggleCandFilterChip(this)">BANT</button>
-        <button type="button" class="form-chip" data-filter-value="SPIN Selling" onclick="toggleCandFilterChip(this)">SPIN</button>
-        <button type="button" class="form-chip" data-filter-value="Challenger Sale" onclick="toggleCandFilterChip(this)">Challenger</button>
+        <button type="button" class="form-chip" data-filter-value="MEDDIC" onclick="toggleCandFilterChip(this)">MEDDIC</button>
+        <button type="button" class="form-chip" data-filter-value="SPIN" onclick="toggleCandFilterChip(this)">SPIN</button>
+        <button type="button" class="form-chip" data-filter-value="Challenger" onclick="toggleCandFilterChip(this)">Challenger</button>
+        <button type="button" class="form-chip" data-filter-value="Solution Selling" onclick="toggleCandFilterChip(this)">Solution Selling</button>
+        <button type="button" class="form-chip" data-filter-value="Inbound" onclick="toggleCandFilterChip(this)">Inbound</button>
       </div>
     </div>
     <div class="filt-section">
@@ -1763,17 +1781,15 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <button type="button" class="form-chip" data-filter-value="immediate" onclick="toggleCandFilterChip(this)">Immédiate</button>
         <button type="button" class="form-chip" data-filter-value="1_month" onclick="toggleCandFilterChip(this)">Sous 1 mois</button>
         <button type="button" class="form-chip" data-filter-value="3_months" onclick="toggleCandFilterChip(this)">Sous 3 mois</button>
-        <button type="button" class="form-chip" data-filter-value="open" onclick="toggleCandFilterChip(this)">À l’écoute</button>
       </div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Types de clients</div>
       <div class="form-chips" id="filt-customer-types">
-        <button type="button" class="form-chip" data-filter-value="B2B" onclick="toggleCandFilterChip(this)">B2B</button>
         <button type="button" class="form-chip" data-filter-value="PME" onclick="toggleCandFilterChip(this)">PME</button>
         <button type="button" class="form-chip" data-filter-value="ETI" onclick="toggleCandFilterChip(this)">ETI</button>
-        <button type="button" class="form-chip" data-filter-value="Grand compte" onclick="toggleCandFilterChip(this)">Grand compte</button>
-        <button type="button" class="form-chip" data-filter-value="Startup" onclick="toggleCandFilterChip(this)">Startup</button>
+        <button type="button" class="form-chip" data-filter-value="Grands comptes" onclick="toggleCandFilterChip(this)">Grands comptes</button>
+        <button type="button" class="form-chip" data-filter-value="Particuliers" onclick="toggleCandFilterChip(this)">Particuliers</button>
       </div>
     </div>
     <div class="filt-actions">
@@ -2547,19 +2563,8 @@ function markChipValues(rootId, values) {
 }
 
 function renderDraftSkillsAccordion(selected = []) {
-  const el = document.getElementById('comp-filter-accordion');
-  if (!el) return;
   DRAFT_SKILLS = [...selected];
-  el.innerHTML = Object.entries(COMPETENCES_TAXONOMY).map(([cat, items]) => `
-    <div class="comp-cat" id="filter-cat-${compCatId(cat)}">
-      <div class="comp-cat-hd" onclick="this.parentElement.classList.toggle('on')">
-        <span>${esc(cat)}</span>
-        <svg class="comp-cat-chevron" width="14" height="14" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="comp-cat-body">
-        ${items.map(item => `<span class="comp-pill${DRAFT_SKILLS.includes(item)?' on':''}" onclick="toggleDraftSkill('${item.replace(/'/g,"\\'")}',this)">${esc(item)}</span>`).join('')}
-      </div>
-    </div>`).join('');
+  markChipValues('filt-skills', DRAFT_SKILLS);
 }
 
 function toggleDraftSkill(item, el) {
@@ -2579,6 +2584,7 @@ function syncCandFilterPanelFromState() {
   markChipValues('filt-sales-style', f.sales_style);
   markChipValues('filt-contracts', f.desired_contracts);
   markChipValues('filt-sectors', f.sectors);
+  markChipValues('filt-skills', f.skills);
   markChipValues('filt-tools', f.tools);
   markChipValues('filt-methodologies', f.methodologies);
   markChipValues('filt-availability', f.availability);
@@ -2617,7 +2623,7 @@ function readCandFiltersFromPanel() {
     years_experience_min: years,
     desired_contracts: readChipValues('filt-contracts'),
     sectors: readChipValues('filt-sectors'),
-    skills: [...DRAFT_SKILLS],
+    skills: readChipValues('filt-skills'),
     tools: readChipValues('filt-tools'),
     methodologies: readChipValues('filt-methodologies'),
     availability: readChipValues('filt-availability'),
@@ -2640,7 +2646,7 @@ function resetCandFiltersPanel() {
   document.querySelectorAll('#filt-score-adn .form-chip').forEach((btn) => {
     btn.classList.toggle('on', (btn.getAttribute('data-filter-value') || '') === '');
   });
-  ['filt-job-types', 'filt-sales-style', 'filt-contracts', 'filt-sectors', 'filt-tools', 'filt-methodologies', 'filt-availability', 'filt-customer-types']
+  ['filt-job-types', 'filt-sales-style', 'filt-contracts', 'filt-sectors', 'filt-skills', 'filt-tools', 'filt-methodologies', 'filt-availability', 'filt-customer-types']
     .forEach((id) => document.querySelectorAll(`#${id} .form-chip`).forEach((btn) => btn.classList.remove('on')));
   const years = document.getElementById('filt-years-min');
   if (years) years.value = '';
@@ -2667,7 +2673,7 @@ function buildCandidateDeckParams(cursor, filters) {
   setCsv('sales_style', filters.sales_style);
   setCsv('desired_contracts', filters.desired_contracts);
   setCsv('sectors', filters.sectors);
-  setCsv('competences', filters.skills);
+  setCsv('skills', filters.skills);
   setCsv('tools', filters.tools);
   setCsv('methodologies', filters.methodologies);
   setCsv('availability', filters.availability);

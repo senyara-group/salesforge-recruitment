@@ -20,7 +20,7 @@ test('recruiter UI redesign : shell + IDs critiques conservés', () => {
     'account-email-display', 'subscription-status-display', 'cancel-subscription-btn',
     'settings-entreprise-display',
     'filt-score-adn', 'filt-job-types', 'filt-sales-style', 'filt-years-min', 'filt-contracts',
-    'filt-sectors', 'comp-filter-accordion', 'filt-tools', 'filt-methodologies', 'filt-availability', 'filt-customer-types',
+    'filt-sectors', 'filt-skills', 'comp-filter-accordion', 'filt-tools', 'filt-methodologies', 'filt-availability', 'filt-customer-types',
   ]) {
     assert.match(html, new RegExp(`id="${id}"`));
   }

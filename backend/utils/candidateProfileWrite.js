@@ -4,12 +4,27 @@
  */
 
 const { CONTRACT_TYPES, normalizeToken, assertAllowedList } = require('./filterTaxonomies');
+const {
+  CANDIDATE_SKILLS,
+  canonicalizeCandidateSkill,
+  canonicalizeFromList,
+  TOOLS,
+  METHODOLOGIES,
+  SECTORS,
+  CUSTOMER_TYPES,
+  TARGET_JOB_TYPES,
+  LEGACY_TOOL_ALIASES,
+  LEGACY_METHODOLOGY_ALIASES,
+  LEGACY_SECTOR_ALIASES,
+  LEGACY_CUSTOMER_ALIASES,
+} = require('./yannisTaxonomies');
 
 const MIN_YEARS = 0;
 const MAX_YEARS = 80;
 const MAX_MULTI = 12;
 const MAX_TEXT = 80;
 const MAX_MOBILITY_KM = 500;
+const MAX_SKILLS = 6;
 
 const AXES_META_PATCH_KEYS = Object.freeze([
   'motivation',
@@ -49,21 +64,39 @@ function parseOptionalText(raw, { label, maxLen = MAX_TEXT }) {
  * Ordre : array → trim → vides → dédup → MAX_MULTI → longueur.
  * 13× "SaaS" → ["SaaS"] (accepté).
  */
-function parseOptionalStringList(raw, { label, max = MAX_MULTI, maxLen = MAX_TEXT, allowed = null }) {
+function parseOptionalStringList(raw, { label, max = MAX_MULTI, maxLen = MAX_TEXT, allowed = null, canonicalize = null, unknown = 'keep' }) {
   if (raw == null) return [];
   if (!Array.isArray(raw)) {
     throw httpError(`${label} doit être un tableau`, 'CANDIDATE_PROFILE_ARRAY_INVALID');
   }
-  const values = [...new Set(raw.map((item) => normalizeToken(item)).filter(Boolean))];
+  const values = [];
+  for (const item of raw) {
+    const token = normalizeToken(item);
+    if (!token) continue;
+    if (token.length > maxLen) {
+      throw httpError(`${label}: valeur trop longue`, 'CANDIDATE_PROFILE_VALUE_TOO_LONG');
+    }
+    let next = token;
+    if (canonicalize) {
+      const canonical = canonicalize(token);
+      if (!canonical) {
+        if (unknown === 'drop') continue;
+        next = token;
+      } else {
+        next = canonical;
+      }
+    }
+    if (!values.includes(next)) values.push(next);
+  }
   if (values.length > max) {
     throw httpError(`${label}: trop de valeurs (max ${max})`, 'CANDIDATE_PROFILE_MULTI_MAX');
   }
-  for (const value of values) {
-    if (value.length > maxLen) {
-      throw httpError(`${label}: valeur trop longue`, 'CANDIDATE_PROFILE_VALUE_TOO_LONG');
+  if (allowed) {
+    if (unknown === 'drop') {
+      return values.filter((value) => allowed.includes(value));
     }
+    return assertAllowedList(values, allowed, label);
   }
-  if (allowed) return assertAllowedList(values, allowed, label);
   return values;
 }
 
@@ -74,8 +107,21 @@ function parseOptionalStringList(raw, { label, max = MAX_MULTI, maxLen = MAX_TEX
 function normalizeCandidateProfileStructuredFields(body = {}) {
   const out = {};
 
+  if (Object.prototype.hasOwnProperty.call(body, 'skills')) {
+    out.skills = parseOptionalStringList(body.skills, {
+      label: 'skills',
+      max: MAX_SKILLS,
+      allowed: [...CANDIDATE_SKILLS],
+      canonicalize: canonicalizeCandidateSkill,
+      unknown: 'drop',
+    });
+  }
   if (Object.prototype.hasOwnProperty.call(body, 'target_job_types')) {
-    out.target_job_types = parseOptionalStringList(body.target_job_types, { label: 'target_job_types' });
+    out.target_job_types = parseOptionalStringList(body.target_job_types, {
+      label: 'target_job_types',
+      canonicalize: (value) => canonicalizeFromList(value, TARGET_JOB_TYPES),
+      unknown: 'keep',
+    });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'sales_style')) {
     out.sales_style = parseOptionalText(body.sales_style, { label: 'sales_style' });
@@ -92,16 +138,32 @@ function normalizeCandidateProfileStructuredFields(body = {}) {
     });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'sectors')) {
-    out.sectors = parseOptionalStringList(body.sectors, { label: 'sectors' });
+    out.sectors = parseOptionalStringList(body.sectors, {
+      label: 'sectors',
+      canonicalize: (value) => canonicalizeFromList(value, SECTORS, LEGACY_SECTOR_ALIASES),
+      unknown: 'keep',
+    });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'customer_types')) {
-    out.customer_types = parseOptionalStringList(body.customer_types, { label: 'customer_types' });
+    out.customer_types = parseOptionalStringList(body.customer_types, {
+      label: 'customer_types',
+      canonicalize: (value) => canonicalizeFromList(value, CUSTOMER_TYPES, LEGACY_CUSTOMER_ALIASES),
+      unknown: 'keep',
+    });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'tools')) {
-    out.tools = parseOptionalStringList(body.tools, { label: 'tools' });
+    out.tools = parseOptionalStringList(body.tools, {
+      label: 'tools',
+      canonicalize: (value) => canonicalizeFromList(value, TOOLS, LEGACY_TOOL_ALIASES),
+      unknown: 'keep',
+    });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'methodologies')) {
-    out.methodologies = parseOptionalStringList(body.methodologies, { label: 'methodologies' });
+    out.methodologies = parseOptionalStringList(body.methodologies, {
+      label: 'methodologies',
+      canonicalize: (value) => canonicalizeFromList(value, METHODOLOGIES, LEGACY_METHODOLOGY_ALIASES),
+      unknown: 'keep',
+    });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'availability')) {
     out.availability = parseOptionalText(body.availability, { label: 'availability' });
@@ -182,7 +244,9 @@ module.exports = {
   MAX_MULTI,
   MAX_TEXT,
   MAX_MOBILITY_KM,
+  MAX_SKILLS,
   CONTRACT_TYPES,
+  CANDIDATE_SKILLS,
   AXES_META_PATCH_KEYS,
   normalizeCandidateProfileStructuredFields,
   parseOptionalStringList,
