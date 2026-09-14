@@ -207,3 +207,9 @@ test('bug tags vides : une offre sans tags ne reçoit plus les 7 tags automatiqu
   const kept = sandbox.normOffre({ id: '2', tags: ['Closing', 'SaaS'] }, []);
   assert.deepEqual(kept.tags, ['Closing', 'SaaS']);
 });
+
+test('filterFoundation : variable_share dans YANNIS_TAXONOMIES', () => {
+  const { YANNIS_TAXONOMIES, VARIABLE_SHARES } = require('../utils/filterTaxonomies');
+  assert.deepEqual(VARIABLE_SHARES, ['low', 'balanced', 'majority']);
+  assert.deepEqual(YANNIS_TAXONOMIES.variable_share.values, VARIABLE_SHARES);
+});

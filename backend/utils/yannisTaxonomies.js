@@ -97,6 +97,29 @@ const SALES_STYLE_OPTIONS = Object.freeze([
   { value: 'full', label: 'Cycle complet' },
 ]);
 
+/** Part de variable offre — labels Yannis ; valeurs SQL. */
+const VARIABLE_SHARE_OPTIONS = Object.freeze([
+  { value: 'low', label: 'Faible' },
+  { value: 'balanced', label: 'Équilibrée' },
+  { value: 'majority', label: 'Majoritaire' },
+]);
+
+const VARIABLE_SHARES = Object.freeze(VARIABLE_SHARE_OPTIONS.map((item) => item.value));
+
+/** Alias affichage FR / typos stables → valeur SQL. */
+const LEGACY_VARIABLE_SHARE_ALIASES = Object.freeze({
+  faible: 'low',
+  low: 'low',
+  'équilibrée': 'balanced',
+  equilibree: 'balanced',
+  balanced: 'balanced',
+  majoritaire: 'majority',
+  majority: 'majority',
+});
+
+/** Compétences offre = même liste fermée que candidat.skills. */
+const OFFER_SKILLS = CANDIDATE_SKILLS;
+
 /**
  * Alias legacy déterministes → label canonique.
  * Uniquement des équivalences exactes / orthographiques stables.
@@ -182,6 +205,32 @@ function canonicalizeCandidateSkill(value) {
   return resolveCanonicalSkill(value);
 }
 
+function canonicalizeVariableShare(value) {
+  return canonicalizeFromList(value, VARIABLE_SHARES, LEGACY_VARIABLE_SHARE_ALIASES);
+}
+
+function canonicalizeSalesStyle(value) {
+  const allowed = SALES_STYLE_OPTIONS.map((item) => item.value);
+  const token = normalizeToken(value);
+  if (!token) return null;
+  const byValue = canonicalizeFromList(token, allowed);
+  if (byValue) return byValue;
+  const byLabel = SALES_STYLE_OPTIONS.find((item) => item.label.toLowerCase() === token.toLowerCase());
+  return byLabel ? byLabel.value : null;
+}
+
+function canonicalizeCustomerType(value) {
+  return canonicalizeFromList(value, CUSTOMER_TYPES, LEGACY_CUSTOMER_ALIASES);
+}
+
+function canonicalizeSector(value) {
+  return canonicalizeFromList(value, SECTORS, LEGACY_SECTOR_ALIASES);
+}
+
+function canonicalizeTargetJobType(value) {
+  return canonicalizeFromList(value, TARGET_JOB_TYPES);
+}
+
 function flattenCompetencesMeta(metaCompetences) {
   if (!metaCompetences || typeof metaCompetences !== 'object' || Array.isArray(metaCompetences)) {
     return [];
@@ -216,6 +265,7 @@ module.exports = {
   normalizeToken,
   normalizeSkill,
   CANDIDATE_SKILLS,
+  OFFER_SKILLS,
   TARGET_JOB_TYPES,
   CONTRACT_TYPES,
   REMOTE_MODE_OPTIONS,
@@ -225,14 +275,22 @@ module.exports = {
   METHODOLOGIES,
   AVAILABILITY_OPTIONS,
   SALES_STYLE_OPTIONS,
+  VARIABLE_SHARE_OPTIONS,
+  VARIABLE_SHARES,
   LEGACY_SKILL_ALIASES,
   LEGACY_TOOL_ALIASES,
   LEGACY_METHODOLOGY_ALIASES,
   LEGACY_SECTOR_ALIASES,
   LEGACY_CUSTOMER_ALIASES,
+  LEGACY_VARIABLE_SHARE_ALIASES,
   canonicalizeFromList,
   canonicalizeCandidateSkill,
   resolveCanonicalSkill,
+  canonicalizeVariableShare,
+  canonicalizeSalesStyle,
+  canonicalizeCustomerType,
+  canonicalizeSector,
+  canonicalizeTargetJobType,
   flattenCompetencesMeta,
   resolveCandidateSkills,
 };

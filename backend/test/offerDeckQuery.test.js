@@ -9,9 +9,11 @@ const {
   encodeCursor,
   decodeCursor,
   offerMatchesSalaryMin,
+  offerMatchesExperience,
   offerMatchesDeckFilters,
   compareOffersNewestFirst,
   paginateOfferDeck,
+  applySupabaseDeckFilters,
 } = require('../utils/offerDeckQuery');
 
 function filters(overrides = {}) {
@@ -49,6 +51,14 @@ test('règle salary_fixed_min explicite sans parsing salaire texte', () => {
   assert.equal(offerMatchesSalaryMin({ salary_fixed_max: null, salary_fixed_min: 36000 }, 35000), true);
   assert.equal(offerMatchesSalaryMin({ salary_fixed_max: null, salary_fixed_min: 30000 }, 35000), false);
   assert.equal(offerMatchesSalaryMin({ salary_fixed_max: null, salary_fixed_min: null, salaire: '45K€' }, 35000), false);
+  assert.equal(
+    offerMatchesSalaryMin({ salary_fixed_max: null, salary_fixed_min: null }, 35000, true),
+    true,
+  );
+  assert.equal(
+    offerMatchesSalaryMin({ salary_fixed_max: null, salary_fixed_min: null }, 35000, false),
+    false,
+  );
 });
 
 test('NULL ne satisfait pas un filtre explicite ; sans filtre les legacy restent visibles', () => {
@@ -245,4 +255,112 @@ test('frontend pagination progressive : première page puis prefetch, pas de bou
   assert.doesNotMatch(html, /do \{[\s\S]*fetchDeckPage[\s\S]*\} while/);
   assert.match(html, /if \(DECK_FETCHING_MORE \|\| !DECK_HAS_MORE \|\| !DECK_CURSOR\) return;/);
   assert.match(html, /OFFRES\.push\(o\)/);
+});
+
+test('variable_share / skills / customer_types / sales_styles : parse + match + unknown 400', () => {
+  assert.deepEqual(parseOfferDeckQuery({ variable_share: 'faible,majority' }).variable_shares, ['low', 'majority']);
+  assert.throws(() => parseOfferDeckQuery({ variable_share: 'huge' }), { code: 'FILTER_TAXONOMY_INVALID' });
+  assert.deepEqual(parseOfferDeckQuery({ skills: 'cold-calling,Négociation' }).skills, ['Cold calling', 'Négociation']);
+  assert.throws(() => parseOfferDeckQuery({ skills: 'CompétenceInconnue' }), { code: 'FILTER_TAXONOMY_INVALID' });
+  assert.deepEqual(parseOfferDeckQuery({ sales_style: 'Chasseur,full' }).sales_styles, ['hunter', 'full']);
+  assert.deepEqual(parseOfferDeckQuery({ customer_types: 'PME,grand compte' }).customer_types, ['PME', 'Grands comptes']);
+  assert.throws(() => parseOfferDeckQuery({ customer_types: 'Enterprise' }), { code: 'FILTER_TAXONOMY_INVALID' });
+
+  const offer = {
+    id: '1',
+    statut: 'active',
+    variable_share: 'low',
+    sales_styles: ['hunter'],
+    customer_types: ['PME'],
+    skills: ['Closing', 'Cold calling'],
+    experience_min: 2,
+    experience_max: 5,
+    contract_type: 'CDI',
+    remote_mode: 'hybrid',
+    tags: [],
+    salary_fixed_min: 40000,
+    salary_fixed_max: null,
+    created_at: '2026-02-01T00:00:00.000Z',
+    job_type: 'Account Executive',
+    sector: 'SaaS et Tech',
+  };
+  assert.equal(offerMatchesDeckFilters(offer, filters({ variable_share: 'low' })), true);
+  assert.equal(offerMatchesDeckFilters(offer, filters({ variable_share: 'majority' })), false);
+  assert.equal(offerMatchesDeckFilters({ ...offer, variable_share: null }, filters({ variable_share: 'low' })), false);
+  assert.equal(offerMatchesDeckFilters(offer, filters({ skills: 'Closing' })), true);
+  assert.equal(offerMatchesDeckFilters(offer, filters({ skills: 'Social selling' })), false);
+  assert.equal(offerMatchesDeckFilters(offer, filters({ sales_style: 'hunter' })), true);
+  assert.equal(offerMatchesDeckFilters(offer, filters({ customer_types: 'PME,ETI' })), true);
+  assert.equal(offerMatchesDeckFilters(offer, filters({})), true);
+});
+
+test('include_unspecified_salary + expérience NULL / chevauchement', () => {
+  const bare = {
+    id: '1',
+    statut: 'active',
+    contract_type: null,
+    remote_mode: null,
+    tags: [],
+    salary_fixed_min: null,
+    salary_fixed_max: null,
+    created_at: '2026-02-01T00:00:00.000Z',
+    job_type: null,
+    sector: null,
+    variable_share: null,
+    sales_styles: null,
+    customer_types: null,
+    skills: null,
+    experience_min: null,
+    experience_max: null,
+  };
+  assert.equal(offerMatchesDeckFilters(bare, filters({ salary_fixed_min: '30000' })), false);
+  assert.equal(offerMatchesDeckFilters(bare, filters({
+    salary_fixed_min: '30000',
+    include_unspecified_salary: 'true',
+  })), true);
+  assert.equal(offerMatchesExperience(bare, 0, 3), false);
+  assert.equal(offerMatchesExperience({ experience_min: 2, experience_max: 5 }, 3, 4), true);
+  assert.equal(offerMatchesExperience({ experience_min: 6, experience_max: 10 }, 0, 3), false);
+  assert.equal(offerMatchesExperience({ experience_min: 0, experience_max: null }, 8, 10), true);
+  assert.equal(offerMatchesDeckFilters({
+    ...bare,
+    experience_min: 1,
+    experience_max: 3,
+  }, filters({ experience_min: '0', experience_max: '2' })), true);
+  assert.throws(() => parseOfferDeckQuery({ experience_min: '11' }), { code: 'OFFER_DECK_EXPERIENCE_INVALID' });
+});
+
+test('applySupabaseDeckFilters pousse skills / variable_share / overlaps', () => {
+  const calls = [];
+  const fake = {
+    or(...args) { calls.push(['or', ...args]); return this; },
+    in(...args) { calls.push(['in', ...args]); return this; },
+    overlaps(...args) { calls.push(['overlaps', ...args]); return this; },
+    gte(...args) { calls.push(['gte', ...args]); return this; },
+  };
+  applySupabaseDeckFilters(fake, filters({
+    variable_share: 'low',
+    skills: 'Closing',
+    sales_style: 'hunter',
+    customer_types: 'PME',
+    salary_fixed_min: '30000',
+    include_unspecified_salary: '1',
+    experience_min: '0',
+    experience_max: '5',
+  }));
+  assert.ok(calls.some((c) => c[0] === 'in' && c[1] === 'variable_share'));
+  assert.ok(calls.some((c) => c[0] === 'overlaps' && c[1] === 'skills'));
+  assert.ok(calls.some((c) => c[0] === 'overlaps' && c[1] === 'sales_styles'));
+  assert.ok(calls.some((c) => c[0] === 'overlaps' && c[1] === 'customer_types'));
+  assert.ok(calls.some((c) => c[0] === 'or' && String(c[1]).includes('salary_fixed_min.is.null')));
+  assert.ok(calls.some((c) => c[0] === 'or' && String(c[1]).includes('experience_min')));
+});
+
+test('migration offres Yannis non-géo additive', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'offres_yannis_filters_migration.sql'), 'utf8');
+  assert.match(sql, /add column if not exists skills text\[\]/i);
+  assert.match(sql, /add column if not exists variable_share text/i);
+  assert.match(sql, /offres_skills_gin/);
+  assert.match(sql, /offres_variable_share_idx/);
+  assert.doesNotMatch(sql, /drop column|truncate|delete from|update\s+public\.offres/i);
 });

@@ -1,6 +1,7 @@
 /**
- * Parsing / validation / règles du deck candidat /offres/deck (PR B).
+ * Parsing / validation / règles du deck candidat /offres/deck.
  * Filtrage métier serveur ; pagination cursor ; pas de parsing legacy texte.
+ * Hors géo (ville/rayon/lat/lon/mobility) — chantier ultérieur.
  */
 
 const {
@@ -9,13 +10,28 @@ const {
   OFFER_TAG_VOCABULARY,
   normalizeToken,
   assertAllowedList,
+  VARIABLE_SHARES,
 } = require('./filterTaxonomies');
+const {
+  OFFER_SKILLS,
+  CUSTOMER_TYPES,
+  SECTORS,
+  TARGET_JOB_TYPES,
+  resolveCanonicalSkill,
+  canonicalizeVariableShare,
+  canonicalizeSalesStyle,
+  canonicalizeCustomerType,
+  canonicalizeSector,
+  canonicalizeTargetJobType,
+} = require('./yannisTaxonomies');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 const MAX_MULTI = 12;
 const MAX_SALARY = 500_000;
 const MIN_SALARY = 0;
+const MIN_EXPERIENCE = 0;
+const MAX_EXPERIENCE = 10;
 
 function httpError(message, code, status = 400) {
   const error = new Error(message);
@@ -53,6 +69,14 @@ function parseSalaryMin(raw) {
   return n;
 }
 
+function parseBoolFlag(raw) {
+  if (raw == null || raw === '') return false;
+  const token = String(raw).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'oui'].includes(token)) return true;
+  if (['0', 'false', 'no', 'non'].includes(token)) return false;
+  throw httpError('include_unspecified_salary invalide', 'OFFER_DECK_BOOL_INVALID');
+}
+
 function parsePublishedSince(raw) {
   if (raw == null || raw === '') return null;
   const token = normalizeToken(raw);
@@ -64,6 +88,15 @@ function parsePublishedSince(raw) {
     throw httpError('published_since invalide', 'OFFER_DECK_DATE_INVALID');
   }
   return date.toISOString();
+}
+
+function parseExperienceBound(raw, label) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < MIN_EXPERIENCE || n > MAX_EXPERIENCE) {
+    throw httpError(`${label} invalide (0–${MAX_EXPERIENCE})`, 'OFFER_DECK_EXPERIENCE_INVALID');
+  }
+  return n;
 }
 
 function parseBoundedList(raw, { label, allowed = null, max = MAX_MULTI, maxLen = 80 }) {
@@ -80,19 +113,39 @@ function parseBoundedList(raw, { label, allowed = null, max = MAX_MULTI, maxLen 
   return values;
 }
 
+/**
+ * Liste CSV : canonicalize si connu ; sinon conserve le token (job_type/sector legacy).
+ * Pour listes fermées strictes, passer rejectUnknown=true.
+ */
+function parseCanonicalList(raw, { label, canonicalize, allowed, rejectUnknown = true }) {
+  const values = splitCsv(raw);
+  if (!values.length) return [];
+  if (values.length > MAX_MULTI) {
+    throw httpError(`${label}: trop de valeurs (max ${MAX_MULTI})`, 'OFFER_DECK_MULTI_MAX');
+  }
+  const out = [];
+  for (const value of values) {
+    const canonical = canonicalize(value);
+    if (canonical) {
+      if (allowed && !allowed.includes(canonical)) {
+        throw httpError(`${label} invalide: ${value}`, 'FILTER_TAXONOMY_INVALID');
+      }
+      if (!out.includes(canonical)) out.push(canonical);
+      continue;
+    }
+    if (rejectUnknown) {
+      throw httpError(`${label} invalide: ${value}`, 'FILTER_TAXONOMY_INVALID');
+    }
+    if (!out.includes(value)) out.push(value);
+  }
+  return out;
+}
+
 function parseTags(raw) {
   const values = parseBoundedList(raw, { label: 'tags', allowed: null, max: MAX_MULTI, maxLen: 40 });
-  // Accepte le vocabulaire connu ; refuse les tags hors liste pour éviter le bruit.
   return assertAllowedList(values, [...OFFER_TAG_VOCABULARY], 'tags');
 }
 
-/**
- * Cursor opaque base64url.
- * Format : { p: 'd'|'n', c: created_at|null, i: id }
- *   p='d' → phase dated (created_at non NULL)
- *   p='n' → phase null (created_at IS NULL), suite uniquement via id DESC
- * Tri serveur : created_at DESC NULLS LAST, id DESC.
- */
 function encodeCursor(row) {
   if (!row?.id) return null;
   const dated = row.created_at != null && row.created_at !== '';
@@ -122,6 +175,16 @@ function decodeCursor(raw) {
 }
 
 function parseOfferDeckQuery(query = {}) {
+  const experience_min = parseExperienceBound(query.experience_min, 'experience_min');
+  const experience_max = parseExperienceBound(query.experience_max, 'experience_max');
+  if (experience_min != null && experience_max != null && experience_max < experience_min) {
+    throw httpError('experience_max doit être ≥ experience_min', 'OFFER_DECK_EXPERIENCE_RANGE');
+  }
+
+  const salesRaw = query.sales_styles != null && query.sales_styles !== ''
+    ? query.sales_styles
+    : query.sales_style;
+
   return {
     limit: parseLimit(query.limit),
     cursor: decodeCursor(query.cursor),
@@ -135,24 +198,83 @@ function parseOfferDeckQuery(query = {}) {
     }),
     tags: query.tags == null || query.tags === '' ? [] : parseTags(query.tags),
     salary_fixed_min: parseSalaryMin(query.salary_fixed_min),
+    include_unspecified_salary: parseBoolFlag(query.include_unspecified_salary),
     published_since: parsePublishedSince(query.published_since),
-    job_types: parseBoundedList(query.job_type, { label: 'job_type', allowed: null }),
-    sectors: parseBoundedList(query.sector, { label: 'sector', allowed: null }),
+    job_types: parseCanonicalList(query.job_type, {
+      label: 'job_type',
+      canonicalize: canonicalizeTargetJobType,
+      allowed: [...TARGET_JOB_TYPES],
+      rejectUnknown: false,
+    }),
+    sectors: parseCanonicalList(query.sector, {
+      label: 'sector',
+      canonicalize: canonicalizeSector,
+      allowed: [...SECTORS],
+      rejectUnknown: false,
+    }),
+    variable_shares: parseCanonicalList(query.variable_share, {
+      label: 'variable_share',
+      canonicalize: canonicalizeVariableShare,
+      allowed: [...VARIABLE_SHARES],
+    }),
+    sales_styles: parseCanonicalList(salesRaw, {
+      label: 'sales_style',
+      canonicalize: canonicalizeSalesStyle,
+      allowed: ['hunter', 'farmer', 'full'],
+    }),
+    customer_types: parseCanonicalList(query.customer_types, {
+      label: 'customer_types',
+      canonicalize: canonicalizeCustomerType,
+      allowed: [...CUSTOMER_TYPES],
+    }),
+    skills: parseCanonicalList(query.skills, {
+      label: 'skills',
+      canonicalize: resolveCanonicalSkill,
+      allowed: [...OFFER_SKILLS],
+    }),
+    experience_min,
+    experience_max,
   };
 }
 
 /**
- * Règle salaire candidat "fixe minimum" X :
+ * Salaire fixe minimum X :
  * - salary_fixed_max >= X si max renseigné
  * - sinon salary_fixed_min >= X
- * - sinon (tout NULL) : ne matche pas
- * Jamais de parsing de offres.salaire texte.
+ * - sinon NULL/NULL : match seulement si include_unspecified_salary
  */
-function offerMatchesSalaryMin(offer, salaryMin) {
+function offerMatchesSalaryMin(offer, salaryMin, includeUnspecified = false) {
   if (salaryMin == null) return true;
   if (offer.salary_fixed_max != null) return Number(offer.salary_fixed_max) >= salaryMin;
   if (offer.salary_fixed_min != null) return Number(offer.salary_fixed_min) >= salaryMin;
+  if (includeUnspecified && offer.salary_fixed_min == null && offer.salary_fixed_max == null) {
+    return true;
+  }
   return false;
+}
+
+/**
+ * Tranche expérience demandée (0–10, 10 = 10+).
+ * Filtre explicite : NULL/NULL legacy ne matche pas.
+ * Chevauchement [offer_lo, offer_hi] ∩ [filter_lo, filter_hi].
+ */
+function offerMatchesExperience(offer, filterMin, filterMax) {
+  if (filterMin == null && filterMax == null) return true;
+  const oMin = offer.experience_min;
+  const oMax = offer.experience_max;
+  if (oMin == null && oMax == null) return false;
+  const lo = oMin != null ? Number(oMin) : 0;
+  const hi = oMax != null ? Number(oMax) : 99;
+  const fLo = filterMin != null ? filterMin : 0;
+  const fHi = filterMax != null ? filterMax : 99;
+  return lo <= fHi && hi >= fLo;
+}
+
+function arrayOverlaps(candidateValues, selected) {
+  if (!selected?.length) return true;
+  if (!Array.isArray(candidateValues) || !candidateValues.length) return false;
+  const pool = new Set(candidateValues.map(String));
+  return selected.some((value) => pool.has(String(value)));
 }
 
 function offerMatchesDeckFilters(offer, filters) {
@@ -168,7 +290,9 @@ function offerMatchesDeckFilters(offer, filters) {
     const tags = Array.isArray(offer.tags) ? offer.tags.map(String) : [];
     if (!filters.tags.some((tag) => tags.includes(tag))) return false;
   }
-  if (!offerMatchesSalaryMin(offer, filters.salary_fixed_min)) return false;
+  if (!offerMatchesSalaryMin(offer, filters.salary_fixed_min, filters.include_unspecified_salary)) {
+    return false;
+  }
   if (filters.published_since) {
     if (!offer.created_at) return false;
     if (new Date(offer.created_at).getTime() < new Date(filters.published_since).getTime()) return false;
@@ -181,10 +305,25 @@ function offerMatchesDeckFilters(offer, filters) {
     if (offer.sector == null) return false;
     if (!filters.sectors.includes(offer.sector)) return false;
   }
+  if (filters.variable_shares.length) {
+    if (offer.variable_share == null || offer.variable_share === '') return false;
+    if (!filters.variable_shares.includes(String(offer.variable_share))) return false;
+  }
+  if (filters.sales_styles.length && !arrayOverlaps(offer.sales_styles, filters.sales_styles)) {
+    return false;
+  }
+  if (filters.customer_types.length && !arrayOverlaps(offer.customer_types, filters.customer_types)) {
+    return false;
+  }
+  if (filters.skills.length && !arrayOverlaps(offer.skills, filters.skills)) {
+    return false;
+  }
+  if (!offerMatchesExperience(offer, filters.experience_min, filters.experience_max)) {
+    return false;
+  }
   return true;
 }
 
-/** Comparaison tri : created_at DESC NULLS LAST, id DESC. */
 function compareOffersNewestFirst(a, b) {
   const ac = a.created_at ? new Date(a.created_at).getTime() : null;
   const bc = b.created_at ? new Date(b.created_at).getTime() : null;
@@ -194,7 +333,6 @@ function compareOffersNewestFirst(a, b) {
   return String(b.id).localeCompare(String(a.id));
 }
 
-/** true si `row` est strictement après le curseur dans l’ordre newest-first. */
 function isAfterCursor(row, cursor) {
   if (!cursor) return true;
   const rowTime = row.created_at != null && row.created_at !== ''
@@ -207,18 +345,12 @@ function isAfterCursor(row, cursor) {
       if (rowTime > cursorTime) return false;
       return String(row.id) < String(cursor.id);
     }
-    // Phase B : toutes les lignes created_at NULL viennent après la phase dated.
     return true;
   }
-  // Cursor déjà en phase NULL : uniquement NULL avec id < cursor.id (jamais created_at < NULL).
   if (rowTime != null) return false;
   return String(row.id) < String(cursor.id);
 }
 
-/**
- * Applique filtres + exclusions + tri + cursor + limit en mémoire sur un jeu déjà
- * restreint (tests / fallback). La route préfère pousser ce qui est possible en SQL.
- */
 function paginateOfferDeck(rows, filters, { seenIds = [] } = {}) {
   const seen = new Set(seenIds.map(String));
   const filtered = rows
@@ -241,10 +373,6 @@ function paginateOfferDeck(rows, filters, { seenIds = [] } = {}) {
   };
 }
 
-/**
- * Construit les filtres Supabase supportés nativement.
- * Exclusions id + salary (OR sur max/min) appliquées ensuite / via .or.
- */
 function applySupabaseDeckFilters(query, filters) {
   let q = query.or('statut.eq.active,statut.is.null');
 
@@ -255,7 +383,6 @@ function applySupabaseDeckFilters(query, filters) {
     q = q.in('remote_mode', filters.remote_modes);
   }
   if (filters.tags.length) {
-    // OR dans la famille tags : overlap array
     q = q.overlaps('tags', filters.tags);
   }
   if (filters.published_since) {
@@ -267,18 +394,38 @@ function applySupabaseDeckFilters(query, filters) {
   if (filters.sectors.length) {
     q = q.in('sector', filters.sectors);
   }
+  if (filters.variable_shares.length) {
+    q = q.in('variable_share', filters.variable_shares);
+  }
+  if (filters.sales_styles.length) {
+    q = q.overlaps('sales_styles', filters.sales_styles);
+  }
+  if (filters.customer_types.length) {
+    q = q.overlaps('customer_types', filters.customer_types);
+  }
+  if (filters.skills.length) {
+    q = q.overlaps('skills', filters.skills);
+  }
   if (filters.salary_fixed_min != null) {
     const x = filters.salary_fixed_min;
-    q = q.or(`salary_fixed_max.gte.${x},and(salary_fixed_max.is.null,salary_fixed_min.gte.${x})`);
+    if (filters.include_unspecified_salary) {
+      q = q.or(
+        `salary_fixed_max.gte.${x},and(salary_fixed_max.is.null,salary_fixed_min.gte.${x}),and(salary_fixed_min.is.null,salary_fixed_max.is.null)`,
+      );
+    } else {
+      q = q.or(`salary_fixed_max.gte.${x},and(salary_fixed_max.is.null,salary_fixed_min.gte.${x})`);
+    }
+  }
+  if (filters.experience_min != null || filters.experience_max != null) {
+    const fLo = filters.experience_min != null ? filters.experience_min : 0;
+    const fHi = filters.experience_max != null ? filters.experience_max : 99;
+    q = q.or(
+      `and(experience_min.lte.${fHi},experience_max.gte.${fLo}),and(experience_min.lte.${fHi},experience_max.is.null),and(experience_min.is.null,experience_max.gte.${fLo})`,
+    );
   }
   return q;
 }
 
-/**
- * Keyset PostgREST — deux phases explicites (pas de created_at < NULL).
- * Phase dated : created_at < c OR (created_at = c AND id < i) OR created_at IS NULL
- * Phase null  : created_at IS NULL AND id < i
- */
 function applySupabaseCursor(query, cursor) {
   if (!cursor) return query;
   if (cursor.phase === 'n' || cursor.created_at == null) {
@@ -294,10 +441,13 @@ function applySupabaseCursor(query, cursor) {
 module.exports = {
   DEFAULT_LIMIT,
   MAX_LIMIT,
+  MIN_EXPERIENCE,
+  MAX_EXPERIENCE,
   parseOfferDeckQuery,
   encodeCursor,
   decodeCursor,
   offerMatchesSalaryMin,
+  offerMatchesExperience,
   offerMatchesDeckFilters,
   compareOffersNewestFirst,
   isAfterCursor,

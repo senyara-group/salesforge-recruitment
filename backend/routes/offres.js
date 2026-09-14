@@ -14,7 +14,7 @@ const {
 const { normalizeOfferStructuredFields } = require('../utils/offerWrite');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
-const DECK_SELECT = 'id, titre, type, contract_type, lieu, salaire, description, tags, statut, auto_candidature, created_at, job_type, remote_mode, salary_fixed_min, salary_fixed_max, has_variable, variable_note, sales_styles, sector, customer_types, experience_min, experience_max, city_code, latitude, longitude, recruteur_id, recruteurs(entreprise, secteur, avatar_meta)';
+const DECK_SELECT = 'id, titre, type, contract_type, lieu, salaire, description, tags, statut, auto_candidature, created_at, job_type, remote_mode, salary_fixed_min, salary_fixed_max, has_variable, variable_note, variable_share, sales_styles, sector, customer_types, skills, experience_min, experience_max, city_code, latitude, longitude, recruteur_id, recruteurs(entreprise, secteur, avatar_meta)';
 
 // Le logo recruteur n'est pas une simple colonne : c'est un chemin de stockage
 // (avatar_meta) qui doit etre transforme en URL signee via l'API Supabase Storage.
@@ -260,6 +260,14 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
         salary_fixed_max: structured.salary_fixed_max,
         job_type: structured.job_type,
         sector: structured.sector,
+        variable_share: structured.variable_share,
+        has_variable: structured.has_variable,
+        variable_note: structured.variable_note,
+        sales_styles: structured.sales_styles,
+        customer_types: structured.customer_types,
+        skills: structured.skills,
+        experience_min: structured.experience_min,
+        experience_max: structured.experience_max,
         recruteur_id: recruteur.id,
       })
       .select('*')
@@ -316,6 +324,14 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
         salary_fixed_max: structured.salary_fixed_max,
         job_type: structured.job_type,
         sector: structured.sector,
+        variable_share: structured.variable_share,
+        has_variable: structured.has_variable,
+        variable_note: structured.variable_note,
+        sales_styles: structured.sales_styles,
+        customer_types: structured.customer_types,
+        skills: structured.skills,
+        experience_min: structured.experience_min,
+        experience_max: structured.experience_max,
       })
       .eq('id', req.params.id)
       .eq('recruteur_id', recruteur.id)
