@@ -2272,13 +2272,22 @@ function refreshAccessToken() {
 async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
-  const r = await fetch(API + path, {
-    method,
-    headers: h,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store',
-    signal: fetchOpts && fetchOpts.signal,
-  });
+  const requestBody = body ? JSON.stringify(body) : undefined;
+  let r;
+  try {
+    r = await fetch(API + path, {
+      method,
+      headers: h,
+      body: requestBody,
+      cache: 'no-store',
+      signal: fetchOpts && fetchOpts.signal,
+    });
+  } catch (error) {
+    // Un rejet TypeError de fetch indique un échec de transport ; une exception
+    // ultérieure (par exemple dans renderResult) ne doit pas être confondue avec lui.
+    if (error?.name === 'TypeError') error.code = 'NETWORK_ERROR';
+    throw error;
+  }
   if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
     return api(method, path, body, false, fetchOpts);
   }
@@ -3607,6 +3616,12 @@ async function saveAdnConsent() {
 function submitADN() {
   hideAllTestSteps();
   const el = document.getElementById('ts10'); if (el) el.style.display = 'block';
+  document.getElementById('ana-block').style.display = 'block';
+  document.getElementById('res-block').style.display = 'none';
+  document.getElementById('ana-block').querySelector('h3').textContent = 'Analyse en cours';
+  document.getElementById('ana-block').querySelector('p').textContent = "L'IA calcule votre ADN Commercial sur 8 axes comportementaux";
+  document.getElementById('ana-block').querySelector('.ana-bar').style.display = '';
+  document.getElementById('test-pf').style.display = '';
   document.getElementById('test-sl').textContent = 'Analyse en cours';
   document.getElementById('test-st').textContent = 'Calcul de votre ADN Commercial';
   document.getElementById('test-pf').style.width = '100%';
@@ -3633,11 +3648,22 @@ async function submitToAPI() {
       message = e.message || 'Votre prochaine évaluation n’est pas encore disponible.';
     } else if (e.status === 401 || e.status === 403) {
       message = 'Votre session ou vos droits ne permettent pas cette évaluation.';
+    } else if (e.code === 'NETWORK_ERROR') {
+      message = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
     } else if (e.status) {
       message = 'L’analyse est temporairement indisponible. Réessayez plus tard.';
     } else {
-      message = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+      message = 'L’analyse n’a pas pu être terminée. Vous pouvez réessayer plus tard.';
     }
+    document.getElementById('test-sl').textContent = 'Évaluation indisponible';
+    document.getElementById('test-st').textContent = 'Résultat indisponible';
+    document.getElementById('test-pf').style.display = 'none';
+    const panel = document.getElementById('ana-block');
+    panel.style.display = 'block';
+    document.getElementById('res-block').style.display = 'none';
+    panel.querySelector('h3').textContent = 'Résultat indisponible';
+    panel.querySelector('p').textContent = 'Vous pouvez continuer à naviguer dans votre espace.';
+    panel.querySelector('.ana-bar').style.display = 'none';
     document.getElementById('as').textContent = message;
     toast(message);
   }

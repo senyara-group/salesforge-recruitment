@@ -108,26 +108,95 @@ test('Coach creation sends the bounded payload and preserves profile/offer setti
   assert.equal(sent[0].offer_text, 'Offre fictive');
 });
 
-test('ADN retake shows API business message; only network failure shows connection message', async () => {
+test('Coach restart omits CV when unchecked and sends it when checked', async () => {
+  const fields = {
+    'coach-use-cv': { checked: false }, 'coach-use-profile': { checked: false },
+    'coach-offer-text': { value: '' }, 'cv-source-text': { value: 'x'.repeat(30000) },
+    'coach-messages': { innerHTML: '' },
+  };
+  const sent = [];
+  const sandbox = {
+    COACH_MODE: 'pitch', COACH_MODE_LABELS: { pitch: 'Pitch' },
+    COACH_OPENERS: { pitch: 'Bonjour' }, AI_AVAILABLE: true, COACH_ALLOWED: true,
+    ACTIVE_CONVERSATION_ID: 'old', document: { getElementById: id => fields[id] },
+    api: async (method, route, body) => {
+      if (method === 'POST') { sent.push({ route, body }); return { id: 'new', messages: [] }; }
+      return {};
+    },
+    setBtn: () => {}, toast: () => {}, showCoachSetup: () => {},
+    showCoachConversation: () => {}, sendCoachContent: async () => {}, refreshCoachHistory: async () => {},
+  };
+  vm.runInNewContext(`${sourceBetween('function coachConversationPayload(', 'async function createCoachConversation()')}\n${sourceBetween('async function restartCoachConversation()', '// ------------------------------------------------------------')}\nthis.restart = restartCoachConversation;`, sandbox);
+  await sandbox.restart();
+  assert.equal(sent[0].route, '/assistant/conversations');
+  assert.equal(Object.hasOwn(sent[0].body, 'cv_text'), false);
+  assert.equal(sent[0].body.use_profile, false);
+  fields['coach-use-cv'].checked = true;
+  await sandbox.restart();
+  assert.equal(sent[1].body.cv_text.length, 30000);
+});
+
+test('ADN failures leave a final DOM state, distinguish business, network, server and local errors', async () => {
   const status = { textContent: '' };
   const notices = [];
+  const heading = { textContent: 'Analyse en cours' };
+  const description = { textContent: 'Calcul en cours' };
+  const bar = { style: { display: '' } };
+  const panel = { style: { display: 'block' }, querySelector: selector => ({ h3: heading, p: description, '.ana-bar': bar })[selector] };
+  const elements = {
+    as: status, 'ana-block': panel, 'res-block': { style: { display: 'none' } },
+    'test-sl': { textContent: 'Analyse en cours' },
+    'test-st': { textContent: 'Calcul de votre ADN Commercial' },
+    'test-pf': { style: { display: '', width: '100%' } },
+  };
   let failure = null;
+  let calls = 0;
   const sandbox = {
     ADN: {}, TEST_JOB_TYPE: 'test', PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
-    document: { getElementById: () => status }, toast: value => notices.push(value),
-    api: async () => { throw failure; }, renderResult: () => assert.fail('unexpected success'),
+    document: { getElementById: id => elements[id] }, toast: value => notices.push(value),
+    api: async () => { calls += 1; if (failure) throw failure; return {}; },
+    renderResult: () => { throw new Error('local render error'); },
   };
   vm.runInNewContext(`${sourceBetween('async function submitToAPI()', 'function resultAxisColor(')}\nthis.submit = submitToAPI;`, sandbox);
   failure = Object.assign(new Error('Prochaine évaluation disponible le 09/03/2027'), { error: 'RETAKE_TOO_SOON', status: 403, next_eligible_at: '2027-03-09T12:41:19.018Z' });
   await sandbox.submit();
   assert.match(status.textContent, /09\/03\/2027/);
   assert.doesNotMatch(notices.at(-1), /connexion/i);
-  failure = new TypeError('Failed to fetch');
+  assert.equal(heading.textContent, 'Résultat indisponible');
+  assert.equal(elements['test-sl'].textContent, 'Évaluation indisponible');
+  assert.equal(elements['test-st'].textContent, 'Résultat indisponible');
+  assert.equal(bar.style.display, 'none');
+  assert.equal(elements['test-pf'].style.display, 'none');
+  assert.equal(panel.style.display, 'block');
+  assert.equal(elements['res-block'].style.display, 'none');
+  assert.equal(calls, 1);
+  failure = Object.assign(new TypeError('Failed to fetch'), { code: 'NETWORK_ERROR' });
   await sandbox.submit();
   assert.match(status.textContent, /connexion/i);
   failure = Object.assign(new Error('server'), { status: 500 });
   await sandbox.submit();
   assert.doesNotMatch(status.textContent, /connexion/i);
+  failure = Object.assign(new Error('invalid JSON'), { code: 'RESPONSE_UNREADABLE', status: 200 });
+  await sandbox.submit();
+  assert.doesNotMatch(status.textContent, /connexion/i);
+  failure = null;
+  await sandbox.submit();
+  assert.match(status.textContent, /pas pu être terminée/);
+  assert.doesNotMatch(status.textContent, /connexion/i);
+  assert.equal(calls, 5);
+});
+
+test('api marks only a rejected fetch TypeError as a network error', async () => {
+  const sandbox = {
+    API: 'https://example.invalid', TOKEN: '',
+    fetch: async () => { throw new TypeError('Failed to fetch'); },
+  };
+  vm.runInNewContext(`${sourceBetween('async function api(method, path, body, allowRefresh = true, fetchOpts = null)', 'async function apiUp(')}\nthis.callApi = api;`, sandbox);
+  await assert.rejects(sandbox.callApi('POST', '/ai/score-adn', {}), error => error.code === 'NETWORK_ERROR');
+  const cyclic = {}; cyclic.self = cyclic;
+  await assert.rejects(sandbox.callApi('POST', '/ai/score-adn', cyclic), error => error.code !== 'NETWORK_ERROR');
+  sandbox.fetch = async () => ({ status: 500, ok: false, text: async () => '{"error":"SERVER_ERROR"}' });
+  await assert.rejects(sandbox.callApi('POST', '/ai/score-adn', {}), error => error.code !== 'NETWORK_ERROR' && error.status === 500);
 });
 
 test('CV programmatic text length is checked before assistant request', async () => {
