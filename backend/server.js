@@ -8,7 +8,7 @@ const app = express();
 app.disable('etag'); // désactive l'ETag auto d'Express (source des 304 sur /api/* avec données dynamiques)
 app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
-app.use(express.json());
+app.use(require('./middleware/jsonBodyParser'));
 app.use((req, res, next) => {
   if (req.path.endsWith('.html') || req.path === '/') {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
