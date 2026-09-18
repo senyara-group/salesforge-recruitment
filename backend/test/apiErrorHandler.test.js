@@ -57,6 +57,19 @@ test('payload trop volumineux (413, express.json PayloadTooLargeError) -> messag
   assert.match(res.body.error, /volumineux/i);
 });
 
+test('erreur de parsing JSON ne journalise jamais le contenu du body', () => {
+  const req = { path: '/api/assistant/cv-analyses', method: 'POST' };
+  const res = fakeRes();
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args);
+  try {
+    apiErrorHandler(Object.assign(new Error('Unexpected token in CV_SECRET'), { status: 400, type: 'entity.parse.failed' }), req, res, () => {});
+  } finally { console.error = originalError; }
+  assert.equal(res.statusCode, 400);
+  assert.doesNotMatch(JSON.stringify(logs), /CV_SECRET/);
+});
+
 test('routes non /api/* : laisse Express gerer (comportement statique inchange)', () => {
   const req = { path: '/swipsales_landing.html', method: 'GET' };
   const res = fakeRes();

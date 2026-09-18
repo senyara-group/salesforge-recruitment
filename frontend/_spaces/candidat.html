@@ -2272,13 +2272,22 @@ function refreshAccessToken() {
 async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
-  const r = await fetch(API + path, {
-    method,
-    headers: h,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store',
-    signal: fetchOpts && fetchOpts.signal,
-  });
+  const requestBody = body ? JSON.stringify(body) : undefined;
+  let r;
+  try {
+    r = await fetch(API + path, {
+      method,
+      headers: h,
+      body: requestBody,
+      cache: 'no-store',
+      signal: fetchOpts && fetchOpts.signal,
+    });
+  } catch (error) {
+    // Un rejet TypeError de fetch indique un échec de transport ; une exception
+    // ultérieure (par exemple dans renderResult) ne doit pas être confondue avec lui.
+    if (error?.name === 'TypeError') error.code = 'NETWORK_ERROR';
+    throw error;
+  }
   if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
     return api(method, path, body, false, fetchOpts);
   }
@@ -3607,6 +3616,14 @@ async function saveAdnConsent() {
 function submitADN() {
   hideAllTestSteps();
   const el = document.getElementById('ts10'); if (el) el.style.display = 'block';
+  document.getElementById('ana-block').style.display = 'block';
+  document.getElementById('res-block').style.display = 'none';
+  document.getElementById('ana-block').querySelector('h3').textContent = 'Analyse en cours';
+  document.getElementById('ana-block').querySelector('p').textContent = "L'IA calcule votre ADN Commercial sur 8 axes comportementaux";
+  document.getElementById('ana-block').querySelector('.ana-bar').style.display = '';
+  document.getElementById('as').textContent = 'Démarrage…';
+  document.getElementById('af').style.width = '0%';
+  document.getElementById('test-pf').style.display = '';
   document.getElementById('test-sl').textContent = 'Analyse en cours';
   document.getElementById('test-st').textContent = 'Calcul de votre ADN Commercial';
   document.getElementById('test-pf').style.width = '100%';
@@ -3627,7 +3644,31 @@ async function submitToAPI() {
     };
     const r = await api('POST', '/ai/score-adn', { reponses: ADN });
     renderResult(r);
-  } catch(e) { toast('Erreur analyse — vérifiez la connexion'); }
+  } catch(e) {
+    let message;
+    if (e.error === 'RETAKE_TOO_SOON' || e.code === 'RETAKE_TOO_SOON') {
+      message = e.message || 'Votre prochaine évaluation n’est pas encore disponible.';
+    } else if (e.status === 401 || e.status === 403) {
+      message = 'Votre session ou vos droits ne permettent pas cette évaluation.';
+    } else if (e.code === 'NETWORK_ERROR') {
+      message = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    } else if (e.status) {
+      message = 'L’analyse est temporairement indisponible. Réessayez plus tard.';
+    } else {
+      message = 'L’analyse n’a pas pu être terminée. Vous pouvez réessayer plus tard.';
+    }
+    document.getElementById('test-sl').textContent = 'Évaluation indisponible';
+    document.getElementById('test-st').textContent = 'Résultat indisponible';
+    document.getElementById('test-pf').style.display = 'none';
+    const panel = document.getElementById('ana-block');
+    panel.style.display = 'block';
+    document.getElementById('res-block').style.display = 'none';
+    panel.querySelector('h3').textContent = 'Résultat indisponible';
+    panel.querySelector('p').textContent = 'Vous pouvez continuer à naviguer dans votre espace.';
+    panel.querySelector('.ana-bar').style.display = 'none';
+    document.getElementById('as').textContent = message;
+    toast(message);
+  }
 }
 function resultAxisColor(value) {
   const score = Number(value || 0);
@@ -5027,6 +5068,8 @@ async function analyseCVWithAI() {
     document.getElementById('cv-text-alt')?.setAttribute('open', '');
     return setFeedback('cv-analysis-feedback', 'L’extraction est insuffisante. Collez manuellement au moins 200 caractères du CV.', true);
   }
+  if (source.length > 30000) return setFeedback('cv-analysis-feedback', 'Le texte extrait dépasse 30 000 caractères. Réduisez le texte à analyser ; le document original reste conservé.', true);
+  if (document.getElementById('cv-offer-text').value.length > 20000) return setFeedback('cv-analysis-feedback', 'L’offre ciblée dépasse 20 000 caractères.', true);
   CV_ANALYSING = true;
   setBtn('cv-analyse-btn', true, 'Analyser mon CV');
   setFeedback('cv-analysis-feedback', '');
@@ -5123,14 +5166,28 @@ const COACH_OPENERS = {
   simulation: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une objection réaliste, donne un feedback, puis une variante plus dure.'
 };
 const COACH_MODE_LABELS = { interview: 'Entretien', pitch: 'Pitch', simulation: 'Objections' };
+function coachConversationPayload(mode, title) {
+  const useCv = document.getElementById('coach-use-cv').checked;
+  const offerText = document.getElementById('coach-offer-text').value;
+  if (offerText.length > 20000) throw new Error('L’offre ciblée dépasse 20 000 caractères.');
+  const payload = { mode, use_profile: document.getElementById('coach-use-profile').checked, use_cv: useCv, offer_text: offerText };
+  if (useCv) {
+    const cvText = document.getElementById('cv-source-text').value.trim();
+    if (!cvText) throw new Error('Ouvrez l’Optimiseur de CV et ajoutez ou collez le texte à partager.');
+    if (cvText.length > 30000) throw new Error('Le texte du CV dépasse 30 000 caractères. Réduisez le texte à partager ; le document original reste conservé.');
+    payload.cv_text = cvText;
+  }
+  if (title) payload.title = title;
+  return payload;
+}
 async function createCoachConversation() {
   if (!COACH_MODE || !AI_AVAILABLE || !COACH_ALLOWED) return;
-  const useCv = document.getElementById('coach-use-cv').checked;
-  const cvText = document.getElementById('cv-source-text').value.trim();
-  if (useCv && !cvText) return setFeedback('coach-setup-feedback', 'Ouvrez l’Optimiseur de CV et ajoutez ou collez le texte à partager.', true);
+  let payload;
+  try { payload = coachConversationPayload(COACH_MODE); }
+  catch (error) { return setFeedback('coach-setup-feedback', error.message, true); }
   setBtn('coach-start-btn', true, 'Commencer');
   try {
-    const conversation = await api('POST', '/assistant/conversations', { mode: COACH_MODE, use_profile: document.getElementById('coach-use-profile').checked, use_cv: useCv, cv_text: cvText, offer_text: document.getElementById('coach-offer-text').value });
+    const conversation = await api('POST', '/assistant/conversations', payload);
     ACTIVE_CONVERSATION_ID = conversation.id; showCoachConversation(conversation); await sendCoachContent(COACH_OPENERS[COACH_MODE]); await refreshCoachHistory();
   } catch (error) { setFeedback('coach-setup-feedback', error.message || 'Création impossible', true); }
   finally { setBtn('coach-start-btn', false, 'Commencer'); }
@@ -5210,6 +5267,9 @@ async function deleteCoachConversation() {
 async function restartCoachConversation() {
   if (!COACH_MODE || !AI_AVAILABLE || !COACH_ALLOWED) return showCoachSetup();
   const mode = COACH_MODE;
+  let payload;
+  try { payload = coachConversationPayload(mode, COACH_MODE_LABELS[mode] || undefined); }
+  catch (error) { return toast(error.message); }
   if (ACTIVE_CONVERSATION_ID) {
     try { await api('DELETE', '/assistant/conversations/' + ACTIVE_CONVERSATION_ID); }
     catch (_error) {}
@@ -5218,14 +5278,7 @@ async function restartCoachConversation() {
   document.getElementById('coach-messages').innerHTML = '';
   setBtn('coach-restart-btn', true, 'Recommencer');
   try {
-    const conversation = await api('POST', '/assistant/conversations', {
-      mode,
-      use_profile: document.getElementById('coach-use-profile').checked,
-      use_cv: document.getElementById('coach-use-cv').checked,
-      cv_text: document.getElementById('cv-source-text').value.trim(),
-      offer_text: document.getElementById('coach-offer-text').value,
-      title: COACH_MODE_LABELS[mode] || undefined
-    });
+    const conversation = await api('POST', '/assistant/conversations', payload);
     COACH_MODE = mode;
     ACTIVE_CONVERSATION_ID = conversation.id;
     showCoachConversation(conversation);

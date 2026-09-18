@@ -10,12 +10,13 @@ module.exports = function apiErrorHandler(err, req, res, next) {
   if (!req.path.startsWith('/api/')) return next(err);
   if (res.headersSent) return next(err);
   const status = Number(err?.status || err?.statusCode) || 500;
+  const parserError = err?.type === 'entity.parse.failed' || err?.type === 'entity.too.large';
   console.error('[server] erreur non geree avant reponse', {
     path: req.path,
     method: req.method,
     status,
     name: err?.name || null,
-    message: String(err?.message || err).slice(0, 300),
+    message: parserError ? err.type : String(err?.message || err).slice(0, 300),
   });
   res.status(status).json({
     error: status === 413 ? 'Contenu trop volumineux.' : 'Erreur serveur. Veuillez réessayer.',
