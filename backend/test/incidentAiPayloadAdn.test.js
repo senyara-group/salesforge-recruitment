@@ -186,6 +186,63 @@ test('ADN failures leave a final DOM state, distinguish business, network, serve
   assert.equal(calls, 5);
 });
 
+test('ADN retake then new attempt resets status and progress before the first tick', async () => {
+  const heading = { textContent: '' };
+  const description = { textContent: '' };
+  const bar = { style: { display: '' } };
+  const elements = {
+    ts10: { style: { display: 'none' } },
+    'ana-block': { style: { display: 'block' }, querySelector: selector => ({ h3: heading, p: description, '.ana-bar': bar })[selector] },
+    'res-block': { style: { display: 'none' } },
+    'test-pf': { style: { display: '', width: '' } },
+    'test-sl': { textContent: '' }, 'test-st': { textContent: '' },
+    as: { textContent: '' }, af: { style: { width: '0%' } },
+  };
+  let tick;
+  let calls = 0;
+  let rendered = 0;
+  const sandbox = {
+    document: { getElementById: id => elements[id] },
+    window: { scrollTo: () => {} }, hideAllTestSteps: () => {},
+    setInterval: callback => { tick = callback; return 1; }, clearInterval: () => {},
+    ANA_MSGS: ['Analyse des scénarios comportementaux…', 'Étape suivante'],
+    ADN: {}, TEST_JOB_TYPE: 'test', PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
+    api: async () => {
+      calls += 1;
+      if (calls === 1) throw Object.assign(new Error('Prochaine évaluation disponible le 09/03/2027'), { error: 'RETAKE_TOO_SOON', status: 403 });
+      return {};
+    },
+    renderResult: () => { rendered += 1; }, toast: () => {},
+  };
+  vm.runInNewContext(`${sourceBetween('function submitADN()', 'function resultAxisColor(')}\nthis.start = submitADN;`, sandbox);
+  sandbox.start();
+  assert.equal(elements.as.textContent, 'Démarrage…');
+  assert.equal(elements.af.style.width, '0%');
+  for (let i = 0; i < 100 && calls === 0; i += 1) tick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls, 1);
+  assert.match(elements.as.textContent, /09\/03\/2027/);
+  assert.equal(bar.style.display, 'none');
+
+  sandbox.start();
+  assert.equal(elements.as.textContent, 'Démarrage…');
+  assert.equal(elements.af.style.width, '0%');
+  assert.equal(heading.textContent, 'Analyse en cours');
+  assert.equal(elements['test-sl'].textContent, 'Analyse en cours');
+  assert.equal(elements['test-st'].textContent, 'Calcul de votre ADN Commercial');
+  assert.equal(bar.style.display, '');
+  assert.equal(elements['test-pf'].style.display, '');
+  assert.equal(elements['ana-block'].style.display, 'block');
+  assert.equal(elements['res-block'].style.display, 'none');
+  assert.equal(calls, 1);
+  tick();
+  assert.notEqual(elements.af.style.width, '0%');
+  for (let i = 0; i < 100 && calls === 1; i += 1) tick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls, 2);
+  assert.equal(rendered, 1);
+});
+
 test('api marks only a rejected fetch TypeError as a network error', async () => {
   const sandbox = {
     API: 'https://example.invalid', TOKEN: '',
