@@ -1351,6 +1351,14 @@ button,input,textarea,select{font-family:inherit}
       <button class="btn bp" id="adn-consent-btn" type="button" onclick="saveAdnConsent()">Continuer vers le test</button>
     </section>
   </div>
+  <div id="adn-eligibility-gate" class="sec" hidden>
+    <section class="account-section" aria-labelledby="adn-eligibility-title">
+      <h1 class="sf" id="adn-eligibility-title">Préparation du test</h1>
+      <p id="adn-eligibility-copy">Vérification de votre éligibilité…</p>
+      <div class="form-feedback" id="adn-eligibility-feedback" role="status"></div>
+      <button class="btn bo" id="adn-eligibility-retry" type="button" hidden onclick="loadAdnConsent()">Réessayer</button>
+    </section>
+  </div>
   <div class="test-sticky" id="adn-test-sticky" hidden>
     <div class="test-sl" id="test-sl">Étape 1 sur 10</div>
     <div class="test-st sf" id="test-st">Scénario comportemental</div>
@@ -3586,18 +3594,108 @@ function pp(btn, pid, idx) {
 }
 function tg(btn, cat, val) { btn.classList.toggle('on'); if(!ADN.prefs[cat]) ADN.prefs[cat]=[]; if(btn.classList.contains('on')) ADN.prefs[cat].push(val); else ADN.prefs[cat]=ADN.prefs[cat].filter(v=>v!==val); }
 function tg1(btn, cat, val) { btn.parentElement.querySelectorAll('.pc').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); ADN.prefs[cat]=val; }
-async function loadAdnConsent() {
-  const gate = document.getElementById('adn-consent-gate');
+let ADN_GATE_SEQ = 0;
+function resetAdnTestSurfaces() {
+  const consent = document.getElementById('adn-consent-gate');
+  const eligibility = document.getElementById('adn-eligibility-gate');
   const sticky = document.getElementById('adn-test-sticky');
   const body = document.getElementById('adn-test-body');
-  gate.hidden = false; sticky.hidden = true; body.hidden = true;
+  if (consent) consent.hidden = true;
+  if (eligibility) eligibility.hidden = true;
+  if (sticky) sticky.hidden = true;
+  if (body) body.hidden = true;
+}
+function showAdnQuestionnaire() {
+  resetAdnTestSurfaces();
+  const sticky = document.getElementById('adn-test-sticky');
+  const body = document.getElementById('adn-test-body');
+  if (sticky) sticky.hidden = false;
+  if (body) body.hidden = false;
+}
+function formatAdnEligibleDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('fr-FR');
+}
+function showAdnCooldown(nextEligibleAt) {
+  resetAdnTestSurfaces();
+  const gate = document.getElementById('adn-eligibility-gate');
+  if (!gate) return;
+  gate.hidden = false;
+  document.getElementById('adn-eligibility-title').textContent = 'Votre ADN Commercial est déjà à jour.';
+  const formatted = formatAdnEligibleDate(nextEligibleAt);
+  document.getElementById('adn-eligibility-copy').textContent = formatted
+    ? `Vous pourrez réaliser une nouvelle évaluation à partir du ${formatted}.`
+    : 'Vous pourrez réaliser une nouvelle évaluation dès que le délai de repassage sera écoulé.';
+  const retry = document.getElementById('adn-eligibility-retry');
+  if (retry) retry.hidden = true;
+  setFeedback('adn-eligibility-feedback', '');
+}
+function showAdnEligibilityError(error) {
+  resetAdnTestSurfaces();
+  const gate = document.getElementById('adn-eligibility-gate');
+  if (!gate) return;
+  gate.hidden = false;
+  document.getElementById('adn-eligibility-title').textContent = 'Vérification impossible';
+  let copy = 'Impossible de vérifier votre éligibilité pour le moment.';
+  if (error?.status === 401 || error?.status === 403) {
+    copy = 'Votre session ou vos droits ne permettent pas de vérifier votre éligibilité.';
+  } else if (error?.code === 'NETWORK_ERROR') {
+    copy = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+  }
+  document.getElementById('adn-eligibility-copy').textContent = copy;
+  const retry = document.getElementById('adn-eligibility-retry');
+  if (retry) retry.hidden = false;
+  setFeedback('adn-eligibility-feedback', 'Réessayez pour accéder au questionnaire.', true);
+}
+function showAdnEligibilityLoading() {
+  resetAdnTestSurfaces();
+  const gate = document.getElementById('adn-eligibility-gate');
+  if (!gate) return;
+  gate.hidden = false;
+  document.getElementById('adn-eligibility-title').textContent = 'Préparation du test';
+  document.getElementById('adn-eligibility-copy').textContent = 'Vérification de votre éligibilité…';
+  const retry = document.getElementById('adn-eligibility-retry');
+  if (retry) retry.hidden = true;
+  setFeedback('adn-eligibility-feedback', '');
+}
+async function loadAdnEligibility(seq) {
+  showAdnEligibilityLoading();
+  try {
+    // Source de vérité backend uniquement — jamais l’état deep ADN ni un calcul local de 6 mois.
+    const evaluations = await api('GET', '/candidats/evaluations');
+    if (seq !== ADN_GATE_SEQ) return;
+    if (evaluations?.peut_repasser === false) {
+      showAdnCooldown(evaluations.next_eligible_at);
+      return;
+    }
+    if (evaluations?.peut_repasser !== true) {
+      showAdnEligibilityError({ code: 'ELIGIBILITY_UNKNOWN' });
+      return;
+    }
+    showAdnQuestionnaire();
+  } catch (error) {
+    if (seq !== ADN_GATE_SEQ) return;
+    showAdnEligibilityError(error);
+  }
+}
+async function loadAdnConsent() {
+  const seq = ++ADN_GATE_SEQ;
+  resetAdnTestSurfaces();
+  const gate = document.getElementById('adn-consent-gate');
+  if (gate) gate.hidden = false;
   setFeedback('adn-consent-feedback', 'Vérification de votre choix…');
   try {
     const consent = await api('GET', '/candidats/consentement/test_adn');
-    if (consent?.accepte) {
-      gate.hidden = true; sticky.hidden = false; body.hidden = false;
-    } else setFeedback('adn-consent-feedback', 'Votre accord est nécessaire pour accéder au test.');
+    if (seq !== ADN_GATE_SEQ) return;
+    if (!consent?.accepte) {
+      setFeedback('adn-consent-feedback', 'Votre accord est nécessaire pour accéder au test.');
+      return;
+    }
+    await loadAdnEligibility(seq);
   } catch (error) {
+    if (seq !== ADN_GATE_SEQ) return;
     setFeedback('adn-consent-feedback', error.message || 'Impossible de vérifier votre choix. Réessayez.', true);
   }
 }

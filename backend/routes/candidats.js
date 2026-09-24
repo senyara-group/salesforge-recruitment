@@ -1156,8 +1156,10 @@ router.get('/ressources', authMiddleware, async (req, res) => {
   }
 });
 
-// Historique des évaluations (palier Carrière Coaching : ré-évaluation semestrielle).
-router.get('/evaluations', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+// Éligibilité ADN (tous candidats authentifiés) + historique détaillé
+// (Carrière Coaching uniquement). Le cooldown métier est calculé sur l'historique
+// réel avant tout filtrage de réponse. Autorité finale : POST /ai/score-adn.
+router.get('/evaluations', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('evaluations_adn')
@@ -1170,11 +1172,17 @@ router.get('/evaluations', authMiddleware, requireCandidatePlan('carriere_coachi
     const nextEligibleAt = last
       ? new Date(new Date(last.created_at).getTime() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString()
       : null;
+    const peutRepasser = !nextEligibleAt || new Date(nextEligibleAt).getTime() <= Date.now();
+
+    // Historique / resultat : réservé au plan qui y avait déjà accès.
+    // L'éligibilité (peut_repasser / next_eligible_at) reste disponible pour le gate.
+    const plan = await getCandidatePlan(req.user.id);
+    const historyAllowed = plan === 'carriere_coaching';
 
     res.json({
-      evaluations: data,
+      evaluations: historyAllowed ? data : [],
       next_eligible_at: nextEligibleAt,
-      peut_repasser: !nextEligibleAt || new Date(nextEligibleAt).getTime() <= Date.now(),
+      peut_repasser: peutRepasser,
     });
   } catch (error) {
     publicError(res, error);
