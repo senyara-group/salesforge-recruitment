@@ -77,7 +77,7 @@ test('HTML expose le gate d’éligibilité avant le questionnaire ADN', () => {
   assert.ok(consentIdx < eligibilityIdx && eligibilityIdx < stickyIdx);
 });
 
-test('GET /candidats/evaluations est auth-only (pas de plan) pour le gate premier passage', () => {
+test('GET /candidats/evaluations est auth-only ; historique masqué hors Coaching', () => {
   assert.match(candidatsRoute, /router\.get\('\/evaluations',\s*authMiddleware,\s*async/);
   assert.doesNotMatch(
     candidatsRoute.slice(candidatsRoute.indexOf("router.get('/evaluations'"), candidatsRoute.indexOf("router.get('/export-pdf'")),
@@ -85,6 +85,8 @@ test('GET /candidats/evaluations est auth-only (pas de plan) pour le gate premie
   );
   assert.match(candidatsRoute, /peut_repasser/);
   assert.match(candidatsRoute, /next_eligible_at/);
+  assert.match(candidatsRoute, /getCandidatePlan/);
+  assert.match(candidatsRoute, /historyAllowed \? data : \[\]/);
 });
 
 test('1. première évaluation → peut commencer', async () => {
@@ -201,6 +203,22 @@ test('6. consentement nécessaire → flow actuel préservé', async () => {
   assert.equal(sandbox.elements['adn-eligibility-gate'].hidden, true);
   assert.match(sandbox.feedback['adn-consent-feedback'].message, /accord est nécessaire/);
   assert.equal(sandbox.calls.length, 1);
+});
+
+test('6. gate frontend : cooldown avec evaluations[] vide (réponse freemium)', async () => {
+  const sandbox = buildGateSandbox(async (_m, route) => {
+    if (route.includes('consentement')) return { accepte: true };
+    return {
+      evaluations: [],
+      next_eligible_at: '2027-01-15T00:00:00.000Z',
+      peut_repasser: false,
+    };
+  });
+  await sandbox.loadAdnConsent();
+  assert.equal(sandbox.elements['adn-test-body'].hidden, true);
+  assert.match(sandbox.elements['adn-eligibility-title'].textContent, /déjà à jour/);
+  const expected = new Date('2027-01-15T00:00:00.000Z').toLocaleDateString('fr-FR');
+  assert.match(sandbox.elements['adn-eligibility-copy'].textContent, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
 test('7. ADN approfondi terminé + principal non éligible → principal reste bloqué', async () => {
