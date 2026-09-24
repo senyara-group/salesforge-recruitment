@@ -346,6 +346,16 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .coach-starters button.on .coach-mode-tag { background: var(--bm); color: var(--b); }
 .coach-starters strong { font-family: 'Sora', sans-serif; font-size: 14px; }
 .coach-starters span { color: var(--ink3); font-size: 11px; line-height: 1.45; }
+.coach-simulation-types { margin: 12px 0 4px; padding: 12px; border: 1px solid var(--bd); border-radius: 10px; background: #f8fafc; }
+.coach-simulation-types-label { margin: 0 0 10px; color: var(--ink2); font-size: 12px; font-weight: 700; }
+.coach-simulation-type-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.coach-simulation-type-grid button {
+  display: grid; gap: 6px; min-height: 88px; padding: 12px; border: 1px solid var(--bd); border-radius: 10px;
+  background: var(--w); color: var(--ink); text-align: left; cursor: pointer;
+}
+.coach-simulation-type-grid button:hover, .coach-simulation-type-grid button.on { border-color: var(--b); background: rgba(19,64,224,.06); }
+.coach-simulation-type-grid strong { font-family: 'Sora', sans-serif; font-size: 13px; }
+.coach-simulation-type-grid span { color: var(--ink3); font-size: 11px; line-height: 1.45; }
 .coach-context { display: grid; gap: 10px; margin: 20px 0 8px; padding: 16px; border: 1px solid var(--bd); border-radius: 9px; }
 .coach-context legend { padding: 0 5px; color: var(--ink2); font-size: 12px; font-weight: 800; }
 .coach-context label { color: var(--ink2); font-size: 12px; }
@@ -640,6 +650,7 @@ body.auth .shell, body.product-gateway .shell {
   .coach-setup { padding: 16px; }
   .coach-starters { grid-template-columns: minmax(0, 1fr); }
   .coach-starters button { min-height: 96px; }
+  .coach-simulation-type-grid { grid-template-columns: minmax(0, 1fr); }
   .coach-conversation { height: calc(100dvh - 156px); min-height: 480px; }
   .coach-messages { padding: 14px; }
   .coach-message { width: 92%; }
