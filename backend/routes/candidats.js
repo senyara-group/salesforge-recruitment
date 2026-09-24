@@ -1156,8 +1156,11 @@ router.get('/ressources', authMiddleware, async (req, res) => {
   }
 });
 
-// Historique des évaluations (palier Carrière Coaching : ré-évaluation semestrielle).
-router.get('/evaluations', authMiddleware, requireCandidatePlan('carriere_coaching'), async (req, res) => {
+// Éligibilité + historique des évaluations ADN.
+// Accessible à tout candidat authentifié : le frontend gate le démarrage du test
+// principal sur peut_repasser / next_eligible_at (premier passage inclus).
+// Le cooldown autoritaire reste POST /ai/score-adn.
+router.get('/evaluations', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('evaluations_adn')
