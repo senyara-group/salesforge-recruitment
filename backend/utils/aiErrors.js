@@ -17,7 +17,7 @@ function publicAiError(error = {}) {
   const technicalMessage = String(error.message || error.details || 'Unknown AI error');
   const code = String(error.code || 'AI_REQUEST_FAILED');
 
-  if (SCHEMA_ERROR.test(`${code} ${technicalMessage}`)) {
+  if (code === 'AI_STORAGE_UNAVAILABLE' || SCHEMA_ERROR.test(`${code} ${technicalMessage}`)) {
     return {
       status: 503,
       code: 'AI_STORAGE_UNAVAILABLE',

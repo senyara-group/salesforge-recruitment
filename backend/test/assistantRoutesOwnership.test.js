@@ -164,6 +164,35 @@ test('extraction CV sous 200 caractères bloque avant quota et provider', async 
   quotaMode = 'exhausted';
 });
 
+test('real compressed PDF extraction is the exact validated source sent to AI', async () => {
+  const { pdf, CV_TEXT } = require('./fixtures/cvDocuments');
+  const { extractCvText } = require('../routes/candidats')._test;
+  const source = await extractCvText({ filename: 'cv.pdf', buffer: await pdf({ embeddedFont: true }) });
+  assert.equal(source.replace(/\s+/g, ' '), CV_TEXT);
+  quotaMode = 'available'; providerCalls = 0;
+  try {
+    const result = await invoke('post', '/cv-analyses', { body: { source_text: source } });
+    assert.equal(result.statusCode, 201);
+    assert.equal(providerCalls, 1);
+    const sent = JSON.parse(providerRequest.messages.find(message => message.role === 'user').content);
+    assert.equal(sent.SOURCE_CV, source);
+    assert.doesNotMatch(sent.SOURCE_CV, /%PDF|FlateDecode|endobj|xref/);
+  } finally { quotaMode = 'exhausted'; }
+});
+
+test('true CV >30k and offer >20k are rejected without truncation or provider calls', async () => {
+  quotaMode = 'available'; providerCalls = 0;
+  try {
+    for (const body of [{ source_text: 'x'.repeat(30001) }, { source_text: 'x'.repeat(200), offer_text: 'x'.repeat(20001) }]) {
+      const result = await invoke('post', '/cv-analyses', { body });
+      assert.equal(result.statusCode, 400);
+      assert.match(result.payload.error, /30001|20001/);
+      assert.match(result.payload.error, /Modifiez|concis/);
+      assert.equal(providerCalls, 0);
+    }
+  } finally { quotaMode = 'exhausted'; }
+});
+
 test('JSON CV tronqué à 3200 tokens ne persiste rien, ne finalise pas et libère la réservation', async () => {
   quotaMode = 'available'; providerCalls = 0; releaseCalls = 0; finalizeCalls = 0; operations.length = 0;
   providerError = Object.assign(new Error('invalid response'), {
@@ -192,7 +221,8 @@ test('provider success then persistence failure releases without finalizing', as
   quotaMode = 'available'; failCvInsert = true; failFinalize = false;
   providerCalls = 0; releaseCalls = 0; finalizeCalls = 0;
   const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV. '.repeat(8) } });
-  assert.equal(response.statusCode, 500);
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.payload.code, 'AI_STORAGE_UNAVAILABLE');
   assert.equal(providerCalls, 1);
   assert.equal(finalizeCalls, 0);
   assert.equal(releaseCalls, 1);
@@ -229,7 +259,8 @@ test('finalization failure fails closed without double finalization', async () =
   quotaMode = 'available'; failCvInsert = false; failFinalize = true;
   releaseCalls = 0; finalizeCalls = 0;
   const response = await invoke('post', '/cv-analyses', { body:{ source_text:'Entirely fictional candidate CV. '.repeat(8) } });
-  assert.equal(response.statusCode, 500);
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.payload.code, 'AI_STORAGE_UNAVAILABLE');
   assert.equal(finalizeCalls, 1);
   assert.equal(releaseCalls, 1);
   failFinalize = false; quotaMode = 'exhausted';

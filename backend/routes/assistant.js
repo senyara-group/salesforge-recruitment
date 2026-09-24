@@ -113,6 +113,14 @@ router.post(
     try {
       const access = await assertAiAccess(req.user.id, 'cv');
 
+      for (const [field, limit, label] of [['source_text', 30000, 'Le CV'], ['offer_text', 20000, 'L’offre ciblée']]) {
+        const length = String(req.body?.[field] || '').replace(/\u0000/g, '').trim().length;
+        if (length > limit) return res.status(400).json({
+          code: 'AI_INVALID_REQUEST',
+          error: `${label} contient ${length} caractères ; la limite est de ${limit}. Modifiez ou collez un texte plus concis. Le document original est conservé.`,
+        });
+      }
+
       const sourceText = safeText(
         req.body?.source_text,
         30000,
@@ -231,6 +239,10 @@ router.post(
       res.status(201).json(data);
     } catch (error) {
       await releaseUsage(reservation);
+      if (cvAnalysisStage === 'db_insert' || cvAnalysisStage === 'finalize_usage') {
+        error.code = 'AI_STORAGE_UNAVAILABLE';
+        error.status = 503;
+      }
       error.diagnostics = {
         route_stage: cvAnalysisStage,
         elapsed_ms: Date.now() - cvAnalysisStartedAt,
