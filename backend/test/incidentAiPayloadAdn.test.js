@@ -263,12 +263,12 @@ test('CV programmatic text length is checked before assistant request', async ()
   };
   const feedback = [];
   const sandbox = {
-    CV_ALLOWED: true, CV_ANALYSING: false,
+    CV_ALLOWED: true, CV_ANALYSING: false, CV_IMPORTING: false,
     document: { getElementById: id => fields[id] },
-    setFeedback: (...args) => feedback.push(args),
-    api: () => assert.fail('oversized CV sent'),
+    cvFeedback: (...args) => feedback.push(args),
+    cvRequest: () => assert.fail('oversized CV sent'),
   };
   vm.runInNewContext(`${sourceBetween('async function analyseCVWithAI()', 'async function saveImprovedCV()')}\nthis.analyse = analyseCVWithAI;`, sandbox);
   await sandbox.analyse();
-  assert.match(feedback[0][1], /30 000/);
+  assert.match(feedback[0][0], /30 000/);
 });

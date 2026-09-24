@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const zlib = require('zlib');
 const PDFDocument = require('pdfkit');
+const { extractPdfText, extractDocxText, extractionError, textState, sendCvError } = require('../utils/cvExtraction');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const requireCandidatePlan = require('../middleware/requireCandidatePlan');
@@ -100,14 +100,18 @@ function readRequestBuffer(req, maxBytes, label = 'Fichier') {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
+    let exceeded = false;
 
     req.on('data', (chunk) => {
+      if (exceeded) return;
       size += chunk.length;
       if (size > maxBytes) {
+        exceeded = true;
+        chunks.length = 0;
         const error = new Error(`${label} trop volumineux`);
         error.status = 413;
         reject(error);
-        req.destroy();
+        // Drain without retaining bytes so the client receives the HTTP 413.
         return;
       }
       chunks.push(chunk);
@@ -192,7 +196,12 @@ function validateProfileDocument(file, label = 'CV') {
 }
 
 function validateCvFile(file) {
-  validateProfileDocument(file, 'CV');
+  if (file.buffer.length > MAX_CV_BYTES) throw extractionError('CV_FILE_TOO_LARGE');
+  const ext = path.extname(file.filename).toLowerCase();
+  if (ext === '.doc') throw extractionError('CV_LEGACY_DOC');
+  if (!['.pdf', '.docx'].includes(ext)) throw extractionError('CV_FORMAT_UNSUPPORTED');
+  try { validateProfileDocument(file, 'CV'); }
+  catch (_) { throw extractionError(ext === '.pdf' ? 'CV_PDF_INVALID' : 'CV_EXTRACTION_FAILED'); }
 }
 
 function validateMotivationFile(file) {
@@ -216,106 +225,24 @@ function validateAvatarFile(file) {
 
 function cleanExtractedText(text = '') {
   return text
-    .replace(/\u0000/g, ' ')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ')
     .replace(/[ \t]+/g, ' ')
     .replace(/\r/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-function decodeXmlEntities(text = '') {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
-}
-
-function extractDocxText(buffer) {
-  const eocdMin = Math.max(0, buffer.length - 65557);
-  let eocdOffset = -1;
-  for (let offset = buffer.length - 22; offset >= eocdMin; offset -= 1) {
-    if (buffer.readUInt32LE(offset) === 0x06054b50) {
-      eocdOffset = offset;
-      break;
-    }
-  }
-  if (eocdOffset === -1) return '';
-
-  const entries = buffer.readUInt16LE(eocdOffset + 10);
-  let cursor = buffer.readUInt32LE(eocdOffset + 16);
-  const xmlTexts = [];
-
-  for (let index = 0; index < entries && cursor + 46 < buffer.length; index += 1) {
-    if (buffer.readUInt32LE(cursor) !== 0x02014b50) break;
-
-    const compression = buffer.readUInt16LE(cursor + 10);
-    const compressedSize = buffer.readUInt32LE(cursor + 20);
-    const nameLength = buffer.readUInt16LE(cursor + 28);
-    const extraLength = buffer.readUInt16LE(cursor + 30);
-    const commentLength = buffer.readUInt16LE(cursor + 32);
-    const localOffset = buffer.readUInt32LE(cursor + 42);
-    const name = buffer.slice(cursor + 46, cursor + 46 + nameLength).toString('utf8');
-
-    if (name === 'word/document.xml' || /^word\/(header|footer)\d*\.xml$/.test(name)) {
-      const localNameLength = buffer.readUInt16LE(localOffset + 26);
-      const localExtraLength = buffer.readUInt16LE(localOffset + 28);
-      const dataStart = localOffset + 30 + localNameLength + localExtraLength;
-      const compressed = buffer.slice(dataStart, dataStart + compressedSize);
-      const raw = compression === 8
-        ? zlib.inflateRawSync(compressed)
-        : compression === 0
-          ? compressed
-          : Buffer.alloc(0);
-      const xml = raw.toString('utf8')
-        .replace(/<w:tab\/>/g, ' ')
-        .replace(/<\/w:p>/g, '\n')
-        .replace(/<[^>]+>/g, ' ');
-      xmlTexts.push(decodeXmlEntities(xml));
-    }
-
-    cursor += 46 + nameLength + extraLength + commentLength;
-  }
-
-  return cleanExtractedText(xmlTexts.join('\n'));
-}
-
-function extractPdfText(buffer) {
-  const source = buffer.toString('latin1');
-  const chunks = [];
-  const stringPattern = /\((?:\\.|[^\\)]){2,}\)/g;
-  let match;
-
-  while ((match = stringPattern.exec(source))) {
-    chunks.push(match[0]
-      .slice(1, -1)
-      .replace(/\\n/g, '\n')
-      .replace(/\\r/g, '\n')
-      .replace(/\\t/g, ' ')
-      .replace(/\\([()\\])/g, '$1'));
-  }
-
-  const utf8Text = buffer.toString('utf8').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
-  return cleanExtractedText([...chunks, utf8Text].join('\n'));
-}
-
-function extractLegacyDocText(buffer) {
-  const latin = buffer.toString('latin1').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
-  const utf16 = buffer.toString('utf16le').replace(/[^\x09\x0a\x0d\x20-\x7EÀ-ÿ]/g, ' ');
-  return cleanExtractedText(`${latin}\n${utf16}`);
-}
-
-function extractCvText(file) {
+async function extractCvText(file) {
+  validateCvFile(file);
   const ext = path.extname(file.filename).toLowerCase();
   try {
-    if (ext === '.docx') return extractDocxText(file.buffer);
-    if (ext === '.pdf') return extractPdfText(file.buffer);
-    if (ext === '.doc') return extractLegacyDocText(file.buffer);
+    if (ext === '.docx') return cleanExtractedText(await extractDocxText(file.buffer));
+    if (ext === '.pdf') return cleanExtractedText(await extractPdfText(file.buffer));
+    throw extractionError('CV_FORMAT_UNSUPPORTED');
   } catch (error) {
-    console.warn('Extraction CV impossible:', error.message || error);
+    if (error.code?.startsWith('CV_')) throw error;
+    throw extractionError('CV_EXTRACTION_FAILED');
   }
-  return '';
 }
 
 function titleCaseName(value = '') {
@@ -363,8 +290,7 @@ function guessName(text, email, filename) {
   return guessNameFromTokens(fromFilename);
 }
 
-function extractCvAutofill(file) {
-  const text = extractCvText(file);
+function extractCvAutofill(file, text) {
   const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase() || '';
   return {
     ...guessName(text, email, file.filename),
@@ -533,9 +459,9 @@ router.post('/analyse-cv', async (req, res) => {
   try {
     const file = await getMultipartFile(req, 'cv');
     validateCvFile(file);
-    res.json({ fields: extractCvAutofill(file) });
+    res.json({ fields: extractCvAutofill(file, await extractCvText(file)) });
   } catch (error) {
-    res.status(error.status || 400).json({ error: error.message || error });
+    sendCvError(res, error);
   }
 });
 
@@ -549,23 +475,22 @@ router.get('/cv-text', authMiddleware, async (req, res) => {
     const { data, error } = await supabase.storage.from(meta.cv_bucket || CV_BUCKET).download(meta.cv_path);
     if (error) {
       // Echec de lecture du stockage : panne de service. Ni un 401 (le candidat
-      // est bien authentifie) ni un 400 (la requete est valide). Le detail
-      // Supabase reste dans les logs.
-      console.error('[candidats] telechargement CV impossible', String(error.message || error).slice(0, 300));
+      // est bien authentifie) ni un 400 (la requete est valide).
+      // Aucun detail du document ou du stockage dans les logs.
+      console.error('[candidats] telechargement CV impossible');
       const failure = new Error('Document momentanement illisible');
       failure.status = 502;
       throw failure;
     }
     const buffer = Buffer.from(await data.arrayBuffer());
-    const text = extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
+    const text = await extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
     res.json({
       filename: meta.cv_file_name || 'CV',
       text,
-      readable: text.length >= 200,
-      message: text.length >= 200 ? '' : 'Le document semble scanne, corrompu ou trop peu lisible. Collez au moins 200 caracteres de son texte pour continuer.',
+      ...textState(text, meta.cv_file_name || 'cv.pdf'),
     });
   } catch (error) {
-    publicError(res, error);
+    sendCvError(res, error);
   }
 });
 
@@ -574,7 +499,8 @@ async function uploadCv(req, res) {
     const current = await ensureCandidateProfile(req.user.id);
     const file = await getMultipartFile(req, 'cv');
     validateCvFile(file);
-    const autofill = extractCvAutofill(file);
+    const text = await extractCvText(file);
+    const autofill = extractCvAutofill(file, text);
     await ensureCvBucket();
 
     const storagePath = `${req.user.id}/${Date.now()}-${file.filename}`;
@@ -620,10 +546,7 @@ async function uploadCv(req, res) {
       removeFile: ({ bucket, path: filePath }) => removeStorageFile(bucket, filePath),
       newFile: { bucket: CV_BUCKET, path: storagePath },
       previousFile: { bucket: previousMeta.cv_bucket || CV_BUCKET, path: previousMeta.cv_path },
-      onCleanupError: (kind, cleanupError) => console.warn(
-        `Nettoyage du ${kind === 'new' ? 'nouveau' : 'précédent'} CV échoué:`,
-        cleanupError.message || cleanupError,
-      ),
+      onCleanupError: (kind) => console.warn('[candidats] cv_cleanup_failed', { kind: kind === 'new' ? 'new' : 'previous' }),
     });
 
     res.json({
@@ -631,11 +554,12 @@ async function uploadCv(req, res) {
       cv_url: signed?.signedUrl || storagePath,
       cv_file_name: file.filename,
       cv_autofill: autofill,
-      cv_text: extractCvText(file),
+      cv_text: text,
+      ...textState(text, file.filename),
       candidat: data,
     });
   } catch (error) {
-    res.status(error.status || 400).json({ error: error.message || error });
+    sendCvError(res, error);
   }
 }
 
@@ -700,7 +624,7 @@ async function removeStorageFile(bucket, storagePath) {
   if (!storagePath) return;
   const { error } = await supabase.storage.from(bucket).remove([storagePath]);
   if (error && !/not found|not exist|missing/i.test(error.message || '')) {
-    console.warn('Suppression storage impossible:', error.message || error);
+    console.warn('[candidats] storage_remove_failed');
   }
 }
 
@@ -1388,7 +1312,7 @@ router.post('/optimiser-cv', authMiddleware, requireCandidatePlan('carriere'), a
     if (isMultipart) {
       const file = await getMultipartFile(req, 'cv');
       validateCvFile(file);
-      text = extractCvText(file);
+      text = await extractCvText(file);
     } else {
       const candidat = await ensureCandidateProfile(req.user.id);
       const meta = candidat.axes?.meta || {};
@@ -1398,23 +1322,22 @@ router.post('/optimiser-cv', authMiddleware, requireCandidatePlan('carriere'), a
       const { data: fileData, error: downloadError } = await supabase.storage
         .from(meta.cv_bucket || CV_BUCKET)
         .download(meta.cv_path);
-      if (downloadError) return res.status(400).json({ error: downloadError });
+      if (downloadError) throw downloadError;
       const buffer = Buffer.from(await fileData.arrayBuffer());
-      text = extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
+      text = await extractCvText({ filename: meta.cv_file_name || 'cv.pdf', buffer });
     }
-    if (!text || text.length < 50) {
-      return res.status(400).json({ error: 'Impossible d\'extraire assez de texte de ce CV pour l\'analyser' });
-    }
+    const state = textState(text, 'cv.pdf');
+    if (!state.analysable) return res.status(422).json({ error: state.message, code: state.code });
 
     const suggestions = await askClaude({
       system: CV_PITCH_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Voici le texte extrait d'un CV commercial :\n\n${text.slice(0, 6000)}` }],
+      messages: [{ role: 'user', content: `Voici le texte extrait d'un CV commercial :\n\n${text}` }],
       maxTokens: 700,
     });
 
     res.json({ suggestions });
   } catch (error) {
-    res.status(error.status || 400).json({ error: error.message || error });
+    sendCvError(res, error);
   }
 });
 

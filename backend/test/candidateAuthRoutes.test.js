@@ -143,7 +143,7 @@ const fakeSupabase = {
           const content = STORAGE[`${bucket}/${path}`];
           if (content === undefined) return { data: null, error: new Error('Object not found') };
           return {
-            data: { arrayBuffer: async () => Buffer.from(content, 'utf8') },
+            data: { arrayBuffer: async () => require('./fixtures/cvDocuments').pdf({ pages: [content] }) },
             error: null,
           };
         },
@@ -222,6 +222,29 @@ async function get(path, token) {
 // GET /api/candidats/cv-text
 // ============================================================
 
+test('oversized multipart upload returns actionable HTTP 413 instead of breaking the connection', async () => {
+  const fd = new FormData();
+  fd.append('cv', new Blob([Buffer.alloc(8 * 1024 * 1024 + 128 * 1024)]), 'large.pdf');
+  const response = await fetch(`${baseUrl}/api/candidats/cv`, {
+    method: 'POST', headers: { Authorization: 'Bearer token-a' }, body: fd,
+  });
+  assert.equal(response.status, 413);
+  const body = await response.json();
+  assert.equal(body.code, 'CV_FILE_TOO_LARGE');
+  assert.match(body.error, /8 Mo.*léger/);
+});
+
+test('public DOCX import rejects a ZIP bomb and HTTP service remains usable', async () => {
+  const fd = new FormData();
+  fd.append('cv', new Blob([require('./fixtures/cvDocuments').docx('x'.repeat(16 * 1024 * 1024), true)]), 'bomb.docx');
+  const result = await fetch(`${baseUrl}/api/candidats/analyse-cv`, { method: 'POST', body: fd });
+  assert.equal(result.status, 422);
+  assert.equal((await result.json()).code, 'CV_DOCX_LIMIT');
+  const healthy = await get('/api/candidats/cv-text', 'token-a');
+  assert.equal(healthy.status, 200);
+  assert.equal(healthy.body.readable, true);
+});
+
 // CAS 1 : authentifie + texte de CV existant -> 200, et uniquement son CV.
 test('CAS 1 — candidat authentifie avec CV : 200 et son propre texte', async () => {
   const response = await get('/api/candidats/cv-text', 'token-a');
@@ -248,7 +271,7 @@ test('CAS 2 bis — CV present mais illisible : 200 avec un etat metier, pas une
 
   assert.equal(response.status, 200);
   assert.equal(response.body.readable, false);
-  assert.match(response.body.message, /scanne|corrompu|lisible/i);
+  assert.match(response.body.message, /scann.|images|texte/i);
 });
 
 // CAS 3 : anonyme -> 401.

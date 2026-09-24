@@ -31,16 +31,15 @@ test('legacy random analysis and hot-candidate routes are not mounted', () => {
   assert.equal(paths.includes('/score-adn'), true);
 });
 
-test('fictitious PDF, DOCX and DOC fixtures have valid signatures and extract text', () => {
+test('real PDF and DOCX fixtures have valid signatures and extract text', async () => {
   const { validateProfileDocument, extractCvText } = candidateRouter._test;
   const fixtures = [
-    { filename: 'fictif.pdf', buffer: Buffer.from('%PDF-1.4\nBT (Candidate fictif commercial B2B avec experience de prospection) Tj ET\n%%EOF') },
+    { filename: 'fictif.pdf', buffer: await require('./fixtures/cvDocuments').pdf({ pages: ['Candidate fictif commercial B2B avec experience de prospection'] }) },
     { filename: 'fictif.docx', buffer: storedDocx('Candidate fictif commercial B2B avec experience de prospection') },
-    { filename: 'fictif.doc', buffer: Buffer.concat([Buffer.from([0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1]), Buffer.from(' Candidate fictif commercial B2B avec experience de prospection')]) },
   ];
   for (const fixture of fixtures) {
     assert.doesNotThrow(() => validateProfileDocument(fixture));
-    assert.match(extractCvText(fixture), /Candidate fictif/i);
+    assert.match(await extractCvText(fixture), /Candidate fictif/i);
   }
 });
 
