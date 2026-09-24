@@ -234,6 +234,17 @@ test('oversized multipart upload returns actionable HTTP 413 instead of breaking
   assert.match(body.error, /8 Mo.*léger/);
 });
 
+test('public DOCX import rejects a ZIP bomb and HTTP service remains usable', async () => {
+  const fd = new FormData();
+  fd.append('cv', new Blob([require('./fixtures/cvDocuments').docx('x'.repeat(16 * 1024 * 1024), true)]), 'bomb.docx');
+  const result = await fetch(`${baseUrl}/api/candidats/analyse-cv`, { method: 'POST', body: fd });
+  assert.equal(result.status, 422);
+  assert.equal((await result.json()).code, 'CV_DOCX_LIMIT');
+  const healthy = await get('/api/candidats/cv-text', 'token-a');
+  assert.equal(healthy.status, 200);
+  assert.equal(healthy.body.readable, true);
+});
+
 // CAS 1 : authentifie + texte de CV existant -> 200, et uniquement son CV.
 test('CAS 1 — candidat authentifie avec CV : 200 et son propre texte', async () => {
   const response = await get('/api/candidats/cv-text', 'token-a');

@@ -39,20 +39,20 @@ function parseJsonResponse(value) {
   const text = stripCodeFence(value);
   if (text.length > MAX_RESPONSE_CHARS) {
     const error = new Error('Reponse IA trop volumineuse');
-    error.diagnostics = { stage: 'json_parse', parse_error: error.message, ...jsonShapeHints(text) };
+    error.diagnostics = { stage: 'json_parse', parse_error: 'RESPONSE_TOO_LARGE', ...jsonShapeHints(text) };
     throw error;
   }
   try { return JSON.parse(text); }
-  catch (firstError) {
+  catch (_) {
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
     if (start >= 0 && end > start) {
       try { return JSON.parse(text.slice(start, end + 1)); }
-      catch (sliceError) {
+      catch (_) {
         const error = new Error('Reponse IA invalide');
         error.diagnostics = {
           stage: 'json_parse',
-          parse_error: String(sliceError.message || firstError.message || 'JSON.parse failed').slice(0, 200),
+          parse_error: 'INVALID_JSON',
           ...jsonShapeHints(text),
         };
         throw error;
@@ -61,7 +61,7 @@ function parseJsonResponse(value) {
     const error = new Error('Reponse IA invalide');
     error.diagnostics = {
       stage: 'json_parse',
-      parse_error: String(firstError.message || 'JSON.parse failed').slice(0, 200),
+      parse_error: 'INVALID_JSON',
       ...jsonShapeHints(text),
     };
     throw error;
@@ -151,7 +151,7 @@ async function callAi({
         stop_reason: 'max_tokens',
         input_tokens: providerMeta?.input_tokens ?? null,
         output_tokens: providerMeta?.output_tokens ?? null,
-        parse_error: 'Generation stopped at max_tokens before completion',
+        parse_error: 'GENERATION_INCOMPLETE',
         ...jsonShapeHints(content),
       };
       throw invalid;
@@ -170,7 +170,7 @@ async function callAi({
         stop_reason: providerMeta?.stop_reason ?? null,
         input_tokens: providerMeta?.input_tokens ?? null,
         output_tokens: providerMeta?.output_tokens ?? null,
-        parse_error: String(parseError.diagnostics?.parse_error || parseError.message || 'JSON.parse failed').slice(0, 200),
+        parse_error: parseError.diagnostics?.parse_error === 'RESPONSE_TOO_LARGE' ? 'RESPONSE_TOO_LARGE' : 'INVALID_JSON',
         response_chars: parseError.diagnostics?.response_chars ?? content.length,
         has_open_brace: parseError.diagnostics?.has_open_brace ?? content.includes('{'),
         has_close_brace: parseError.diagnostics?.has_close_brace ?? content.includes('}'),

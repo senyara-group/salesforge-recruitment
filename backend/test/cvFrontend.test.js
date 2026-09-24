@@ -14,7 +14,10 @@ function harness() {
   let deadline;
   let clears = 0;
   const feedback = [];
+  const storage = new Map();
   const context = {
+    USER: { id: 'user-a' }, crypto: require('node:crypto').webcrypto, TextEncoder,
+    sessionStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     API: 'https://example.invalid', TOKEN: 'test', FormData, AbortController,
     CV_ALLOWED: true, CV_ANALYSING: false, AI_AVAILABLE: true,
     document: { getElementById: node },
@@ -82,26 +85,28 @@ test('blocking CV/offer lengths stop before network and scroll the actionable er
 test('analysis restores loading after all errors, preserves text, distinguishes local render failure', async () => {
   const h = harness(); const c = h.context; const original = h.node('cv-source-text').value;
   for (const error of [Object.assign(new Error(), { name: 'AbortError' }), Object.assign(new TypeError(), { code: 'NETWORK_ERROR' }), { status: 413 }, { status: 429 }, { code: 'AI_TIMEOUT' }, { code: 'AI_STORAGE_UNAVAILABLE' }, { code: 'RESPONSE_UNREADABLE' }]) {
-    c.cvRequest = async () => { throw error; };
+    c.cvRequest = async () => { throw error; }; // failed preflight must never POST
     await c.analyseCVWithAI();
     assert.equal(c.CV_ANALYSING, false); assert.equal(h.node('cv-analyse-btn').disabled, false);
     assert.equal(h.node('cv-waiting').hidden, true); assert.equal(h.node('cv-source-text').value, original);
     assert.equal(h.feedback.at(-1).error, true);
   }
-  c.cvRequest = async () => ({ id: 'analysis', analysis: {} });
+  c.cvRequest = async method => method === 'GET' ? [] : ({ id: 'analysis', analysis: {} });
   c.renderCVAnalysis = () => { throw new TypeError('local render failure'); };
   await c.analyseCVWithAI();
   assert.doesNotMatch(h.feedback.at(-1).message, /connexion|réseau/i);
   assert.equal(c.CV_ANALYSING, false);
-  c.cvRequest = async () => ({ id: 'analysis' });
+  c.cvRequest = async method => method === 'GET' ? [] : ({ id: 'analysis' });
   await c.analyseCVWithAI();
-  assert.match(h.feedback.at(-1).message, /illisible|incomplète/);
+  assert.match(h.feedback.at(-1).message, /confirmée/);
 });
 test('double submit is ignored; successful request sends exact editable text and clears spinner', async () => {
   const h = harness(); let release; const sent = [];
-  h.context.cvRequest = async (_method, _path, payload) => { sent.push(payload); return new Promise(resolve => { release = resolve; }); };
+  h.context.cvRequest = async (method, _path, payload) => { if (method === 'GET') return []; sent.push(payload); return new Promise(resolve => { release = resolve; }); };
   const first = h.context.analyseCVWithAI();
-  await h.context.analyseCVWithAI(); assert.equal(sent.length, 1);
+  await h.context.analyseCVWithAI();
+  while (!release) await new Promise(resolve => setImmediate(resolve));
+  assert.equal(sent.length, 1);
   assert.equal(sent[0].source_text, h.node('cv-source-text').value.trim());
   release({ id: 'analysis', analysis: {} }); await first;
   assert.equal(h.node('cv-analyse-btn').disabled, false); assert.equal(h.node('cv-waiting').hidden, true);
@@ -125,4 +130,62 @@ test('scan preserves prepared text; oversized extraction remains editable withou
   h.context.showCvExtraction('x'.repeat(31000), 'long.pdf');
   assert.equal(h.node('cv-source-text').value.length, 31000);
   assert.match(h.feedback.at(-1).message, /31000.*30 000/);
+});
+
+test('uncertain POST survives reload, reconciles only a new matching result and never posts twice', async () => {
+  const h = harness(); const c = h.context; let posts = 0;
+  c.cvRequest = async method => {
+    if (method === 'GET') return [{ id: 'old' }];
+    posts++; throw { code: 'CV_REQUEST_TIMEOUT' };
+  };
+  await c.analyseCVWithAI();
+  assert.equal(posts, 1);
+  assert.equal(h.node('cv-analyse-btn').disabled, true);
+  assert.equal(h.node('cv-waiting').hidden, true);
+  const pending = c.cvPending();
+  assert.doesNotMatch(JSON.stringify(pending), /commerciale|prospection/);
+  const expected = require('../utils/cvRequestFingerprint').cvRequestFingerprint({ source_text: h.node('cv-source-text').value });
+  assert.equal(pending.fingerprint, expected);
+  const reloaded = harness();
+  reloaded.context.sessionStorage = c.sessionStorage;
+  reloaded.context.updateCvRecovery();
+  assert.equal(reloaded.node('cv-analyse-btn').disabled, true);
+  await c.analyseCVWithAI(); assert.equal(posts, 1);
+  let rendered;
+  c.renderCVAnalysis = row => { rendered = row; };
+  c.cvRequest = async method => { assert.equal(method, 'GET'); return [
+    { id: 'old', request_fingerprint: expected, analysis: {} },
+    { id: 'other', request_fingerprint: 'f'.repeat(64), analysis: {} },
+  ]; };
+  await c.recoverCvAnalysis();
+  assert.equal(rendered, undefined); assert.ok(c.cvPending());
+  c.allowCvRetry(); assert.ok(c.cvPending()); // cooldown has not elapsed
+  c.cvRequest = async method => { assert.equal(method, 'GET'); return [{ id: 'new', request_fingerprint: expected, analysis: {} }]; };
+  await c.recoverCvAnalysis();
+  assert.equal(rendered.id, 'new'); assert.equal(c.cvPending(), null); assert.equal(posts, 1);
+});
+
+test('retry requires elapsed cooldown AND successful reconciliation AND explicit action', async () => {
+  const h = harness(); const c = h.context;
+  const pending = { fingerprint: 'a'.repeat(64), previousIds: [], startedAt: Date.now() - 180001 };
+  c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify(pending));
+  c.cvRequest = async () => { throw { code: 'NETWORK_ERROR' }; };
+  await c.recoverCvAnalysis(); c.allowCvRetry(); assert.ok(c.cvPending());
+  c.cvRequest = async method => { assert.equal(method, 'GET'); return []; };
+  await c.recoverCvAnalysis(); assert.ok(c.cvPending());
+  assert.equal(h.node('cv-retry').hidden, false);
+  c.allowCvRetry(); assert.equal(c.cvPending(), null);
+  assert.equal(h.node('cv-analyse-btn').disabled, false);
+});
+
+test('ambiguous POST errors stay locked; definitive rejections release the local marker', async () => {
+  for (const error of [{ code: 'NETWORK_ERROR' }, { code: 'RESPONSE_UNREADABLE' }, { code: 'AI_STORAGE_UNAVAILABLE', status: 503 }, { name: 'AbortError' }, { status: 500 }, { status: 400 }, { status: 413 }, { status: 429 }]) {
+    const h = harness();
+    h.context.cvRequest = async method => { if (method === 'GET') return []; throw error; };
+    await h.context.analyseCVWithAI();
+    const locked = ![400, 413, 429].includes(error.status);
+    assert.equal(Boolean(h.context.cvPending()), locked);
+    assert.equal(h.node('cv-analyse-btn').disabled, locked);
+    assert.equal(h.node('cv-waiting').hidden, true);
+  }
 });

@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const zlib = require('zlib');
 const PDFDocument = require('pdfkit');
-const { extractPdfText, extractionError, textState, sendCvError } = require('../utils/cvExtraction');
+const { extractPdfText, extractDocxText, extractionError, textState, sendCvError } = require('../utils/cvExtraction');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const requireCandidatePlan = require('../middleware/requireCandidatePlan');
@@ -233,69 +232,11 @@ function cleanExtractedText(text = '') {
     .trim();
 }
 
-function decodeXmlEntities(text = '') {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
-}
-
-function extractDocxText(buffer) {
-  const eocdMin = Math.max(0, buffer.length - 65557);
-  let eocdOffset = -1;
-  for (let offset = buffer.length - 22; offset >= eocdMin; offset -= 1) {
-    if (buffer.readUInt32LE(offset) === 0x06054b50) {
-      eocdOffset = offset;
-      break;
-    }
-  }
-  if (eocdOffset === -1) return '';
-
-  const entries = buffer.readUInt16LE(eocdOffset + 10);
-  let cursor = buffer.readUInt32LE(eocdOffset + 16);
-  const xmlTexts = [];
-
-  for (let index = 0; index < entries && cursor + 46 < buffer.length; index += 1) {
-    if (buffer.readUInt32LE(cursor) !== 0x02014b50) break;
-
-    const compression = buffer.readUInt16LE(cursor + 10);
-    const compressedSize = buffer.readUInt32LE(cursor + 20);
-    const nameLength = buffer.readUInt16LE(cursor + 28);
-    const extraLength = buffer.readUInt16LE(cursor + 30);
-    const commentLength = buffer.readUInt16LE(cursor + 32);
-    const localOffset = buffer.readUInt32LE(cursor + 42);
-    const name = buffer.slice(cursor + 46, cursor + 46 + nameLength).toString('utf8');
-
-    if (name === 'word/document.xml' || /^word\/(header|footer)\d*\.xml$/.test(name)) {
-      const localNameLength = buffer.readUInt16LE(localOffset + 26);
-      const localExtraLength = buffer.readUInt16LE(localOffset + 28);
-      const dataStart = localOffset + 30 + localNameLength + localExtraLength;
-      const compressed = buffer.slice(dataStart, dataStart + compressedSize);
-      const raw = compression === 8
-        ? zlib.inflateRawSync(compressed)
-        : compression === 0
-          ? compressed
-          : Buffer.alloc(0);
-      const xml = raw.toString('utf8')
-        .replace(/<w:tab\/>/g, ' ')
-        .replace(/<\/w:p>/g, '\n')
-        .replace(/<[^>]+>/g, ' ');
-      xmlTexts.push(decodeXmlEntities(xml));
-    }
-
-    cursor += 46 + nameLength + extraLength + commentLength;
-  }
-
-  return cleanExtractedText(xmlTexts.join('\n'));
-}
-
 async function extractCvText(file) {
   validateCvFile(file);
   const ext = path.extname(file.filename).toLowerCase();
   try {
-    if (ext === '.docx') return extractDocxText(file.buffer);
+    if (ext === '.docx') return cleanExtractedText(await extractDocxText(file.buffer));
     if (ext === '.pdf') return cleanExtractedText(await extractPdfText(file.buffer));
     throw extractionError('CV_FORMAT_UNSUPPORTED');
   } catch (error) {
@@ -605,10 +546,7 @@ async function uploadCv(req, res) {
       removeFile: ({ bucket, path: filePath }) => removeStorageFile(bucket, filePath),
       newFile: { bucket: CV_BUCKET, path: storagePath },
       previousFile: { bucket: previousMeta.cv_bucket || CV_BUCKET, path: previousMeta.cv_path },
-      onCleanupError: (kind, cleanupError) => console.warn(
-        `Nettoyage du ${kind === 'new' ? 'nouveau' : 'précédent'} CV échoué:`,
-        cleanupError.message || cleanupError,
-      ),
+      onCleanupError: (kind) => console.warn('[candidats] cv_cleanup_failed', { kind: kind === 'new' ? 'new' : 'previous' }),
     });
 
     res.json({
@@ -686,7 +624,7 @@ async function removeStorageFile(bucket, storagePath) {
   if (!storagePath) return;
   const { error } = await supabase.storage.from(bucket).remove([storagePath]);
   if (error && !/not found|not exist|missing/i.test(error.message || '')) {
-    console.warn('Suppression storage impossible:', error.message || error);
+    console.warn('[candidats] storage_remove_failed');
   }
 }
 

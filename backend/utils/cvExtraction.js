@@ -4,6 +4,8 @@ const { Worker } = require('node:worker_threads');
 const MESSAGES = {
   CV_PDF_INVALID: 'Ce PDF est corrompu ou invalide. Exportez à nouveau votre CV en PDF ou utilisez un fichier DOCX.',
   CV_PDF_PROTECTED: 'Ce PDF est protégé par un mot de passe. Fournissez une copie sans protection ou un fichier DOCX.',
+  CV_DOCX_LIMIT: 'Ce DOCX est trop complexe ou trop fortement compressé pour être lu en sécurité. Exportez un PDF avec texte sélectionnable ou collez le texte du CV.',
+  CV_DOCX_INVALID: 'Ce DOCX est invalide ou utilise un format ZIP non pris en charge. Enregistrez-le à nouveau en DOCX ou PDF, ou collez votre texte.',
   CV_EXTRACTION_TIMEOUT: 'La lecture du document a pris trop de temps. Essayez un PDF plus simple, un DOCX ou collez le texte du CV.',
   CV_EXTRACTION_BUSY: 'La lecture des documents est momentanément occupée. Réessayez dans quelques instants ou collez votre texte.',
   CV_EXTRACTION_FAILED: 'Le texte du document ne peut pas être extrait. Exportez à nouveau le fichier ou collez le texte du CV.',
@@ -30,7 +32,7 @@ function textState(text, filename) {
   };
 }
 let active = 0;
-function extractPdfText(buffer, { timeoutMs = 30000 } = {}) {
+function extractDocumentText(buffer, workerFile, { timeoutMs = 30000 } = {}) {
   if (active >= 2) return Promise.reject(extractionError('CV_EXTRACTION_BUSY'));
   active += 1;
   return new Promise((resolve, reject) => {
@@ -46,7 +48,7 @@ function extractPdfText(buffer, { timeoutMs = 30000 } = {}) {
       if (error) reject(error); else resolve(text);
     };
     try {
-      worker = new Worker(path.join(__dirname, 'cvPdfWorker.js'), {
+      worker = new Worker(path.join(__dirname, workerFile), {
         workerData: new Uint8Array(buffer),
         resourceLimits: { maxOldGenerationSizeMb: 128 },
         // PDF.js diagnostics may contain document fragments: never log them.
@@ -61,6 +63,8 @@ function extractPdfText(buffer, { timeoutMs = 30000 } = {}) {
     } catch (_) { finish(extractionError('CV_EXTRACTION_FAILED')); }
   });
 }
+const extractPdfText = (buffer, options) => extractDocumentText(buffer, 'cvPdfWorker.js', options);
+const extractDocxText = (buffer, options) => extractDocumentText(buffer, 'cvDocxWorker.js', options);
 function sendCvError(res, error) {
   const known = MESSAGES[error.code];
   const tooLarge = error.status === 413;
@@ -69,4 +73,4 @@ function sendCvError(res, error) {
     error: known || (tooLarge ? MESSAGES.CV_FILE_TOO_LARGE : 'Le document ne peut pas être lu ou enregistré pour le moment. Réessayez ; vous pouvez aussi coller le texte du CV.'),
   });
 }
-module.exports = { extractPdfText, extractionError, textState, sendCvError };
+module.exports = { extractPdfText, extractDocxText, extractionError, textState, sendCvError };

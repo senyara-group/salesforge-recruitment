@@ -7,6 +7,8 @@ const { ensureCandidateProfile } = require('../utils/profiles');
 const { callAi, isAiConfigured, safeText } = require('../utils/aiProvider');
 const { assertAiAccess, configuredPlans, getAiPlan } = require('../utils/aiAccess');
 const { publicAiError } = require('../utils/aiErrors');
+const { aiLogMetadata } = require('../utils/aiLogMetadata');
+const { cvRequestFingerprint } = require('../utils/cvRequestFingerprint');
 const { owned, ownedById, ownedConversationMessages, withOwner } = require('../utils/ownership');
 const { CV_MAX_TOKENS, CV_MIN_SOURCE_CHARS, cvAnalysisPrompt, normalizeCvAnalysis } = require('../utils/cvAnalysis');
 const { buildCvFacts } = require('../utils/cvFacts');
@@ -20,30 +22,7 @@ const MODE_LABELS = COACH_MODE_LABELS;
 
 function publicError(res, error) {
   const response = publicAiError(error);
-  const logPayload = {
-    technicalCode: error?.code || null,
-    technicalMessage: String(error?.message || 'Unknown error').slice(0, 500),
-  };
-
-  // DIAG_CV_JSON: métadonnées non sensibles uniquement (pas de CV / prompt / réponse).
-  if (error?.diagnostics && typeof error.diagnostics === 'object') {
-    logPayload.diagnostics = {
-      route_stage: error.diagnostics.route_stage || null,
-      elapsed_ms: error.diagnostics.elapsed_ms ?? null,
-      stage: error.diagnostics.stage || null,
-      schema_stage: error.diagnostics.schema_stage ?? null,
-      stop_reason: error.diagnostics.stop_reason ?? null,
-      input_tokens: error.diagnostics.input_tokens ?? null,
-      output_tokens: error.diagnostics.output_tokens ?? null,
-      response_chars: error.diagnostics.response_chars ?? null,
-      has_open_brace: error.diagnostics.has_open_brace ?? null,
-      has_close_brace: error.diagnostics.has_close_brace ?? null,
-      has_markdown_fence: error.diagnostics.has_markdown_fence ?? null,
-      parse_error: error.diagnostics.parse_error
-        ? String(error.diagnostics.parse_error).slice(0, 200)
-        : null,
-    };
-  }
+  const logPayload = aiLogMetadata(error, response.code);
 
   console.error('[assistant]', response.code, logPayload);
   return res.status(response.status).json({
@@ -84,15 +63,19 @@ router.get('/cv-analyses', authMiddleware, async (req, res) => {
     const { data, error } = await owned(
       supabase
         .from('ai_cv_analyses')
-        .select('id,target_role,analysis,improved_text,created_at,updated_at'),
+        .select('id,target_role,analysis,improved_text,created_at,updated_at,source_text,offer_text,experience_years,sector'),
       req.user.id,
     )
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(10);
 
     if (error) throw error;
 
-    res.json(data || []);
+    res.json((data || []).map(row => ({
+      id: row.id, target_role: row.target_role, analysis: row.analysis,
+      improved_text: row.improved_text, created_at: row.created_at, updated_at: row.updated_at,
+      request_fingerprint: cvRequestFingerprint(row),
+    })));
   } catch (error) {
     publicError(res, error);
   }

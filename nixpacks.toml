@@ -1,11 +1,15 @@
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+# This revision supplies Node 22.14.0; independent of root package.json detection.
+nixpkgsArchive = "e6f23dc08d3624daab7094b701aa3954923c6bbb"
 
 [phases.install]
-cmds = ["npm --prefix backend ci"]
+dependsOn = ["setup"]
+cmds = ["node backend/scripts/check-runtime.js --deployment", "npm --prefix backend ci --omit=optional"]
 
 [phases.build]
-cmds = []
+dependsOn = ["install"]
+cmds = ["npm --prefix backend run test:syntax", "npm --prefix backend run test:static"]
 
 [start]
 cmd = "npm --prefix backend start"

@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const realCallAi = require('../utils/aiProvider').callAi;
 
 process.env.SUPABASE_URL ||= 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_KEY ||= 'test-service-key';
@@ -162,6 +163,21 @@ test('extraction CV sous 200 caractères bloque avant quota et provider', async 
   assert.match(response.payload.error, /200 caractères/i);
   assert.equal(providerCalls, 0); assert.equal(finalizeCalls, 0);
   quotaMode = 'exhausted';
+});
+
+test('CV history recovery is owned, fingerprints normalized inputs and omits raw source fields', async () => {
+  const source = { source_text: ' private source ', offer_text: ' private offer ', target_role: 'Sales', experience_years: 3, sector: 'Tech' };
+  const row = { id: 'recovery-test', user_id: 'user-a', ...source, analysis: {} };
+  rows.ai_cv_analyses.push(row);
+  try {
+    const before = providerCalls;
+    const response = await invoke('get', '/cv-analyses');
+    const found = response.payload.find(item => item.id === row.id);
+    assert.equal(found.request_fingerprint, require('../utils/cvRequestFingerprint').cvRequestFingerprint(source));
+    assert.equal(response.payload.some(item => item.id === 'analysis-b'), false);
+    assert.equal('source_text' in found, false); assert.equal('offer_text' in found, false);
+    assert.equal(providerCalls, before);
+  } finally { rows.ai_cv_analyses.splice(rows.ai_cv_analyses.indexOf(row), 1); }
 });
 
 test('real compressed PDF extraction is the exact validated source sent to AI', async () => {
@@ -367,5 +383,30 @@ test('CV : une erreur provider non normalisée reste diagnosticable sans fuite d
     console.error = originalError;
     providerError = null;
     quotaMode = 'exhausted';
+  }
+});
+
+test('secret marker in invalid AI JSON, exception fields and diagnostics never reaches any assistant log', async () => {
+  const marker = 'PRIVATE_CV_OFFER_AUTH_COOKIE_MARKER';
+  const captured = [];
+  const methods = ['log', 'warn', 'error', 'info', 'debug'];
+  const originals = Object.fromEntries(methods.map(method => [method, console[method]]));
+  for (const method of methods) console[method] = (...args) => captured.push(args);
+  quotaMode = 'available';
+  try {
+    for (const raw of [marker + ' not JSON', `{"cv":${marker}}`]) {
+      try { await realCallAi({ messages: [], json: true, providerCall: async () => raw }); }
+      catch (error) { providerError = error; }
+      const response = await invoke('post', '/cv-analyses', { body: { source_text: marker.repeat(10) } });
+      assert.equal(response.statusCode, 502);
+      assert.doesNotMatch(JSON.stringify(providerError.diagnostics), new RegExp(marker));
+    }
+    providerError = Object.assign(new Error(marker), { code: marker, diagnostics: { stage: marker, parse_error: marker, response_chars: marker, stop_reason: marker, schema_stage: marker } });
+    await invoke('post', '/cv-analyses', { body: { source_text: marker.repeat(10) } });
+    assert.ok(captured.length >= 3);
+    assert.doesNotMatch(JSON.stringify(captured), new RegExp(marker));
+    assert.match(JSON.stringify(captured), /INVALID_JSON/);
+  } finally {
+    Object.assign(console, originals); providerError = null; quotaMode = 'exhausted';
   }
 });

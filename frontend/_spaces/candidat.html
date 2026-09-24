@@ -1892,6 +1892,10 @@ button,input,textarea,select{font-family:inherit}
         <label class="field ai-fields-wide"><span class="form-label" for="cv-offer-text">Offre ciblée <small>(facultatif)</small></span><textarea class="form-textarea" id="cv-offer-text" rows="4" placeholder="Collez le descriptif de l’offre…"></textarea></label>
       </div>
       <div class="form-feedback" id="cv-analysis-feedback" role="status"></div>
+      <div id="cv-recovery" hidden>
+        <button class="btn" type="button" onclick="recoverCvAnalysis()">Vérifier si l’analyse est disponible</button>
+        <button class="btn" id="cv-retry" type="button" hidden onclick="allowCvRetry()">Autoriser une nouvelle tentative malgré le risque de double consommation</button>
+      </div>
       <div class="cv-actions-row card-footer">
         <button class="btn bp" id="cv-analyse-btn" type="button" onclick="analyseCVWithAI()">Analyser mon CV</button>
         <p class="cv-privacy-note">Aucune information inventée. Analyse basée uniquement sur votre CV et les informations fournies.</p>
@@ -4820,6 +4824,57 @@ function renderAiQuota(kind, config) {
 }
 const CV_REQUEST_TIMEOUT_MS = 75000;
 let CV_IMPORTING = false;
+let CV_RECOVERING = false;
+let CV_RETRY_READY = false;
+function cvPendingKey() { return 'cv-pending:' + USER.id; }
+function cvPending() {
+  const raw = sessionStorage.getItem(cvPendingKey());
+  if (!raw) return null;
+  const value = JSON.parse(raw);
+  if (!/^[a-f0-9]{64}$/.test(value.fingerprint) || !Array.isArray(value.previousIds) || !Number.isFinite(value.startedAt)) throw new Error('Invalid recovery state');
+  return value;
+}
+function updateCvRecovery() {
+  const pending = cvPending();
+  document.getElementById('cv-recovery').hidden = !pending;
+  document.getElementById('cv-retry').hidden = !pending || !CV_RETRY_READY;
+  document.getElementById('cv-analyse-btn').disabled = Boolean(pending) || CV_ANALYSING || !CV_ALLOWED || !AI_AVAILABLE;
+}
+async function cvFingerprint(value) {
+  const text = key => String(value[key] || '').replace(/\u0000/g, '').trim();
+  const canonical = JSON.stringify([text('source_text'), text('target_role'), text('offer_text'), value.experience_years === '' || value.experience_years == null ? null : Number(value.experience_years), text('sector')]);
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
+  return Array.from(new Uint8Array(bytes), n => n.toString(16).padStart(2, '0')).join('');
+}
+async function recoverCvAnalysis() {
+  if (CV_RECOVERING || CV_ANALYSING) return;
+  CV_RECOVERING = true;
+  CV_RETRY_READY = false;
+  try {
+    updateCvRecovery();
+    const pending = cvPending();
+    if (!pending) return;
+    const history = await cvRequest('GET', '/assistant/cv-analyses');
+    if (!Array.isArray(history)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
+    const found = history.find(row => !pending.previousIds.includes(row.id) && row.request_fingerprint === pending.fingerprint && row.analysis && typeof row.analysis === 'object' && !Array.isArray(row.analysis));
+    if (found) {
+      renderCVAnalysis(found);
+      sessionStorage.removeItem(cvPendingKey());
+      cvFeedback('Analyse récupérée dans votre historique. Aucune nouvelle analyse n’a été lancée.');
+    } else {
+      CV_RETRY_READY = Date.now() - pending.startedAt >= 180000;
+      cvFeedback('Aucun résultat disponible pour le moment. Vérifiez à nouveau dans quelques instants. Une nouvelle tentative peut consommer une autre analyse si la précédente se termine tardivement.', true);
+    }
+  } catch (error) { cvFeedback('La vérification n’a pas abouti. La relance reste bloquée pour éviter une double analyse. Réessayez la vérification.', true); }
+  finally { CV_RECOVERING = false; updateCvRecovery(); }
+}
+function allowCvRetry() {
+  if (!CV_RETRY_READY || CV_RECOVERING || CV_ANALYSING) return;
+  sessionStorage.removeItem(cvPendingKey());
+  CV_RETRY_READY = false;
+  updateCvRecovery();
+  cvFeedback('Vous pouvez relancer manuellement. Cette nouvelle tentative peut consommer une analyse supplémentaire si la précédente aboutit.', true);
+}
 function cvFeedback(message, error = false) {
   setFeedback('cv-analysis-feedback', message, error);
   if (error) document.getElementById('cv-analysis-feedback')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4833,6 +4888,8 @@ function cvErrorMessage(error = {}) {
   if (error.status === 413) return 'Le contenu envoyé est trop volumineux. Limites : fichier 8 Mo, CV 30 000 caractères et offre 20 000. Réduisez le fichier ou le texte puis réessayez.';
   if (error.status === 429) return 'Trop de demandes en peu de temps. Patientez quelques instants puis réessayez.';
   const messages = {
+    CV_DOCX_LIMIT: 'Ce DOCX est trop complexe ou trop fortement compressé. Exportez un PDF avec texte sélectionnable ou collez le texte du CV.',
+    CV_DOCX_INVALID: 'Ce DOCX est invalide. Enregistrez-le à nouveau en DOCX ou PDF, ou collez votre texte.',
     CV_PDF_INVALID: 'Ce PDF est corrompu ou invalide. Exportez-le à nouveau en PDF ou utilisez un DOCX.',
     CV_PDF_PROTECTED: 'Ce PDF est protégé. Fournissez une copie sans mot de passe ou un DOCX.',
     CV_LEGACY_DOC: "Ce format Word ancien n'est pas pris en charge. Enregistrez votre CV en .docx ou PDF.",
@@ -4913,7 +4970,11 @@ async function loadCVTool() {
     renderProfileCV(profile);
     setAiAvailability('cv-ai-availability', AI_AVAILABLE);
     bindCvDropzone();
-    document.getElementById('cv-analyse-btn').disabled = !AI_AVAILABLE || !CV_ALLOWED;
+    updateCvRecovery();
+    if (cvPending()) {
+      await recoverCvAnalysis();
+      return;
+    }
     if (!CV_ALLOWED) return;
     if (!AI_AVAILABLE) setFeedback('cv-analysis-feedback', 'L’assistant est momentanément indisponible. Vous pouvez préparer le texte et réessayer plus tard.', true);
     if ((profile.axes?.meta?.cv_file_name || profile.cv_url) && !document.getElementById('cv-source-text').value.trim()) {
@@ -5156,6 +5217,8 @@ async function analyseCVWithAI() {
   }
   if (source.length > 30000) return cvFeedback(`Le CV contient ${source.length} caractères ; la limite est de 30 000. Modifiez ou collez le texte à analyser, ou fournissez une version plus concise. Le document original reste conservé.`, true);
   if (document.getElementById('cv-offer-text').value.length > 20000) return cvFeedback('L’offre ciblée dépasse 20 000 caractères. Réduisez son texte puis relancez l’analyse.', true);
+  try { if (cvPending()) { updateCvRecovery(); return cvFeedback('Vérifiez d’abord le résultat de votre précédente demande ci-dessous.', true); } }
+  catch (_) { return cvFeedback('Le suivi de votre demande est indisponible dans ce navigateur. Autorisez le stockage de session avant de lancer une analyse.', true); }
   CV_ANALYSING = true;
   try {
     setBtn('cv-analyse-btn', true, 'Analyser mon CV');
@@ -5168,19 +5231,30 @@ async function analyseCVWithAI() {
       experience_years: document.getElementById('cv-experience-years').value,
       sector: document.getElementById('cv-sector').value
     };
+    // Snapshot the owned history BEFORE posting. Recovery cannot mistake an old
+    // analysis of the same CV for the result of this request. No CV is stored here.
+    const previous = await cvRequest('GET', '/assistant/cv-analyses');
+    if (!Array.isArray(previous)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
+    const fingerprint = await cvFingerprint(payload);
+    sessionStorage.setItem(cvPendingKey(), JSON.stringify({ fingerprint, previousIds: previous.map(row => row.id), startedAt: Date.now() }));
+    CV_RETRY_READY = false;
     const data = await cvRequest('POST', '/assistant/cv-analyses', payload);
     if (!data?.id || !data.analysis || typeof data.analysis !== 'object' || Array.isArray(data.analysis)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
+    sessionStorage.removeItem(cvPendingKey());
     renderCVAnalysis(data); setFeedback('cv-analysis-feedback', 'Analyse terminée. Relisez chaque proposition avant usage.');
     document.getElementById('cv-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
-    cvFeedback(cvErrorMessage(error), true);
+    // Only a definitive rejection permits an immediate retry. Network/5xx/body
+    // failures can hide a successful insert or a request still running remotely.
+    if ([400, 401, 403, 413, 422, 429].includes(error.status)) sessionStorage.removeItem(cvPendingKey());
+    cvFeedback(cvPending() ? 'La réponse n’est pas confirmée. Votre texte est conservé. Vérifiez le résultat ci-dessous avant toute nouvelle analyse.' : cvErrorMessage(error), true);
     if (error.code === 'AI_QUOTA_EXCEEDED' || error.status === 403) CV_ALLOWED = false;
   }
   finally {
     CV_ANALYSING = false;
     stopCvWaiting();
     setBtn('cv-analyse-btn', false, 'Analyser mon CV');
-    document.getElementById('cv-analyse-btn').disabled = !CV_ALLOWED || !AI_AVAILABLE;
+    updateCvRecovery();
     syncCvJourney();
   }
 }
