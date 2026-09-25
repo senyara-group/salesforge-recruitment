@@ -1987,11 +1987,18 @@ button,input,textarea,select{font-family:inherit}
       <section class="coach-main">
         <div id="coach-setup" class="coach-setup">
           <h2 class="sf">Choisissez votre mode</h2>
-          <p class="coach-setup-intro">Trois entraînements distincts. Le coach répond à gauche, vos réponses à droite.</p>
+          <p class="coach-setup-intro">Trois entraînements distincts. Pour les objections, choisissez ensuite le contexte commercial ou recrutement.</p>
           <div class="coach-starters">
             <button type="button" onclick="selectCoachMode(this,'interview')"><span class="coach-mode-tag">Mode</span><strong>Entretien</strong><span>Anticiper les questions et structurer vos réponses.</span></button>
-            <button type="button" onclick="selectCoachMode(this,'simulation')"><span class="coach-mode-tag">Mode</span><strong>Objections</strong><span>Répondre à un recruteur sceptique et durcir vos arguments.</span></button>
+            <button type="button" id="coach-mode-objections" onclick="selectCoachMode(this,'simulation')"><span class="coach-mode-tag">Mode</span><strong>Objections</strong><span>Prospect ou recruteur : choisissez le type d’entraînement ci-dessous.</span></button>
             <button type="button" onclick="selectCoachMode(this,'pitch')"><span class="coach-mode-tag">Mode</span><strong>Pitch</strong><span>Clarifier un discours de résultats chiffrés, crédible et concis.</span></button>
+          </div>
+          <div id="coach-simulation-types" class="coach-simulation-types" hidden>
+            <p class="coach-simulation-types-label">Quel entraînement d’objections ?</p>
+            <div class="coach-simulation-type-grid">
+              <button type="button" id="coach-sim-commercial" aria-pressed="false" onclick="selectSimulationType(this,'commercial')"><strong>Objections commerciales</strong><span>S’entraîner à répondre aux objections d’un prospect ou client.</span></button>
+              <button type="button" id="coach-sim-recruitment" aria-pressed="false" onclick="selectSimulationType(this,'recruitment')"><strong>Objections recrutement</strong><span>S’entraîner aux objections et questions difficiles d’un recruteur.</span></button>
+            </div>
           </div>
           <fieldset class="coach-context"><legend>Contexte à partager avec le coach</legend><label><input type="checkbox" id="coach-use-profile"> Mon profil SwipSales</label><label><input type="checkbox" id="coach-use-cv"> Le texte affiché dans l’Optimiseur de CV</label><label for="coach-offer-text">Offre ciblée <small>(facultatif)</small></label><textarea class="form-textarea" id="coach-offer-text" rows="5" maxlength="20000" placeholder="Cette offre ne sera partagée que pour cette conversation."></textarea></fieldset>
           <div class="form-feedback" id="coach-setup-feedback" role="status"></div>
@@ -2434,6 +2441,7 @@ let COACH_ALLOWED = false;
 let CV_ANALYSING = false;
 let ACTIVE_CV_ANALYSIS_ID = '';
 let COACH_MODE = '';
+let COACH_SIMULATION_TYPE = '';
 let ACTIVE_CONVERSATION_ID = '';
 let COACH_SENDING = false;
 function normalizePage(page) { return page === 'matchs' ? 'messages' : page; }
@@ -5414,27 +5422,82 @@ function renderCoachHistory(items) {
   });
 }
 function showCoachSetup() {
-  ACTIVE_CONVERSATION_ID = ''; COACH_MODE = '';
+  ACTIVE_CONVERSATION_ID = ''; COACH_MODE = ''; COACH_SIMULATION_TYPE = '';
   document.getElementById('coach-conversation').hidden = true; document.getElementById('coach-setup').hidden = false;
-  document.querySelectorAll('.coach-starters button').forEach((button) => button.classList.remove('on'));
+  document.querySelectorAll('.coach-starters > button').forEach((button) => button.classList.remove('on'));
+  document.querySelectorAll('#coach-simulation-types button').forEach((button) => {
+    button.classList.remove('on');
+    button.setAttribute('aria-pressed', 'false');
+  });
+  const types = document.getElementById('coach-simulation-types');
+  if (types) types.hidden = true;
   document.getElementById('coach-start-btn').disabled = true;
 }
+function syncCoachStartEnabled() {
+  const needsType = COACH_MODE === 'simulation';
+  document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE || !COACH_ALLOWED || !COACH_MODE || (needsType && !COACH_SIMULATION_TYPE);
+}
 function selectCoachMode(button, mode) {
-  COACH_MODE = mode; document.querySelectorAll('.coach-starters button').forEach((item) => item.classList.remove('on')); button.classList.add('on');
-  document.getElementById('coach-start-btn').disabled = !AI_AVAILABLE || !COACH_ALLOWED;
+  COACH_MODE = mode;
+  document.querySelectorAll('.coach-starters > button').forEach((item) => item.classList.remove('on'));
+  button.classList.add('on');
+  const types = document.getElementById('coach-simulation-types');
+  if (mode === 'simulation') {
+    if (types) types.hidden = false;
+    COACH_SIMULATION_TYPE = '';
+    document.querySelectorAll('#coach-simulation-types button').forEach((item) => {
+      item.classList.remove('on');
+      item.setAttribute('aria-pressed', 'false');
+    });
+  } else {
+    if (types) types.hidden = true;
+    COACH_SIMULATION_TYPE = '';
+  }
+  syncCoachStartEnabled();
+}
+function selectSimulationType(button, type) {
+  COACH_SIMULATION_TYPE = type;
+  document.querySelectorAll('#coach-simulation-types button').forEach((item) => {
+    item.classList.remove('on');
+    item.setAttribute('aria-pressed', 'false');
+  });
+  button.classList.add('on');
+  button.setAttribute('aria-pressed', 'true');
+  syncCoachStartEnabled();
 }
 // Modes API /assistant uniquement (ne pas substituer par m1/m2/m3 de /coaching).
 const COACH_OPENERS = {
   interview: 'Aide-moi à préparer un entretien. Commence par me poser la question la plus utile pour cadrer la préparation.',
   pitch: 'Aide-moi à améliorer mon pitch de résultats chiffrés. Commence par me demander le contexte et le public visé.',
-  simulation: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une objection réaliste, donne un feedback, puis une variante plus dure.'
+  simulation: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une objection réaliste, donne un feedback, puis une variante plus dure.',
+  simulation_commercial: 'Je veux m’entraîner aux objections commerciales. Commence uniquement par une brève mise en situation et UNE objection de prospect (prix, concurrent ou timing). Pas de feedback tant que je n’ai pas répondu.',
+  simulation_recruitment: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une seule objection réaliste, sans feedback tant que je n’ai pas répondu.',
 };
 const COACH_MODE_LABELS = { interview: 'Entretien', pitch: 'Pitch', simulation: 'Objections' };
+const COACH_SIMULATION_LABELS = { commercial: 'Objections commerciales', recruitment: 'Objections recrutement' };
+function coachDisplayLabel(conversation) {
+  if (conversation?.mode === 'simulation' || conversation?.mode === 'objections' || COACH_MODE === 'simulation') {
+    const type = conversation?.simulation_type || COACH_SIMULATION_TYPE || 'recruitment';
+    return COACH_SIMULATION_LABELS[type] || COACH_SIMULATION_LABELS.recruitment;
+  }
+  return COACH_MODE_LABELS[conversation?.mode || COACH_MODE] || 'Coaching';
+}
+function coachOpenerForCurrent() {
+  if (COACH_MODE === 'simulation') {
+    return COACH_OPENERS[COACH_SIMULATION_TYPE === 'commercial' ? 'simulation_commercial' : 'simulation_recruitment'];
+  }
+  return COACH_OPENERS[COACH_MODE];
+}
 function coachConversationPayload(mode, title) {
   const useCv = document.getElementById('coach-use-cv').checked;
   const offerText = document.getElementById('coach-offer-text').value;
   if (offerText.length > 20000) throw new Error('L’offre ciblée dépasse 20 000 caractères.');
   const payload = { mode, use_profile: document.getElementById('coach-use-profile').checked, use_cv: useCv, offer_text: offerText };
+  if (mode === 'simulation') {
+    const type = COACH_SIMULATION_TYPE || 'recruitment';
+    if (type !== 'recruitment' && type !== 'commercial') throw new Error('Choisissez Objections commerciales ou Objections recrutement.');
+    payload.simulation_type = type;
+  }
   if (useCv) {
     const cvText = document.getElementById('cv-source-text').value.trim();
     if (!cvText) throw new Error('Ouvrez l’Optimiseur de CV et ajoutez ou collez le texte à partager.');
@@ -5442,28 +5505,41 @@ function coachConversationPayload(mode, title) {
     payload.cv_text = cvText;
   }
   if (title) payload.title = title;
+  else if (mode === 'simulation') payload.title = COACH_SIMULATION_LABELS[payload.simulation_type] || COACH_SIMULATION_LABELS.recruitment;
   return payload;
 }
 async function createCoachConversation() {
   if (!COACH_MODE || !AI_AVAILABLE || !COACH_ALLOWED) return;
+  if (COACH_MODE === 'simulation' && !COACH_SIMULATION_TYPE) {
+    return setFeedback('coach-setup-feedback', 'Choisissez Objections commerciales ou Objections recrutement.', true);
+  }
   let payload;
   try { payload = coachConversationPayload(COACH_MODE); }
   catch (error) { return setFeedback('coach-setup-feedback', error.message, true); }
   setBtn('coach-start-btn', true, 'Commencer');
   try {
     const conversation = await api('POST', '/assistant/conversations', payload);
-    ACTIVE_CONVERSATION_ID = conversation.id; showCoachConversation(conversation); await sendCoachContent(COACH_OPENERS[COACH_MODE]); await refreshCoachHistory();
+    ACTIVE_CONVERSATION_ID = conversation.id;
+    if (conversation.simulation_type) COACH_SIMULATION_TYPE = conversation.simulation_type;
+    showCoachConversation(conversation); await sendCoachContent(coachOpenerForCurrent()); await refreshCoachHistory();
   } catch (error) { setFeedback('coach-setup-feedback', error.message || 'Création impossible', true); }
   finally { setBtn('coach-start-btn', false, 'Commencer'); }
 }
 function showCoachConversation(conversation) {
   document.getElementById('coach-setup').hidden = true; document.getElementById('coach-conversation').hidden = false;
-  document.getElementById('coach-title').textContent = conversation.title || COACH_MODE_LABELS[conversation.mode] || 'Conversation';
-  document.getElementById('coach-phase').textContent = COACH_MODE_LABELS[conversation.mode] || 'Coaching';
+  const label = coachDisplayLabel(conversation);
+  document.getElementById('coach-title').textContent = conversation.title || label;
+  document.getElementById('coach-phase').textContent = label;
   renderCoachMessages(conversation.messages || []);
 }
 async function openCoachConversation(id) {
-  try { const conversation = await api('GET', '/assistant/conversations/' + id); ACTIVE_CONVERSATION_ID = id; COACH_MODE = conversation.mode; showCoachConversation(conversation); }
+  try {
+    const conversation = await api('GET', '/assistant/conversations/' + id);
+    ACTIVE_CONVERSATION_ID = id;
+    COACH_MODE = conversation.mode;
+    COACH_SIMULATION_TYPE = conversation.simulation_type || (conversation.mode === 'simulation' || conversation.mode === 'objections' ? 'recruitment' : '');
+    showCoachConversation(conversation);
+  }
   catch (error) { toast(error.message || 'Conversation indisponible'); }
 }
 function renderCoachMessages(messages) {
@@ -5496,8 +5572,7 @@ function appendCoachMessage(message) {
   }
   const content = document.createElement('div'); content.className = 'coach-bubble'; content.textContent = message.content;
   item.appendChild(content); list.appendChild(item);
-  const phaseLabel = message.phase === 'simulation' ? 'Objections' : message.phase === 'debrief' ? 'Feedback' : (COACH_MODE_LABELS[COACH_MODE] || 'Coaching');
-  document.getElementById('coach-phase').textContent = phaseLabel;
+  document.getElementById('coach-phase').textContent = coachDisplayLabel({ mode: COACH_MODE, simulation_type: COACH_SIMULATION_TYPE });
   list.scrollTop = list.scrollHeight;
 }
 function setCoachWaiting(waiting) {
@@ -5530,9 +5605,16 @@ async function deleteCoachConversation() {
 }
 async function restartCoachConversation() {
   if (!COACH_MODE || !AI_AVAILABLE || !COACH_ALLOWED) return showCoachSetup();
+  if (COACH_MODE === 'simulation' && !COACH_SIMULATION_TYPE) return showCoachSetup();
   const mode = COACH_MODE;
+  const simulationType = COACH_SIMULATION_TYPE;
   let payload;
-  try { payload = coachConversationPayload(mode, COACH_MODE_LABELS[mode] || undefined); }
+  try {
+    payload = coachConversationPayload(
+      mode,
+      mode === 'simulation' ? (COACH_SIMULATION_LABELS[simulationType] || COACH_SIMULATION_LABELS.recruitment) : (COACH_MODE_LABELS[mode] || undefined),
+    );
+  }
   catch (error) { return toast(error.message); }
   if (ACTIVE_CONVERSATION_ID) {
     try { await api('DELETE', '/assistant/conversations/' + ACTIVE_CONVERSATION_ID); }
@@ -5544,9 +5626,10 @@ async function restartCoachConversation() {
   try {
     const conversation = await api('POST', '/assistant/conversations', payload);
     COACH_MODE = mode;
+    COACH_SIMULATION_TYPE = conversation.simulation_type || simulationType;
     ACTIVE_CONVERSATION_ID = conversation.id;
     showCoachConversation(conversation);
-    await sendCoachContent(COACH_OPENERS[mode]);
+    await sendCoachContent(coachOpenerForCurrent());
     await refreshCoachHistory();
   } catch (error) {
     toast(error.message || 'Impossible de recommencer');

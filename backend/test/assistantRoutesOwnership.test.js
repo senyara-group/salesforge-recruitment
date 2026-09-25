@@ -284,6 +284,10 @@ test('finalization failure fails closed without double finalization', async () =
 
 test('route Coach structure la réponse et finalise après persistance', async () => {
   quotaMode = 'available'; failFinalize = false; finalizeCalls = 0;
+  rows.ai_conversation_messages.push({
+    id: 'prior-a', conversation_id: 'conversation-a', user_id: 'user-a', role: 'assistant',
+    content: 'Première question', created_at: '2026-01-01T00:00:00.000Z',
+  });
   providerValue = { feedback:{ works:'Réponse claire', missing:'Un fait précis', rewrite:'Réponse factuelle' }, next:{ type:'question', content:'Quel résultat pouvez-vous prouver ?' } };
   const response = await invoke('post', '/conversations/:id/messages', { params:{ id:'conversation-a' }, body:{ content:'Réponse candidat fictive' } });
   assert.equal(response.statusCode, 201);

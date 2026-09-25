@@ -116,7 +116,8 @@ test('Coach restart omits CV when unchecked and sends it when checked', async ()
   };
   const sent = [];
   const sandbox = {
-    COACH_MODE: 'pitch', COACH_MODE_LABELS: { pitch: 'Pitch' },
+    COACH_MODE: 'pitch', COACH_SIMULATION_TYPE: '', COACH_MODE_LABELS: { pitch: 'Pitch' },
+    COACH_SIMULATION_LABELS: { commercial: 'Objections commerciales', recruitment: 'Objections recrutement' },
     COACH_OPENERS: { pitch: 'Bonjour' }, AI_AVAILABLE: true, COACH_ALLOWED: true,
     ACTIVE_CONVERSATION_ID: 'old', document: { getElementById: id => fields[id] },
     api: async (method, route, body) => {
@@ -125,6 +126,7 @@ test('Coach restart omits CV when unchecked and sends it when checked', async ()
     },
     setBtn: () => {}, toast: () => {}, showCoachSetup: () => {},
     showCoachConversation: () => {}, sendCoachContent: async () => {}, refreshCoachHistory: async () => {},
+    coachOpenerForCurrent: () => 'Bonjour',
   };
   vm.runInNewContext(`${sourceBetween('function coachConversationPayload(', 'async function createCoachConversation()')}\n${sourceBetween('async function restartCoachConversation()', '// ------------------------------------------------------------')}\nthis.restart = restartCoachConversation;`, sandbox);
   await sandbox.restart();
