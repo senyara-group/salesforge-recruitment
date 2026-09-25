@@ -16,10 +16,13 @@ test('réponse Coach devient un feedback structuré suivi d’une seule question
   const text = formatCoachReply(reply);
   assert.match(text, /Ce qui fonctionne/); assert.match(text, /Ce qui manque/); assert.match(text, /Reformulation possible/); assert.match(text, /Question suivante/);
   assert.equal((text.match(/Question suivante/g) || []).length, 1);
+  const opening = formatCoachReply(normalizeCoachReply({ feedback:{ works:'', missing:'', rewrite:'' }, next:{ type:'question', content:'Parlez-moi de vous.' } }, 'interview'), { opening: true });
+  assert.equal(opening, 'Parlez-moi de vous.');
+  assert.doesNotMatch(opening, /Ce qui fonctionne/);
 });
 
 test('mode Objections impose une objection suivante', () => {
-  const reply = normalizeCoachReply({ feedback:{}, next:{ type:'question', content:'Pourquoi ?' } }, 'objections');
+  const reply = normalizeCoachReply({ feedback:{ works:'Ok', missing:'Précisez', rewrite:'Version claire' }, next:{ type:'question', content:'Pourquoi ?' } }, 'objections');
   assert.equal(reply.next.type, 'objection');
   assert.match(formatCoachReply(reply), /Objection suivante/);
   assert.equal(normalizeCoachReply({ next:{ type:'question', content:'Pourquoi ?' } }, 'simulation').next.type, 'objection');

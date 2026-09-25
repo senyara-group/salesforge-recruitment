@@ -18,6 +18,7 @@ function el(overrides = {}) {
     hidden: true, disabled: false, checked: false, value: '', textContent: '', classList: {
       add() { this._on = true; }, remove() { this._on = false; }, contains() { return Boolean(this._on); },
     },
+    setAttribute(name, value) { this[name] = value; },
     ...overrides,
   };
 }
@@ -121,4 +122,12 @@ test('frontend : labels distincts et legacy recruitment', () => {
   assert.equal(s.coachDisplayLabel({ mode: 'simulation', simulation_type: 'commercial' }), 'Objections commerciales');
   assert.equal(s.coachDisplayLabel({ mode: 'simulation' }), 'Objections recrutement');
   assert.equal(s.coachDisplayLabel({ mode: 'interview' }), 'Entretien');
+});
+
+test('frontend : aria-pressed suit la sélection', () => {
+  const s = harness();
+  s.selectCoachMode(s.buttons.simulation, 'simulation');
+  s.selectSimulationType(s.buttons.commercial, 'commercial');
+  assert.equal(s.buttons.commercial['aria-pressed'], 'true');
+  assert.equal(s.buttons.recruitment['aria-pressed'], 'false');
 });

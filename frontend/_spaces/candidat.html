@@ -1996,8 +1996,8 @@ button,input,textarea,select{font-family:inherit}
           <div id="coach-simulation-types" class="coach-simulation-types" hidden>
             <p class="coach-simulation-types-label">Quel entraînement d’objections ?</p>
             <div class="coach-simulation-type-grid">
-              <button type="button" id="coach-sim-commercial" onclick="selectSimulationType(this,'commercial')"><strong>Objections commerciales</strong><span>S’entraîner à répondre aux objections d’un prospect ou client.</span></button>
-              <button type="button" id="coach-sim-recruitment" onclick="selectSimulationType(this,'recruitment')"><strong>Objections recrutement</strong><span>S’entraîner aux objections et questions difficiles d’un recruteur.</span></button>
+              <button type="button" id="coach-sim-commercial" aria-pressed="false" onclick="selectSimulationType(this,'commercial')"><strong>Objections commerciales</strong><span>S’entraîner à répondre aux objections d’un prospect ou client.</span></button>
+              <button type="button" id="coach-sim-recruitment" aria-pressed="false" onclick="selectSimulationType(this,'recruitment')"><strong>Objections recrutement</strong><span>S’entraîner aux objections et questions difficiles d’un recruteur.</span></button>
             </div>
           </div>
           <fieldset class="coach-context"><legend>Contexte à partager avec le coach</legend><label><input type="checkbox" id="coach-use-profile"> Mon profil SwipSales</label><label><input type="checkbox" id="coach-use-cv"> Le texte affiché dans l’Optimiseur de CV</label><label for="coach-offer-text">Offre ciblée <small>(facultatif)</small></label><textarea class="form-textarea" id="coach-offer-text" rows="5" maxlength="20000" placeholder="Cette offre ne sera partagée que pour cette conversation."></textarea></fieldset>
@@ -5425,7 +5425,10 @@ function showCoachSetup() {
   ACTIVE_CONVERSATION_ID = ''; COACH_MODE = ''; COACH_SIMULATION_TYPE = '';
   document.getElementById('coach-conversation').hidden = true; document.getElementById('coach-setup').hidden = false;
   document.querySelectorAll('.coach-starters > button').forEach((button) => button.classList.remove('on'));
-  document.querySelectorAll('#coach-simulation-types button').forEach((button) => button.classList.remove('on'));
+  document.querySelectorAll('#coach-simulation-types button').forEach((button) => {
+    button.classList.remove('on');
+    button.setAttribute('aria-pressed', 'false');
+  });
   const types = document.getElementById('coach-simulation-types');
   if (types) types.hidden = true;
   document.getElementById('coach-start-btn').disabled = true;
@@ -5442,7 +5445,10 @@ function selectCoachMode(button, mode) {
   if (mode === 'simulation') {
     if (types) types.hidden = false;
     COACH_SIMULATION_TYPE = '';
-    document.querySelectorAll('#coach-simulation-types button').forEach((item) => item.classList.remove('on'));
+    document.querySelectorAll('#coach-simulation-types button').forEach((item) => {
+      item.classList.remove('on');
+      item.setAttribute('aria-pressed', 'false');
+    });
   } else {
     if (types) types.hidden = true;
     COACH_SIMULATION_TYPE = '';
@@ -5451,8 +5457,12 @@ function selectCoachMode(button, mode) {
 }
 function selectSimulationType(button, type) {
   COACH_SIMULATION_TYPE = type;
-  document.querySelectorAll('#coach-simulation-types button').forEach((item) => item.classList.remove('on'));
+  document.querySelectorAll('#coach-simulation-types button').forEach((item) => {
+    item.classList.remove('on');
+    item.setAttribute('aria-pressed', 'false');
+  });
   button.classList.add('on');
+  button.setAttribute('aria-pressed', 'true');
   syncCoachStartEnabled();
 }
 // Modes API /assistant uniquement (ne pas substituer par m1/m2/m3 de /coaching).
@@ -5460,8 +5470,8 @@ const COACH_OPENERS = {
   interview: 'Aide-moi à préparer un entretien. Commence par me poser la question la plus utile pour cadrer la préparation.',
   pitch: 'Aide-moi à améliorer mon pitch de résultats chiffrés. Commence par me demander le contexte et le public visé.',
   simulation: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une objection réaliste, donne un feedback, puis une variante plus dure.',
-  simulation_commercial: 'Je veux m’entraîner aux objections commerciales d’un prospect. Commence par une seule objection réaliste (prix, concurrent ou timing), donne un feedback court, puis la réaction suivante.',
-  simulation_recruitment: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une objection réaliste, donne un feedback, puis une variante plus dure.'
+  simulation_commercial: 'Je veux m’entraîner aux objections commerciales. Commence uniquement par une brève mise en situation et UNE objection de prospect (prix, concurrent ou timing). Pas de feedback tant que je n’ai pas répondu.',
+  simulation_recruitment: 'Je veux m’entraîner aux objections d’un recruteur sceptique. Commence par une seule objection réaliste, sans feedback tant que je n’ai pas répondu.',
 };
 const COACH_MODE_LABELS = { interview: 'Entretien', pitch: 'Pitch', simulation: 'Objections' };
 const COACH_SIMULATION_LABELS = { commercial: 'Objections commerciales', recruitment: 'Objections recrutement' };

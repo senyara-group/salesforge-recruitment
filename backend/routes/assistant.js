@@ -14,7 +14,7 @@ const { CV_MAX_TOKENS, CV_MIN_SOURCE_CHARS, cvAnalysisPrompt, normalizeCvAnalysi
 const { buildCvFacts } = require('../utils/cvFacts');
 const { selectCoachHistory } = require('../utils/coachContext');
 const { AI_SAFETY_FALLBACK, inspectAssistantOutput } = require('../utils/aiSafety');
-const { COACH_MODES, COACH_MODE_LABELS, normalizeCoachReply, formatCoachReply, coachSystemPrompt, isObjectionMode, resolveSimulationType, simulationLabel } = require('../utils/coachReply');
+const { COACH_MODES, COACH_MODE_LABELS, normalizeCoachReply, formatCoachReply, coachSystemPrompt, isObjectionMode, parseSimulationTypeInput, resolveStoredSimulationType, simulationLabel } = require('../utils/coachReply');
 const { usageFor, reserveUsage, releaseUsage, finalizeUsage } = require('../utils/aiUsage');
 
 const MODES = COACH_MODES;
@@ -22,7 +22,7 @@ const MODE_LABELS = COACH_MODE_LABELS;
 
 function publicConversation(conversation) {
   const simulation_type = isObjectionMode(conversation.mode)
-    ? resolveSimulationType(conversation.context_data?.simulation_type, { strict: false })
+    ? resolveStoredSimulationType(conversation.context_data?.simulation_type)
     : undefined;
   return {
     id: conversation.id,
@@ -359,10 +359,8 @@ router.post('/conversations', authMiddleware, async (req, res) => {
 
     let simulationType;
     if (isObjectionMode(mode)) {
-      // Absent → recruitment (legacy). Present but invalid → 400.
-      simulationType = Object.prototype.hasOwnProperty.call(req.body || {}, 'simulation_type')
-        ? resolveSimulationType(req.body.simulation_type)
-        : 'recruitment';
+      // Absent → recruitment (legacy). Present but not exact closed string → 400.
+      simulationType = parseSimulationTypeInput(req.body);
     }
 
     const profile = await ensureCandidateProfile(req.user.id);
@@ -454,16 +452,30 @@ router.get('/conversations/:id', authMiddleware, async (req, res) => {
 router.patch('/conversations/:id', authMiddleware, async (req, res) => {
   try {
     await assertAiAccess(req.user.id, 'coach');
-    const mode = String(req.body?.mode || '');
-    if (!MODES.has(mode)) return res.status(400).json({ error: 'Mode de coaching invalide' });
-    const { data, error } = await ownedById(
-      supabase.from('ai_conversations').update({ mode, updated_at: new Date().toISOString() }),
-      req.user.id,
-      req.params.id,
-    ).select('id,mode,title,created_at,updated_at').maybeSingle();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Conversation introuvable' });
-    res.json(data);
+    const conversation = await ownedConversation(req.user.id, req.params.id);
+
+    // Mode and simulation_type are immutable once created. Change training via a new conversation.
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'simulation_type')) {
+      return res.status(409).json({
+        error: 'Le type d’objections d’une conversation ne peut pas être modifié. Créez un nouvel entraînement.',
+        code: 'CONVERSATION_CONTEXT_IMMUTABLE',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'mode')) {
+      const mode = String(req.body.mode || '');
+      if (!MODES.has(mode)) {
+        return res.status(400).json({ error: 'Mode de coaching invalide' });
+      }
+      if (mode !== conversation.mode) {
+        return res.status(409).json({
+          error: 'Le mode d’une conversation ne peut pas être modifié. Créez un nouvel entraînement ou recommencez.',
+          code: 'CONVERSATION_MODE_IMMUTABLE',
+        });
+      }
+    }
+
+    res.json(publicConversation(conversation));
   } catch (error) {
     publicError(res, error);
   }
@@ -488,7 +500,7 @@ router.post('/conversations/:id/reset', authMiddleware, async (req, res) => {
 function coachSystem(conversation) {
   const context = conversation.context_data || {};
   const simulationType = isObjectionMode(conversation.mode)
-    ? resolveSimulationType(context.simulation_type, { strict: false })
+    ? resolveStoredSimulationType(context.simulation_type)
     : 'recruitment';
   return coachSystemPrompt(conversation.mode, JSON.stringify({
     profil: context.profile || {},
@@ -562,8 +574,9 @@ async function generateCoachReply(
       ...selectCoachHistory(history || [], undefined, userContent),
     ],
   });
+  const opening = !(history || []).some((message) => message.role === 'assistant');
   const structuredReply = normalizeCoachReply(aiResult.value, conversation.mode);
-  const rawContent = formatCoachReply(structuredReply);
+  const rawContent = formatCoachReply(structuredReply, { opening });
   const safety = inspectAssistantOutput(rawContent);
   const content = safety.safe ? rawContent : AI_SAFETY_FALLBACK;
   if (!safety.safe) console.warn('[ai-safety]', { feature: 'coach', incidentType: safety.incidentType });

@@ -5,6 +5,8 @@ const path = require('node:path');
 const {
   coachSystemPrompt,
   resolveSimulationType,
+  parseSimulationTypeInput,
+  resolveStoredSimulationType,
   isObjectionMode,
   SHARED_INTERDICTIONS,
   SIMULATION_TYPES,
@@ -18,9 +20,9 @@ const html = fs.readFileSync(path.join(__dirname, '../../frontend/_spaces/candid
 const css = fs.readFileSync(path.join(__dirname, '../../frontend/app-professional.css'), 'utf8');
 
 test('1. simulation legacy sans subtype → recruitment', () => {
-  assert.equal(resolveSimulationType(undefined), 'recruitment');
-  assert.equal(resolveSimulationType(null), 'recruitment');
-  assert.equal(resolveSimulationType(''), 'recruitment');
+  assert.equal(parseSimulationTypeInput({}), 'recruitment');
+  assert.equal(parseSimulationTypeInput({ mode: 'simulation' }), 'recruitment');
+  assert.equal(resolveStoredSimulationType(undefined), 'recruitment');
   const prompt = coachSystemPrompt('simulation', '{}');
   assert.match(prompt, /recruteur sceptique/i);
   assert.doesNotMatch(prompt, /prospect ou un client/i);
@@ -36,13 +38,17 @@ test('3. simulation_type=commercial → prompt commercial', () => {
   const prompt = coachSystemPrompt('simulation', '{}', 'commercial');
   assert.match(prompt, /prospect ou un client/i);
   assert.match(prompt, /prix\/budget|concurrence|closing/i);
-  assert.match(prompt, /UNE seule objection/i);
+  assert.match(prompt, /UNE objection/i);
 });
 
-test('4. valeur inconnue → refus validation strict', () => {
-  assert.throws(() => resolveSimulationType('sales'), { code: 'INVALID_SIMULATION_TYPE', status: 400 });
-  assert.throws(() => resolveSimulationType('RECRUITMENT'), { code: 'INVALID_SIMULATION_TYPE' });
-  assert.equal(resolveSimulationType('sales', { strict: false }), 'recruitment');
+test('4. valeur inconnue ou type invalide → refus validation strict', () => {
+  assert.throws(() => parseSimulationTypeInput({ simulation_type: 'sales' }), { code: 'INVALID_SIMULATION_TYPE', status: 400 });
+  assert.throws(() => parseSimulationTypeInput({ simulation_type: 'RECRUITMENT' }), { code: 'INVALID_SIMULATION_TYPE' });
+  assert.throws(() => parseSimulationTypeInput({ simulation_type: null }), { code: 'INVALID_SIMULATION_TYPE' });
+  assert.throws(() => parseSimulationTypeInput({ simulation_type: '' }), { code: 'INVALID_SIMULATION_TYPE' });
+  assert.throws(() => parseSimulationTypeInput({ simulation_type: ['commercial'] }), { code: 'INVALID_SIMULATION_TYPE' });
+  assert.equal(resolveStoredSimulationType('sales'), 'recruitment');
+  assert.equal(resolveSimulationType(undefined), 'recruitment');
 });
 
 test('5. commercial prompt ne contient pas de rôle recruteur', () => {
@@ -97,9 +103,10 @@ test('11–12. context_data / simulation_type persistés côté create + lecture
   assert.match(assistantSource, /\.\.\.publicConversation\(/);
 });
 
-test('13. changement subtype = nouvelle conversation (pas de PATCH context silencieux)', () => {
+test('13. changement subtype = nouvelle conversation (PATCH mode/subtype immuables)', () => {
   const patch = assistantSource.slice(assistantSource.indexOf("router.patch('/conversations/:id'"), assistantSource.indexOf("router.post('/conversations/:id/reset'"));
-  assert.doesNotMatch(patch, /simulation_type|context_data/);
+  assert.match(patch, /CONVERSATION_MODE_IMMUTABLE/);
+  assert.match(patch, /CONVERSATION_CONTEXT_IMMUTABLE/);
   assert.match(html, /showCoachSetup\(\)/);
   assert.match(html, /restartCoachConversation/);
 });
@@ -122,6 +129,7 @@ test('frontend : choix commercial/recrutement et context_data', () => {
   assert.match(html, /coach-simulation-types/);
   assert.match(html, /selectSimulationType\(this,'commercial'\)/);
   assert.match(html, /selectSimulationType\(this,'recruitment'\)/);
+  assert.match(html, /aria-pressed/);
   assert.match(html, /payload\.simulation_type/);
   assert.match(html, /COACH_SIMULATION_TYPE/);
   assert.match(html, /Objections commerciales/);
