@@ -518,13 +518,84 @@ test('L. affichage : lieu complet échappé, absence explicite, pas de troncatur
   assert.match(recruiterHtml, /typeof c\.location === 'string' && c\.location\.trim\(\) \? `<span class="cand-fact cand-fact-location" title="\$\{esc\(c\.location\)\}">/);
 });
 
-test('L. mobile : champs pleine largeur, pas de débordement horizontal, labels associés', () => {
+// Règles CSS des <style> inline : { selectors, body, media } (media = null au niveau racine).
+function cssRules(html) {
+  const css = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = [];
+  const stack = [];
+  let prelude = '';
+  for (const char of css) {
+    if (char === '{') {
+      stack.push(prelude.trim());
+      prelude = '';
+    } else if (char === '}') {
+      const head = stack.pop();
+      if (head && !head.startsWith('@')) {
+        const media = stack.filter((h) => h.startsWith('@media')).pop() || null;
+        rules.push({ selectors: head.split(',').map((s) => s.trim().replace(/\s+/g, ' ')), body: prelude.trim(), media });
+      }
+      prelude = '';
+    } else {
+      prelude += char;
+    }
+  }
+  return rules;
+}
+function declarations(body) {
+  return Object.fromEntries(body.split(';').map((d) => d.split(':')).filter((p) => p.length >= 2)
+    .map(([k, ...v]) => [k.trim(), v.join(':').trim()]));
+}
+function filterSheetFieldRules(html) {
+  return cssRules(html).filter((rule) => rule.selectors.includes('.filters-sheet .form-field'));
+}
+
+test('L. mobile : .filters-sheet .form-field réellement pleine largeur (candidat + recruteur)', () => {
+  for (const [name, html, inputs] of [
+    ['candidat', candidateHtml, ['filt-location', 'filt-job-type', 'filt-sector']],
+    ['recruteur', recruiterHtml, ['filt-cand-location', 'filt-years-min']],
+  ]) {
+    // Exactement une règle dédiée au panneau, au niveau racine (toutes largeurs d'écran).
+    const all = cssRules(html);
+    const rules = all.filter((rule) => rule.selectors.includes('.filters-sheet .form-field'));
+    assert.equal(rules.length, 1, `${name}: une seule règle .filters-sheet .form-field`);
+    assert.equal(rules[0].media, null, `${name}: règle hors media query`);
+    const decl = declarations(rules[0].body);
+    assert.equal(decl.width, '100%', name);
+    assert.equal(decl['box-sizing'], 'border-box', name); // padding + bordure inclus : aucun débordement
+    assert.equal(decl['min-height'], '44px', name); // cible tactile
+    // Aucune règle (media query comprise) ne réimpose une largeur fixe à ces champs.
+    for (const rule of all) {
+      const targets = rule.selectors.some((s) => s === '.filters-sheet .form-field' || inputs.some((id) => s.includes(`#${id}`)));
+      if (targets && rule !== rules[0]) assert.equal(declarations(rule.body).width, undefined, `${name}: ${rule.selectors}`);
+    }
+    // Les champs concernés sont bien des .form-field DANS le panneau de filtres.
+    const sheetStart = html.indexOf('bottom-sheet filters-sheet');
+    const sheetEnd = html.indexOf('class="filt-actions"', sheetStart);
+    assert.ok(sheetStart > 0 && sheetEnd > sheetStart, name);
+    for (const id of inputs) {
+      const at = html.indexOf(`id="${id}"`);
+      assert.ok(at > sheetStart && at < sheetEnd, `${name}: #${id} dans .filters-sheet`);
+      assert.match(html.slice(html.lastIndexOf('<input', at), at), /class="form-field"/, `${name}: #${id}`);
+    }
+  }
+  // Garde-fou : la règle profil ne peut plus satisfaire le test par accident.
+  assert.equal(filterSheetFieldRules('<style>.prefs-block .form-field{width:100%;box-sizing:border-box}</style>').length, 0);
+  const withoutRule = candidateHtml.replace(/\.filters-sheet \.form-field\{[^}]*\}/, '');
+  assert.equal(filterSheetFieldRules(withoutRule).length, 0);
+
+  // Petit écran (CSS existant, inchangé) : feuille à 100 % avec gouttières de 20 px,
+  // 16 px sous 380 px ⇒ champ ≈ 350 px à 390 px et ≈ 390 px à 430 px, sans débordement.
+  const candidateRules = cssRules(candidateHtml);
+  assert.ok(candidateRules.some((r) => r.media === null && r.selectors.includes('.bottom-sheet')
+    && declarations(r.body).width === '100%' && declarations(r.body).padding === '17px 20px 22px'));
+  assert.ok(candidateRules.some((r) => /max-width:\s*380px/.test(r.media || '') && r.selectors.includes('.bottom-sheet')
+    && declarations(r.body)['padding-left'] === '16px' && declarations(r.body)['padding-right'] === '16px'));
+
+  // Labels associés, aide accessible, textes longs tronqués.
   for (const [html, id] of [[candidateHtml, 'filt-location'], [recruiterHtml, 'filt-cand-location']]) {
     assert.match(html, new RegExp(`<label class="filt-label" for="${id}">`));
     assert.match(html, new RegExp(`<input class="form-field" id="${id}" type="search" maxlength="80"`));
     assert.match(html, new RegExp(`aria-describedby="${id}-help"`));
-    assert.match(html, /\.form-field\{[^}]*width:100%/);
-    assert.match(html, /\.filters-sheet \.filt-help\{/);
   }
   assert.match(candidateHtml, /\.mstat-v\.is-text\{[^}]*text-overflow:ellipsis/);
   assert.match(recruiterHtml, /\.cand-fact-location span\{[^}]*text-overflow:ellipsis/);
