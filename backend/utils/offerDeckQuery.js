@@ -1,7 +1,8 @@
 /**
  * Parsing / validation / règles du deck candidat /offres/deck.
  * Filtrage métier serveur ; pagination cursor ; pas de parsing legacy texte.
- * Hors géo (ville/rayon/lat/lon/mobility) — chantier ultérieur.
+ * Localisation : filtre texte sur offres.lieu (utils/locationFilter.js).
+ * Hors géo (rayon/lat/lon/mobility) — chantier ultérieur, voir LOCATION.md.
  */
 
 const {
@@ -24,6 +25,7 @@ const {
   canonicalizeSector,
   canonicalizeTargetJobType,
 } = require('./yannisTaxonomies');
+const { parseLocationQuery, locationTextMatches } = require('./locationFilter');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -234,6 +236,7 @@ function parseOfferDeckQuery(query = {}) {
     }),
     experience_min,
     experience_max,
+    location: parseLocationQuery(query.location),
   };
 }
 
@@ -321,6 +324,8 @@ function offerMatchesDeckFilters(offer, filters) {
   if (!offerMatchesExperience(offer, filters.experience_min, filters.experience_max)) {
     return false;
   }
+  // Filtre explicite : une offre sans lieu (NULL/vide/non-texte) ne matche pas.
+  if (filters.location && !locationTextMatches(offer.lieu, filters.location)) return false;
   return true;
 }
 
@@ -405,6 +410,11 @@ function applySupabaseDeckFilters(query, filters) {
   }
   if (filters.skills.length) {
     q = q.overlaps('skills', filters.skills);
+  }
+  if (filters.location) {
+    // PostgREST `match` = regex POSIX (~). Motif construit uniquement depuis des
+    // mots validés : aucun caractère de la saisie n'est interprété comme regex.
+    q = q.filter('lieu', 'match', filters.location.pattern);
   }
   if (filters.salary_fixed_min != null) {
     const x = filters.salary_fixed_min;

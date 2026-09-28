@@ -19,7 +19,9 @@ const {
   applySupabaseScoreCursor,
   fetchCandidateDeckRows,
   resolveCandidateSkills,
+  isAnonymousCandidate,
 } = require('../utils/candidateDeckQuery');
+const { readLocationText } = require('../utils/locationFilter');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -834,6 +836,8 @@ function mapCandidateDeckCard(profile, matching) {
     initiales: initials,
     role: profile.titre || 'Commercial',
     anon,
+    // Ville déclarée (jamais d'adresse ni de coordonnées) ; masquée pour un profil anonyme.
+    location: anon || isAnonymousCandidate(profile) ? '' : readLocationText(profile.axes?.meta?.ville),
     certifie: false,
     avatar_url: anon ? '' : (profile.avatar_url || ''),
     m: fit,

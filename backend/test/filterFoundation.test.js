@@ -198,6 +198,8 @@ test('bug tags vides : une offre sans tags ne reçoit plus les 7 tags automatiqu
       score: (offerTags || []).length ? 10 : 0,
       matched: new Set(),
     }),
+    normalizeLocationInput: (value) => (typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : ''),
+    WORK_MODE_LABELS: {},
   };
   vm.runInNewContext(`${candidateHtml.slice(start, end)}\nthis.normOffre = normOffre;`, sandbox);
   const empty = sandbox.normOffre({ id: '1', titre: 'Test', tags: [] }, []);

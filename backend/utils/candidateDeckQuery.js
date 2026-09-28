@@ -9,6 +9,7 @@ const {
   flattenCompetencesMeta,
   resolveCanonicalSkill,
 } = require('./yannisTaxonomies');
+const { parseLocationQuery, locationTextMatches } = require('./locationFilter');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -168,6 +169,7 @@ function parseCandidateDeckQuery(query = {}) {
     methodologies: parseBoundedList(query.methodologies, { label: 'methodologies' }),
     availabilities: parseBoundedList(query.availability, { label: 'availability', max: 6 }),
     customer_types: parseBoundedList(query.customer_types, { label: 'customer_types' }),
+    location: parseLocationQuery(query.location),
   };
 }
 
@@ -195,6 +197,22 @@ function arrayOverlaps(candidateValues, selected) {
   if (!Array.isArray(candidateValues) || !candidateValues.length) return false;
   const pool = new Set(candidateValues.map(String));
   return selected.some((value) => pool.has(String(value)));
+}
+
+/**
+ * Localisation candidat = axes.meta.ville (ville déclarée, texte libre).
+ * Un profil anonyme n'expose pas sa ville : il ne matche jamais un filtre
+ * localisation (sinon le résultat du filtre révélerait la ville).
+ */
+function isAnonymousCandidate(candidate) {
+  const flag = candidate?.axes?.meta?.anonyme;
+  return flag === true || flag === 'true';
+}
+
+function candidateMatchesLocation(candidate, location) {
+  if (!location) return true;
+  if (isAnonymousCandidate(candidate)) return false;
+  return locationTextMatches(candidate?.axes?.meta?.ville, location);
 }
 
 function candidateMatchesDeckFilters(candidate, filters) {
@@ -231,6 +249,7 @@ function candidateMatchesDeckFilters(candidate, filters) {
   if (filters.customer_types.length && !arrayOverlaps(candidate.customer_types, filters.customer_types)) {
     return false;
   }
+  if (!candidateMatchesLocation(candidate, filters.location)) return false;
   return true;
 }
 
@@ -311,6 +330,11 @@ function applySupabaseCandidateDeckFilters(query, filters) {
   if (filters.customer_types.length) {
     q = q.overlaps('customer_types', filters.customer_types);
   }
+  if (filters.location) {
+    // Même motif que candidateMatchesLocation ; anonymes exclus (->> donne 'true' pour le booléen).
+    q = q.filter('axes->meta->>ville', 'match', filters.location.pattern)
+      .or('axes->meta->>anonyme.is.null,axes->meta->>anonyme.neq.true');
+  }
   return q;
 }
 
@@ -349,7 +373,10 @@ async function fetchCandidateDeckRows(filters, {
   const seen = new Set(seenIds.map(String));
   const pageUserIds = new Set();
   const skillsActive = filters.skills.length > 0;
-  const maxRounds = skillsActive ? SKILLS_FILL_MAX_ROUNDS : 1;
+  // Localisation : le SQL (axes->meta->>ville) convertit aussi un objet/nombre JSON
+  // en texte ; ce post-filtre garantit la sémantique « chaîne uniquement ».
+  const postFilterActive = skillsActive || Boolean(filters.location);
+  const maxRounds = postFilterActive ? SKILLS_FILL_MAX_ROUNDS : 1;
   let scanCursor = filters.cursor;
   let exhausted = false;
   let rounds = 0;
@@ -357,7 +384,7 @@ async function fetchCandidateDeckRows(filters, {
   while (collected.length < filters.limit && rounds < maxRounds && !exhausted) {
     rounds += 1;
     const remaining = filters.limit - collected.length;
-    const batchSize = skillsActive
+    const batchSize = postFilterActive
       ? Math.min(MAX_LIMIT, Math.max(remaining + 1, (remaining + 1) * SKILLS_FILL_BATCH_FACTOR))
       : remaining + 1;
     const rows = await fetchBatch(scanCursor, batchSize) || [];
@@ -374,7 +401,8 @@ async function fetchCandidateDeckRows(filters, {
       const excluded = (excludeUserId && String(row.user_id) === String(excludeUserId))
         || seen.has(String(row.id))
         || seen.has(String(row.user_id));
-      if (!excluded && !duplicateUser && candidateMatchesSkills(row, filters.skills)) {
+      if (!excluded && !duplicateUser && candidateMatchesSkills(row, filters.skills)
+        && candidateMatchesLocation(row, filters.location)) {
         collected.push(row);
         if (row.user_id) pageUserIds.add(String(row.user_id));
       }
@@ -408,6 +436,8 @@ module.exports = {
   flattenCompetences,
   candidateMatchesSkills,
   candidateMatchesDeckFilters,
+  candidateMatchesLocation,
+  isAnonymousCandidate,
   compareCandidatesByScore,
   isAfterScoreCursor,
   paginateCandidateDeck,

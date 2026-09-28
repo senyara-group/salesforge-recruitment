@@ -741,6 +741,9 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 .filters-sheet .filt-section{margin:14px 0 0}
 .filters-sheet .filt-section:first-of-type{margin-top:8px}
 .filters-sheet .filt-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin-bottom:8px}
+.filters-sheet .filt-help{font-size:12px;line-height:1.4;opacity:.7;margin-top:6px}
+.cand-fact.cand-fact-location{max-width:100%;min-width:0}
+.cand-fact-location span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .filters-sheet .form-chips{display:flex;flex-wrap:wrap;gap:6px}
 .filters-sheet .form-chip{border:1px solid var(--bd);background:var(--w);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink2)}
 .filters-sheet .form-chip.on{border-color:var(--b);background:rgba(37,99,235,.08);color:var(--b);font-weight:600}
@@ -1713,6 +1716,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       </div>
     </div>
     <div class="filt-section">
+      <label class="filt-label" for="filt-cand-location">Localisation du candidat</label>
+      <input class="form-field" id="filt-cand-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-cand-location-help">
+      <div class="filt-help" id="filt-cand-location-help">Ville déclarée par le candidat (accents et majuscules ignorés). Les profils sans ville et les profils anonymes sont exclus tant que ce filtre est actif.</div>
+    </div>
+    <div class="filt-section">
       <div class="filt-label">Style de vente</div>
       <div class="form-chips" id="filt-sales-style">
         <button type="button" class="form-chip" data-filter-value="hunter" onclick="toggleCandFilterChip(this)">Chasseur</button>
@@ -2469,9 +2477,26 @@ function emptyCandFilters() {
     methodologies: [],
     availability: [],
     customer_types: [],
+    location: '',
   };
 }
 let APPLIED_CAND_FILTERS = emptyCandFilters();
+
+// Même contrat que backend/utils/locationFilter.js (parseLocationQuery).
+const LOCATION_FILTER_MAX_LENGTH = 80;
+function normalizeLocationInput(value) {
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+function locationFilterInputError(value) {
+  const text = normalizeLocationInput(value);
+  if (!text) return '';
+  if (text.length > LOCATION_FILTER_MAX_LENGTH) return 'Localisation trop longue (80 caractères max)';
+  const folded = text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae');
+  if (!/^[a-z0-9 '’.\-()/]+$/.test(folded) || !/[a-z0-9]/.test(folded)) {
+    return 'Localisation invalide : lettres, chiffres, espaces, tirets et apostrophes uniquement';
+  }
+  return '';
+}
 let DRAFT_SKILLS = [];
 
 function cloneCandFilters(filters) {
@@ -2503,11 +2528,14 @@ function countActiveCandFilters(filters = APPLIED_CAND_FILTERS) {
   n += (filters.methodologies || []).length;
   n += (filters.availability || []).length;
   n += (filters.customer_types || []).length;
+  if (normalizeLocationInput(filters.location)) n += 1;
   return n;
 }
 
 function activeCandFilterLabels(filters = APPLIED_CAND_FILTERS) {
   const labels = [];
+  const location = normalizeLocationInput(filters.location);
+  if (location) labels.push('Lieu : ' + location);
   if (filters.score_adn_min != null) labels.push('ADN ' + filters.score_adn_min + '+');
   if (filters.years_experience_min != null) labels.push(filters.years_experience_min + '+ ans');
   (filters.target_job_types || []).forEach((v) => labels.push(v));
@@ -2598,6 +2626,8 @@ function syncCandFilterPanelFromState() {
   markChipValues('filt-customer-types', f.customer_types);
   const years = document.getElementById('filt-years-min');
   if (years) years.value = f.years_experience_min != null ? f.years_experience_min : '';
+  const location = document.getElementById('filt-cand-location');
+  if (location) location.value = f.location || '';
   renderDraftSkillsAccordion(f.skills);
 }
 
@@ -2620,6 +2650,12 @@ function readCandFiltersFromPanel() {
     }
     years = n;
   }
+  const locationValue = normalizeLocationInput(document.getElementById('filt-cand-location')?.value || '');
+  const locationError = locationFilterInputError(locationValue);
+  if (locationError) {
+    toast(locationError);
+    return null;
+  }
   const scoreBtn = document.querySelector('#filt-score-adn .form-chip.on');
   const scoreRaw = scoreBtn ? (scoreBtn.getAttribute('data-filter-value') || '') : '';
   const score = scoreRaw ? Number(scoreRaw) : null;
@@ -2635,6 +2671,7 @@ function readCandFiltersFromPanel() {
     methodologies: readChipValues('filt-methodologies'),
     availability: readChipValues('filt-availability'),
     customer_types: readChipValues('filt-customer-types'),
+    location: locationValue,
   };
 }
 
@@ -2657,6 +2694,8 @@ function resetCandFiltersPanel() {
     .forEach((id) => document.querySelectorAll(`#${id} .form-chip`).forEach((btn) => btn.classList.remove('on')));
   const years = document.getElementById('filt-years-min');
   if (years) years.value = '';
+  const location = document.getElementById('filt-cand-location');
+  if (location) location.value = '';
   renderDraftSkillsAccordion([]);
 }
 
@@ -2685,6 +2724,8 @@ function buildCandidateDeckParams(cursor, filters) {
   setCsv('methodologies', filters.methodologies);
   setCsv('availability', filters.availability);
   setCsv('customer_types', filters.customer_types);
+  const location = normalizeLocationInput(filters.location);
+  if (location) params.set('location', location);
   return params;
 }
 
@@ -2876,6 +2917,7 @@ function buildCandCard(c) {
           ${c.anon ? '<span class="cand-fact"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Anonyme</span>' : ''}
           ${showRankFact ? `<span class="cand-fact">${esc(rankLabel)}</span>` : ''}
           ${c.adn_type ? `<span class="cand-fact">${esc(c.adn_type)}</span>` : ''}
+          ${typeof c.location === 'string' && c.location.trim() ? `<span class="cand-fact cand-fact-location" title="${esc(c.location)}"><svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true" style="stroke:currentColor;fill:none;stroke-width:2.5;flex:none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${esc(c.location)}</span></span>` : ''}
         </div>
       </div>
     </aside>
