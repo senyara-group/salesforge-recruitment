@@ -154,7 +154,7 @@ test('ADN failures leave a final DOM state, distinguish business, network, serve
   let failure = null;
   let calls = 0;
   const sandbox = {
-    ADN: {}, TEST_JOB_TYPE: 'test', PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
+    ADN: {}, TEST_JOB_TYPE: 'test', TEST_TARGET_JOBS: ['test'], PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
     document: { getElementById: id => elements[id] }, toast: value => notices.push(value),
     api: async () => { calls += 1; if (failure) throw failure; return {}; },
     renderResult: () => { throw new Error('local render error'); },
@@ -208,7 +208,7 @@ test('ADN retake then new attempt resets status and progress before the first ti
     window: { scrollTo: () => {} }, hideAllTestSteps: () => {},
     setInterval: callback => { tick = callback; return 1; }, clearInterval: () => {},
     ANA_MSGS: ['Analyse des scénarios comportementaux…', 'Étape suivante'],
-    ADN: {}, TEST_JOB_TYPE: 'test', PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
+    ADN: {}, TEST_JOB_TYPE: 'test', TEST_TARGET_JOBS: ['test'], PROFILE_QUESTIONS: {}, TEST_HUNT_FARM: '', TEST_PROFILE_ANSWERS: {},
     api: async () => {
       calls += 1;
       if (calls === 1) throw Object.assign(new Error('Prochaine évaluation disponible le 09/03/2027'), { error: 'RETAKE_TOO_SOON', status: 403 });

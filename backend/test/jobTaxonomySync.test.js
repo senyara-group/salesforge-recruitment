@@ -80,7 +80,7 @@ function generatedChoices(root) {
   const buttons = candidate.match(/id="job-type-opts">([\s\S]*?)\n\s*<\/div>/)[1];
   const chips = recruiter.match(/id="filt-job-types">([\s\S]*?)\n\s*<\/div>/)[1];
   return {
-    buttons: [...buttons.matchAll(/selectJobType\('([^']+)',this\)"><span class="ot">([^<]*)</g)].map(m => [m[1], decode(m[2])]),
+    buttons: [...buttons.matchAll(/toggleTargetJob\('([^']+)',this\)"><span class="ot">([^<]*)</g)].map(m => [m[1], decode(m[2])]),
     chips: [...chips.matchAll(/data-filter-value="([^"]*)"[^>]*>([^<]*)</g)].map(m => [decode(m[1]), decode(m[2])]),
     suggestions: evalConst(candidate, 'PROFILE_PREF_SUGGESTIONS').target_job_types,
     questions: evalConst(candidate, 'PROFILE_QUESTIONS'),
@@ -100,7 +100,8 @@ for (const [format, eol] of EOLS) {
   test(`A. [${format}] re-indented closing tags cannot make a zone overflow into adjacent HTML`, t => {
     const root = tempRoot(t, eol);
     const marker = '<!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->\n      </div>';
-    // Original repro: shifting the closing </div> by one space used to swallow bn-job and ts-huntfarm.
+    // Original repro: shifting the closing </div> by one space used to swallow the adjacent
+    // Continue button (bn-job) and the following steps.
     for (const closing of ['     </div>', '       </div>', '</div>', '\t</div>']) {
       const reindented = replaceOnce(historicalFile(CANDIDATE, eol), marker, marker.replace('      </div>', closing));
       const source = replaceOnce(reindented, ...CANDIDATE_DRIFT);
@@ -108,7 +109,8 @@ for (const [format, eol] of EOLS) {
       assert.deepEqual(sync({ write: true, root }).changed, [CANDIDATE]);
       const output = text(root, CANDIDATE);
       assert.equal(outsideZones(output), outsideZones(source));
-      assert.match(output, /id="bn-job" onclick="ns_custom\('ts-huntfarm'\)" disabled>Continuer/);
+      assert.match(output, /id="bn-job" onclick="continueFromTargetJobs\(\)" disabled>Continuer/);
+      assert.match(output, /<div id="ts-primary" style="display:none">/);
       assert.match(output, /selectHuntFarm\('full',this\)/);
       assert.equal(output, reindented, 'only the zone is regenerated, original line endings kept');
     }

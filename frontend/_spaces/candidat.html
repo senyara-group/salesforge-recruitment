@@ -335,6 +335,13 @@ button,input,textarea,select{font-family:inherit}
 .opts{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 .opt{background:var(--w);border:1.5px solid var(--bd);border-radius:12px;padding:12px 13px;cursor:pointer;text-align:left;width:100%;display:flex;flex-direction:column;gap:4px;position:relative;transition:.15s}
 .opt:hover{border-color:var(--bd2)}.opt.sel{border-color:var(--b);background:var(--bs)}
+.job-pick .opt .ot{display:flex;align-items:center;gap:10px;min-width:0;overflow-wrap:anywhere}
+.job-pick .opt .ot::before{content:'';flex:none;width:20px;height:20px;border:1.5px solid var(--bd2);border-radius:6px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;line-height:1}
+.job-pick.is-single .opt .ot::before{border-radius:50%}
+.job-pick .opt[aria-pressed="true"]{border-color:var(--b);background:var(--bs)}
+.job-pick .opt[aria-pressed="true"] .ot::before{content:'✓';border-color:var(--b);background:var(--b);color:#fff}
+.job-pick .opt:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.job-pick-count{font-size:12px;font-weight:700;color:var(--ink3);margin:-8px 0 14px}
 .ob{position:absolute;top:10px;right:10px;font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;text-transform:uppercase}
 .ob-h{background:var(--rs);color:var(--r)}.ob-f{background:var(--gs);color:var(--g)}
 .ob-c{background:var(--bs);color:var(--b)}.ob-a{background:var(--as);color:var(--a)}
@@ -1363,13 +1370,37 @@ button,input,textarea,select{font-family:inherit}
     </section>
   </div>
   <div class="test-sticky" id="adn-test-sticky" hidden>
-    <div class="test-sl" id="test-sl">Étape 1 sur 10</div>
-    <div class="test-st sf" id="test-st">Scénario comportemental</div>
-    <div class="test-pb"><div class="test-pf" id="test-pf" style="width:10%"></div></div>
+    <div class="test-sl" id="test-sl">Étape 1 sur 13</div>
+    <div class="test-st sf" id="test-st">Postes visés</div>
+    <div class="test-pb"><div class="test-pf" id="test-pf" style="width:7.7%"></div></div>
   </div>
   <div class="test-body" id="adn-test-body" hidden>
+    <!-- STEP POSTES VISÉS (début du test : unique source du métier ADN) -->
+    <div id="ts-jobs">
+      <div class="qt sf" id="ts-jobs-title">Quels postes visez-vous ?</div>
+      <div class="qh" id="ts-jobs-help">Sélectionnez un ou plusieurs postes. Touchez à nouveau un poste pour le retirer.</div>
+      <div class="opts job-pick" role="group" aria-labelledby="ts-jobs-title" aria-describedby="ts-jobs-help" id="job-type-opts">
+        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->
+        <button type="button" class="opt" aria-pressed="false" data-job-id="sdr" onclick="toggleTargetJob('sdr',this)"><span class="ot">SDR / BDR</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="bizdev" onclick="toggleTargetJob('bizdev',this)"><span class="ot">Business Developer</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="ae" onclick="toggleTargetJob('ae',this)"><span class="ot">Account Executive</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="terrain" onclick="toggleTargetJob('terrain',this)"><span class="ot">Commercial terrain</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="kam" onclick="toggleTargetJob('kam',this)"><span class="ot">Key Account Manager</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="manager" onclick="toggleTargetJob('manager',this)"><span class="ot">Manager commercial</span></button>
+        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->
+      </div>
+      <p class="job-pick-count" id="job-sel-count" role="status" aria-live="polite">Aucun poste sélectionné</p>
+      <button class="btn bp blk" type="button" id="bn-job" onclick="continueFromTargetJobs()" disabled>Continuer</button>
+    </div>
+    <!-- STEP POSTE PRINCIPAL (uniquement si plusieurs postes visés) -->
+    <div id="ts-primary" style="display:none">
+      <div class="qt sf" id="ts-primary-title">Quel est votre poste principal ?</div>
+      <div class="qh" id="ts-primary-help">Il détermine vos deux questions spécifiques et votre groupe de comparaison. Vos autres postes restent enregistrés.</div>
+      <div class="opts job-pick is-single" role="group" aria-labelledby="ts-primary-title" aria-describedby="ts-primary-help" id="primary-job-opts"></div>
+      <div class="step-nav"><button class="btn bo" type="button" onclick="showTestStep('ts-jobs')">Retour</button><button class="btn bp" type="button" id="bn-primary" onclick="continueFromPrimaryJob()" disabled>Continuer</button></div>
+    </div>
     <!-- STEP 1 -->
-    <div id="ts1">
+    <div id="ts1" style="display:none">
       <div class="qt sf">Objection prix — votre réflexe naturel ?</div>
       <div class="qh">L'IA croise votre choix avec les étapes suivantes pour détecter les incohérences et recalibrer votre score.</div>
       <div class="sc-box"><span class="sc-tag">Scénario 1</span><div class="sc-quote">"Votre solution est intéressante mais c'est 2× notre budget. On va devoir passer."</div><div class="sc-ctx"><span>SaaS B2B</span><span>Ticket 8 000 €</span><span>30 secondes</span></div></div>
@@ -1379,7 +1410,7 @@ button,input,textarea,select{font-family:inherit}
         <button class="opt" onclick="po(this,1,'hunter')"><span class="ob ob-h">Hunter</span><span class="ot">Créer l'urgence avec une concession</span><span class="oh">"Je peux faire un geste si on signe avant vendredi."</span></button>
         <button class="opt" onclick="po(this,1,'advisor')"><span class="ob ob-a">Advisor</span><span class="ot">Requalifier le vrai blocage</span><span class="oh">"Le budget n'est jamais le vrai blocage. Reprenons depuis le début."</span></button>
       </div>
-      <button class="btn bp blk" id="bn1" onclick="ns(2)" disabled>Continuer</button>
+      <div class="step-nav"><button class="btn bo" type="button" onclick="backFromFirstQuestion()">Retour</button><button class="btn bp" id="bn1" onclick="ns(2)" disabled>Continuer</button></div>
     </div>
     <!-- STEP 2 -->
     <div id="ts2" style="display:none">
@@ -1481,14 +1512,6 @@ button,input,textarea,select{font-family:inherit}
     <div id="ts9" style="display:none">
       <div class="qt sf">Vos préférences de mission</div>
       <div class="qh">Ces choix alimentent directement l'algorithme de matching. Soyez précis.</div>
-      <div class="prefs-sec"><div class="prefs-l sf">Type de poste</div><div class="prefs-chips">
-        <button class="pc" onclick="tg(this,'poste','closer')">Closer</button>
-        <button class="pc" onclick="tg(this,'poste','sales')">Sales</button>
-        <button class="pc" onclick="tg(this,'poste','sdr')">SDR / BDR</button>
-        <button class="pc" onclick="tg(this,'poste','ae')">Account Executive</button>
-        <button class="pc" onclick="tg(this,'poste','head')">Head of Sales</button>
-        <button class="pc" onclick="tg(this,'poste','se')">Sales Engineer</button>
-      </div></div>
       <div class="prefs-sec"><div class="prefs-l sf">Type de contrat</div><div class="prefs-chips">
         <button class="pc" onclick="tg(this,'contrat','cdi')">CDI</button>
         <button class="pc" onclick="tg(this,'contrat','alternance')">Alternance</button>
@@ -1522,22 +1545,7 @@ button,input,textarea,select{font-family:inherit}
         <button class="pc" onclick="tg(this,'taille','eti')">ETI</button>
         <button class="pc" onclick="tg(this,'taille','gc')">Grand compte</button>
       </div></div>
-      <div class="step-nav"><button class="btn bo" onclick="ns(8)">Retour</button><button class="btn bp" onclick="goToJobStep()">Continuer</button></div>
-    </div>
-    <!-- STEP JOB TYPE -->
-    <div id="ts-job" style="display:none">
-      <div class="qt sf">Quel type de poste recherchez-vous ?</div>
-      <div class="opts" id="job-type-opts">
-        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->
-        <button class="opt" onclick="selectJobType('sdr',this)"><span class="ot">SDR / BDR</span></button>
-        <button class="opt" onclick="selectJobType('bizdev',this)"><span class="ot">Business Developer</span></button>
-        <button class="opt" onclick="selectJobType('ae',this)"><span class="ot">Account Executive</span></button>
-        <button class="opt" onclick="selectJobType('terrain',this)"><span class="ot">Commercial terrain</span></button>
-        <button class="opt" onclick="selectJobType('kam',this)"><span class="ot">Key Account Manager</span></button>
-        <button class="opt" onclick="selectJobType('manager',this)"><span class="ot">Manager commercial</span></button>
-        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->
-      </div>
-      <div class="step-nav"><button class="btn bo" onclick="ns(9)">Retour</button><button class="btn bp" id="bn-job" onclick="ns_custom('ts-huntfarm')" disabled>Continuer</button></div>
+      <div class="step-nav"><button class="btn bo" onclick="ns(8)">Retour</button><button class="btn bp" onclick="goToProfileSteps()">Continuer</button></div>
     </div>
     <!-- STEP HUNTER / FARMER -->
     <div id="ts-huntfarm" style="display:none">
@@ -1547,7 +1555,7 @@ button,input,textarea,select{font-family:inherit}
         <button class="opt" onclick="selectHuntFarm('farmer',this)"><span class="ot">Farmer (développer les comptes existants)</span></button>
         <button class="opt" onclick="selectHuntFarm('full',this)"><span class="ot">Full cycle (les deux)</span></button>
       </div>
-      <div class="step-nav"><button class="btn bo" onclick="ns_custom('ts-job')">Retour</button><button class="btn bp" id="bn-huntfarm" onclick="renderProfileQuestion(1)" disabled>Continuer</button></div>
+      <div class="step-nav"><button class="btn bo" onclick="showTestStep('ts9')">Retour</button><button class="btn bp" id="bn-huntfarm" onclick="renderProfileQuestion(1)" disabled>Continuer</button></div>
     </div>
     <!-- STEP PROFILE Q1 (contenu dynamique selon le poste choisi) -->
     <div id="ts-profileq1" style="display:none">
@@ -2248,10 +2256,10 @@ window.addEventListener('message', (e) => {
 const ADN = {
   scenarios: {}, sliders: { resilience:7, objections:6, cycle:1, salestech:5, emotional:8, drive:9, coldcall:7, social:6 },
   mcq: {}, pitches: {}, story: '',
-  prefs: { poste:[], contrat:[], mode:[], secteur:[], remun:'', taille:[] }
+  prefs: { contrat:[], mode:[], secteur:[], remun:'', taille:[] }
 };
 
-const STEPS = {1:'Scénario comportemental',2:'Scénario relance',3:'Scénario rétention',4:'Compétences sales réelles',5:'Culture commerciale',6:'Simulation pitch — Objection',7:'Simulation pitch — Discovery',8:'Votre meilleure vente',9:'Préférences de poste',10:'Résultat ADN'};
+const STEPS = {1:'Scénario comportemental',2:'Scénario relance',3:'Scénario rétention',4:'Compétences sales réelles',5:'Culture commerciale',6:'Simulation pitch — Objection',7:'Simulation pitch — Discovery',8:'Votre meilleure vente',9:'Préférences de mission',10:'Résultat ADN'};
 const ANA_MSGS = ['Analyse des scénarios comportementaux…','Détection des biais déclaratifs…','Benchmarking sur 4 200 commerciaux…','Analyse des simulations de pitch…','Évaluation culture sales…','Traitement narration STAR…','Génération de votre ADN Commercial…'];
 const P1 = [
   {t:"Approche directe mais vous vous justifiez avant de recréer l'intérêt. Efficace sur profils analytiques.",a:78,b:72,c:85},
@@ -3513,40 +3521,68 @@ function renderDeepAdnResult(assessment) {
   root.innerHTML = `<div class="deep-adn-result"><div class="sec-hd"><div><div class="page-kicker">Restitution</div><h2 class="sf">Votre profil approfondi</h2></div><span class="chip chip-g"><span class="chip-dot"></span>Complété</span></div>${result.blocks.map(block => `<div class="adn-row"><div class="adn-l"><strong>${esc(block.label)}</strong><small>${esc(block.profile)}</small></div><div class="adn-tr"><div class="adn-f" style="width:${Number(block.score) || 0}%"></div></div><div class="adn-s sf">${Number(block.score) || 0}</div></div>`).join('')}${result.consistency?.message ? `<p class="form-feedback on">${esc(result.consistency.message)}</p>` : ''}<p class="deep-adn-privacy">Ces résultats sont personnels et ne sont pas utilisés pour votre matching ou présentés aux recruteurs.</p><button class="btn bo" type="button" onclick="go('coaching')">Retour aux outils</button></div>`;
 }
 
-const CUSTOM_TEST_STEPS = ['ts-job', 'ts-huntfarm', 'ts-profileq1', 'ts-profileq2'];
+const CUSTOM_TEST_STEPS = ['ts-jobs', 'ts-primary', 'ts-huntfarm', 'ts-profileq1', 'ts-profileq2'];
 function hideAllTestSteps() {
   for (let i=1;i<=10;i++) { const el=document.getElementById('ts'+i); if(el) el.style.display='none'; }
   CUSTOM_TEST_STEPS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 }
+const ADN_STEP_TITLES = Object.freeze({
+  'ts-jobs': 'Postes visés',
+  'ts-primary': 'Poste principal',
+  'ts-huntfarm': 'Profil de chasse',
+  'ts-profileq1': 'Question spécifique',
+  'ts-profileq2': 'Question spécifique',
+});
+// Parcours : postes visés (+ poste principal si plusieurs) → étapes 1 à 9 →
+// profil de chasse → 2 questions du poste principal. Numérotation réelle.
+function adnStepSequence() {
+  const steps = ['ts-jobs'];
+  if (TEST_TARGET_JOBS.length > 1) steps.push('ts-primary');
+  for (let i = 1; i <= 9; i++) steps.push('ts' + i);
+  return steps.concat(['ts-huntfarm', 'ts-profileq1', 'ts-profileq2']);
+}
+function currentTestStepId() {
+  return adnStepSequence().find((id) => {
+    const el = document.getElementById(id);
+    return el && el.style.display !== 'none';
+  }) || null;
+}
+function updateTestProgress(id) {
+  const steps = adnStepSequence();
+  const index = steps.indexOf(id);
+  if (index < 0) return;
+  document.getElementById('test-sl').textContent = 'Étape ' + (index + 1) + ' sur ' + steps.length;
+  document.getElementById('test-st').textContent = ADN_STEP_TITLES[id] || STEPS[Number(id.slice(2))] || '';
+  document.getElementById('test-pf').style.width = ((index + 1) * 100 / steps.length) + '%';
+}
+function refreshTestProgress() {
+  const id = currentTestStepId();
+  if (id) updateTestProgress(id);
+}
+function showTestStep(id) {
+  hideAllTestSteps();
+  const el = document.getElementById(id); if (el) el.style.display = 'block';
+  updateTestProgress(id);
+  window.scrollTo(0,0);
+}
 function ns(n) {
   const current = getCurrentStep();
   if (n > current && !canContinueStep(current)) return;
-  hideAllTestSteps();
-  const el = document.getElementById('ts'+n); if(el) el.style.display='block';
-  document.getElementById('test-sl').textContent = 'Étape '+n+' sur 13';
-  document.getElementById('test-st').textContent = STEPS[n];
-  document.getElementById('test-pf').style.width = (n*(100/13)) + '%';
-  if (n===10) runAnalysis();
-  window.scrollTo(0,0);
+  if (n === 10) {
+    hideAllTestSteps();
+    const el = document.getElementById('ts10'); if (el) el.style.display = 'block';
+    runAnalysis();
+    window.scrollTo(0,0);
+    return;
+  }
+  showTestStep('ts' + n);
 }
-const CUSTOM_STEP_META = {
-  'ts-job': { n: 10, title: 'Poste recherché' },
-  'ts-huntfarm': { n: 11, title: 'Profil de chasse' },
-  'ts-profileq1': { n: 12, title: 'Question spécifique' },
-  'ts-profileq2': { n: 13, title: 'Question spécifique' },
-};
 function ns_custom(id) {
-  hideAllTestSteps();
-  const el = document.getElementById(id); if (el) el.style.display = 'block';
-  const meta = CUSTOM_STEP_META[id] || { n: 10, title: '' };
-  document.getElementById('test-sl').textContent = 'Étape ' + meta.n + ' sur 13';
-  document.getElementById('test-st').textContent = meta.title;
-  document.getElementById('test-pf').style.width = (meta.n*(100/13)) + '%';
-  window.scrollTo(0,0);
+  showTestStep(id);
 }
-function goToJobStep() {
+function goToProfileSteps() {
   if (!canContinueStep(9)) return;
-  ns_custom('ts-job');
+  showTestStep('ts-huntfarm');
 }
 // JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:START
 const PROFILE_QUESTIONS = {
@@ -3582,14 +3618,77 @@ const PROFILE_QUESTIONS = {
   },
 };
 // JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:END
+// Postes visés : IDs de la taxonomie (clés générées de PROFILE_QUESTIONS), ordre canonique.
+let TEST_TARGET_JOBS = [];
+// Poste principal : q1/q2, type_poste et benchmark. Jamais choisi d'office parmi plusieurs.
 let TEST_JOB_TYPE = null;
+let TEST_PRIMARY_EXPLICIT = false;
 let TEST_HUNT_FARM = null;
 let TEST_PROFILE_ANSWERS = { q1: null, q2: null };
-function selectJobType(key, btn) {
-  TEST_JOB_TYPE = key;
-  btn.parentElement.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
-  document.getElementById('bn-job').disabled = false;
+function setPrimaryJob(id, explicit) {
+  if (TEST_JOB_TYPE !== id) TEST_PROFILE_ANSWERS = { q1: null, q2: null };
+  TEST_JOB_TYPE = id;
+  TEST_PRIMARY_EXPLICIT = Boolean(id && explicit);
+}
+function toggleTargetJob(id) {
+  if (!Object.prototype.hasOwnProperty.call(PROFILE_QUESTIONS, id)) return;
+  const selected = new Set(TEST_TARGET_JOBS);
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  TEST_TARGET_JOBS = Object.keys(PROFILE_QUESTIONS).filter((key) => selected.has(key));
+  if (TEST_TARGET_JOBS.length === 1) setPrimaryJob(TEST_TARGET_JOBS[0], false);
+  else if (!TEST_PRIMARY_EXPLICIT || !TEST_TARGET_JOBS.includes(TEST_JOB_TYPE)) setPrimaryJob(null, false);
+  syncTargetJobButtons();
+}
+function syncTargetJobButtons() {
+  document.querySelectorAll('#job-type-opts [data-job-id]').forEach((btn) => {
+    const on = TEST_TARGET_JOBS.includes(btn.getAttribute('data-job-id'));
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('sel', on);
+  });
+  const n = TEST_TARGET_JOBS.length;
+  const count = document.getElementById('job-sel-count');
+  if (count) count.textContent = n ? (n + ' poste' + (n > 1 ? 's' : '') + ' sélectionné' + (n > 1 ? 's' : '')) : 'Aucun poste sélectionné';
+  const next = document.getElementById('bn-job');
+  if (next) next.disabled = n === 0;
+}
+function continueFromTargetJobs() {
+  if (!TEST_TARGET_JOBS.length) { toast('Sélectionnez au moins un poste'); return; }
+  if (TEST_TARGET_JOBS.length === 1) {
+    setPrimaryJob(TEST_TARGET_JOBS[0], false);
+    showTestStep('ts1');
+    return;
+  }
+  renderPrimaryJobOptions();
+  showTestStep('ts-primary');
+}
+function renderPrimaryJobOptions() {
+  const box = document.getElementById('primary-job-opts');
+  if (!box) return;
+  box.innerHTML = TEST_TARGET_JOBS.map((id) =>
+    `<button type="button" class="opt" aria-pressed="false" data-job-id="${esc(id)}" onclick="selectPrimaryJob(this.getAttribute('data-job-id'))"><span class="ot">${esc(PROFILE_QUESTIONS[id].label)}</span></button>`
+  ).join('');
+  syncPrimaryJobButtons();
+}
+function selectPrimaryJob(id) {
+  if (!TEST_TARGET_JOBS.includes(id)) return;
+  setPrimaryJob(id, true);
+  syncPrimaryJobButtons();
+}
+function syncPrimaryJobButtons() {
+  document.querySelectorAll('#primary-job-opts [data-job-id]').forEach((btn) => {
+    const on = btn.getAttribute('data-job-id') === TEST_JOB_TYPE;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('sel', on);
+  });
+  const next = document.getElementById('bn-primary');
+  if (next) next.disabled = !TEST_TARGET_JOBS.includes(TEST_JOB_TYPE);
+}
+function continueFromPrimaryJob() {
+  if (!TEST_TARGET_JOBS.includes(TEST_JOB_TYPE)) { toast('Choisissez votre poste principal'); return; }
+  showTestStep('ts1');
+}
+function backFromFirstQuestion() {
+  showTestStep(TEST_TARGET_JOBS.length > 1 ? 'ts-primary' : 'ts-jobs');
 }
 function selectHuntFarm(key, btn) {
   TEST_HUNT_FARM = key;
@@ -3629,7 +3728,7 @@ function canContinueStep(step) {
   if (step === 8 && !String(ADN.story || '').trim()) return needAnswer();
   if (step === 9) {
     const p = ADN.prefs || {};
-    const hasPrefs = ['poste','contrat','mode','secteur','taille'].some(k => Array.isArray(p[k]) && p[k].length) || Boolean(p.remun);
+    const hasPrefs = ['contrat','mode','secteur','taille'].some(k => Array.isArray(p[k]) && p[k].length) || Boolean(p.remun);
     if (!hasPrefs) return needAnswer();
   }
   return true;
@@ -3673,6 +3772,7 @@ function showAdnQuestionnaire() {
   const body = document.getElementById('adn-test-body');
   if (sticky) sticky.hidden = false;
   if (body) body.hidden = false;
+  refreshTestProgress();
 }
 function formatAdnEligibleDate(value) {
   if (!value) return null;
@@ -3801,6 +3901,8 @@ async function submitToAPI() {
       poste_label: PROFILE_QUESTIONS[TEST_JOB_TYPE]?.label || '',
       style: TEST_HUNT_FARM,
       reponses: TEST_PROFILE_ANSWERS,
+      // Tous les postes visés (ordre taxonomie), poste principal inclus.
+      postes: [...TEST_TARGET_JOBS],
     };
     const r = await api('POST', '/ai/score-adn', { reponses: ADN });
     renderResult(r);

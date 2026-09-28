@@ -50,6 +50,8 @@ function buildGateSandbox(apiImpl) {
     document: { getElementById: id => elements[id] || null },
     setFeedback(id, message, error = false) { feedback[id] = { message, error }; },
     setBtn() {},
+    progressRefreshes: 0,
+    refreshTestProgress() { sandbox.progressRefreshes += 1; },
     api: async (method, route, body) => {
       calls.push({ method, route, body });
       return apiImpl(method, route, body, calls.length);
@@ -100,6 +102,8 @@ test('1. première évaluation → peut commencer', async () => {
   await sandbox.loadAdnConsent();
   assert.equal(sandbox.elements['adn-test-body'].hidden, false);
   assert.equal(sandbox.elements['adn-test-sticky'].hidden, false);
+  // La barre de progression reflète l'étape réellement visible (postes visés).
+  assert.equal(sandbox.progressRefreshes, 1);
   assert.equal(sandbox.elements['adn-eligibility-gate'].hidden, true);
   assert.equal(sandbox.elements['adn-consent-gate'].hidden, true);
   assert.deepEqual(sandbox.calls.map(c => c.route), [
