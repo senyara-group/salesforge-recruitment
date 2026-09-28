@@ -4,6 +4,7 @@ const authMiddleware = require('../middleware/auth');
 const supabase = require('../supabase');
 const { ensureCandidateProfile, getUserEmail, getCandidatePlan } = require('../utils/profiles');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
+const { parseAdnJobProfile, normalizeAdnReponses, buildLegacyScoringPayload } = require('../utils/adnJobProfile');
 
 const RETAKE_COOLDOWN_MONTHS = 6;
 const RETAKE_COOLDOWN_MS = RETAKE_COOLDOWN_MONTHS * 30 * 24 * 60 * 60 * 1000;
@@ -63,8 +64,17 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
       }
     }
 
-    const { reponses = {} } = req.body;
-    const filledAnswers = JSON.stringify(reponses).length;
+    const { reponses: submitted = {} } = req.body;
+    let jobProfile;
+    try {
+      jobProfile = parseAdnJobProfile(submitted);
+    } catch (validationError) {
+      return res.status(400).json({ error: validationError.code, message: validationError.message });
+    }
+    const reponses = normalizeAdnReponses(submitted, jobProfile);
+    // Longueur calculée sur la forme historique mono-poste (utils/adnJobProfile.js) :
+    // le nombre de postes secondaires ne change jamais le score.
+    const filledAnswers = JSON.stringify(buildLegacyScoringPayload(reponses, jobProfile)).length;
     const score = Math.max(55, Math.min(95, Math.round(65 + filledAnswers / 80)));
     const result = {
       score,
@@ -83,8 +93,8 @@ router.post('/score-adn', authMiddleware, async (req, res) => {
 
     // Typologie de poste choisie pendant le test — colonne dédiée (au lieu de rester
     // enterrée dans axes.questionnaire sans jamais être relue) pour permettre le
-    // benchmark anonymisé par typologie de poste.
-    const typePoste = reponses?.job_profile?.poste || null;
+    // benchmark anonymisé par typologie de poste. Multi-postes : poste principal.
+    const typePoste = jobProfile.primary;
 
     const { error } = await supabase
       .from('candidats')

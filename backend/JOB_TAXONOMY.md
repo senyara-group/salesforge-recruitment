@@ -118,7 +118,7 @@ npm --prefix backend test
 
 | File | Zone | Content |
 | --- | --- | --- |
-| candidat.html | `CANDIDATE_ADN_JOB_BUTTONS` | `job-type-opts` buttons (IDs + labels) |
+| candidat.html | `CANDIDATE_ADN_JOB_BUTTONS` | `job-type-opts` multi-select toggles at the start of the ADN test |
 | candidat.html | `CANDIDATE_PROFILE_SUGGESTIONS` | `PROFILE_PREF_SUGGESTIONS.target_job_types` |
 | candidat.html | `CANDIDATE_ADN_QUESTIONS` | whole `PROFILE_QUESTIONS` object |
 | recruteur.html | `RECRUITER_FILTER_CHIPS` | `filt-job-types` chips |
@@ -143,10 +143,33 @@ Railway build runs) fails on drift, invalid registry, invalid ADN module,
 collision or invalid markers, and prints the correction to apply. The browser
 still receives the same static HTML/JS: no runtime dependency, endpoint or request.
 
+## ADN multi-postes (Lot 3)
+
+The ADN test starts with a multi-select of the active jobs (generated zone
+`CANDIDATE_ADN_JOB_BUTTONS`, `aria-pressed`, taxonomy order, minimum 1, no maximum).
+One job selected: it is the primary job. Several: the candidate explicitly picks the
+primary job (never the first one automatically). q1/q2 are asked for the primary job
+only. The old step 9 "Type de poste" chips and the later single-job question are gone.
+
+Payload (`utils/adnJobProfile.js`): `job_profile = { poste, poste_label, style,
+reponses, postes }`; `poste` = primary ID, `postes` = all selected IDs (active,
+unique, stored in canonical order, primary included). Unknown/inactive IDs,
+duplicates, empty or non-text values are refused (400 `ADN_JOB_PROFILE_INVALID`).
+Legacy payloads (no `postes`) keep their tolerant contract and are stored as sent.
+`candidats.type_poste` = primary ID, so the benchmark contract is unchanged.
+
+Score (placeholder based on the answers' JSON length, to be redesigned separately):
+computed on `buildLegacyScoringPayload`, the equivalent historical single-job shape
+(`job_profile` without `postes`; `prefs.poste` = `['sdr']` / `['ae']` when the primary
+job had an identically labelled old chip, else `[]`). Hence the number of secondary
+jobs never changes the score, and an equivalent old single-job scenario scores
+exactly as before. Stored `reponses` are never rewritten for scoring.
+
 ## Deliberately separate lists
 
-- ADN preference chips (`closer`, `sales`, `sdr`, `ae`, `head`, `se`) are a different
-  historical vocabulary from the single-job question. Keep payloads unchanged.
+- ADN preference chips (`closer`, `sales`, `sdr`, `ae`, `head`, `se`, stored in
+  `prefs.poste`) were a different historical vocabulary. They are no longer asked
+  (Lot 3) but remain readable in historical payloads; never remap them.
 - Free-text recruiter title suggestions contain many job titles outside the six
   categories; they must not be narrowed to the registry.
 - Offer job_type and candidate search job_type inputs remain free text.

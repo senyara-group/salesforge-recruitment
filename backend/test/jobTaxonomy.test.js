@@ -125,7 +125,9 @@ test('offer writes and both decks preserve existing label-based contracts', () =
 test('generated ADN button payloads, profile choices and question labels remain historical', () => {
   const source = html(FILES[0]);
   const buttons = source.match(/id="job-type-opts">([\s\S]*?)<\/div>/)[1];
-  assert.deepEqual([...buttons.matchAll(/selectJobType\('([^']+)',this\).*?class="ot">([^<]+)</g)].map(m => [m[1], m[2]]), historical);
+  const parsed = [...buttons.matchAll(/<button type="button" class="opt" aria-pressed="false" data-job-id="([^"]+)" onclick="toggleTargetJob\('([^']+)',this\)"><span class="ot">([^<]+)</g)];
+  assert.ok(parsed.every(m => m[1] === m[2]), 'data-job-id = handler id');
+  assert.deepEqual(parsed.map(m => [m[2], m[3]]), historical);
   const questionsStart = source.indexOf('const PROFILE_QUESTIONS = {');
   const questionsEnd = source.indexOf('let TEST_JOB_TYPE', questionsStart);
   const questions = vm.runInNewContext(source.slice(questionsStart, questionsEnd) + '\nPROFILE_QUESTIONS');

@@ -47,8 +47,9 @@ function quoteJs(text) {
   return out + quote;
 }
 
+// Sélection multi-postes au début du test ADN (bascule accessible, aria-pressed).
 const renderAdnButtons = ({ jobs }) => jobs.map(job =>
-  `<button class="opt" onclick="selectJobType('${job.id}',this)"><span class="ot">${escapeHtml(job.label)}</span></button>`);
+  `<button type="button" class="opt" aria-pressed="false" data-job-id="${job.id}" onclick="toggleTargetJob('${job.id}',this)"><span class="ot">${escapeHtml(job.label)}</span></button>`);
 const renderProfileSuggestions = ({ jobs }) => [jobs.map(job => quoteJs(job.label)).join(', ') + ','];
 const renderQuestion = question =>
   `{ text: ${quoteJs(question.text)}, options: [${question.options.map(quoteJs).join(', ')}] }`;
@@ -89,8 +90,9 @@ const ZONES = Object.freeze({
       syntax: 'html',
       render: renderAdnButtons,
       verify(content, { jobs }) {
-        const parsed = parseButtons(content, /^<button class="opt" onclick="selectJobType\('([a-z][a-z0-9_]*)',this\)"><span class="ot">([^<>]*)<\/span><\/button>$/);
-        if (!isDeepStrictEqual(parsed, jobs.map(job => [job.id, job.label]))) throw new JobTaxonomyError('CANDIDATE_ADN_JOB_BUTTONS: generated IDs/labels do not round-trip');
+        const parsed = parseButtons(content, /^<button type="button" class="opt" aria-pressed="false" data-job-id="([a-z][a-z0-9_]*)" onclick="toggleTargetJob\('([a-z][a-z0-9_]*)',this\)"><span class="ot">([^<>]*)<\/span><\/button>$/);
+        if (!parsed.every(([dataId, handlerId]) => dataId === handlerId)) throw new JobTaxonomyError('CANDIDATE_ADN_JOB_BUTTONS: data-job-id/handler mismatch');
+        if (!isDeepStrictEqual(parsed.map(([id, , label]) => [id, label]), jobs.map(job => [job.id, job.label]))) throw new JobTaxonomyError('CANDIDATE_ADN_JOB_BUTTONS: generated IDs/labels do not round-trip');
       },
     },
     {
