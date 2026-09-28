@@ -8,6 +8,8 @@
     "test:syntax": "node scripts/check-syntax.js",
     "test:static": "node scripts/check-static.js",
     "test:unit": "node --test test/*.test.js",
+    "taxonomy:sync": "node scripts/sync-job-taxonomy.js --write",
+    "taxonomy:check": "node scripts/sync-job-taxonomy.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

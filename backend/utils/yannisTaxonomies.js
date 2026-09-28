@@ -28,14 +28,32 @@ const CANDIDATE_SKILLS = Object.freeze([
   'Social selling',
 ]);
 
-const TARGET_JOB_TYPES = Object.freeze([
-  'SDR / BDR',
-  'Business Developer',
-  'Account Executive',
-  'Commercial terrain',
-  'Key Account Manager',
-  'Manager commercial',
-]);
+// IDs are the existing ADN job_profile.poste / candidats.type_poste codes.
+// Structured profile/offer fields persist labels, NOT these IDs.
+const JOB_TYPES = Object.freeze([
+  { id: 'sdr', label: 'SDR / BDR' },
+  { id: 'bizdev', label: 'Business Developer' },
+  { id: 'ae', label: 'Account Executive' },
+  { id: 'terrain', label: 'Commercial terrain' },
+  { id: 'kam', label: 'Key Account Manager' },
+  { id: 'manager', label: 'Manager commercial' },
+].map((job, order) => Object.freeze({ ...job, aliases: Object.freeze([...(job.aliases || [])]), active: job.active ?? true, order })));
+
+function activeJobTypes() { return JOB_TYPES.filter(job => job.active); }
+function jobTypeById(value) {
+  return typeof value === 'string' ? JOB_TYPES.find(job => job.id === value) || null : null;
+}
+function isJobTypeId(value) { return jobTypeById(value) !== null; }
+// Existing label normalization is trim + case only. No new semantic aliases.
+function resolveJobTypeLabel(value) {
+  if (typeof value !== 'string') return null;
+  const token = value.trim().toLowerCase();
+  return JOB_TYPES.find(job => job.label.toLowerCase() === token || job.aliases.some(alias => alias.toLowerCase() === token)) || null;
+}
+// Read either persisted representation without rewriting the stored value.
+function resolveStoredJobType(value) { return jobTypeById(value) || resolveJobTypeLabel(value); }
+function jobTypeLabel(value) { return resolveStoredJobType(value)?.label || null; }
+const TARGET_JOB_TYPES = Object.freeze(activeJobTypes().map(job => job.label));
 
 const CONTRACT_TYPES = Object.freeze(['CDI', 'Alternance', 'Mission', 'Freelance']);
 
@@ -228,7 +246,7 @@ function canonicalizeSector(value) {
 }
 
 function canonicalizeTargetJobType(value) {
-  return canonicalizeFromList(value, TARGET_JOB_TYPES);
+  return resolveJobTypeLabel(value)?.label || null;
 }
 
 function flattenCompetencesMeta(metaCompetences) {
@@ -267,6 +285,13 @@ module.exports = {
   CANDIDATE_SKILLS,
   OFFER_SKILLS,
   TARGET_JOB_TYPES,
+  JOB_TYPES,
+  activeJobTypes,
+  jobTypeById,
+  isJobTypeId,
+  resolveJobTypeLabel,
+  resolveStoredJobType,
+  jobTypeLabel,
   CONTRACT_TYPES,
   REMOTE_MODE_OPTIONS,
   SECTORS,
