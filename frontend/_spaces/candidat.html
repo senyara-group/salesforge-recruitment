@@ -231,6 +231,7 @@ button,input,textarea,select{font-family:inherit}
 .filters-sheet{max-height:min(78dvh,640px);overflow:auto}
 .filters-sheet .filt-section{margin:14px 0 0}
 .filters-sheet .filt-section:first-of-type{margin-top:8px}
+.filters-sheet .filt-help{font-size:12px;line-height:1.4;opacity:.7;margin-top:6px}
 .filters-sheet .filt-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin-bottom:8px}
 .filters-sheet .form-chips{display:flex;flex-wrap:wrap;gap:6px}
 .filters-sheet .form-chip{border:1px solid var(--bd);background:var(--w);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -672,6 +673,7 @@ button,input,textarea,select{font-family:inherit}
 .match-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:13px}
 .mstat{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 7px;text-align:center}
 .mstat-v{font-family:'Sora',sans-serif;font-size:14px;font-weight:900}
+.mstat-v.is-text{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .mstat-l{font-size:10px;color:var(--mu);margin-top:2px;font-weight:600;text-transform:uppercase}
 .prep-box{background:var(--pus);border:1px solid rgba(104,48,208,.15);border-radius:11px;padding:12px;margin-bottom:12px}
 .prep-box-t{font-size:12px;font-weight:700;color:var(--pu);margin-bottom:8px;display:flex;align-items:center;gap:5px}
@@ -2115,6 +2117,11 @@ button,input,textarea,select{font-family:inherit}
       </div>
     </div>
     <div class="filt-section">
+      <label class="filt-label" for="filt-location">Localisation</label>
+      <input class="form-field" id="filt-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-location-help">
+      <div class="filt-help" id="filt-location-help">Ville ou lieu indiqué dans l’offre (accents et majuscules ignorés). Les offres sans lieu renseigné sont masquées tant que ce filtre est actif.</div>
+    </div>
+    <div class="filt-section">
       <div class="filt-label">Contrat</div>
       <div class="form-chips" id="filt-contract">
         <button type="button" class="form-chip" data-filter-value="CDI" onclick="toggleFilterChip(this,'contract_type')">CDI</button>
@@ -2558,7 +2565,7 @@ function normOffre(o, mySkills = []) {
   const offerTags = rawTags;
   const { score, matched } = computeCompat(offerTags, mySkills);
   const secteur = String(o.sz || o.recruteurs?.secteur || '').trim();
-  const lieu = String(o.lieu || '').trim();
+  const lieu = normalizeLocationInput(o.lieu);
   const salaire = String(o.sal || o.salaire || '').trim();
   const type = String(o.type || '').trim() || 'CDI';
   return {
@@ -2566,8 +2573,9 @@ function normOffre(o, mySkills = []) {
     logoUrl: o.logoUrl || o.recruteurs?.avatar_url || '',
     secteur,
     sz: secteur,
-    lieu: lieu || 'À définir',
+    lieu: lieu || 'Lieu non précisé',
     lieuDisplay: lieu,
+    workMode: WORK_MODE_LABELS[o.remote_mode] || '',
     type, g:o.g || 'g1',
     m:score, matchedTags:matched,
     sal: salaire || 'Salaire à définir',
@@ -2938,9 +2946,27 @@ function emptyDeckFilters() {
     job_type: '',
     sector: '',
     published_preset: '',
+    location: '',
   };
 }
 let DECK_FILTERS = emptyDeckFilters();
+
+// Même contrat que backend/utils/locationFilter.js (parseLocationQuery).
+const LOCATION_FILTER_MAX_LENGTH = 80;
+function normalizeLocationInput(value) {
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+function locationFilterInputError(value) {
+  const text = normalizeLocationInput(value);
+  if (!text) return '';
+  if (text.length > LOCATION_FILTER_MAX_LENGTH) return 'Localisation trop longue (80 caractères max)';
+  const folded = text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae');
+  if (!/^[a-z0-9 '’.\-()/]+$/.test(folded) || !/[a-z0-9]/.test(folded)) {
+    return 'Localisation invalide : lettres, chiffres, espaces, tirets et apostrophes uniquement';
+  }
+  return '';
+}
+const WORK_MODE_LABELS = Object.freeze({ onsite: 'Sur site', hybrid: 'Hybride', remote: 'Télétravail' });
 
 function publishedSinceFromPreset(preset, now = new Date()) {
   const days = { '24h': 1, '7d': 7, '30d': 30 }[preset];
@@ -2959,6 +2985,7 @@ function countActiveDeckFilters(filters = DECK_FILTERS) {
   if (String(filters.job_type || '').trim()) n += 1;
   if (String(filters.sector || '').trim()) n += 1;
   if (filters.published_preset) n += 1;
+  if (normalizeLocationInput(filters.location)) n += 1;
   return n;
 }
 
@@ -2982,6 +3009,8 @@ function buildDeckQueryParams(filters, options) {
   if (sector) params.set('sector', sector);
   const published = publishedSinceFromPreset(filters.published_preset);
   if (published) params.set('published_since', published);
+  const location = normalizeLocationInput(filters.location);
+  if (location) params.set('location', location);
   return params;
 }
 
@@ -3078,6 +3107,8 @@ function syncFilterPanelFromState() {
   if (salary) salary.value = DECK_FILTERS.salary_fixed_min != null ? DECK_FILTERS.salary_fixed_min : '';
   if (jobType) jobType.value = DECK_FILTERS.job_type || '';
   if (sector) sector.value = DECK_FILTERS.sector || '';
+  const location = document.getElementById('filt-location');
+  if (location) location.value = DECK_FILTERS.location || '';
 }
 
 function openDeckFilters() {
@@ -3101,6 +3132,12 @@ function applyDeckFiltersFromPanel() {
     }
     salary = n;
   }
+  const locationValue = normalizeLocationInput(document.getElementById('filt-location')?.value || '');
+  const locationError = locationFilterInputError(locationValue);
+  if (locationError) {
+    toast(locationError);
+    return;
+  }
   const publishedBtn = document.querySelector('#filt-published .form-chip.on');
   DECK_FILTERS = {
     contract_type: readChipValues('filt-contract'),
@@ -3110,6 +3147,7 @@ function applyDeckFiltersFromPanel() {
     job_type: String(document.getElementById('filt-job-type')?.value || '').trim(),
     sector: String(document.getElementById('filt-sector')?.value || '').trim(),
     published_preset: publishedBtn ? (publishedBtn.getAttribute('data-filter-value') || '') : '',
+    location: locationValue,
   };
   document.getElementById('filters-ov')?.classList.remove('on');
   syncFilterChrome();
@@ -3216,8 +3254,11 @@ function renderDeck() {
   const reset = document.getElementById('deck-empty-reset');
   if (title) title.textContent = filteredEmpty ? 'Aucun résultat' : 'Tout vu';
   if (copy) {
+    const locationFilter = normalizeLocationInput(DECK_FILTERS.location);
     copy.textContent = filteredEmpty
-      ? 'Aucune offre ne correspond à vos filtres.'
+      ? (locationFilter
+        ? `Aucune offre ne correspond à vos filtres pour « ${locationFilter} ». Les offres sans lieu renseigné ne sont pas incluses.`
+        : 'Aucune offre ne correspond à vos filtres.')
       : 'Toutes les offres compatibles ont été vues. Revenez demain.';
   }
   if (reset) reset.hidden = !filteredEmpty;
@@ -3270,6 +3311,7 @@ function buildCard(o) {
         <div class="card-identity-facts">
           ${o.type ? `<span class="card-fact">${esc(o.type)}</span>` : ''}
           ${lieuLabel ? `<span class="card-fact">${esc(lieuLabel)}</span>` : ''}
+          ${o.workMode ? `<span class="card-fact">${esc(o.workMode)}</span>` : ''}
           ${o.auto ? '<span class="card-fact is-auto">Candidature auto</span>' : ''}
         </div>
         ${identityTags.length ? `<div class="card-identity-tags">${identityTags.map(t=>`<span class="card-top-tag${o.matchedTags?.has(t)?' has-it':''}">${esc(t)}</span>`).join('')}</div>` : ''}
@@ -3366,7 +3408,7 @@ function showMatch(o, r) {
   document.getElementById('ov-user').textContent = USER ? ((USER.prenom||'?')[0]+(USER.nom||'?')[0]).toUpperCase() : 'YS';
   document.getElementById('ov-title').textContent = 'Match confirmé';
   document.getElementById('ov-sub').innerHTML = `Avec <strong>${o.co}</strong> — ${o.titre}`;
-  document.getElementById('ov-score').textContent = o.m + '%'; document.getElementById('ov-type').textContent = o.type; document.getElementById('ov-lieu').textContent = o.lieu.split('·')[0].trim().split(' ')[0];
+  document.getElementById('ov-score').textContent = o.m + '%'; document.getElementById('ov-type').textContent = o.type; const ovLieu = document.getElementById('ov-lieu'); ovLieu.textContent = o.lieuDisplay || 'Non précisé'; ovLieu.title = o.lieuDisplay || ''; ovLieu.classList.add('is-text');
   if (r.questions) document.getElementById('ov-prep-qs').innerHTML = r.questions.map(q => `<div class="prep-q">"${q}"</div>`).join('');
   document.getElementById('ov').classList.add('on');
 }

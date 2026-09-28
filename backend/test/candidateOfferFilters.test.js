@@ -42,6 +42,7 @@ function loadDeckFilterHelpers() {
     },
   };
   const code = [
+    extractFunction(candidateHtml, 'function normalizeLocationInput(value)'),
     extractFunction(candidateHtml, 'function publishedSinceFromPreset(preset, now = new Date())'),
     extractFunction(candidateHtml, 'function countActiveDeckFilters(filters = DECK_FILTERS)'),
     extractFunction(candidateHtml, 'function buildDeckQueryParams(filters, options)'),
