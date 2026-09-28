@@ -1525,12 +1525,14 @@ button,input,textarea,select{font-family:inherit}
     <div id="ts-job" style="display:none">
       <div class="qt sf">Quel type de poste recherchez-vous ?</div>
       <div class="opts" id="job-type-opts">
+        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->
         <button class="opt" onclick="selectJobType('sdr',this)"><span class="ot">SDR / BDR</span></button>
         <button class="opt" onclick="selectJobType('bizdev',this)"><span class="ot">Business Developer</span></button>
         <button class="opt" onclick="selectJobType('ae',this)"><span class="ot">Account Executive</span></button>
         <button class="opt" onclick="selectJobType('terrain',this)"><span class="ot">Commercial terrain</span></button>
         <button class="opt" onclick="selectJobType('kam',this)"><span class="ot">Key Account Manager</span></button>
         <button class="opt" onclick="selectJobType('manager',this)"><span class="ot">Manager commercial</span></button>
+        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->
       </div>
       <div class="step-nav"><button class="btn bo" onclick="ns(9)">Retour</button><button class="btn bp" id="bn-job" onclick="ns_custom('ts-huntfarm')" disabled>Continuer</button></div>
     </div>
@@ -3503,6 +3505,7 @@ function goToJobStep() {
   if (!canContinueStep(9)) return;
   ns_custom('ts-job');
 }
+// JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:START
 const PROFILE_QUESTIONS = {
   sdr: {
     label: 'SDR / BDR',
@@ -3535,6 +3538,7 @@ const PROFILE_QUESTIONS = {
     q2: { text: 'Face à un commercial en sous-performance :', options: ['Je fixe un plan de redressement chiffré', 'Je fais du terrain avec lui', "Je cherche à comprendre ce qui bloque avant d'agir"] },
   },
 };
+// JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:END
 let TEST_JOB_TYPE = null;
 let TEST_HUNT_FARM = null;
 let TEST_PROFILE_ANSWERS = { q1: null, q2: null };
@@ -4311,7 +4315,9 @@ let PROFILE_COMPETENCES_BASE = {};
 let SOFT_COMPETENCES_DIRTY = false;
 const PROFILE_PREF_SUGGESTIONS = Object.freeze({
   target_job_types: [
+    // JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:START
     'SDR / BDR', 'Business Developer', 'Account Executive', 'Commercial terrain', 'Key Account Manager', 'Manager commercial',
+    // JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:END
   ],
   sales_style: [
     { value: 'hunter', label: 'Chasseur' },

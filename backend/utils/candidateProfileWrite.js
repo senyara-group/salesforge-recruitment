@@ -12,7 +12,7 @@ const {
   METHODOLOGIES,
   SECTORS,
   CUSTOMER_TYPES,
-  TARGET_JOB_TYPES,
+  canonicalizeTargetJobType,
   LEGACY_TOOL_ALIASES,
   LEGACY_METHODOLOGY_ALIASES,
   LEGACY_SECTOR_ALIASES,
@@ -119,7 +119,7 @@ function normalizeCandidateProfileStructuredFields(body = {}) {
   if (Object.prototype.hasOwnProperty.call(body, 'target_job_types')) {
     out.target_job_types = parseOptionalStringList(body.target_job_types, {
       label: 'target_job_types',
-      canonicalize: (value) => canonicalizeFromList(value, TARGET_JOB_TYPES),
+      canonicalize: canonicalizeTargetJobType,
       unknown: 'keep',
     });
   }

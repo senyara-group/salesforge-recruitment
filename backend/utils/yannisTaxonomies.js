@@ -1,3 +1,5 @@
+const { createJobTaxonomy, deepFreezeDescriptors } = require('./jobTaxonomy');
+
 /**
  * Taxonomies Yannis V1 (document SwipSales_Test_ADN_situations).
  * Source de vérité applicative — pas d’enum DB dur (legacy toléré).
@@ -28,14 +30,29 @@ const CANDIDATE_SKILLS = Object.freeze([
   'Social selling',
 ]);
 
-const TARGET_JOB_TYPES = Object.freeze([
-  'SDR / BDR',
-  'Business Developer',
-  'Account Executive',
-  'Commercial terrain',
-  'Key Account Manager',
-  'Manager commercial',
+// IDs are the existing ADN job_profile.poste / candidats.type_poste codes.
+// Structured profile/offer fields persist labels, NOT these IDs.
+// Validated at load (IDs, labels, aliases, collisions): see utils/jobTaxonomy.js.
+const JOB_TYPE_DESCRIPTORS = deepFreezeDescriptors([
+  { id: 'sdr', label: 'SDR / BDR' },
+  { id: 'bizdev', label: 'Business Developer' },
+  { id: 'ae', label: 'Account Executive' },
+  { id: 'terrain', label: 'Commercial terrain' },
+  { id: 'kam', label: 'Key Account Manager' },
+  { id: 'manager', label: 'Manager commercial' },
 ]);
+const jobTaxonomy = createJobTaxonomy(JOB_TYPE_DESCRIPTORS);
+const {
+  JOB_TYPES,
+  TARGET_JOB_TYPES,
+  activeJobTypes,
+  jobTypeById,
+  isJobTypeId,
+  resolveJobTypeLabel,
+  resolveStoredJobType,
+  jobTypeLabel,
+  canonicalizeTargetJobType,
+} = jobTaxonomy;
 
 const CONTRACT_TYPES = Object.freeze(['CDI', 'Alternance', 'Mission', 'Freelance']);
 
@@ -227,10 +244,6 @@ function canonicalizeSector(value) {
   return canonicalizeFromList(value, SECTORS, LEGACY_SECTOR_ALIASES);
 }
 
-function canonicalizeTargetJobType(value) {
-  return canonicalizeFromList(value, TARGET_JOB_TYPES);
-}
-
 function flattenCompetencesMeta(metaCompetences) {
   if (!metaCompetences || typeof metaCompetences !== 'object' || Array.isArray(metaCompetences)) {
     return [];
@@ -267,6 +280,14 @@ module.exports = {
   CANDIDATE_SKILLS,
   OFFER_SKILLS,
   TARGET_JOB_TYPES,
+  JOB_TYPE_DESCRIPTORS,
+  JOB_TYPES,
+  activeJobTypes,
+  jobTypeById,
+  isJobTypeId,
+  resolveJobTypeLabel,
+  resolveStoredJobType,
+  jobTypeLabel,
   CONTRACT_TYPES,
   REMOTE_MODE_OPTIONS,
   SECTORS,
