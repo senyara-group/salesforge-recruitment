@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const taxonomy = require('../utils/yannisTaxonomies');
-const { FILES, render, sync } = require('../scripts/sync-job-taxonomy');
+const { createJobTaxonomy, JobTaxonomyError } = require('../utils/jobTaxonomy');
+const { FILES } = require('../scripts/sync-job-taxonomy');
 const { normalizeCandidateProfileStructuredFields } = require('../utils/candidateProfileWrite');
 const { normalizeOfferStructuredFields } = require('../utils/offerWrite');
 const { parseOfferDeckQuery, offerMatchesDeckFilters } = require('../utils/offerDeckQuery');
@@ -14,9 +15,11 @@ const historical = [
   ['terrain', 'Commercial terrain'], ['kam', 'Key Account Manager'], ['manager', 'Manager commercial'],
 ];
 const html = file => fs.readFileSync(path.resolve(__dirname, '../..', file), 'utf8');
+const withJobs = (...extra) => [...taxonomy.JOB_TYPE_DESCRIPTORS, ...extra];
 
 test('six historical ADN IDs, persisted labels and ordering stay identical', () => {
   assert.deepEqual(taxonomy.activeJobTypes().map(job => [job.id, job.label]), historical);
+  assert.deepEqual(taxonomy.JOB_TYPE_DESCRIPTORS.map(job => [job.id, job.label]), historical);
   assert.deepEqual(taxonomy.TARGET_JOB_TYPES, historical.map(([, label]) => label));
   for (const [id, label] of historical) {
     assert.equal(taxonomy.isJobTypeId(id), true);
@@ -51,6 +54,7 @@ test('all job helpers refuse nonstrings without invoking coercion', () => {
 
 test('registry and descriptors cannot be mutated through public helpers', () => {
   assert.ok(Object.isFrozen(taxonomy.JOB_TYPES));
+  assert.ok(Object.isFrozen(taxonomy.JOB_TYPE_DESCRIPTORS));
   for (const job of taxonomy.JOB_TYPES) {
     assert.ok(Object.isFrozen(job)); assert.ok(Object.isFrozen(job.aliases));
   }
@@ -58,17 +62,20 @@ test('registry and descriptors cannot be mutated through public helpers', () => 
   assert.equal(taxonomy.activeJobTypes().length, 6);
 });
 
-test('inactive descriptors and explicit aliases remain readable without appearing in active UI lists', () => {
+test('inactive jobs: historical reads resolve, new writes never canonicalize, never remap', () => {
   // Synthetic fixture only: no additional profession is added to the actual registry.
-  const source = fs.readFileSync(path.join(__dirname, '../utils/yannisTaxonomies.js'), 'utf8');
-  const fixture = source.replace("const JOB_TYPES = Object.freeze([", "const JOB_TYPES = Object.freeze([{ id: 'fixture_retired', label: 'Fixture retired', active: false, aliases: ['Fixture old'] },");
-  const sandbox = { module: { exports: {} } };
-  vm.runInNewContext(fixture, sandbox);
-  const t = sandbox.module.exports;
+  const t = createJobTaxonomy(withJobs({ id: 'fixture_retired', label: 'Fixture retired', active: false, aliases: ['Fixture old'] }));
   assert.equal(t.activeJobTypes().length, 6);
   assert.equal(t.TARGET_JOB_TYPES.includes('Fixture retired'), false);
+  // Read side: stored ID or label/alias stays readable with its own label.
   assert.equal(t.resolveStoredJobType('Fixture old').id, 'fixture_retired');
+  assert.equal(t.resolveStoredJobType('fixture_retired').id, 'fixture_retired');
+  assert.equal(t.jobTypeLabel(' fixture RETIRED '), 'Fixture retired');
   assert.equal(t.jobTypeById('fixture_retired').active, false);
+  // Write side: not a new choice, so not canonicalized (writers keep the raw text).
+  assert.equal(t.canonicalizeTargetJobType('Fixture retired'), null);
+  assert.equal(t.canonicalizeTargetJobType('fixture old'), null);
+  for (const [, label] of historical) assert.equal(t.canonicalizeTargetJobType(label), label);
 });
 
 test('profile writes retain arrays, canonical labels and unknown historical text', () => {
@@ -88,22 +95,6 @@ test('offer writes and both decks preserve existing label-based contracts', () =
   assert.equal(normalizeOfferStructuredFields({ type: 'CDI', job_type: 'Legacy custom role' }).job_type, 'Legacy custom role');
 });
 
-test('checked-in frontend consumers match generation and generation is idempotent', () => {
-  sync();
-  for (const file of FILES) {
-    const current = html(file);
-    assert.equal(render(file, current), current);
-    assert.equal(render(file, current.replace(/\r\n/g, '\n')), current.replace(/\r\n/g, '\n'));
-    if (file === FILES[0]) {
-      const escapedLabel = current.replace("label: 'SDR / BDR'", "label: 'Fixture d\\'exemple'");
-      assert.equal(render(file, escapedLabel), current);
-    }
-    const drift = current.replace('>SDR / BDR</', '>wrong label</');
-    // First candidate occurrence is intentionally a separate legacy prefs list.
-    if (file === FILES[1]) assert.equal(render(file, drift), current);
-  }
-});
-
 test('generated ADN button payloads, profile choices and question labels remain historical', () => {
   const source = html(FILES[0]);
   const buttons = source.match(/id="job-type-opts">([\s\S]*?)<\/div>/)[1];
@@ -117,11 +108,15 @@ test('generated ADN button payloads, profile choices and question labels remain 
     assert.ok(questions[id].q1.options.length >= 3);
     assert.ok(questions[id].q2.options.length >= 3);
   }
+  const chips = html(FILES[1]).match(/id="filt-job-types">([\s\S]*?)<\/div>/)[1];
+  assert.deepEqual([...chips.matchAll(/data-filter-value="([^"]+)"/g)].map(m => m[1]), historical.map(([, label]) => label));
 });
 
-test('generator fails closed on missing or duplicated consumer anchors', () => {
-  const source = html(FILES[0]);
-  assert.throws(() => render(FILES[0], source.replace('id="job-type-opts"', 'id="missing"')), /anchor/);
-  assert.throws(() => render(FILES[0], source.replace("  sdr: {", '  missing: {')), /anchor/);
-  assert.throws(() => render(FILES[1], html(FILES[1]) + html(FILES[1])), /anchor/);
+test('invalid registries fail at construction with a JobTaxonomyError', () => {
+  assert.throws(() => createJobTaxonomy([]), JobTaxonomyError);
+  assert.throws(() => createJobTaxonomy([{ id: 'x', label: 'X', active: false }]), /at least one active/);
+  assert.throws(() => createJobTaxonomy(withJobs({ id: 'x', label: 'X', extra: 1 })), /unknown key "extra"/);
+  assert.throws(() => createJobTaxonomy(withJobs({ id: 'Bad-ID', label: 'X' })), /id must match/);
+  assert.throws(() => createJobTaxonomy(withJobs({ id: 'x', label: 'X', active: 'yes' })), /active must be a boolean/);
+  assert.throws(() => createJobTaxonomy(withJobs({ id: 'x', label: 'X', aliases: 'Y' })), /aliases must be an array/);
 });

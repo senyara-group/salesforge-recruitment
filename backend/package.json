@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "npm run test:syntax && npm run test:static && npm run test:unit",
+    "test": "npm run taxonomy:check && npm run test:syntax && npm run test:static && npm run test:unit",
     "test:syntax": "node scripts/check-syntax.js",
     "test:static": "node scripts/check-static.js",
     "test:unit": "node --test test/*.test.js",

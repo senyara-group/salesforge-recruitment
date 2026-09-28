@@ -1,7 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-require('./sync-job-taxonomy').sync();
+try {
+  require('./sync-job-taxonomy').sync();
+} catch (error) {
+  console.error(`taxonomy:check failed: ${error.message}`);
+  process.exit(1);
+}
 
 const frontendRoot = path.resolve(__dirname, '..', '..', 'frontend');
 const htmlFiles = [];

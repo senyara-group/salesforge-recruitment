@@ -1,3 +1,5 @@
+const { createJobTaxonomy } = require('./jobTaxonomy');
+
 /**
  * Taxonomies Yannis V1 (document SwipSales_Test_ADN_situations).
  * Source de vérité applicative — pas d’enum DB dur (legacy toléré).
@@ -30,30 +32,27 @@ const CANDIDATE_SKILLS = Object.freeze([
 
 // IDs are the existing ADN job_profile.poste / candidats.type_poste codes.
 // Structured profile/offer fields persist labels, NOT these IDs.
-const JOB_TYPES = Object.freeze([
+// Validated at load (IDs, labels, aliases, collisions): see utils/jobTaxonomy.js.
+const JOB_TYPE_DESCRIPTORS = Object.freeze([
   { id: 'sdr', label: 'SDR / BDR' },
   { id: 'bizdev', label: 'Business Developer' },
   { id: 'ae', label: 'Account Executive' },
   { id: 'terrain', label: 'Commercial terrain' },
   { id: 'kam', label: 'Key Account Manager' },
   { id: 'manager', label: 'Manager commercial' },
-].map((job, order) => Object.freeze({ ...job, aliases: Object.freeze([...(job.aliases || [])]), active: job.active ?? true, order })));
-
-function activeJobTypes() { return JOB_TYPES.filter(job => job.active); }
-function jobTypeById(value) {
-  return typeof value === 'string' ? JOB_TYPES.find(job => job.id === value) || null : null;
-}
-function isJobTypeId(value) { return jobTypeById(value) !== null; }
-// Existing label normalization is trim + case only. No new semantic aliases.
-function resolveJobTypeLabel(value) {
-  if (typeof value !== 'string') return null;
-  const token = value.trim().toLowerCase();
-  return JOB_TYPES.find(job => job.label.toLowerCase() === token || job.aliases.some(alias => alias.toLowerCase() === token)) || null;
-}
-// Read either persisted representation without rewriting the stored value.
-function resolveStoredJobType(value) { return jobTypeById(value) || resolveJobTypeLabel(value); }
-function jobTypeLabel(value) { return resolveStoredJobType(value)?.label || null; }
-const TARGET_JOB_TYPES = Object.freeze(activeJobTypes().map(job => job.label));
+]);
+const jobTaxonomy = createJobTaxonomy(JOB_TYPE_DESCRIPTORS);
+const {
+  JOB_TYPES,
+  TARGET_JOB_TYPES,
+  activeJobTypes,
+  jobTypeById,
+  isJobTypeId,
+  resolveJobTypeLabel,
+  resolveStoredJobType,
+  jobTypeLabel,
+  canonicalizeTargetJobType,
+} = jobTaxonomy;
 
 const CONTRACT_TYPES = Object.freeze(['CDI', 'Alternance', 'Mission', 'Freelance']);
 
@@ -245,10 +244,6 @@ function canonicalizeSector(value) {
   return canonicalizeFromList(value, SECTORS, LEGACY_SECTOR_ALIASES);
 }
 
-function canonicalizeTargetJobType(value) {
-  return resolveJobTypeLabel(value)?.label || null;
-}
-
 function flattenCompetencesMeta(metaCompetences) {
   if (!metaCompetences || typeof metaCompetences !== 'object' || Array.isArray(metaCompetences)) {
     return [];
@@ -285,6 +280,7 @@ module.exports = {
   CANDIDATE_SKILLS,
   OFFER_SKILLS,
   TARGET_JOB_TYPES,
+  JOB_TYPE_DESCRIPTORS,
   JOB_TYPES,
   activeJobTypes,
   jobTypeById,
