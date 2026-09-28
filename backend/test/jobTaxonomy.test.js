@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const taxonomy = require('../utils/yannisTaxonomies');
-const { createJobTaxonomy, JobTaxonomyError } = require('../utils/jobTaxonomy');
+const { createJobTaxonomy, deepFreezeDescriptors, JobTaxonomyError } = require('../utils/jobTaxonomy');
 const { FILES } = require('../scripts/sync-job-taxonomy');
 const { normalizeCandidateProfileStructuredFields } = require('../utils/candidateProfileWrite');
 const { normalizeOfferStructuredFields } = require('../utils/offerWrite');
@@ -60,6 +60,33 @@ test('registry and descriptors cannot be mutated through public helpers', () => 
   }
   const copy = taxonomy.activeJobTypes(); copy.pop();
   assert.equal(taxonomy.activeJobTypes().length, 6);
+});
+
+test('JOB_TYPE_DESCRIPTORS is deeply immutable: helpers and generator cannot be altered', () => {
+  const { sync } = require('../scripts/sync-job-taxonomy');
+  const [sdr] = taxonomy.JOB_TYPE_DESCRIPTORS;
+  assert.ok(Object.isFrozen(sdr));
+  assert.equal(Reflect.set(sdr, 'label', 'HACK'), false);
+  assert.equal(Reflect.set(sdr, 'active', false), false);
+  assert.equal(Reflect.set(sdr, 'aliases', ['BDR']), false); // cannot add an alias array
+  assert.equal(Reflect.deleteProperty(sdr, 'id'), false);
+  assert.equal(Reflect.set(taxonomy.JOB_TYPE_DESCRIPTORS, 0, { id: 'x', label: 'X' }), false);
+  assert.throws(() => taxonomy.JOB_TYPE_DESCRIPTORS.push({ id: 'x', label: 'X' }), TypeError);
+  for (const job of taxonomy.JOB_TYPES) {
+    assert.throws(() => job.aliases.push('BDR'), TypeError);
+    assert.equal(Reflect.set(job, 'label', 'HACK'), false);
+  }
+  // Alias arrays of descriptors are frozen too (fixture: the real registry has none).
+  const fixture = deepFreezeDescriptors([{ id: 'x', label: 'X', aliases: ['Y'] }]);
+  assert.throws(() => fixture[0].aliases.push('Z'), TypeError);
+  assert.equal(Reflect.set(fixture[0].aliases, 0, 'Z'), false);
+  assert.equal(Reflect.deleteProperty(fixture[0].aliases, 0), false);
+  assert.deepEqual(fixture[0].aliases, ['Y']);
+  // Registry, helpers and generator are unchanged after every attempt.
+  assert.deepEqual(taxonomy.JOB_TYPE_DESCRIPTORS.map(job => [job.id, job.label]), historical);
+  assert.equal(taxonomy.jobTypeLabel('sdr'), 'SDR / BDR');
+  assert.equal(taxonomy.resolveStoredJobType('BDR'), null);
+  assert.deepEqual(sync(), { changed: [] });
 });
 
 test('inactive jobs: historical reads resolve, new writes never canonicalize, never remap', () => {

@@ -62,6 +62,10 @@ function validateQuestion(question, where) {
   assertSafeText(question.text, `${where}.text`, ADN_QUESTION_TEXT_MAX_LENGTH);
   const { options } = question;
   if (!Array.isArray(options)) throw new JobTaxonomyError(`${where}.options: must be an array`);
+  // A hole would be skipped by options.map() in renderProfileQuestion: refuse it explicitly.
+  for (let i = 0; i < options.length; i += 1) {
+    if (!Object.prototype.hasOwnProperty.call(options, i)) throw new JobTaxonomyError(`${where}.options[${i}]: sparse array (hole) is not allowed`);
+  }
   if (options.length < ADN_MIN_OPTIONS || options.length > ADN_MAX_OPTIONS) {
     throw new JobTaxonomyError(`${where}.options: expected ${ADN_MIN_OPTIONS}-${ADN_MAX_OPTIONS} options, got ${options.length}`);
   }

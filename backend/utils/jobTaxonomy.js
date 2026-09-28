@@ -90,6 +90,14 @@ function validateJobTypeDescriptors(rawList) {
   return jobs;
 }
 
+/** Deeply frozen copy of a descriptor list (descriptors and alias arrays). */
+function deepFreezeDescriptors(list) {
+  return Object.freeze(list.map(descriptor => Object.freeze({
+    ...descriptor,
+    ...(Array.isArray(descriptor.aliases) ? { aliases: Object.freeze([...descriptor.aliases]) } : {}),
+  })));
+}
+
 function createJobTaxonomy(rawList) {
   const JOB_TYPES = Object.freeze(validateJobTypeDescriptors(rawList).map((job, order) => Object.freeze({
     id: job.id, label: job.label, aliases: Object.freeze([...job.aliases]), active: job.active, order,
@@ -138,5 +146,6 @@ module.exports = {
   isPlainObject,
   assertSafeText,
   validateJobTypeDescriptors,
+  deepFreezeDescriptors,
   createJobTaxonomy,
 };

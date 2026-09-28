@@ -9,7 +9,7 @@ const vm = require('node:vm');
 const { spawnSync } = require('node:child_process');
 const { JOB_TYPE_DESCRIPTORS } = require('../utils/yannisTaxonomies');
 const { createJobTaxonomy, JobTaxonomyError } = require('../utils/jobTaxonomy');
-const { ADN_PROFILE_QUESTION_MODULES } = require('../utils/adnProfileQuestions');
+const { ADN_PROFILE_QUESTION_MODULES, validateAdnModules } = require('../utils/adnProfileQuestions');
 const { FILES, render, sync } = require('../scripts/sync-job-taxonomy');
 
 const REPO = path.resolve(__dirname, '../..');
@@ -22,29 +22,36 @@ const COMPLETE_MODULE = Object.freeze({
   q1: { text: 'Part de votre temps en démonstrations techniques :', options: ['Moins de 25 %', '25 à 50 %', 'Plus de 50 %'] },
   q2: { text: 'Face à une objection technique pointue :', options: ['Je réponds seul', "J'implique un expert", 'Je reporte la réponse'] },
 });
-const historicalFile = file => fs.readFileSync(path.join(REPO, file), 'utf8');
+// The index stores LF, Windows checkouts may get CRLF: every EOL-sensitive test
+// runs on both, independently of how the repository was checked out.
+const EOLS = Object.freeze([['LF', '\n'], ['CRLF', '\r\n']]);
+const withEol = (source, eol) => (eol ? source.replace(/\r\n/g, '\n').replace(/\n/g, eol) : source);
+const historicalFile = (file, eol) => withEol(fs.readFileSync(path.join(REPO, file), 'utf8'), eol);
 
-function tempRoot(t) {
+function tempRoot(t, eol) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'job-taxonomy-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   for (const file of FILES) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    fs.copyFileSync(path.join(REPO, file), path.join(root, file));
+    fs.writeFileSync(path.join(root, file), historicalFile(file, eol), 'utf8');
   }
   return root;
 }
 const bytes = (root, file) => fs.readFileSync(path.join(root, file));
 const text = (root, file) => fs.readFileSync(path.join(root, file), 'utf8');
+// Anchors are written with \n and adapted to the line endings of `source`.
 function replaceOnce(source, from, to) {
-  assert.equal(source.split(from).length - 1, 1, `fixture anchor must be unique: ${from}`);
+  const eol = source.includes('\r\n') ? '\r\n' : '\n';
+  [from, to] = [withEol(from, eol), withEol(to, eol)];
+  assert.equal(source.split(from).length - 1, 1, `fixture anchor must be unique: ${JSON.stringify(from)}`);
   return source.replace(from, () => to);
 }
 function mutate(root, file, from, to) {
   fs.writeFileSync(path.join(root, file), replaceOnce(text(root, file), from, to), 'utf8');
 }
 /** Both files need regeneration, then one error is injected: nothing may be written. */
-function assertZeroWrite(t, { breakFile, from, to, edit, options = {}, error }) {
-  const root = tempRoot(t);
+function assertZeroWrite(t, { eol, breakFile, from, to, edit, options = {}, error }) {
+  const root = tempRoot(t, eol);
   mutate(root, CANDIDATE, ...CANDIDATE_DRIFT);
   mutate(root, RECRUITER, ...RECRUITER_DRIFT);
   if (breakFile && edit) fs.writeFileSync(path.join(root, breakFile), edit(text(root, breakFile)), 'utf8');
@@ -85,73 +92,90 @@ test('checked-in HTML is synchronized and generation is idempotent on repository
   for (const file of FILES) {
     const current = historicalFile(file);
     assert.equal(render(file, current), current);
-    assert.equal(render(file, current.replace(/\r\n/g, '\n')), current.replace(/\r\n/g, '\n'));
+    for (const [, eol] of EOLS) assert.equal(render(file, withEol(current, eol)), withEol(current, eol));
   }
 });
 
-test('A. re-indented closing tags cannot make a zone overflow into adjacent HTML', t => {
-  const root = tempRoot(t);
-  const marker = '<!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->\r\n      </div>';
-  // Original repro: shifting the closing </div> by one space used to swallow bn-job and ts-huntfarm.
-  for (const closing of ['     </div>', '       </div>', '</div>', '\t</div>']) {
-    const source = replaceOnce(replaceOnce(historicalFile(CANDIDATE), marker, marker.replace('      </div>', closing)), ...CANDIDATE_DRIFT);
-    fs.writeFileSync(path.join(root, CANDIDATE), source, 'utf8');
-    assert.deepEqual(sync({ write: true, root }).changed, [CANDIDATE]);
-    const output = text(root, CANDIDATE);
-    assert.equal(outsideZones(output), outsideZones(source));
-    assert.match(output, /id="bn-job" onclick="ns_custom\('ts-huntfarm'\)" disabled>Continuer/);
-    assert.match(output, /selectHuntFarm\('full',this\)/);
-    assert.equal(output, replaceOnce(historicalFile(CANDIDATE), marker, marker.replace('      </div>', closing)));
-  }
-});
-
-test('B-F. absent, duplicated or inverted markers fail with zero write', t => {
-  const start = '        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->\r\n';
-  const end = '        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->\r\n';
-  const cases = {
-    'B START absent': [start, ''],
-    'C END absent': [end, ''],
-    'D START duplicated': [start, start + start],
-    'E END duplicated': [end, end + end],
-    'marker not alone on its line': [start, '        <b></b><!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->\r\n'],
-    'unknown marker': [start, start + '<!-- JOB_TAXONOMY:TYPO_ZONE:START -->\r\n'],
-  };
-  for (const [name, [from, to]] of Object.entries(cases)) {
-    assertZeroWrite(t, { breakFile: CANDIDATE, from, to, error: /Fix: restore exactly one START and one END marker/ });
-    assert.throws(() => render(CANDIDATE, replaceOnce(historicalFile(CANDIDATE), from, to)), JobTaxonomyError, name);
-  }
-  // F: END before START (the two marker lines swapped).
-  const swap = source => replaceOnce(replaceOnce(source, start, '<<S>>'), end, start).replace('<<S>>', end);
-  assertZeroWrite(t, { breakFile: CANDIDATE, edit: swap, error: /END \(line \d+\) precedes its START/ });
-  assert.throws(() => render(CANDIDATE, swap(historicalFile(CANDIDATE))), /precedes its START/);
-  // A duplicated END in the JS region and overlapping zones are also refused.
-  const jsEnd = '// JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:END\r\n';
-  assertZeroWrite(t, { breakFile: CANDIDATE, from: jsEnd, to: jsEnd + jsEnd, error: /found 2 times/ });
-});
-
-test('G. an error in candidat.html leaves recruteur.html untouched', t => {
-  assertZeroWrite(t, {
-    breakFile: CANDIDATE, from: '// JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:END\r\n', to: '', error: /found 0 times/,
+for (const [format, eol] of EOLS) {
+  test(`A. [${format}] re-indented closing tags cannot make a zone overflow into adjacent HTML`, t => {
+    const root = tempRoot(t, eol);
+    const marker = '<!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->\n      </div>';
+    // Original repro: shifting the closing </div> by one space used to swallow bn-job and ts-huntfarm.
+    for (const closing of ['     </div>', '       </div>', '</div>', '\t</div>']) {
+      const reindented = replaceOnce(historicalFile(CANDIDATE, eol), marker, marker.replace('      </div>', closing));
+      const source = replaceOnce(reindented, ...CANDIDATE_DRIFT);
+      fs.writeFileSync(path.join(root, CANDIDATE), source, 'utf8');
+      assert.deepEqual(sync({ write: true, root }).changed, [CANDIDATE]);
+      const output = text(root, CANDIDATE);
+      assert.equal(outsideZones(output), outsideZones(source));
+      assert.match(output, /id="bn-job" onclick="ns_custom\('ts-huntfarm'\)" disabled>Continuer/);
+      assert.match(output, /selectHuntFarm\('full',this\)/);
+      assert.equal(output, reindented, 'only the zone is regenerated, original line endings kept');
+    }
   });
-});
 
-test('H. an error in recruteur.html after candidat.html was generated in memory: zero write', t => {
-  assertZeroWrite(t, {
-    breakFile: RECRUITER, from: '        <!-- JOB_TAXONOMY:RECRUITER_FILTER_CHIPS:END -->\r\n', to: '', error: /recruteur\.html: marker/,
+  test(`B-F. [${format}] absent, duplicated or inverted markers fail with zero write`, t => {
+    const start = '        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->\n';
+    const end = '        <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->\n';
+    const cases = {
+      'B START absent': [start, ''],
+      'C END absent': [end, ''],
+      'D START duplicated': [start, start + start],
+      'E END duplicated': [end, end + end],
+      'marker not alone on its line': [start, '        <b></b><!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:START -->\n'],
+      'unknown marker': [start, start + '<!-- JOB_TAXONOMY:TYPO_ZONE:START -->\n'],
+    };
+    for (const [name, [from, to]] of Object.entries(cases)) {
+      assertZeroWrite(t, { eol, breakFile: CANDIDATE, from, to, error: /Fix: restore exactly one START and one END marker/ });
+      assert.throws(() => render(CANDIDATE, replaceOnce(historicalFile(CANDIDATE, eol), from, to)), JobTaxonomyError, name);
+    }
+    // F: END before START (the two marker lines swapped).
+    const swap = source => replaceOnce(replaceOnce(replaceOnce(source, start, '<<S>>\n'), end, start), '<<S>>\n', end);
+    assertZeroWrite(t, { eol, breakFile: CANDIDATE, edit: swap, error: /END \(line \d+\) precedes its START/ });
+    assert.throws(() => render(CANDIDATE, swap(historicalFile(CANDIDATE, eol))), /precedes its START/);
+    // A duplicated END in the JS region is also refused.
+    const jsEnd = '// JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:END\n';
+    assertZeroWrite(t, { eol, breakFile: CANDIDATE, from: jsEnd, to: jsEnd + jsEnd, error: /found 2 times/ });
   });
-});
 
-test('H2. a filesystem failure while committing rolls back already renamed files', t => {
-  const root = tempRoot(t);
-  mutate(root, CANDIDATE, ...CANDIDATE_DRIFT);
-  mutate(root, RECRUITER, ...RECRUITER_DRIFT);
-  const before = FILES.map(file => bytes(root, file));
-  let renames = 0;
-  const fsImpl = { ...fs, renameSync(from, to) { if (++renames === 2) throw new Error('disk full'); return fs.renameSync(from, to); } };
-  assert.throws(() => sync({ write: true, root, fsImpl }), /disk full/);
-  FILES.forEach((file, i) => assert.ok(bytes(root, file).equals(before[i]), file));
-  assert.deepEqual(fs.readdirSync(path.join(root, 'frontend/_spaces')).filter(name => name.endsWith('.tmp')), []);
-});
+  test(`G. [${format}] an error in candidat.html leaves recruteur.html untouched`, t => {
+    assertZeroWrite(t, {
+      eol, breakFile: CANDIDATE, from: '// JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:END\n', to: '', error: /found 0 times/,
+    });
+  });
+
+  test(`H. [${format}] an error in recruteur.html after candidat.html was generated in memory: zero write`, t => {
+    assertZeroWrite(t, {
+      eol, breakFile: RECRUITER, from: '        <!-- JOB_TAXONOMY:RECRUITER_FILTER_CHIPS:END -->\n', to: '', error: /recruteur\.html: marker/,
+    });
+  });
+
+  test(`H2. [${format}] a filesystem failure while committing rolls back already renamed files`, t => {
+    const root = tempRoot(t, eol);
+    mutate(root, CANDIDATE, ...CANDIDATE_DRIFT);
+    mutate(root, RECRUITER, ...RECRUITER_DRIFT);
+    const before = FILES.map(file => bytes(root, file));
+    let renames = 0;
+    const fsImpl = { ...fs, renameSync(from, to) { if (++renames === 2) throw new Error('disk full'); return fs.renameSync(from, to); } };
+    assert.throws(() => sync({ write: true, root, fsImpl }), /disk full/);
+    FILES.forEach((file, i) => assert.ok(bytes(root, file).equals(before[i]), file));
+    assert.deepEqual(fs.readdirSync(path.join(root, 'frontend/_spaces')).filter(name => name.endsWith('.tmp')), []);
+  });
+
+  test(`Q. [${format}] sync twice: second run changes nothing, line endings preserved, check then passes`, t => {
+    const root = tempRoot(t, eol);
+    mutate(root, CANDIDATE, ...CANDIDATE_DRIFT);
+    mutate(root, RECRUITER, ...RECRUITER_DRIFT);
+    assert.deepEqual(sync({ write: true, root }).changed, FILES);
+    const first = FILES.map(file => bytes(root, file));
+    assert.deepEqual(sync({ write: true, root }).changed, []);
+    FILES.forEach((file, i) => {
+      assert.ok(bytes(root, file).equals(first[i]));
+      assert.equal(text(root, file), historicalFile(file, eol), `${file} regenerated to the checked-in content in ${format}`);
+    });
+    assert.deepEqual(sync({ root }), { changed: [] });
+  });
+}
 
 test('I-K. ADN modules must match the renderProfileQuestion contract', t => {
   const descriptors = withJobs(TECHNICO);
@@ -177,6 +201,14 @@ test('I-K. ADN modules must match the renderProfileQuestion contract', t => {
   for (const [name, module] of Object.entries(invalid)) {
     assertZeroWrite(t, { options: { descriptors, modules: withModules({ technico_commercial: module }) }, error: /invalid job taxonomy: ADN module "technico_commercial"/ });
     assert.throws(() => render(CANDIDATE, historicalFile(CANDIDATE), { descriptors, modules: withModules({ technico_commercial: module }) }), JobTaxonomyError, name);
+  }
+  // Sparse options: rejected by the contract itself, before any rendering.
+  const holes = ['Oui', 'Non', 'Peut-être'];
+  delete holes[1];
+  for (const options of [holes, new Array(3), ['Oui', , 'Non']]) { // eslint-disable-line no-sparse-arrays
+    assert.throws(() => validateAdnModules(createJobTaxonomy(descriptors).JOB_TYPES, withModules({ technico_commercial: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } })),
+      /technico_commercial"\.q1\.options\[\d\]: sparse array \(hole\) is not allowed/);
+    assertZeroWrite(t, { options: { descriptors, modules: withModules({ technico_commercial: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } }) }, error: /sparse array \(hole\) is not allowed/ });
   }
   // Historical modules are subject to the same contract.
   const { sdr, ...withoutSdr } = ADN_PROFILE_QUESTION_MODULES;
@@ -255,20 +287,6 @@ test('P. special characters are escaped and restored exactly in HTML and JS', t 
     for (const match of text(root, file).matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)) new vm.Script(match[1]);
   }
   assert.deepEqual(sync({ write: true, root, descriptors, modules }).changed, []);
-});
-
-test('Q. sync twice: second run changes nothing, check then passes', t => {
-  const root = tempRoot(t);
-  mutate(root, CANDIDATE, ...CANDIDATE_DRIFT);
-  mutate(root, RECRUITER, ...RECRUITER_DRIFT);
-  assert.deepEqual(sync({ write: true, root }).changed, FILES);
-  const first = FILES.map(file => bytes(root, file));
-  assert.deepEqual(sync({ write: true, root }).changed, []);
-  FILES.forEach((file, i) => {
-    assert.ok(bytes(root, file).equals(first[i]));
-    assert.ok(bytes(root, file).equals(fs.readFileSync(path.join(REPO, file))), `${file} regenerated to the checked-in bytes`);
-  });
-  assert.deepEqual(sync({ root }), { changed: [] });
 });
 
 test('check mode detects drift and names the exact fix without writing', t => {

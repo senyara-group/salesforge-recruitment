@@ -1,4 +1,4 @@
-const { createJobTaxonomy } = require('./jobTaxonomy');
+const { createJobTaxonomy, deepFreezeDescriptors } = require('./jobTaxonomy');
 
 /**
  * Taxonomies Yannis V1 (document SwipSales_Test_ADN_situations).
@@ -33,7 +33,7 @@ const CANDIDATE_SKILLS = Object.freeze([
 // IDs are the existing ADN job_profile.poste / candidats.type_poste codes.
 // Structured profile/offer fields persist labels, NOT these IDs.
 // Validated at load (IDs, labels, aliases, collisions): see utils/jobTaxonomy.js.
-const JOB_TYPE_DESCRIPTORS = Object.freeze([
+const JOB_TYPE_DESCRIPTORS = deepFreezeDescriptors([
   { id: 'sdr', label: 'SDR / BDR' },
   { id: 'bizdev', label: 'Business Developer' },
   { id: 'ae', label: 'Account Executive' },
