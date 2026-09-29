@@ -71,6 +71,8 @@ button,input,textarea,select{font-family:inherit}
 .btn:active{transform:scale(.97)}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px;box-shadow:var(--sh-brand)}.bp:hover{background:var(--b2);box-shadow:0 12px 26px rgba(19,64,224,.3)}
 .bo{background:transparent;border:1.5px solid var(--bd2);color:var(--ink2);padding:12px 18px;font-size:14px}
+.support-contact-link{min-height:44px;max-width:100%;text-decoration:none;text-align:center;overflow-wrap:anywhere;justify-self:start}
+.support-contact-link:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .bg2{background:var(--bs);color:var(--b);padding:8px 14px;font-size:13px}
 .bsm{padding:8px 13px;font-size:12px}.blk{width:100%}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px}
@@ -1598,6 +1600,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <div class="menu-i" onclick="go('pricing')"><div class="menu-ico"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="menu-txt">Abonnement et tarifs</div></div>
       </div>
     </section>
+    <section class="account-section support-contact" aria-labelledby="support-contact-title">
+      <h2 class="sf" id="support-contact-title">Besoin d'aide ? Parlez avec notre équipe</h2>
+      <p>Une question sur vos offres, le sourcing de candidats ou votre abonnement ? Écrivez-nous : une personne de l'équipe SwipSales lit votre message et vous répond par e-mail.</p>
+      <a class="btn bo support-contact-link" href="mailto:contact@swipsales.fr">Écrire à contact@swipsales.fr</a>
+    </section>
     <button class="btn bo account-logout" type="button" onclick="doLogout()">Se déconnecter</button>
   </div>
 </div>
@@ -1709,9 +1716,18 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <button type="button" class="form-chip" data-filter-value="SDR / BDR" onclick="toggleCandFilterChip(this)">SDR / BDR</button>
         <button type="button" class="form-chip" data-filter-value="Business Developer" onclick="toggleCandFilterChip(this)">Business Developer</button>
         <button type="button" class="form-chip" data-filter-value="Account Executive" onclick="toggleCandFilterChip(this)">Account Executive</button>
+        <button type="button" class="form-chip" data-filter-value="Commercial sédentaire / Inside Sales" onclick="toggleCandFilterChip(this)">Commercial sédentaire / Inside Sales</button>
         <button type="button" class="form-chip" data-filter-value="Commercial terrain" onclick="toggleCandFilterChip(this)">Commercial terrain</button>
+        <button type="button" class="form-chip" data-filter-value="Technico-commercial" onclick="toggleCandFilterChip(this)">Technico-commercial</button>
+        <button type="button" class="form-chip" data-filter-value="Chargé d&#39;affaires / Ingénieur d&#39;affaires" onclick="toggleCandFilterChip(this)">Chargé d&#39;affaires / Ingénieur d&#39;affaires</button>
+        <button type="button" class="form-chip" data-filter-value="Avant-vente / Sales Engineer" onclick="toggleCandFilterChip(this)">Avant-vente / Sales Engineer</button>
         <button type="button" class="form-chip" data-filter-value="Key Account Manager" onclick="toggleCandFilterChip(this)">Key Account Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Account Manager" onclick="toggleCandFilterChip(this)">Account Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Customer Success Manager" onclick="toggleCandFilterChip(this)">Customer Success Manager</button>
+        <button type="button" class="form-chip" data-filter-value="Partenariats / Channel" onclick="toggleCandFilterChip(this)">Partenariats / Channel</button>
+        <button type="button" class="form-chip" data-filter-value="Conseiller de vente / Vendeur" onclick="toggleCandFilterChip(this)">Conseiller de vente / Vendeur</button>
         <button type="button" class="form-chip" data-filter-value="Manager commercial" onclick="toggleCandFilterChip(this)">Manager commercial</button>
+        <button type="button" class="form-chip" data-filter-value="Directeur commercial / Head of Sales" onclick="toggleCandFilterChip(this)">Directeur commercial / Head of Sales</button>
         <!-- JOB_TAXONOMY:RECRUITER_FILTER_CHIPS:END -->
       </div>
     </div>

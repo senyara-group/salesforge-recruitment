@@ -69,6 +69,8 @@ button,input,textarea,select{font-family:inherit}
 .btn:active{transform:scale(.97)}
 .bp{background:var(--b);color:#fff;padding:13px 20px;font-size:14px;box-shadow:var(--sh-brand)}.bp:hover{background:var(--b2);box-shadow:0 12px 26px rgba(19,64,224,.3)}
 .bo{background:transparent;border:1.5px solid var(--bd2);color:var(--ink2);padding:12px 18px;font-size:14px}
+.support-contact-link{min-height:44px;max-width:100%;text-decoration:none;text-align:center;overflow-wrap:anywhere;justify-self:start}
+.support-contact-link:focus-visible{outline:2px solid var(--b);outline-offset:2px}
 .bg2{background:var(--bs);color:var(--b);padding:8px 14px;font-size:13px}
 .bsm{padding:8px 13px;font-size:12px}.blk{width:100%}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:6px;flex-shrink:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1384,9 +1386,18 @@ button,input,textarea,select{font-family:inherit}
         <button type="button" class="opt" aria-pressed="false" data-job-id="sdr" onclick="toggleTargetJob('sdr',this)"><span class="ot">SDR / BDR</span></button>
         <button type="button" class="opt" aria-pressed="false" data-job-id="bizdev" onclick="toggleTargetJob('bizdev',this)"><span class="ot">Business Developer</span></button>
         <button type="button" class="opt" aria-pressed="false" data-job-id="ae" onclick="toggleTargetJob('ae',this)"><span class="ot">Account Executive</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="sedentaire" onclick="toggleTargetJob('sedentaire',this)"><span class="ot">Commercial sédentaire / Inside Sales</span></button>
         <button type="button" class="opt" aria-pressed="false" data-job-id="terrain" onclick="toggleTargetJob('terrain',this)"><span class="ot">Commercial terrain</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="technico_commercial" onclick="toggleTargetJob('technico_commercial',this)"><span class="ot">Technico-commercial</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="charge_affaires" onclick="toggleTargetJob('charge_affaires',this)"><span class="ot">Chargé d&#39;affaires / Ingénieur d&#39;affaires</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="avant_vente" onclick="toggleTargetJob('avant_vente',this)"><span class="ot">Avant-vente / Sales Engineer</span></button>
         <button type="button" class="opt" aria-pressed="false" data-job-id="kam" onclick="toggleTargetJob('kam',this)"><span class="ot">Key Account Manager</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="account_manager" onclick="toggleTargetJob('account_manager',this)"><span class="ot">Account Manager</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="customer_success" onclick="toggleTargetJob('customer_success',this)"><span class="ot">Customer Success Manager</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="partenariats" onclick="toggleTargetJob('partenariats',this)"><span class="ot">Partenariats / Channel</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="conseiller_vente" onclick="toggleTargetJob('conseiller_vente',this)"><span class="ot">Conseiller de vente / Vendeur</span></button>
         <button type="button" class="opt" aria-pressed="false" data-job-id="manager" onclick="toggleTargetJob('manager',this)"><span class="ot">Manager commercial</span></button>
+        <button type="button" class="opt" aria-pressed="false" data-job-id="direction_commerciale" onclick="toggleTargetJob('direction_commerciale',this)"><span class="ot">Directeur commercial / Head of Sales</span></button>
         <!-- JOB_TAXONOMY:CANDIDATE_ADN_JOB_BUTTONS:END -->
       </div>
       <p class="job-pick-count" id="job-sel-count" role="status" aria-live="polite">Aucun poste sélectionné</p>
@@ -2041,6 +2052,11 @@ button,input,textarea,select{font-family:inherit}
     <div class="page-heading"><div><div class="page-kicker">Préférences</div><h1 class="page-title sf">Compte</h1><p class="page-intro">Gérez vos accès et votre abonnement sans modifier votre profil professionnel.</p></div></div>
     <section class="account-section"><h2 class="sf">Connexion</h2><p>Adresse utilisée pour accéder à SwipSales.</p><div class="account-value" id="account-email-display">—</div><button type="button" class="btn bo" onclick="requestPasswordReset()">Changer mon mot de passe</button></section>
     <section class="account-section"><h2 class="sf">Abonnement</h2><p>Consultez votre formule actuelle et gérez-la.</p><div class="account-value" id="subscription-status-display">—</div><div class="account-actions"><button type="button" class="btn bp" onclick="go('pricing')">Voir les formules</button><button type="button" class="btn bo" style="display:none" id="cancel-subscription-btn" onclick="cancelSubscription()">Résilier</button></div></section>
+    <section class="account-section support-contact" aria-labelledby="support-contact-title">
+      <h2 class="sf" id="support-contact-title">Besoin d'aide ? Parlez avec notre équipe</h2>
+      <p>Une question sur votre compte, votre test ADN, vos candidatures ou votre abonnement ? Écrivez-nous : une personne de l'équipe SwipSales lit votre message et vous répond par e-mail.</p>
+      <a class="btn bo support-contact-link" href="mailto:contact@swipsales.fr">Écrire à contact@swipsales.fr</a>
+    </section>
     <button class="btn bo account-logout" type="button" onclick="doLogout()">Se déconnecter</button>
   </div>
 </div>
@@ -3601,20 +3617,65 @@ const PROFILE_QUESTIONS = {
     q1: { text: 'Votre plus gros contrat signé :', options: ['Moins de 20K€', '20 à 50K€', '50 à 150K€', 'Plus de 150K€'] },
     q2: { text: 'Comment gérez-vous un deal qui stagne depuis 3 semaines ?', options: ["J'attends que le client revienne", 'Je relance avec du contenu à valeur', "J'envoie un mail de rupture", 'Je remonte au niveau supérieur'] },
   },
+  sedentaire: {
+    label: 'Commercial sédentaire / Inside Sales',
+    q1: { text: 'Combien de conversations commerciales à distance (téléphone, visio) menez-vous par jour ?', options: ['Moins de 15', '15 à 30', '30 à 60', 'Plus de 60'] },
+    q2: { text: "En fin d'appel, le client hésite à signer :", options: ['Je le rappelle la semaine prochaine', 'Je reformule son besoin et adapte mon offre', "Je conclus avec une offre valable aujourd'hui", 'Je lui envoie une documentation par e-mail'] },
+  },
   terrain: {
     label: 'Commercial terrain',
     q1: { text: 'Combien de visites clients par semaine ?', options: ['Moins de 5', '5 à 15', '15 à 25', 'Plus de 25'] },
     q2: { text: 'Votre secteur géographique idéal :', options: ['Local (moins de 50 km)', 'Régional', 'National avec découchés'] },
+  },
+  technico_commercial: {
+    label: 'Technico-commercial',
+    q1: { text: "Quelle part de votre temps consacrez-vous à l'étude technique des besoins (cahier des charges, dimensionnement, chiffrage) ?", options: ['Moins de 20 %', '20 à 40 %', '40 à 60 %', 'Plus de 60 %'] },
+    q2: { text: 'Le client exige une caractéristique que votre produit ne couvre pas :', options: ["J'étudie une adaptation avec le bureau d'études", 'Je recentre sur les points où le produit est supérieur', 'Je le dis franchement et propose une alternative', "J'accepte et je verrai avec la production ensuite"] },
+  },
+  charge_affaires: {
+    label: "Chargé d'affaires / Ingénieur d'affaires",
+    q1: { text: "Montant moyen des affaires que vous pilotez, de l'offre à la livraison :", options: ['Moins de 50K€', '50 à 200K€', '200K€ à 1M€', 'Plus de 1M€'] },
+    q2: { text: 'En cours de projet, une dérive des coûts menace votre marge :', options: ["J'absorbe l'écart pour préserver la relation", 'Je négocie un avenant chiffré avec le client', "J'arbitre avec l'équipe projet pour rattraper la marge", 'Je remonte à ma direction pour décision'] },
+  },
+  avant_vente: {
+    label: 'Avant-vente / Sales Engineer',
+    q1: { text: 'Combien de démonstrations ou ateliers techniques animez-vous par mois ?', options: ['Moins de 5', '5 à 15', '15 à 30', 'Plus de 30'] },
+    q2: { text: 'En démonstration, le prospect pointe une fonctionnalité manquante qu’il juge critique :', options: ["Je promets qu'elle arrive bientôt", 'Je creuse le besoin réel derrière la demande', 'Je montre un contournement crédible', 'Je le note et laisse le commercial gérer'] },
   },
   kam: {
     label: 'Key Account Manager',
     q1: { text: 'Combien de comptes gérez-vous simultanément ?', options: ['Moins de 5', '5 à 15', '15 à 30', 'Plus de 30'] },
     q2: { text: 'Face à un client mécontent qui menace de partir :', options: ['Je fais un geste commercial', "Je comprends d'abord le problème de fond", 'Je remonte à ma direction'] },
   },
+  account_manager: {
+    label: 'Account Manager',
+    q1: { text: 'Combien de clients compte votre portefeuille ?', options: ['Moins de 20', '20 à 50', '50 à 150', 'Plus de 150'] },
+    q2: { text: 'Quelle part de votre chiffre vient des ventes additionnelles (upsell, cross-sell) ?', options: ['Moins de 20 %', '20 à 40 %', '40 à 60 %', 'Plus de 60 %'] },
+  },
+  customer_success: {
+    label: 'Customer Success Manager',
+    q1: { text: 'Sur quel indicateur êtes-vous principalement évalué ?', options: ['Rétention / churn', 'Adoption du produit', 'Expansion du portefeuille', 'Satisfaction client (NPS, CSAT)'] },
+    q2: { text: 'Un client clé utilise peu le produit trois mois avant son renouvellement :', options: ['J’attends la date de renouvellement pour en parler', 'Je lance un plan d’adoption avec ses équipes', 'Je propose une remise pour sécuriser le renouvellement', 'Je remonte l’alerte au commercial du compte'] },
+  },
+  partenariats: {
+    label: 'Partenariats / Channel',
+    q1: { text: 'Quelle part de vos revenus passe par des partenaires ou distributeurs ?', options: ['Moins de 25 %', '25 à 50 %', '50 à 75 %', 'Plus de 75 %'] },
+    q2: { text: 'Un partenaire signé génère très peu de ventes :', options: ['Je le laisse avancer à son rythme', "Je co-construis un plan d'affaires avec objectifs", "Je forme et j'accompagne ses équipes commerciales", 'Je réduis ses avantages au profit des partenaires actifs'] },
+  },
+  conseiller_vente: {
+    label: 'Conseiller de vente / Vendeur',
+    q1: { text: 'Combien de clients conseillez-vous en moyenne par jour ?', options: ['Moins de 10', '10 à 30', '30 à 60', 'Plus de 60'] },
+    q2: { text: 'Un client hésite longuement entre deux produits :', options: ['Je le laisse réfléchir tranquillement', 'Je le questionne sur son usage pour l’aider à trancher', 'Je mets en avant le produit le plus cher', "Je lui propose un avantage s'il achète aujourd'hui"] },
+  },
   manager: {
     label: 'Manager commercial',
     q1: { text: 'Combien de commerciaux avez-vous encadrés ?', options: ['Aucun encore', '1 à 3', '4 à 10', 'Plus de 10'] },
     q2: { text: 'Face à un commercial en sous-performance :', options: ['Je fixe un plan de redressement chiffré', 'Je fais du terrain avec lui', "Je cherche à comprendre ce qui bloque avant d'agir"] },
+  },
+  direction_commerciale: {
+    label: 'Directeur commercial / Head of Sales',
+    q1: { text: 'Quel chiffre d’affaires annuel pilotez-vous ?', options: ['Moins de 5M€', '5 à 20M€', '20 à 100M€', 'Plus de 100M€'] },
+    q2: { text: 'À mi-année, vos résultats sont en retard de 15 % sur l’objectif :', options: ['Je renforce le suivi individuel des commerciaux', 'Je revois le mix cibles, canaux et offres', 'Je recrute pour augmenter la capacité', "J'ajuste les objectifs avec la direction générale"] },
   },
 };
 // JOB_TAXONOMY:CANDIDATE_ADN_QUESTIONS:END
@@ -4461,7 +4522,7 @@ let SOFT_COMPETENCES_DIRTY = false;
 const PROFILE_PREF_SUGGESTIONS = Object.freeze({
   target_job_types: [
     // JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:START
-    'SDR / BDR', 'Business Developer', 'Account Executive', 'Commercial terrain', 'Key Account Manager', 'Manager commercial',
+    'SDR / BDR', 'Business Developer', 'Account Executive', 'Commercial sédentaire / Inside Sales', 'Commercial terrain', 'Technico-commercial', "Chargé d'affaires / Ingénieur d'affaires", 'Avant-vente / Sales Engineer', 'Key Account Manager', 'Account Manager', 'Customer Success Manager', 'Partenariats / Channel', 'Conseiller de vente / Vendeur', 'Manager commercial', 'Directeur commercial / Head of Sales',
     // JOB_TAXONOMY:CANDIDATE_PROFILE_SUGGESTIONS:END
   ],
   sales_style: [

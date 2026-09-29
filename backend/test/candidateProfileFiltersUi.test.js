@@ -10,7 +10,7 @@ const {
 
 test('profil structuré : update champs valides', () => {
   const out = normalizeCandidateProfileStructuredFields({
-    target_job_types: ['SDR', 'Account Executive'],
+    target_job_types: ['SDR', 'Account Executive', 'Closer'],
     sales_style: 'hunter',
     years_experience: 5,
     desired_contracts: ['CDI', 'Freelance'],
@@ -21,7 +21,9 @@ test('profil structuré : update champs valides', () => {
     methodologies: ['MEDDIC', 'SPIN Selling'],
     availability: 'immediate',
   });
-  assert.deepEqual(out.target_job_types, ['SDR', 'Account Executive']);
+  // Lot 4 : 'SDR' est un alias certain (liste Yannis) → label canonique ; 'Closer'
+  // (ambigu, non rattaché) reste tel quel.
+  assert.deepEqual(out.target_job_types, ['SDR / BDR', 'Account Executive', 'Closer']);
   assert.equal(out.sales_style, 'hunter');
   assert.equal(out.years_experience, 5);
   assert.deepEqual(out.desired_contracts, ['CDI', 'Freelance']);

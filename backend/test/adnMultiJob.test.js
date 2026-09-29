@@ -316,7 +316,7 @@ test('4/5/8. refus propres : tableau vide, non-texte, doublon, principal hors s�
 
 test('6/7. ID inconnu et métier inactif : refusés en nouvelle écriture, tolérés en lecture historique', async () => {
   const f = FIXTURES[0];
-  for (const unknown of ['closer', 'technico_commercial', 'SDR / BDR']) {
+  for (const unknown of ['closer', 'chef_de_rayon', 'SDR / BDR']) {
     const response = await submit(newCandidate(), newPayload(f, ['sdr', unknown]));
     assert.equal(response.status, 400, unknown);
   }
@@ -628,6 +628,51 @@ test('bout en bout : payload produit par le frontend → même score que l’anc
       assert.deepEqual(response.body, resultBeforeLot(equivalentOldPayload(f)), `${f.name} +${extra.length}`);
     }
   }
+});
+
+test('Lot 4 : nouveau métier principal, mélange ancien + nouveau, stockage/relecture, score invariant', async () => {
+  const NEW_IDS = ['sedentaire', 'technico_commercial', 'charge_affaires', 'avant_vente', 'account_manager',
+    'customer_success', 'partenariats', 'conseiller_vente', 'direction_commerciale'];
+  assert.ok(NEW_IDS.every((id) => JOB_IDS.includes(id)));
+  for (const primary of NEW_IDS) {
+    const f = { ...FIXTURES[1], name: `principal ${primary}`, primary, style: 'full', q: [1, 2] };
+    const expected = resultBeforeLot(equivalentOldPayload(f)); // pas d'ancien bouton : prefs.poste = []
+    for (const postes of [[primary], ['sdr', primary], ['ae', 'kam', primary, 'manager'], JOB_IDS]) {
+      const user = newCandidate();
+      const response = await submit(user, newPayload(f, canonical(postes)));
+      assert.equal(response.status, 200, `${primary} ${postes}`);
+      assert.deepEqual(response.body, expected, `${primary} avec ${postes.length} postes`);
+      const row = db.candidats.find((r) => r.user_id === user);
+      assert.equal(row.type_poste, primary); // chaîne ID, groupe benchmark
+      assert.equal(jobTypeById(row.type_poste).label, JOB_TYPE_DESCRIPTORS.find((job) => job.id === primary).label);
+      assert.deepEqual(row.axes.questionnaire.job_profile.postes, canonical(postes));
+      assert.equal('poste' in row.axes.questionnaire.prefs, false);
+      assert.equal(row.axes.questionnaire.job_profile.reponses.q1, MODULES[primary].q1.options[1]);
+    }
+  }
+  // Ancien métier principal + nouveaux secondaires : strictement le score historique.
+  const legacyPrimary = FIXTURES[0];
+  const response = await submit(newCandidate(), newPayload(legacyPrimary, canonical(['sdr', 'charge_affaires', 'avant_vente', 'direction_commerciale'])));
+  assert.deepEqual(response.body, resultBeforeLot(equivalentOldPayload(legacyPrimary)));
+});
+
+test('Lot 4 frontend : nouveaux métiers sélectionnables, principal explicite, q1/q2 du nouveau principal', () => {
+  const ui = buildFrontend();
+  const { fn, state, elements } = ui;
+  assert.deepEqual(ui.jobButtons.map((b) => b.getAttribute('data-job-id')), JOB_IDS);
+  fn.toggleTargetJob('direction_commerciale');
+  fn.toggleTargetJob('sdr');
+  fn.toggleTargetJob('charge_affaires');
+  assert.deepEqual(state().jobs, ['sdr', 'charge_affaires', 'direction_commerciale']); // ordre taxonomie
+  assert.equal(state().primary, null);
+  fn.continueFromTargetJobs();
+  assert.equal(fn.currentTestStepId(), 'ts-primary');
+  assert.deepEqual(ui.primaryButtons().map((b) => [b.getAttribute('data-job-id'), b.label]),
+    [['sdr', 'SDR / BDR'], ['charge_affaires', 'Chargé d&#39;affaires / Ingénieur d&#39;affaires'], ['direction_commerciale', 'Directeur commercial / Head of Sales']]);
+  fn.selectPrimaryJob('charge_affaires');
+  fn.continueFromPrimaryJob();
+  fn.renderProfileQuestion(2);
+  assert.equal(elements['profileq2-text'].textContent, MODULES.charge_affaires.q2.text);
 });
 
 test('accessibilité et mobile (statique) : boutons natifs, aria-pressed, indicateur non coloré, libellés longs', () => {

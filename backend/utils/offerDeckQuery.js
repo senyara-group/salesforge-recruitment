@@ -118,8 +118,11 @@ function parseBoundedList(raw, { label, allowed = null, max = MAX_MULTI, maxLen 
 /**
  * Liste CSV : canonicalize si connu ; sinon conserve le token (job_type/sector legacy).
  * Pour listes fermées strictes, passer rejectUnknown=true.
+ * keepAliasRaw (job_type) : une valeur résolue via un ALIAS (et non une simple variante
+ * de casse du libellé) garde aussi le texte saisi, pour retrouver les offres historiques
+ * enregistrées en texte libre avant l'ajout de l'alias (ex. job_type = 'Sales Engineer').
  */
-function parseCanonicalList(raw, { label, canonicalize, allowed, rejectUnknown = true }) {
+function parseCanonicalList(raw, { label, canonicalize, allowed, rejectUnknown = true, keepAliasRaw = false }) {
   const values = splitCsv(raw);
   if (!values.length) return [];
   if (values.length > MAX_MULTI) {
@@ -133,6 +136,8 @@ function parseCanonicalList(raw, { label, canonicalize, allowed, rejectUnknown =
         throw httpError(`${label} invalide: ${value}`, 'FILTER_TAXONOMY_INVALID');
       }
       if (!out.includes(canonical)) out.push(canonical);
+      const viaAlias = canonical.trim().toLowerCase() !== value.toLowerCase();
+      if (keepAliasRaw && viaAlias && !out.includes(value)) out.push(value);
       continue;
     }
     if (rejectUnknown) {
@@ -207,6 +212,7 @@ function parseOfferDeckQuery(query = {}) {
       canonicalize: canonicalizeTargetJobType,
       allowed: [...TARGET_JOB_TYPES],
       rejectUnknown: false,
+      keepAliasRaw: true, // offres.job_type historique = texte libre (lecture seule, aucun backfill)
     }),
     sectors: parseCanonicalList(query.sector, {
       label: 'sector',
