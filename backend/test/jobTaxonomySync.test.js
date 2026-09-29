@@ -17,7 +17,8 @@ const [CANDIDATE, RECRUITER] = FILES;
 const HISTORICAL_IDS = ['sdr', 'bizdev', 'ae', 'terrain', 'kam', 'manager'];
 const CANDIDATE_DRIFT = ['<span class="ot">SDR / BDR</span>', '<span class="ot">stale label</span>'];
 const RECRUITER_DRIFT = ['>SDR / BDR</button>', '>stale label</button>'];
-const TECHNICO = Object.freeze({ id: 'technico_commercial', label: 'Technico-commercial', active: true });
+// Métier fictif (le technico-commercial est devenu un vrai métier au Lot 4).
+const FUTURE_JOB = Object.freeze({ id: 'fixture_future_job', label: 'Métier futur (fixture)', active: true });
 const COMPLETE_MODULE = Object.freeze({
   q1: { text: 'Part de votre temps en démonstrations techniques :', options: ['Moins de 25 %', '25 à 50 %', 'Plus de 50 %'] },
   q2: { text: 'Face à une objection technique pointue :', options: ['Je réponds seul', "J'implique un expert", 'Je reporte la réponse'] },
@@ -180,11 +181,11 @@ for (const [format, eol] of EOLS) {
 }
 
 test('I-K. ADN modules must match the renderProfileQuestion contract', t => {
-  const descriptors = withJobs(TECHNICO);
+  const descriptors = withJobs(FUTURE_JOB);
   const invalid = {
-    'I label-only module': { label: 'Technico-commercial' },
+    'I label-only module': { label: 'Métier futur (fixture)' },
     'missing q2': { q1: COMPLETE_MODULE.q1 },
-    'module label is generated, not declared': { label: 'Technico-commercial', ...COMPLETE_MODULE },
+    'module label is generated, not declared': { label: 'Métier futur (fixture)', ...COMPLETE_MODULE },
     'J q1 without text': { ...COMPLETE_MODULE, q1: { options: COMPLETE_MODULE.q1.options } },
     'J q1 blank text': { ...COMPLETE_MODULE, q1: { text: '   ', options: COMPLETE_MODULE.q1.options } },
     'J q2 text not a string': { ...COMPLETE_MODULE, q2: { text: 42, options: COMPLETE_MODULE.q2.options } },
@@ -197,20 +198,20 @@ test('I-K. ADN modules must match the renderProfileQuestion contract', t => {
     'K empty option': { ...COMPLETE_MODULE, q1: { text: 'Question ?', options: ['Oui', ''] } },
     'K duplicate option': { ...COMPLETE_MODULE, q1: { text: 'Question ?', options: ['Oui', ' oui'.trim().toUpperCase()] } },
     'unknown question key': { ...COMPLETE_MODULE, q3: COMPLETE_MODULE.q1 },
-    'module is not an object': 'Technico-commercial',
+    'module is not an object': 'Métier futur (fixture)',
     'question is null': { ...COMPLETE_MODULE, q1: null },
   };
   for (const [name, module] of Object.entries(invalid)) {
-    assertZeroWrite(t, { options: { descriptors, modules: withModules({ technico_commercial: module }) }, error: /invalid job taxonomy: ADN module "technico_commercial"/ });
-    assert.throws(() => render(CANDIDATE, historicalFile(CANDIDATE), { descriptors, modules: withModules({ technico_commercial: module }) }), JobTaxonomyError, name);
+    assertZeroWrite(t, { options: { descriptors, modules: withModules({ fixture_future_job: module }) }, error: /invalid job taxonomy: ADN module "fixture_future_job"/ });
+    assert.throws(() => render(CANDIDATE, historicalFile(CANDIDATE), { descriptors, modules: withModules({ fixture_future_job: module }) }), JobTaxonomyError, name);
   }
   // Sparse options: rejected by the contract itself, before any rendering.
   const holes = ['Oui', 'Non', 'Peut-être'];
   delete holes[1];
   for (const options of [holes, new Array(3), ['Oui', , 'Non']]) { // eslint-disable-line no-sparse-arrays
-    assert.throws(() => validateAdnModules(createJobTaxonomy(descriptors).JOB_TYPES, withModules({ technico_commercial: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } })),
-      /technico_commercial"\.q1\.options\[\d\]: sparse array \(hole\) is not allowed/);
-    assertZeroWrite(t, { options: { descriptors, modules: withModules({ technico_commercial: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } }) }, error: /sparse array \(hole\) is not allowed/ });
+    assert.throws(() => validateAdnModules(createJobTaxonomy(descriptors).JOB_TYPES, withModules({ fixture_future_job: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } })),
+      /fixture_future_job"\.q1\.options\[\d\]: sparse array \(hole\) is not allowed/);
+    assertZeroWrite(t, { options: { descriptors, modules: withModules({ fixture_future_job: { ...COMPLETE_MODULE, q1: { text: 'Question ?', options } } }) }, error: /sparse array \(hole\) is not allowed/ });
   }
   // Historical modules are subject to the same contract.
   const { sdr, ...withoutSdr } = ADN_PROFILE_QUESTION_MODULES;
@@ -226,7 +227,7 @@ test('L-N. ID, label and alias collisions are refused before any generation', t 
     'M label equal after normalization': [{ id: 'x', label: 'account EXECUTIVE' }, /collides with label of "ae"/],
     'M label equal to another id': [{ id: 'x', label: 'KAM' }, /collides with the id of "kam"/],
     'N alias equal to another label': [{ id: 'x', label: 'X', aliases: ['key account manager'] }, /alias "key account manager" of "x" collides with label of "kam"/],
-    'N alias equal to another id': [{ id: 'x', label: 'X', aliases: ['SDR'] }, /collides with the id of "sdr"/],
+    'N alias equal to another id': [{ id: 'x', label: 'X', aliases: ['Terrain'] }, /collides with the id of "terrain"/],
     'N alias duplicated in the same job': [{ id: 'x', label: 'X', aliases: ['Y', ' y'.trim()] }, /duplicates its own alias/],
     'N alias equal to its own label': [{ id: 'x', label: 'X', aliases: ['x '.trim().toUpperCase()] }, /duplicates its own label/],
   };
@@ -248,11 +249,11 @@ test('O. unsupported labels are refused (line breaks, controls, blanks, size, ty
   const bad = ['Technico\ncommercial', 'Technico' + cr + 'commercial', 'Technico' + lineSeparator + 'commercial', 'Tech\tnico',
     '', '   ', ' Technico', 'Technico ', 'x'.repeat(81), 42, null, undefined];
   for (const label of bad) {
-    assert.throws(() => createJobTaxonomy(withJobs({ id: 'technico_commercial', label })), JobTaxonomyError, JSON.stringify(label));
-    assert.throws(() => createJobTaxonomy(withJobs({ id: 'technico_commercial', label: 'Technico-commercial', aliases: [label] })), JobTaxonomyError);
+    assert.throws(() => createJobTaxonomy(withJobs({ id: 'fixture_future_job', label })), JobTaxonomyError, JSON.stringify(label));
+    assert.throws(() => createJobTaxonomy(withJobs({ id: 'fixture_future_job', label: 'Métier futur (fixture)', aliases: [label] })), JobTaxonomyError);
   }
   assertZeroWrite(t, {
-    options: { descriptors: withJobs({ ...TECHNICO, label: 'Technico\ncommercial' }), modules: withModules({ technico_commercial: COMPLETE_MODULE }) },
+    options: { descriptors: withJobs({ ...FUTURE_JOB, label: 'Technico\ncommercial' }), modules: withModules({ fixture_future_job: COMPLETE_MODULE }) },
     error: /line breaks \(CR\/LF\) are not allowed/,
   });
   assert.doesNotThrow(() => createJobTaxonomy(withJobs({ id: 'y', label: 'y'.repeat(80) })));
@@ -298,8 +299,8 @@ test('check mode detects drift and names the exact fix without writing', t => {
   assert.throws(() => sync({ root }), /recruteur\.html out of date with the job taxonomy .*npm --prefix backend run taxonomy:sync/);
   assert.ok(bytes(root, RECRUITER).equals(before));
   // A registry change without sync is detected the same way.
-  const descriptors = withJobs(TECHNICO);
-  assert.throws(() => sync({ root: tempRoot(t), descriptors, modules: withModules({ technico_commercial: COMPLETE_MODULE }) }),
+  const descriptors = withJobs(FUTURE_JOB);
+  assert.throws(() => sync({ root: tempRoot(t), descriptors, modules: withModules({ fixture_future_job: COMPLETE_MODULE }) }),
     /candidat\.html, frontend\/_spaces\/recruteur\.html out of date/);
 });
 
@@ -309,35 +310,36 @@ test('CLI check exits 0 on the repository and prints a clear status', () => {
   assert.match(result.stdout, /Job taxonomy HTML is synchronized/);
 });
 
-test('future job simulation: technico_commercial (fixture/temp only)', t => {
-  const descriptors = withJobs(TECHNICO);
+test('future job simulation: fixture_future_job (fixture/temp only)', t => {
+  const descriptors = withJobs(FUTURE_JOB);
   // CAS 1: no ADN module.
-  assertZeroWrite(t, { options: { descriptors }, error: /ADN module "technico_commercial" is missing/ });
+  assertZeroWrite(t, { options: { descriptors }, error: /ADN module "fixture_future_job" is missing/ });
   // CAS 2: label-only module.
-  assertZeroWrite(t, { options: { descriptors, modules: withModules({ technico_commercial: { label: 'Technico-commercial' } }) }, error: /q1 is missing/ });
+  assertZeroWrite(t, { options: { descriptors, modules: withModules({ fixture_future_job: { label: 'Métier futur (fixture)' } }) }, error: /q1 is missing/ });
   // CAS 3: structurally complete module -> generation in a temporary copy only.
-  const modules = withModules({ technico_commercial: COMPLETE_MODULE });
+  const modules = withModules({ fixture_future_job: COMPLETE_MODULE });
   const root = tempRoot(t);
   assert.deepEqual(sync({ write: true, root, descriptors, modules }).changed, FILES);
   const choices = generatedChoices(root);
-  const labels = [...JOB_TYPE_DESCRIPTORS.map(job => job.label), 'Technico-commercial'];
-  assert.deepEqual(choices.buttons, [...JOB_TYPE_DESCRIPTORS.map(job => [job.id, job.label]), ['technico_commercial', 'Technico-commercial']]);
+  const labels = [...JOB_TYPE_DESCRIPTORS.map(job => job.label), 'Métier futur (fixture)'];
+  assert.deepEqual(choices.buttons, [...JOB_TYPE_DESCRIPTORS.map(job => [job.id, job.label]), ['fixture_future_job', 'Métier futur (fixture)']]);
   assert.deepEqual(choices.chips.map(([value]) => value), labels);
   assert.deepEqual(choices.suggestions, labels);
-  assert.deepEqual(Object.keys(choices.questions), [...HISTORICAL_IDS, 'technico_commercial']);
-  assert.deepEqual(choices.questions.technico_commercial, { label: 'Technico-commercial', ...COMPLETE_MODULE });
-  for (const id of HISTORICAL_IDS) {
+  assert.deepEqual(Object.keys(choices.questions), [...JOB_TYPE_DESCRIPTORS.map(job => job.id), 'fixture_future_job']);
+  assert.deepEqual(choices.questions.fixture_future_job, { label: 'Métier futur (fixture)', ...COMPLETE_MODULE });
+  for (const id of JOB_TYPE_DESCRIPTORS.map(job => job.id)) {
     assert.deepEqual(choices.questions[id], JSON.parse(JSON.stringify({ label: JOB_TYPE_DESCRIPTORS.find(job => job.id === id).label, ...ADN_PROFILE_QUESTION_MODULES[id] })));
   }
   // Storage formats are unchanged: ADN poste stores the ID, profile/offer columns store the label.
   const fixture = createJobTaxonomy(descriptors);
-  assert.equal(fixture.jobTypeById('technico_commercial').label, 'Technico-commercial');
-  assert.equal(fixture.canonicalizeTargetJobType(' technico-COMMERCIAL '), 'Technico-commercial');
-  assert.equal(fixture.canonicalizeTargetJobType('technico_commercial'), null);
+  assert.equal(fixture.jobTypeById('fixture_future_job').label, 'Métier futur (fixture)');
+  assert.equal(fixture.canonicalizeTargetJobType(' métier FUTUR (fixture) '), 'Métier futur (fixture)');
+  assert.equal(fixture.canonicalizeTargetJobType('fixture_future_job'), null);
   assert.deepEqual(fixture.TARGET_JOB_TYPES, labels);
   for (const job of JOB_TYPE_DESCRIPTORS) assert.equal(fixture.jobTypeById(job.id).label, job.label);
   // The real registry and checked-in HTML are untouched by the simulation.
-  assert.deepEqual(JOB_TYPE_DESCRIPTORS.map(job => job.id), HISTORICAL_IDS);
+  assert.equal(JOB_TYPE_DESCRIPTORS.length, 15);
+  assert.deepEqual(JOB_TYPE_DESCRIPTORS.map(job => job.id).filter(id => HISTORICAL_IDS.includes(id)), HISTORICAL_IDS);
   assert.deepEqual(sync(), { changed: [] });
 });
 
@@ -346,6 +348,6 @@ test('inactive jobs are not generated as new choices and need no ADN module', t 
   const root = tempRoot(t);
   assert.deepEqual(sync({ write: true, root, descriptors }).changed, []);
   const choices = generatedChoices(root);
-  assert.equal(choices.buttons.length, 6);
+  assert.equal(choices.buttons.length, JOB_TYPE_DESCRIPTORS.length);
   assert.equal(choices.suggestions.includes('Fixture retired'), false);
 });

@@ -6,14 +6,40 @@ The contracts below describe the repository's writers/readers, not measured DB c
 
 ## Authoritative registry
 
-`utils/yannisTaxonomies.js`: `JOB_TYPE_DESCRIPTORS`, in existing order:
+`utils/yannisTaxonomies.js`: `JOB_TYPE_DESCRIPTORS`, 15 active jobs (Lot 4). The six
+historical IDs/labels are unchanged and keep their relative order; new jobs (*) come
+from Yannis' list (`test/fixtures/yannis-job-titles.json`):
 
 - `sdr`: SDR / BDR
 - `bizdev`: Business Developer
 - `ae`: Account Executive
+- `sedentaire`*: Commercial sédentaire / Inside Sales
 - `terrain`: Commercial terrain
+- `technico_commercial`*: Technico-commercial
+- `charge_affaires`*: Chargé d'affaires / Ingénieur d'affaires
+- `avant_vente`*: Avant-vente / Sales Engineer
 - `kam`: Key Account Manager
+- `account_manager`*: Account Manager
+- `customer_success`*: Customer Success Manager
+- `partenariats`*: Partenariats / Channel
+- `conseiller_vente`*: Conseiller de vente / Vendeur
 - `manager`: Manager commercial
+- `direction_commerciale`*: Directeur commercial / Head of Sales
+
+### Lot 4 — Yannis' list (258 raw titles, 211 distinct)
+
+- 122 distinct titles resolve to exactly one job (label or alias); 115 aliases, each
+  an exact title of the document (FR/EN variants, acronyms, junior/senior, sector).
+- 89 titles are deliberately NOT mapped (listed with reasons in
+  `test/jobTaxonomyLot4.test.js`): generic/ambiguous titles (Commercial, Sales
+  Executive, Closer, Chargé de clientèle…), titles contested between two families
+  (Ingénieur commercial, Directeur grands comptes, Enterprise Account Manager,
+  Technical Account Manager…), export roles (product decision pending), tenders and
+  contracts, sales support/ADV, Sales Ops/RevOps, retail store management/trade
+  marketing. Unmapped values stay verbatim everywhere (never remapped).
+- Writers canonicalize unambiguous aliases to the label on NEW writes (e.g. `BDR` →
+  `SDR / BDR`); stored data is never rewritten in bulk. `sdr` typed as text also
+  matches its own alias `SDR` and becomes its own label, never another job.
 
 They are validated and frozen by `createJobTaxonomy()` (`utils/jobTaxonomy.js`)
 when the module loads; an invalid registry throws a `JobTaxonomyError` (server,
@@ -28,9 +54,9 @@ Helpers: `activeJobTypes`, `jobTypeById`, `isJobTypeId`, `resolveJobTypeLabel`,
 `resolveStoredJobType`, `jobTypeLabel`, `canonicalizeTargetJobType`.
 Invalid/non-string inputs return null (false for validation); no string coercion.
 Exact IDs are read separately from labels. Label resolution preserves the existing
-trim + case-insensitive behavior. There were no semantic job aliases in the old
-normalizer: aliases are empty. BDR, Closer, Sales, Head of Sales and Sales Engineer
-are NOT silently mapped to one of the six jobs.
+trim + case-insensitive behavior. Aliases (Lot 4) only contain unambiguous titles of
+Yannis' list; Closer, Sales, Sales Executive, Commercial and other ambiguous titles
+are NOT silently mapped to any job.
 
 ### Descriptor contract
 

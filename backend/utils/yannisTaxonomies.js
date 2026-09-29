@@ -33,13 +33,107 @@ const CANDIDATE_SKILLS = Object.freeze([
 // IDs are the existing ADN job_profile.poste / candidats.type_poste codes.
 // Structured profile/offer fields persist labels, NOT these IDs.
 // Validated at load (IDs, labels, aliases, collisions): see utils/jobTaxonomy.js.
+// Lot 4 : 9 familles ajoutées depuis la liste de Yannis (JOB_TAXONOMY.md). Les 6 IDs et
+// labels historiques sont inchangés et gardent leur ordre relatif. Les aliases sont
+// uniquement des intitulés de cette liste sans ambiguïté ; les intitulés génériques
+// (Commercial, Sales Executive, Closer…) restent volontairement non résolus.
 const JOB_TYPE_DESCRIPTORS = deepFreezeDescriptors([
-  { id: 'sdr', label: 'SDR / BDR' },
-  { id: 'bizdev', label: 'Business Developer' },
-  { id: 'ae', label: 'Account Executive' },
-  { id: 'terrain', label: 'Commercial terrain' },
-  { id: 'kam', label: 'Key Account Manager' },
-  { id: 'manager', label: 'Manager commercial' },
+  {
+    id: 'sdr',
+    label: 'SDR / BDR',
+    aliases: ['SDR', 'BDR', 'Sales Development Representative (SDR)', 'Business Development Representative (BDR)',
+      'Prospecteur commercial', 'Chargé de prospection', 'Téléprospecteur', 'Appointment Setter',
+      'Lead Generation Specialist'],
+  },
+  {
+    id: 'bizdev',
+    label: 'Business Developer',
+    aliases: ['Business Development Manager (BDM)', 'Business Development Executive', 'Business Developer International',
+      'International Business Developer', 'International Business Development Manager'],
+  },
+  {
+    id: 'ae',
+    label: 'Account Executive',
+    aliases: ['Account Executive (AE)', 'Junior Account Executive', 'Senior Account Executive',
+      'Enterprise Account Executive', 'Strategic Account Executive'],
+  },
+  {
+    id: 'sedentaire',
+    label: 'Commercial sédentaire / Inside Sales',
+    aliases: ['Commercial sédentaire', 'Inside Sales', 'Télévendeur'],
+  },
+  {
+    id: 'terrain',
+    label: 'Commercial terrain',
+    aliases: ['Délégué commercial', 'Délégué commercial terrain', 'Attaché commercial', 'Représentant commercial',
+      'VRP', 'Agent commercial'],
+  },
+  {
+    id: 'technico_commercial',
+    label: 'Technico-commercial',
+    aliases: ['Attaché technico-commercial', 'Ingénieur technico-commercial', 'Technico-commercial sédentaire',
+      'Technico-commercial itinérant', 'Technical Sales'],
+  },
+  {
+    id: 'charge_affaires',
+    label: "Chargé d'affaires / Ingénieur d'affaires",
+    aliases: ["Chargé d'affaires", "Chargé d'affaires commercial", "Chargé d'affaires B2B", "Chargé d'affaires industrie",
+      "Chargé d'affaires IT", "Chargé d'affaires international", "Responsable d'affaires", "Ingénieur d'affaires",
+      "Ingénieur d'affaires IT"],
+  },
+  {
+    id: 'avant_vente',
+    label: 'Avant-vente / Sales Engineer',
+    aliases: ['Sales Engineer', 'Sales Engineer IT', 'Solutions Engineer', 'Solutions Consultant', 'Solution Consultant',
+      'Sales Solutions Consultant', 'Pre-Sales Consultant', 'Consultant avant-vente', 'Ingénieur avant-vente',
+      'Responsable avant-vente', 'Avant-vente IT'],
+  },
+  {
+    id: 'kam',
+    label: 'Key Account Manager',
+    aliases: ['Key Account Manager (KAM)', 'Global Account Manager', 'Strategic Account Manager', 'Commercial grands comptes',
+      'Responsable grands comptes', 'International Key Account Manager'],
+  },
+  {
+    id: 'account_manager',
+    label: 'Account Manager',
+    aliases: ['Junior Account Manager', 'Senior Account Manager', 'Customer Account Manager', 'International Account Manager',
+      'Responsable portefeuille clients', 'Responsable comptes clients', 'Responsable de compte', 'Chargé de comptes'],
+  },
+  {
+    id: 'customer_success',
+    label: 'Customer Success Manager',
+    aliases: ['Customer Success Manager (CSM)', 'Client Success Manager', 'Customer Success Executive',
+      'Customer Success Specialist'],
+  },
+  {
+    id: 'partenariats',
+    label: 'Partenariats / Channel',
+    aliases: ['Partnership Manager', 'Partner Manager', 'Channel Manager', 'Channel Sales Manager', 'Channel Account Manager',
+      'Strategic Partnerships Manager', 'Business Partnership Manager', 'Alliances Manager', 'Alliance Manager',
+      'Partner Development Manager', 'Head of Partnerships', 'Partnership Director', 'Directeur des partenariats',
+      'VP Partnerships'],
+  },
+  {
+    id: 'conseiller_vente',
+    label: 'Conseiller de vente / Vendeur',
+    aliases: ['Conseiller de vente', 'Vendeur', 'Vendeur conseil'],
+  },
+  {
+    id: 'manager',
+    label: 'Manager commercial',
+    aliases: ['Team Leader Sales', 'Sales Team Leader', 'Sales Supervisor', 'Sales Manager', 'Responsable commercial',
+      'Responsable des ventes', 'Responsable régional des ventes', 'Area Sales Manager', 'Regional Sales Manager',
+      'National Sales Manager', 'Sales Development Manager'],
+  },
+  {
+    id: 'direction_commerciale',
+    label: 'Directeur commercial / Head of Sales',
+    aliases: ['Directeur commercial', 'Directeur des ventes', 'Directeur commercial international', 'Sales Director',
+      'Head of Sales', 'VP Sales', 'Chief Sales Officer (CSO)', 'Chief Sales Officer', 'Chief Revenue Officer (CRO)',
+      'Chief Revenue Officer', 'CRO', 'Chief Commercial Officer (CCO)', 'Business Development Director',
+      'Directeur Business Development', 'Head of Business Development', 'VP Business Development'],
+  },
 ]);
 const jobTaxonomy = createJobTaxonomy(JOB_TYPE_DESCRIPTORS);
 const {
