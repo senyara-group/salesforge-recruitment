@@ -1603,7 +1603,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <section class="account-section support-contact" aria-labelledby="support-contact-title">
       <h2 class="sf" id="support-contact-title">Besoin d'aide ? Parlez avec notre équipe</h2>
       <p>Une question sur vos offres, le sourcing de candidats ou votre abonnement ? Écrivez-nous : une personne de l'équipe SwipSales lit votre message et vous répond par e-mail.</p>
-      <a class="btn bo support-contact-link" href="mailto:contact@swipsales.fr">Écrire à contact@swipsales.fr</a>
+      <a class="btn bo support-contact-link" href="mailto:contact@swipsales.fr?subject=SwipSales%20%E2%80%94%20Demande%20d%27aide">Écrire à contact@swipsales.fr</a>
     </section>
     <button class="btn bo account-logout" type="button" onclick="doLogout()">Se déconnecter</button>
   </div>
@@ -4141,7 +4141,7 @@ async function selectPlan(plan, billing) {
 }
 // Palier "sur devis" : jamais de checkout Stripe automatique, contact manuel.
 function contactPartenaire() {
-  window.location.href = 'mailto:senechalyannis@gmail.com?subject=' + encodeURIComponent('SwipSales — palier Partenaire (sur devis)');
+  window.location.href = 'mailto:contact@swipsales.fr?subject=' + encodeURIComponent('SwipSales — palier Partenaire (sur devis)');
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
 function isCurrentPlan(p) {
