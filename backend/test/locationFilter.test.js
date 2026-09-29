@@ -631,7 +631,8 @@ test('L. mobile : .filters-sheet .form-field réellement pleine largeur (candida
   for (const [html, id] of [[candidateHtml, 'filt-location'], [recruiterHtml, 'filt-cand-location']]) {
     assert.match(html, new RegExp(`<label class="filt-label" for="${id}">`));
     assert.match(html, new RegExp(`<input class="form-field" id="${id}" type="search" maxlength="80"`));
-    assert.match(html, new RegExp(`aria-describedby="${id}-help"`));
+    // Aide + statut de l'autocomplétion (Lot 6) annoncés par les lecteurs d'écran.
+    assert.match(html, new RegExp(`aria-describedby="${id}-help ${id}-status"`));
   }
   assert.match(candidateHtml, /\.mstat-v\.is-text\{[^}]*text-overflow:ellipsis/);
   assert.match(recruiterHtml, /\.cand-fact-location span\{[^}]*text-overflow:ellipsis/);
