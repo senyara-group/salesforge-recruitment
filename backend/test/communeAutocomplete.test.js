@@ -322,6 +322,84 @@ test('T/U. mobile : liste en flux dans les feuilles de filtres (non rognée), ci
 });
 
 // ------------------------------------------------------------------ correctif final Lot 6
+test('P2 debounce : Lille devient obsolète dès input Paris, avant le fetch Paris', async () => {
+  const s = setup();
+  s.input.focus();
+  s.type('Lille');
+  await s.flush();
+  s.type('Paris'); // Ne pas vider les timers : Paris attend encore son debounce.
+  const snapshot = () => ({
+    labels: labels(s.list), expanded: s.input.getAttribute('aria-expanded'),
+    active: s.input.getAttribute('aria-activedescendant'),
+    status: s.status.textContent, hidden: s.status.hidden, open: s.widget.isOpen(),
+  });
+  const duringDebounce = snapshot();
+  assert.equal(s.net.calls.length, 1);
+  assert.equal(s.timers.pending(), 1);
+  s.net.calls[0].resolve([{ nom: 'Lille', codeDepartement: '59' }]);
+  await tick();
+  assert.deepEqual(snapshot(), duringDebounce);
+  assert.deepEqual(labels(s.list), []);
+  assert.equal(s.widget.isOpen(), false);
+  assert.equal(s.net.calls[0].init.signal.aborted, true);
+  await s.flush();
+  assert.equal(s.net.calls.length, 2);
+  s.net.calls[1].resolve([{ nom: 'Paris', codeDepartement: '75' }]);
+  await tick();
+  assert.deepEqual(labels(s.list), ['Paris (75)']);
+  assert.equal(s.input.getAttribute('aria-expanded'), 'true');
+});
+
+test('P2 Reset recruteur : vrai handler, aucun ancien résultat après Reset et ArrowDown', async () => {
+  const page = offerPage();
+  const input = page.doc.byId['filt-cand-location'];
+  const list = page.doc.byId['filt-cand-location-list'];
+  const status = page.doc.byId['filt-cand-location-status'];
+  const type = (value) => { input.focus(); input.value = value; input.dispatch('input'); };
+  const assertReset = () => {
+    assert.equal(input.value, '');
+    assert.deepEqual(labels(list), []);
+    assert.equal(list.classList.contains('on'), false);
+    assert.equal(input.getAttribute('aria-expanded'), 'false');
+    assert.equal(input.getAttribute('aria-activedescendant'), null);
+    assert.equal(list.scrollTop, 0);
+    assert.equal(status.hidden, true);
+  };
+  type('Lille');
+  await page.flush();
+  page.net.calls[0].resolve([{ nom: 'Lille', codeDepartement: '59' }]);
+  await tick();
+  assert.equal(list.classList.contains('on'), true);
+  input.dispatch('keydown', { key: 'ArrowDown' });
+  list.scrollTop = 90;
+  page.doc.dispatch('mousedown', page.doc.createElement('button'));
+  page.h.resetCandFiltersPanel();
+  input.focus();
+  input.dispatch('keydown', { key: 'ArrowDown' });
+  assertReset();
+  // Reset pendant le debounce : aucune requête supplémentaire.
+  type('Lyon');
+  page.h.resetCandFiltersPanel();
+  await page.flush();
+  assert.equal(page.net.calls.length, 1);
+  assertReset();
+  // Reset pendant fetch : même un serveur ignorant abort ne restaure rien.
+  type('Lyon');
+  await page.flush();
+  page.h.resetCandFiltersPanel();
+  assert.equal(page.net.calls[1].init.signal.aborted, true);
+  page.net.calls[1].resolve([{ nom: 'Lyon', codeDepartement: '69' }]);
+  await tick();
+  assertReset();
+  // Le cache et la navigation restent fonctionnels après Reset.
+  type('Lille');
+  await page.flush();
+  assert.equal(page.net.calls.length, 2);
+  assert.deepEqual(labels(list), ['Lille (59)']);
+  input.dispatch('keydown', { key: 'ArrowDown' });
+  assert.equal(input.getAttribute('aria-activedescendant'), 'filt-cand-location-list-opt-0');
+});
+
 const FREE_TEXT_WORDING = /tel quel|librement|saisie libre|texte saisi|sera utilisé|accept/i;
 
 function extractFunction(source, signature) {
@@ -359,7 +437,8 @@ function offerPage() {
   };
   const sandbox = {
     window: { SwipCommuneAutocomplete: component }, SwipCommuneAutocomplete: component,
-    document: { getElementById: (id) => doc.byId[id] || stubs[id] || null },
+    document: { getElementById: (id) => doc.byId[id] || stubs[id] || null, querySelectorAll: () => [] },
+    DRAFT_SKILLS: [], renderDraftSkillsAccordion() {},
     OF_TYPE: 'CDI', OF_REMOTE: '', OF_TAGS: [], EDITING_OFFER_ID: '', EDITING_OFFER_STATUS: 'active',
     showErr: (id, message) => errors.push(message), isValidSalaire: () => true, parseOptionalSalaryInput: () => null,
     setBtn() {}, toast() {}, go() {}, initNotifications() {},
@@ -370,8 +449,9 @@ function offerPage() {
   vm.runInNewContext([
     'let LIEU_SELECTIONNE = false;',
     extractFunction(recruteur, 'async function postOffre()'),
+    extractFunction(recruteur, 'function resetCandFiltersPanel()'),
     recruteur.slice(start, end),
-    'this.h = { postOffre, selected: () => LIEU_SELECTIONNE };',
+    'this.h = { postOffre, resetCandFiltersPanel, selected: () => LIEU_SELECTIONNE };',
   ].join('\n'), sandbox);
   const input = doc.byId['of-lieu'];
   const list = doc.byId['of-lieu-list'];
@@ -469,6 +549,22 @@ test('D. Échap pendant la recherche : la réponse tardive ne rouvre pas la list
   net.calls[2].resolve([{ nom: 'Paris', codeDepartement: '75' }]);
   await tick();
   assert.equal(list.classList.contains('on'), false);
+  // Tab annule également la recherche sans empêcher le déplacement du focus.
+  type('Bordeaux');
+  await flush();
+  const tab = input.dispatch('keydown', { key: 'Tab' });
+  assert.equal(tab.defaultPrevented, false);
+  assert.equal(net.calls[3].init.signal.aborted, true);
+  net.calls[3].resolve([{ nom: 'Bordeaux', codeDepartement: '33' }]);
+  await tick();
+  assert.equal(list.classList.contains('on'), false);
+  assert.equal(input.getAttribute('aria-expanded'), 'false');
+  assert.equal(input.getAttribute('aria-activedescendant'), null);
+  type('Nantes');
+  await flush();
+  net.calls[4].resolve([{ nom: 'Nantes', codeDepartement: '44' }]);
+  await tick();
+  assert.deepEqual(labels(list), ['Nantes (44)']);
 });
 
 test('E/F. fermeture du contexte (feuille de filtres) pendant la recherche, puis réouverture sans suggestion périmée', async () => {

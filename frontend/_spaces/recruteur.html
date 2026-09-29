@@ -2721,6 +2721,7 @@ function resetCandFiltersPanel() {
   if (years) years.value = '';
   const location = document.getElementById('filt-cand-location');
   if (location) location.value = '';
+  CAND_LOCATION_AUTOCOMPLETE?.reset();
   renderDraftSkillsAccordion([]);
 }
 
@@ -3666,6 +3667,7 @@ const OFFER_LOCATION_SPECIAL = Object.freeze([
   { label: 'France entière', value: 'France entière', special: true },
 ]);
 const isRemoteLocationQuery = (query) => !query || /remote|teletravail|télétravail|distance|domicile/i.test(query);
+let CAND_LOCATION_AUTOCOMPLETE = null;
 if (window.SwipCommuneAutocomplete) {
   SwipCommuneAutocomplete.attach(document.getElementById('of-lieu'), {
     listId: 'of-lieu-list',
@@ -3681,7 +3683,7 @@ if (window.SwipCommuneAutocomplete) {
     onInput: () => { LIEU_SELECTIONNE = false; },
     onSelect: () => { LIEU_SELECTIONNE = true; },
   });
-  SwipCommuneAutocomplete.attach(document.getElementById('filt-cand-location'), {
+  CAND_LOCATION_AUTOCOMPLETE = SwipCommuneAutocomplete.attach(document.getElementById('filt-cand-location'), {
     listId: 'filt-cand-location-list', statusId: 'filt-cand-location-status', revealList: true,
     context: document.getElementById('comp-filter-ov'),
   });

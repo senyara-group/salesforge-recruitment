@@ -277,6 +277,8 @@
     }
 
     function onInput() {
+      // L'ancienne saisie devient obsolète immédiatement, avant le prochain debounce.
+      reset();
       if (options.onInput) options.onInput();
       schedule();
     }
