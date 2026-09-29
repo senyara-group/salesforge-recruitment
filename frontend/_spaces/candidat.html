@@ -104,6 +104,11 @@ button,input,textarea,select{font-family:inherit}
 .autocomplete-item{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--bd)}
 .autocomplete-item:last-child{border-bottom:none}
 .autocomplete-item:hover{background:var(--bs);color:var(--b)}
+.autocomplete-item{min-height:44px;display:flex;align-items:center;box-sizing:border-box}
+.autocomplete-item.active{background:var(--bs);color:var(--b)}
+.autocomplete-list.is-inline{position:static;margin-top:6px;box-shadow:none;max-height:264px;scroll-margin-bottom:104px}
+.autocomplete-status{font-size:12px;line-height:1.4;color:var(--ink3);margin-top:6px}
+.autocomplete-status[hidden]{display:none}
 .fi:focus{outline:none;border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
 .auth-form{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
 .or-div{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--mu);font-size:12px;font-weight:600}
@@ -233,6 +238,8 @@ button,input,textarea,select{font-family:inherit}
 .filters-sheet{max-height:min(78dvh,640px);overflow:auto}
 .filters-sheet .filt-section{margin:14px 0 0}
 .filters-sheet .filt-section:first-of-type{margin-top:8px}
+.filters-sheet .filt-check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;margin-top:6px;cursor:pointer}
+.filters-sheet .filt-check input{width:20px;height:20px;flex:none}
 .filters-sheet .filt-help{font-size:12px;line-height:1.4;opacity:.7;margin-top:6px}
 .filters-sheet .filt-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin-bottom:8px}
 .filters-sheet .form-chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -1733,8 +1740,9 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <div class="profile-edit-field" style="position:relative;margin-bottom:12px">
         <label for="edit-ville">Ville</label>
-        <input id="edit-ville" autocomplete="off" placeholder="Ville" oninput="searchVilles('edit-ville','edit-ville-list',this.value)" onfocus="searchVilles('edit-ville','edit-ville-list',this.value)">
+        <input id="edit-ville" autocomplete="off" placeholder="Ville" aria-describedby="edit-ville-status">
         <div class="autocomplete-list" id="edit-ville-list"></div>
+        <div class="autocomplete-status" id="edit-ville-status" hidden></div>
       </div>
       <div class="profile-resource-list">
         <div class="profile-resource-row">
@@ -2143,8 +2151,10 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <div class="filt-section">
       <label class="filt-label" for="filt-location">Localisation</label>
-      <input class="form-field" id="filt-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-location-help">
-      <div class="filt-help" id="filt-location-help">Ville ou lieu indiqué dans l’offre (accents et majuscules ignorés). Les offres sans lieu renseigné sont masquées tant que ce filtre est actif.</div>
+      <input class="form-field" id="filt-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-location-help filt-location-status">
+      <div class="autocomplete-list is-inline" id="filt-location-list"></div>
+      <div class="autocomplete-status" id="filt-location-status" hidden></div>
+      <div class="filt-help" id="filt-location-help">Choisissez une commune proposée ou saisissez un lieu : la recherche porte sur le lieu indiqué dans l’offre (accents et majuscules ignorés). Les offres sans lieu renseigné sont masquées tant que ce filtre est actif.</div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Contrat</div>
@@ -2165,7 +2175,9 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <div class="filt-section">
       <div class="filt-label">Salaire fixe minimum (€ / an)</div>
-      <input class="form-field" id="filt-salary-min" type="number" min="0" max="500000" step="1000" inputmode="numeric" placeholder="Ex : 35000">
+      <input class="form-field" id="filt-salary-min" type="number" min="0" max="500000" step="1000" inputmode="numeric" placeholder="Ex : 35000" aria-describedby="filt-salary-help">
+      <label class="filt-check"><input type="checkbox" id="filt-salary-unspecified"> Inclure les offres sans salaire fixe renseigné</label>
+      <div class="filt-help" id="filt-salary-help">Le filtre s’appuie sur le fixe annuel saisi par le recruteur ; certaines offres n’indiquent qu’une rémunération en texte libre.</div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Compétences</div>
@@ -2204,6 +2216,7 @@ button,input,textarea,select{font-family:inherit}
 </div>
 
 <div class="toast" id="toast">Action réalisée</div>
+<script src="../commune-autocomplete.js"></script>
 <script>
 // ------------------------------------------------------------
 // CONFIG — Alexis : remplacer par l'URL Railway en production
@@ -2400,46 +2413,13 @@ function esc(text = '') {
 }
 
 // ------------------------------------------------------------
-// AUTOCOMPLÉTION VILLES (API officielle geo.api.gouv.fr, gratuite, sans clé)
-// Généralisée : passer l'id du champ texte et l'id de la liste de suggestions
+// AUTOCOMPLÉTION COMMUNES : composant commun ../commune-autocomplete.js
+// (ville du profil + filtre Opportunités). Sans le script, saisie libre.
 // ------------------------------------------------------------
-let VILLE_SEARCH_TIMER = null;
-function searchVilles(inputId, listId, query) {
-  clearTimeout(VILLE_SEARCH_TIMER);
-  VILLE_SEARCH_TIMER = setTimeout(() => fetchVilles(inputId, listId, query.trim()), 250);
+if (window.SwipCommuneAutocomplete) {
+  SwipCommuneAutocomplete.attach(document.getElementById('edit-ville'), { listId: 'edit-ville-list', statusId: 'edit-ville-status' });
+  SwipCommuneAutocomplete.attach(document.getElementById('filt-location'), { listId: 'filt-location-list', statusId: 'filt-location-status', revealList: true });
 }
-async function fetchVilles(inputId, listId, query) {
-  const list = document.getElementById(listId);
-  if (!list) return;
-  if (query.length < 2) { list.classList.remove('on'); return; }
-  let items = [];
-  try {
-    const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,codeDepartement&boost=population&limit=7`);
-    if (res.ok) {
-      const data = await res.json();
-      items = data.map(c => ({ label: `${c.nom} (${c.codeDepartement})`, value: c.nom }));
-    }
-  } catch (e) { /* API indisponible : on laisse la saisie libre */ }
-  if (!items.length) { list.classList.remove('on'); return; }
-  list.innerHTML = items.map((it, i) => `<div class="autocomplete-item" onmousedown="pickVille('${inputId}','${listId}',${i})">${esc(it.label)}</div>`).join('');
-  list.dataset.items = JSON.stringify(items);
-  list.classList.add('on');
-}
-function pickVille(inputId, listId, i) {
-  const list = document.getElementById(listId);
-  const items = JSON.parse(list.dataset.items || '[]');
-  const it = items[i];
-  if (!it) return;
-  document.getElementById(inputId).value = it.value;
-  list.classList.remove('on');
-}
-document.addEventListener('click', (e) => {
-  document.querySelectorAll('.autocomplete-list.on').forEach(list => {
-    if (!list.previousElementSibling || (!e.target.closest(`#${list.id}`) && e.target !== list.previousElementSibling)) {
-      list.classList.remove('on');
-    }
-  });
-});
 function shortDate(value) {
   if (!value) return '';
   return new Date(value).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
@@ -2972,6 +2952,7 @@ function emptyDeckFilters() {
     sector: '',
     published_preset: '',
     location: '',
+    include_unspecified_salary: false,
   };
 }
 let DECK_FILTERS = emptyDeckFilters();
@@ -3027,6 +3008,7 @@ function buildDeckQueryParams(filters, options) {
   if (filters.tags?.length) params.set('tags', filters.tags.join(','));
   if (filters.salary_fixed_min != null && filters.salary_fixed_min !== '') {
     params.set('salary_fixed_min', String(filters.salary_fixed_min));
+    if (filters.include_unspecified_salary === true) params.set('include_unspecified_salary', '1');
   }
   const jobType = String(filters.job_type || '').trim();
   if (jobType) params.set('job_type', jobType);
@@ -3130,6 +3112,8 @@ function syncFilterPanelFromState() {
   const jobType = document.getElementById('filt-job-type');
   const sector = document.getElementById('filt-sector');
   if (salary) salary.value = DECK_FILTERS.salary_fixed_min != null ? DECK_FILTERS.salary_fixed_min : '';
+  const unspecified = document.getElementById('filt-salary-unspecified');
+  if (unspecified) unspecified.checked = DECK_FILTERS.include_unspecified_salary === true;
   if (jobType) jobType.value = DECK_FILTERS.job_type || '';
   if (sector) sector.value = DECK_FILTERS.sector || '';
   const location = document.getElementById('filt-location');
@@ -3173,6 +3157,7 @@ function applyDeckFiltersFromPanel() {
     sector: String(document.getElementById('filt-sector')?.value || '').trim(),
     published_preset: publishedBtn ? (publishedBtn.getAttribute('data-filter-value') || '') : '',
     location: locationValue,
+    include_unspecified_salary: Boolean(document.getElementById('filt-salary-unspecified')?.checked),
   };
   document.getElementById('filters-ov')?.classList.remove('on');
   syncFilterChrome();

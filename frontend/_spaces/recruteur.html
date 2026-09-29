@@ -628,6 +628,11 @@ button.db{padding:0;font:inherit;appearance:none;-webkit-appearance:none}
 .autocomplete-item:last-child{border-bottom:none}
 .autocomplete-item:hover,.autocomplete-item.active{background:var(--bs);color:var(--b)}
 .autocomplete-item.remote{color:var(--b);font-weight:700}
+.autocomplete-item{min-height:44px;display:flex;align-items:center;box-sizing:border-box}
+.autocomplete-item.active{background:var(--bs);color:var(--b)}
+.autocomplete-list.is-inline{position:static;margin-top:6px;box-shadow:none;max-height:264px;scroll-margin-bottom:104px}
+.autocomplete-status{font-size:12px;line-height:1.4;color:var(--ink3);margin-top:6px}
+.autocomplete-status[hidden]{display:none}
 .form-hint-err{font-size:11px;color:var(--r);margin-top:5px;font-weight:600}
 .form-label{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;margin-bottom:6px;display:block}
 .form-field{width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;background:var(--w);color:var(--ink);transition:.15s}
@@ -1483,9 +1488,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <button type="button" class="link-action" id="of-sector-suggest" style="margin-top:6px;background:none;border:0;padding:0;color:var(--b);cursor:pointer;font:inherit;display:none" onclick="applyCompanySectorSuggestion()">Utiliser le secteur société</button>
     </div>
     <div class="form-group" style="position:relative">
-      <label class="form-label sf">Localisation</label>
-      <input class="form-field" id="of-lieu" placeholder="Ex : Paris" autocomplete="off" oninput="searchVilles(this.value)" onfocus="searchVilles(this.value)">
+      <label class="form-label sf" for="of-lieu">Localisation</label>
+      <input class="form-field" id="of-lieu" placeholder="Ex : Paris" autocomplete="off" aria-describedby="of-lieu-status">
       <div class="autocomplete-list" id="of-lieu-list"></div>
+      <div class="autocomplete-status" id="of-lieu-status" hidden></div>
     </div>
     <div class="form-group">
       <label class="form-label sf">Rémunération (libellé libre)</label>
@@ -1733,8 +1739,10 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     </div>
     <div class="filt-section">
       <label class="filt-label" for="filt-cand-location">Localisation du candidat</label>
-      <input class="form-field" id="filt-cand-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-cand-location-help">
-      <div class="filt-help" id="filt-cand-location-help">Ville déclarée par le candidat (accents et majuscules ignorés). Les profils sans ville et les profils anonymes sont exclus tant que ce filtre est actif.</div>
+      <input class="form-field" id="filt-cand-location" type="search" maxlength="80" autocomplete="off" enterkeyhint="search" placeholder="Ex : Lyon, Saint-Étienne" aria-describedby="filt-cand-location-help filt-cand-location-status">
+      <div class="autocomplete-list is-inline" id="filt-cand-location-list"></div>
+      <div class="autocomplete-status" id="filt-cand-location-status" hidden></div>
+      <div class="filt-help" id="filt-cand-location-help">Choisissez une commune proposée ou saisissez une ville : la recherche porte sur la ville déclarée par le candidat (accents et majuscules ignorés). Les profils sans ville et les profils anonymes sont exclus tant que ce filtre est actif.</div>
     </div>
     <div class="filt-section">
       <div class="filt-label">Style de vente</div>
@@ -1831,6 +1839,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 </div>
 
 <div class="toast" id="toast">Action réalisée</div>
+<script src="../commune-autocomplete.js"></script>
 <script>
 // ------------------------------------------------------------
 // CONFIG — Alexis : remplacer par l'URL Railway en production
@@ -3649,46 +3658,31 @@ async function postOffre() {
   } catch(e) { showErr('post-err', e.message); } finally { setBtn('btn-post-offre', false, EDITING_OFFER_ID ? 'Enregistrer les modifications' : "Publier l'offre"); }
 }
 
-let VILLE_SEARCH_TIMER = null;
-function searchVilles(query) {
-  LIEU_SELECTIONNE = false;
-  clearTimeout(VILLE_SEARCH_TIMER);
-  VILLE_SEARCH_TIMER = setTimeout(() => fetchVilles(query.trim()), 250);
+// Localisation : composant commun ../commune-autocomplete.js (lieu d'offre + filtre
+// Sourcing). Offre : « Remote / Télétravail » et « France entière » proposés, et une
+// suggestion doit être choisie (LIEU_SELECTIONNE). Sans le script, saisie libre.
+const OFFER_LOCATION_SPECIAL = Object.freeze([
+  { label: 'Remote / Télétravail', value: 'Remote / Télétravail', special: true },
+  { label: 'France entière', value: 'France entière', special: true },
+]);
+const isRemoteLocationQuery = (query) => !query || /remote|teletravail|télétravail|distance|domicile/i.test(query);
+if (window.SwipCommuneAutocomplete) {
+  SwipCommuneAutocomplete.attach(document.getElementById('of-lieu'), {
+    listId: 'of-lieu-list',
+    statusId: 'of-lieu-status',
+    openOnFocus: true,
+    extraItems: (query) => (isRemoteLocationQuery(query) ? OFFER_LOCATION_SPECIAL : []),
+    shouldFetch: (query) => query.length >= SwipCommuneAutocomplete.MIN_CHARS && !isRemoteLocationQuery(query),
+    onInput: () => { LIEU_SELECTIONNE = false; },
+    onSelect: () => { LIEU_SELECTIONNE = true; },
+  });
+  SwipCommuneAutocomplete.attach(document.getElementById('filt-cand-location'), {
+    listId: 'filt-cand-location-list', statusId: 'filt-cand-location-status', revealList: true,
+  });
+} else {
+  // Repli sans suggestions : la saisie libre reste acceptée pour ne pas bloquer la publication.
+  document.getElementById('of-lieu')?.addEventListener('input', () => { LIEU_SELECTIONNE = true; });
 }
-async function fetchVilles(query) {
-  const list = document.getElementById('of-lieu-list');
-  if (!list) return;
-  const q = query.toLowerCase();
-  // "Remote" n'a de sens que si le champ est vide (première suggestion) ou si on tape explicitement un mot lié au remote
-  const remotePertinent = !q || /remote|teletravail|télétravail|distance|domicile/.test(q);
-  let items = remotePertinent ? [{ label: 'Remote / Télétravail', remote: true }, { label: 'France entière', value: 'France entière' }] : [];
-  if (query.length >= 2 && !remotePertinent) {
-    try {
-      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,codeDepartement&boost=population&limit=8`);
-      if (res.ok) {
-        const data = await res.json();
-        items = items.concat(data.map(c => ({ label: `${c.nom} (${c.codeDepartement})`, value: c.nom })));
-      }
-    } catch (e) {}
-  }
-  if (!items.length) { list.classList.remove('on'); return; }
-  list.innerHTML = items.map((it, i) => `<div class="autocomplete-item${it.remote?' remote':''}" onmousedown="pickVille(${i})">${esc(it.label)}</div>`).join('');
-  list.dataset.items = JSON.stringify(items);
-  list.classList.add('on');
-}
-function pickVille(i) {
-  const list = document.getElementById('of-lieu-list');
-  const items = JSON.parse(list.dataset.items || '[]');
-  const it = items[i];
-  if (!it) return;
-  document.getElementById('of-lieu').value = it.remote ? 'Remote / Télétravail' : it.value;
-  LIEU_SELECTIONNE = true;
-  list.classList.remove('on');
-}
-document.addEventListener('click', (e) => {
-  const list = document.getElementById('of-lieu-list');
-  if (list && !e.target.closest('#of-lieu') && !e.target.closest('#of-lieu-list')) list.classList.remove('on');
-});
 
 async function loadOffers() {
   const list = document.getElementById('offers-list');
