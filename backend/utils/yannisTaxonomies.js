@@ -265,6 +265,7 @@ const LEGACY_METHODOLOGY_ALIASES = Object.freeze({
 });
 
 const LEGACY_SECTOR_ALIASES = Object.freeze({
+  saas: 'SaaS et Tech', // Lot 7 : décision produit explicite.
   'saas / tech': 'SaaS et Tech',
   'saas et tech': 'SaaS et Tech',
   'assurance / banque': 'Assurance et Banque',

@@ -2193,11 +2193,13 @@ button,input,textarea,select{font-family:inherit}
     </div>
     <div class="filt-section">
       <div class="filt-label">Type de poste</div>
-      <input class="form-field" id="filt-job-type" maxlength="80" placeholder="Ex : Account Executive">
+      <input class="form-field" id="filt-job-type" list="filter-job-suggestions" maxlength="80" placeholder="Ex : Account Executive">
+      <datalist id="filter-job-suggestions"></datalist>
     </div>
     <div class="filt-section">
       <div class="filt-label">Secteur</div>
-      <input class="form-field" id="filt-sector" maxlength="80" placeholder="Ex : SaaS">
+      <datalist id="filter-sector-suggestions"></datalist>
+      <input class="form-field" id="filt-sector" list="filter-sector-suggestions" maxlength="80" placeholder="Ex : SaaS">
     </div>
     <div class="filt-section">
       <div class="filt-label">Date de publication</div>
@@ -4520,7 +4522,9 @@ const PROFILE_PREF_SUGGESTIONS = Object.freeze({
   ],
   desired_contracts: ['CDI', 'Alternance', 'Freelance', 'Mission'],
   sectors: [
+    // JOB_TAXONOMY:CANDIDATE_SECTOR_SUGGESTIONS:START
     'SaaS et Tech', 'Industrie', 'BTP', 'Immobilier', 'Assurance et Banque', 'Retail', 'Services B2B', 'Télécom', 'Santé', 'Automobile',
+    // JOB_TAXONOMY:CANDIDATE_SECTOR_SUGGESTIONS:END
   ],
   customer_types: ['PME', 'ETI', 'Grands comptes', 'Particuliers'],
   skills: YANNIS_SKILLS,
@@ -4532,6 +4536,10 @@ const PROFILE_PREF_SUGGESTIONS = Object.freeze({
     { value: '3_months', label: 'Sous 3 mois' },
   ],
 });
+for (const [id, values] of [['filter-job-suggestions', PROFILE_PREF_SUGGESTIONS.target_job_types], ['filter-sector-suggestions', PROFILE_PREF_SUGGESTIONS.sectors]]) {
+  const list = document.getElementById(id);
+  if (list) values.forEach(value => { const option = document.createElement('option'); option.value = value; list.appendChild(option); });
+}
 let EDIT_PREFS = {
   target_job_types: [],
   sales_style: null,
@@ -4590,10 +4598,10 @@ function buildPrefChipHtml(key, options, selected, mode) {
     const value = typeof opt === 'string' ? opt : opt.value;
     const label = typeof opt === 'string' ? opt : opt.label;
     const on = isSingle ? selected === value : (selected || []).includes(value);
-    const handler = isSingle
-      ? `setPrefSingle('${key}','${String(value).replace(/'/g, "\\'")}',this)`
-      : `togglePrefMulti('${key}','${String(value).replace(/'/g, "\\'")}',this)`;
-    return `<button type="button" class="form-chip${on ? ' on' : ''}" onclick="${handler}">${esc(label)}</button>`;
+    const handler = `${isSingle ? "setPrefSingle" : "togglePrefMulti"}(${JSON.stringify(key)},${JSON.stringify(value)},this)`;
+    // Valeur historique hors liste : affichée telle quelle, retirable d'un clic.
+    const hint = opt && opt.extra ? ` title="${esc('Valeur hors liste — cliquez pour la retirer')}"` : '';
+    return `<button type="button" class="form-chip${on ? ' on' : ''}"${hint} onclick="${esc(handler)}">${esc(label)}</button>`;
   }).join('');
 }
 
@@ -4615,7 +4623,12 @@ function buildPrefsEditor(p = {}) {
   if (years) years.value = EDIT_PREFS.years_experience != null ? EDIT_PREFS.years_experience : '';
   const set = (id, key, opts, mode) => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = buildPrefChipHtml(key, opts, EDIT_PREFS[key], mode);
+    // Métiers / secteurs : les valeurs enregistrées hors suggestions restent visibles
+    // (sinon renvoyées à chaque sauvegarde sans pouvoir être retirées).
+    const extras = ['target_job_types', 'sectors'].includes(key)
+      ? (EDIT_PREFS[key] || []).filter((value) => !opts.includes(value)).map((value) => ({ value, label: value, extra: true }))
+      : [];
+    if (el) el.innerHTML = buildPrefChipHtml(key, [...opts, ...extras], EDIT_PREFS[key], mode);
   };
   set('edit-target-job-types', 'target_job_types', PROFILE_PREF_SUGGESTIONS.target_job_types, 'multi');
   set('edit-sales-style', 'sales_style', PROFILE_PREF_SUGGESTIONS.sales_style, 'single');

@@ -214,11 +214,12 @@ test('applySupabaseCandidateDeckFilters pousse overlaps / gte / in', () => {
   }));
   const ops = q.calls.map((c) => c[0] + ':' + c[1]);
   assert.ok(ops.includes('gte:score_adn'));
-  assert.ok(ops.includes('overlaps:target_job_types'));
+  // Lot 7 : métiers / secteurs post-filtrés en JS (historique), plus d'overlap SQL exact.
+  assert.equal(ops.includes('overlaps:target_job_types'), false);
   assert.ok(ops.includes('in:sales_style'));
   assert.ok(ops.includes('gte:years_experience'));
   assert.ok(ops.includes('overlaps:desired_contracts'));
-  assert.ok(ops.includes('overlaps:sectors'));
+  assert.equal(ops.includes('overlaps:sectors'), false);
   assert.ok(ops.includes('overlaps:tools'));
   assert.ok(ops.includes('overlaps:methodologies'));
   assert.ok(ops.includes('in:availability'));

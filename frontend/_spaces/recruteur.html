@@ -1480,11 +1480,13 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
       <button type="button" class="form-chip" onclick="ofPick(this,'OF_REMOTE','remote')">Télétravail</button>
     </div></div>
     <div class="form-group"><label class="form-label sf">Type de poste</label>
-      <input class="form-field" id="of-job-type" maxlength="80" placeholder="Ex : Account Executive Senior">
+      <input class="form-field" id="of-job-type" list="offer-job-suggestions" maxlength="80" placeholder="Ex : Account Executive Senior">
+      <datalist id="offer-job-suggestions"></datalist>
       <button type="button" class="link-action" style="margin-top:6px;background:none;border:0;padding:0;color:var(--b);cursor:pointer;font:inherit" onclick="document.getElementById('of-job-type').value=document.getElementById('of-titre').value.trim()">Utiliser l’intitulé</button>
     </div>
     <div class="form-group"><label class="form-label sf">Secteur de l’offre</label>
-      <input class="form-field" id="of-sector" maxlength="80" placeholder="Ex : SaaS B2B">
+      <datalist id="offer-sector-suggestions"></datalist>
+      <input class="form-field" id="of-sector" list="offer-sector-suggestions" maxlength="80" placeholder="Ex : SaaS B2B">
       <button type="button" class="link-action" id="of-sector-suggest" style="margin-top:6px;background:none;border:0;padding:0;color:var(--b);cursor:pointer;font:inherit;display:none" onclick="applyCompanySectorSuggestion()">Utiliser le secteur société</button>
     </div>
     <div class="form-group" style="position:relative">
@@ -1768,6 +1770,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="filt-section">
       <div class="filt-label">Secteurs</div>
       <div class="form-chips" id="filt-sectors">
+        <!-- JOB_TAXONOMY:RECRUITER_SECTOR_CHIPS:START -->
         <button type="button" class="form-chip" data-filter-value="SaaS et Tech" onclick="toggleCandFilterChip(this)">SaaS et Tech</button>
         <button type="button" class="form-chip" data-filter-value="Industrie" onclick="toggleCandFilterChip(this)">Industrie</button>
         <button type="button" class="form-chip" data-filter-value="BTP" onclick="toggleCandFilterChip(this)">BTP</button>
@@ -1778,6 +1781,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
         <button type="button" class="form-chip" data-filter-value="Télécom" onclick="toggleCandFilterChip(this)">Télécom</button>
         <button type="button" class="form-chip" data-filter-value="Santé" onclick="toggleCandFilterChip(this)">Santé</button>
         <button type="button" class="form-chip" data-filter-value="Automobile" onclick="toggleCandFilterChip(this)">Automobile</button>
+      <!-- JOB_TAXONOMY:RECRUITER_SECTOR_CHIPS:END -->
       </div>
     </div>
     <div class="filt-section">
@@ -3569,6 +3573,12 @@ function ofPick(btn, varName, val) {
   else OF_TYPE = val;
 }
 function ofTag(btn, tag) { btn.classList.toggle('on'); if(OF_TAGS.includes(tag)) OF_TAGS=OF_TAGS.filter(t=>t!==tag); else OF_TAGS.push(tag); }
+for (const [id, group] of [['offer-job-suggestions', 'filt-job-types'], ['offer-sector-suggestions', 'filt-sectors']]) {
+  const list = document.getElementById(id);
+  if (list) document.querySelectorAll('#' + group + ' [data-filter-value]').forEach(chip => {
+    const option = document.createElement('option'); option.value = chip.getAttribute('data-filter-value'); list.appendChild(option);
+  });
+}
 function applyCompanySectorSuggestion() {
   const sector = String(USER?.secteur || '').trim();
   if (!sector) return;

@@ -22,6 +22,7 @@ const {
   isAnonymousCandidate,
 } = require('../utils/candidateDeckQuery');
 const { readLocationText } = require('../utils/locationFilter');
+const { canonicalList } = require('../utils/jobSectorFilter');
 
 // Score à partir duquel le profil est éligible à la certification SwipSales
 // (candidat-visible uniquement — jamais exposé au recruteur, voir Notes.md).
@@ -440,11 +441,11 @@ router.get('/profil', authMiddleware, async (req, res) => {
       competences: profil.axes?.meta?.competences || {},
       skills: resolveCandidateSkills(profil),
       certifie,
-      target_job_types: profil.target_job_types || [],
+      target_job_types: canonicalList(profil.target_job_types || [], 'job'),
       sales_style: profil.sales_style || null,
       years_experience: profil.years_experience ?? null,
       desired_contracts: profil.desired_contracts || [],
-      sectors: profil.sectors || [],
+      sectors: canonicalList(profil.sectors || [], 'sector'),
       customer_types: profil.customer_types || [],
       tools: profil.tools || [],
       methodologies: profil.methodologies || [],
@@ -771,11 +772,11 @@ router.put('/profil', authMiddleware, async (req, res) => {
       ville: data.axes?.meta?.ville || '',
       competences: data.axes?.meta?.competences || {},
       skills: resolveCandidateSkills(data),
-      target_job_types: data.target_job_types || [],
+      target_job_types: canonicalList(data.target_job_types || [], 'job'),
       sales_style: data.sales_style || null,
       years_experience: data.years_experience ?? null,
       desired_contracts: data.desired_contracts || [],
-      sectors: data.sectors || [],
+      sectors: canonicalList(data.sectors || [], 'sector'),
       customer_types: data.customer_types || [],
       tools: data.tools || [],
       methodologies: data.methodologies || [],

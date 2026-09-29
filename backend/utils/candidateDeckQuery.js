@@ -10,6 +10,7 @@ const {
   resolveCanonicalSkill,
 } = require('./yannisTaxonomies');
 const { parseLocationQuery, locationTextMatches } = require('./locationFilter');
+const identity = require('./jobSectorFilter');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -215,12 +216,23 @@ function candidateMatchesLocation(candidate, location) {
   return locationTextMatches(candidate?.axes?.meta?.ville, location);
 }
 
+/**
+ * Lot 7 : métiers / secteurs historiques (aliases déclarés, casse, espaces de bord)
+ * comparés en JS — un overlap PostgREST sur text[] est strictement exact. Contrat
+ * d'anonymat inchangé : seule la ville d'un anonyme est protégée (LOCATION.md) ;
+ * métiers/secteurs restent filtrables pour tous, comme avant le Lot 7.
+ */
+function candidateMatchesJobSector(candidate, filters) {
+  return identity.overlaps(candidate.target_job_types, filters.target_job_types || [], 'job')
+    && identity.overlaps(candidate.sectors, filters.sectors || [], 'sector');
+}
+
 function candidateMatchesDeckFilters(candidate, filters) {
   if (filters.score_adn_min != null) {
     if (candidate.score_adn == null) return false;
     if (Number(candidate.score_adn) < filters.score_adn_min) return false;
   }
-  if (filters.target_job_types.length && !arrayOverlaps(candidate.target_job_types, filters.target_job_types)) {
+  if (!candidateMatchesJobSector(candidate, filters)) {
     return false;
   }
   if (filters.sales_styles.length) {
@@ -232,9 +244,6 @@ function candidateMatchesDeckFilters(candidate, filters) {
     if (Number(candidate.years_experience) < filters.years_experience_min) return false;
   }
   if (filters.desired_contracts.length && !arrayOverlaps(candidate.desired_contracts, filters.desired_contracts)) {
-    return false;
-  }
-  if (filters.sectors.length && !arrayOverlaps(candidate.sectors, filters.sectors)) {
     return false;
   }
   if (!candidateMatchesSkills(candidate, filters.skills)) return false;
@@ -303,9 +312,8 @@ function applySupabaseCandidateDeckFilters(query, filters) {
   if (filters.score_adn_min != null) {
     q = q.gte('score_adn', filters.score_adn_min);
   }
-  if (filters.target_job_types.length) {
-    q = q.overlaps('target_job_types', filters.target_job_types);
-  }
+  // target_job_types / sectors : aucun filtre SQL (overlap exact sur text[]) ;
+  // post-filtre candidateMatchesJobSector dans le scan borné.
   if (filters.sales_styles.length) {
     q = q.in('sales_style', filters.sales_styles);
   }
@@ -314,9 +322,6 @@ function applySupabaseCandidateDeckFilters(query, filters) {
   }
   if (filters.desired_contracts.length) {
     q = q.overlaps('desired_contracts', filters.desired_contracts);
-  }
-  if (filters.sectors.length) {
-    q = q.overlaps('sectors', filters.sectors);
   }
   if (filters.tools.length) {
     q = q.overlaps('tools', filters.tools);
@@ -375,7 +380,9 @@ async function fetchCandidateDeckRows(filters, {
   const skillsActive = filters.skills.length > 0;
   // Localisation : le SQL (axes->meta->>ville) convertit aussi un objet/nombre JSON
   // en texte ; ce post-filtre garantit la sémantique « chaîne uniquement ».
-  const postFilterActive = skillsActive || Boolean(filters.location);
+  // Métiers / secteurs : post-filtre JS (READ OLD), voir candidateMatchesJobSector.
+  const postFilterActive = skillsActive || Boolean(filters.location)
+    || filters.target_job_types.length > 0 || filters.sectors.length > 0;
   const maxRounds = postFilterActive ? SKILLS_FILL_MAX_ROUNDS : 1;
   let scanCursor = filters.cursor;
   let exhausted = false;
@@ -402,6 +409,7 @@ async function fetchCandidateDeckRows(filters, {
         || seen.has(String(row.id))
         || seen.has(String(row.user_id));
       if (!excluded && !duplicateUser && candidateMatchesSkills(row, filters.skills)
+        && candidateMatchesJobSector(row, filters)
         && candidateMatchesLocation(row, filters.location)) {
         collected.push(row);
         if (row.user_id) pageUserIds.add(String(row.user_id));

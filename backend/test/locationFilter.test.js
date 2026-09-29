@@ -101,9 +101,10 @@ function makeQuery(rows, log) {
     },
     filter(column, op, pattern) {
       log.push(['filter', column, op, pattern]);
-      assert.equal(op, 'match');
-      // Même moteur que PostgreSQL ARE pour ce motif (classes explicites, pas de backslash).
-      const regex = new RegExp(pattern);
+      assert.ok(op === 'match' || op === 'imatch', `op filter non supporté: ${op}`);
+      // Même moteur que PostgreSQL ARE pour ces motifs (classes explicites / échappements
+      // littéraux) ; imatch = ~* (insensible à la casse, Lot 7 métier/secteur).
+      const regex = new RegExp(pattern, op === 'imatch' ? 'i' : '');
       predicates.push((row) => { const v = readPath(row, column); return typeof v === 'string' && regex.test(v); });
       return api;
     },

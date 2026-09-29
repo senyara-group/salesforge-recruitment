@@ -164,7 +164,7 @@ test('O/W. Opportunités : chaque filtre visible a un chemin backend fonctionnel
     [{ job_type: 'Business Dev' }, ['Historique libre']], // texte libre historique retrouvé tel quel
     [{ sector: 'SaaS et Tech' }, ['AE Lyon']],
     [{ sector: 'saas et tech' }, ['AE Lyon']], // canonicalisé
-    [{ sector: 'SaaS' }, []], // P2 documenté : pas d'alias secteur, correspondance exacte
+    [{ sector: 'SaaS' }, ['AE Lyon']], // Lot 7 : alias explicite validé par le produit.
     [{ published_preset: '7d' }, ['AE Lyon', 'Freelance remote', 'Sans rien']],
     [{ published_preset: '30d' }, ['AE Lyon', 'Freelance remote', 'SDR Paris', 'Sans rien']],
     [{ location: 'lyon' }, ['AE Lyon', 'Historique libre']],

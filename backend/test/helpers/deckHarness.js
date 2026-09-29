@@ -49,8 +49,10 @@ function makeQuery(rows, log) {
   const predicates = [];
   let limit = Infinity;
   const order = [];
+  let patch = null; // update(patch) : appliqué aux lignes filtrées (mutation en place)
   const api = {
     select() { return api; },
+    update(values) { log.push(['update', values]); patch = values; return api; },
     eq(column, value) { log.push(['eq', column, value]); predicates.push((row) => compare('eq', readPath(row, column), String(value))); return api; },
     neq(column, value) { predicates.push((row) => compare('neq', readPath(row, column), String(value))); return api; },
     is(column, value) { predicates.push((row) => readPath(row, column) == null && value === null); return api; },
@@ -76,16 +78,23 @@ function makeQuery(rows, log) {
     },
     filter(column, op, pattern) {
       log.push(['filter', column, op, pattern]);
-      assert.equal(op, 'match');
-      const regex = new RegExp(pattern);
+      assert.ok(op === 'match' || op === 'imatch', `op filter non supporté: ${op}`);
+      // match = ~ (sensible à la casse), imatch = ~* (insensible).
+      const regex = new RegExp(pattern, op === 'imatch' ? 'i' : '');
       predicates.push((row) => { const v = readPath(row, column); return typeof v === 'string' && regex.test(v); });
       return api;
     },
     order(column, { ascending }) { order.push([column, ascending]); return api; },
     limit(n) { limit = n; return api; },
     maybeSingle() { return api.then((result) => ({ data: result.data[0] || null, error: null })); },
+    single() {
+      return api.then((result) => (result.data.length === 1
+        ? { data: result.data[0], error: null }
+        : { data: null, error: { message: 'single: ' + result.data.length + ' lignes' } }));
+    },
     then(resolve, reject) {
       let out = rows.filter((row) => predicates.every((fn) => fn(row)));
+      if (patch) out.forEach((row) => Object.assign(row, JSON.parse(JSON.stringify(patch))));
       for (const [column, ascending] of [...order].reverse()) {
         out = [...out].sort((a, b) => {
           const av = a[column]; const bv = b[column];
@@ -111,11 +120,21 @@ function createDeckHarness() {
     candidats: [],
   };
   const queryLog = [];
+  const backend = path.resolve(__dirname, '../..');
   const fakeSupabase = {
     from(table) { return makeQuery(db[table] || [], queryLog); },
+    // PUT /candidats/profil : fusion atomique axes.meta (même helper que la RPC SQL).
+    async rpc(name, args) {
+      queryLog.push(['rpc', name]);
+      assert.equal(name, 'merge_candidat_axes_meta');
+      const { applyAxesMetaMerge } = require(path.join(backend, 'utils/candidateProfileWrite'));
+      const row = db.candidats.find((c) => c.user_id === args.p_user_id);
+      if (!row) return { data: null, error: { message: 'missing' } };
+      row.axes = applyAxesMetaMerge(row.axes, args.p_meta_patch);
+      return { data: JSON.parse(JSON.stringify(row.axes)), error: null };
+    },
     storage: { from() { return { createSignedUrl: async () => ({ data: null, error: { message: 'none' } }) }; } },
   };
-  const backend = path.resolve(__dirname, '../..');
   const mockModule = (request, exports) => {
     const filename = require.resolve(path.join(backend, request));
     require.cache[filename] = { id: filename, filename, loaded: true, exports };
@@ -149,16 +168,21 @@ function createDeckHarness() {
   app.use('/offres', require(path.join(backend, 'routes/offres')));
   app.use('/candidats', require(path.join(backend, 'routes/candidats')));
 
-  async function get(url, user) {
+  async function request(method, url, user, body) {
     const server = app.listen(0);
     try {
-      const response = await fetch(`http://127.0.0.1:${server.address().port}${url}`, { headers: { 'x-test-user': user } });
+      const headers = { 'x-test-user': user };
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      const response = await fetch(`http://127.0.0.1:${server.address().port}${url}`, {
+        method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+      });
       return { status: response.status, body: await response.json() };
     } finally {
       server.close();
     }
   }
-  return { db, queryLog, get };
+  const get = (url, user) => request('GET', url, user);
+  return { db, queryLog, get, request };
 }
 
 module.exports = { createDeckHarness };
