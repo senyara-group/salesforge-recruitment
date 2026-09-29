@@ -122,7 +122,9 @@ const JOB_TYPE_DESCRIPTORS = deepFreezeDescriptors([
   {
     id: 'manager',
     label: 'Manager commercial',
-    aliases: ['Team Leader Sales', 'Sales Team Leader', 'Sales Supervisor', 'Sales Manager', 'Responsable commercial',
+    // 'Sales Manager' et 'Responsable commercial' volontairement absents : souvent un
+    // commercial senior sans équipe, trop ambigus pour être convertis en 'Manager commercial'.
+    aliases: ['Team Leader Sales', 'Sales Team Leader', 'Sales Supervisor',
       'Responsable des ventes', 'Responsable régional des ventes', 'Area Sales Manager', 'Regional Sales Manager',
       'National Sales Manager', 'Sales Development Manager'],
   },

@@ -45,6 +45,9 @@ const EXCLUDED = {
     'Account Director', 'Client Partner', 'Directeur grands comptes', 'Customer Engineer', 'Technical Account Manager (TAM)',
     'Technical Account Manager', 'Architecte solutions', 'Solution Architect',
   ],
+  'Manager ou commercial senior sans équipe (ambigu, retiré de manager)': [
+    'Responsable commercial', 'Sales Manager',
+  ],
   'Export / international : décision produit à prendre': [
     'Commercial export', 'International Sales Manager', 'Export Sales Manager', 'Export Manager', 'Export Director',
   ],
@@ -83,8 +86,8 @@ test('chaque intitulé du document est résolu vers UN métier ou exclu avec un 
   const resolved = DISTINCT_TITLES.filter((title) => taxonomy.resolveJobTypeLabel(title));
   const unresolved = DISTINCT_TITLES.filter((title) => !taxonomy.resolveJobTypeLabel(title));
   assert.deepEqual([...unresolved].sort(), [...EXCLUDED_TITLES].sort());
-  assert.equal(resolved.length, 122);
-  assert.equal(unresolved.length, 89);
+  assert.equal(resolved.length, 120);
+  assert.equal(unresolved.length, 91);
   for (const title of EXCLUDED_TITLES) assert.ok(DISTINCT_TITLES.includes(title), `${title} provient du document`);
 });
 
@@ -100,7 +103,7 @@ test('aliases prouvés : chaque alias est un intitulé exact du document ; label
   }
   const ids = taxonomy.JOB_TYPES.map((job) => job.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(taxonomy.JOB_TYPES.reduce((n, job) => n + job.aliases.length, 0), 115);
+  assert.equal(taxonomy.JOB_TYPES.reduce((n, job) => n + job.aliases.length, 0), 113);
 });
 
 test('6 métiers historiques inchangés ; 9 nouveaux IDs stables, actifs, dans un ordre cohérent', () => {
@@ -126,7 +129,7 @@ test('résolution des aliases : exemples de la liste vers le bon métier, jamais
     'Senior Account Manager': 'account_manager', 'Chargé de comptes': 'account_manager',
     'Customer Success Manager (CSM)': 'customer_success', 'Channel Manager': 'partenariats', 'Head of Partnerships': 'partenariats',
     Vendeur: 'conseiller_vente', 'Vendeur conseil': 'conseiller_vente',
-    'Sales Manager': 'manager', 'Area Sales Manager': 'manager', 'Sales Development Manager': 'manager',
+    'Area Sales Manager': 'manager', 'Sales Development Manager': 'manager', 'Team Leader Sales': 'manager',
     'Head of Sales': 'direction_commerciale', 'VP Sales': 'direction_commerciale', CRO: 'direction_commerciale',
     'Chief Revenue Officer (CRO)': 'direction_commerciale',
   };
@@ -145,6 +148,55 @@ test('écritures : alias certain → label canonique, intitulé ambigu ou legacy
   assert.equal(normalizeOfferStructuredFields({ type: 'CDI', job_type: 'sales engineer' }).job_type, 'Avant-vente / Sales Engineer');
   assert.equal(normalizeOfferStructuredFields({ type: 'CDI', job_type: 'Commercial B2B' }).job_type, 'Commercial B2B');
   for (const [, label] of HISTORICAL) assert.equal(taxonomy.canonicalizeTargetJobType(label), label);
+});
+
+test('aliases ambigus retirés : Responsable commercial / Sales Manager restent du texte libre, jamais « Manager commercial »', () => {
+  for (const title of ['Responsable commercial', 'Sales Manager', '  sales MANAGER ']) {
+    assert.equal(taxonomy.resolveStoredJobType(title), null, title);
+    assert.equal(taxonomy.canonicalizeTargetJobType(title), null, title);
+  }
+  const profile = normalizeCandidateProfileStructuredFields({ target_job_types: ['Responsable commercial', 'Sales Manager'] });
+  assert.deepEqual(profile.target_job_types, ['Responsable commercial', 'Sales Manager']);
+  assert.equal(normalizeOfferStructuredFields({ type: 'CDI', job_type: 'Responsable commercial' }).job_type, 'Responsable commercial');
+  // Le métier manager, son bouton ADN et ses autres aliases sont inchangés.
+  assert.equal(taxonomy.jobTypeById('manager').label, 'Manager commercial');
+  assert.deepEqual([...taxonomy.jobTypeById('manager').aliases], ['Team Leader Sales', 'Sales Team Leader', 'Sales Supervisor',
+    'Responsable des ventes', 'Responsable régional des ventes', 'Area Sales Manager', 'Regional Sales Manager',
+    'National Sales Manager', 'Sales Development Manager']);
+  const candidate = fs.readFileSync(path.join(ROOT, FILES[0]), 'utf8');
+  assert.match(candidate, /data-job-id="manager" onclick="toggleTargetJob\('manager',this\)"><span class="ot">Manager commercial</);
+});
+
+test('KAM seul : non résolu (provenance stricte — seul « Key Account Manager (KAM) » figure dans le document)', () => {
+  assert.equal(DISTINCT_TITLES.includes('KAM'), false);
+  assert.equal(taxonomy.resolveStoredJobType('KAM'), null);
+  assert.equal(taxonomy.resolveJobTypeLabel('Key Account Manager (KAM)').id, 'kam');
+});
+
+test('filtre offres job_type : alias → libellé canonique + texte historique brut (A–E, parser réel)', () => {
+  const { parseOfferDeckQuery, offerMatchesDeckFilters } = require('../utils/offerDeckQuery');
+  const offers = [
+    { id: 'legacy-se', job_type: 'Sales Engineer' }, { id: 'canon-se', job_type: 'Avant-vente / Sales Engineer' },
+    { id: 'legacy-bdr', job_type: 'BDR' }, { id: 'canon-bdr', job_type: 'SDR / BDR' },
+    { id: 'unknown', job_type: 'Growth Hacker Sales' }, { id: 'ae', job_type: 'Account Executive' },
+    { id: 'other', job_type: 'Solutions Engineer' }, { id: 'null', job_type: null },
+  ];
+  const match = (job_type) => {
+    const filters = parseOfferDeckQuery({ job_type });
+    return { list: filters.job_types, ids: offers.filter((offer) => offerMatchesDeckFilters(offer, filters)).map((offer) => offer.id) };
+  };
+  // A/B/C : historique ET canonique, sans doublon, sans élargissement aux autres aliases.
+  assert.deepEqual(match('Sales Engineer'), { list: ['Avant-vente / Sales Engineer', 'Sales Engineer'], ids: ['legacy-se', 'canon-se'] });
+  assert.deepEqual(match('  sales engineer ').list, ['Avant-vente / Sales Engineer', 'sales engineer']);
+  assert.deepEqual(match('Sales Engineer,Sales Engineer').list, ['Avant-vente / Sales Engineer', 'Sales Engineer']);
+  // D : BDR.
+  assert.deepEqual(match('BDR'), { list: ['SDR / BDR', 'BDR'], ids: ['legacy-bdr', 'canon-bdr'] });
+  // E : inconnu → texte brut comme avant ; variante de casse d'un libellé → libellé seul (comportement de base).
+  assert.deepEqual(match('Growth Hacker Sales'), { list: ['Growth Hacker Sales'], ids: ['unknown'] });
+  assert.deepEqual(match('account executive'), { list: ['Account Executive'], ids: ['ae'] });
+  assert.deepEqual(match('Avant-vente / Sales Engineer').list, ['Avant-vente / Sales Engineer']);
+  // Les autres filtres à liste fermée ne gardent jamais de texte brut.
+  assert.throws(() => parseOfferDeckQuery({ sector: 'SaaS', customer_types: 'Inconnu' }), { code: 'FILTER_TAXONOMY_INVALID' });
 });
 
 test('modules ADN : q1/q2 complets pour chaque nouveau métier, contrat respecté, pas de copier-coller', () => {

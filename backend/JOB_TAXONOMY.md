@@ -28,18 +28,26 @@ from Yannis' list (`test/fixtures/yannis-job-titles.json`):
 
 ### Lot 4 — Yannis' list (258 raw titles, 211 distinct)
 
-- 122 distinct titles resolve to exactly one job (label or alias); 115 aliases, each
+- 120 distinct titles resolve to exactly one job (label or alias); 113 aliases, each
   an exact title of the document (FR/EN variants, acronyms, junior/senior, sector).
-- 89 titles are deliberately NOT mapped (listed with reasons in
+  Provenance is strict: `KAM` alone is NOT an alias because only `Key Account
+  Manager (KAM)` appears in the document (deliberate, no invented alias).
+- 91 titles are deliberately NOT mapped (listed with reasons in
   `test/jobTaxonomyLot4.test.js`): generic/ambiguous titles (Commercial, Sales
-  Executive, Closer, Chargé de clientèle…), titles contested between two families
-  (Ingénieur commercial, Directeur grands comptes, Enterprise Account Manager,
-  Technical Account Manager…), export roles (product decision pending), tenders and
-  contracts, sales support/ADV, Sales Ops/RevOps, retail store management/trade
-  marketing. Unmapped values stay verbatim everywhere (never remapped).
+  Executive, Closer, Chargé de clientèle…), `Responsable commercial` and `Sales
+  Manager` (often a senior individual contributor, never converted to `Manager
+  commercial`), titles contested between two families (Ingénieur commercial,
+  Directeur grands comptes, Enterprise Account Manager, Technical Account Manager…),
+  export roles (product decision pending), tenders and contracts, sales support/ADV,
+  Sales Ops/RevOps, retail store management/trade marketing. Unmapped values stay
+  verbatim everywhere (never remapped).
 - Writers canonicalize unambiguous aliases to the label on NEW writes (e.g. `BDR` →
   `SDR / BDR`); stored data is never rewritten in bulk. `sdr` typed as text also
   matches its own alias `SDR` and becomes its own label, never another job.
+- Read compatibility (offers deck `job_type` filter): a value resolved through an
+  ALIAS searches the canonical label AND the raw text typed, so historical offers
+  stored as free text (`job_type = 'Sales Engineer'`, `'BDR'`…) are still found.
+  Label case variants and unknown values behave exactly as before. No backfill.
 
 They are validated and frozen by `createJobTaxonomy()` (`utils/jobTaxonomy.js`)
 when the module loads; an invalid registry throws a `JobTaxonomyError` (server,

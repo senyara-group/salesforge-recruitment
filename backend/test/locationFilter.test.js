@@ -367,6 +367,42 @@ test('B/E/G. GET /offres/deck : filtre localisation SQL, combinaison métier, pa
   }
 });
 
+test('Lot 4 correctif — GET /offres/deck : job_type alias retrouve historique + canonique, combiné localisation, curseur', async () => {
+  resetDb();
+  db.candidats[0].swipes_meta = { swiped_offer_ids: [] };
+  db.offres.push(
+    offer('Lyon', { job_type: 'Sales Engineer', contract_type: 'CDI' }),
+    offer('Lyon (69)', { job_type: 'Avant-vente / Sales Engineer', contract_type: 'CDI' }),
+    offer('Paris', { job_type: 'Sales Engineer', contract_type: 'CDI' }),
+    offer('Lyon', { job_type: 'Solutions Engineer', contract_type: 'CDI' }),
+    offer('Lyon', { job_type: 'BDR' }),
+    offer('Lyon', { job_type: 'SDR / BDR' }),
+    offer('Lyon', { job_type: 'Growth Hacker Sales' }),
+  );
+  const ids = (body) => body.offers.map((o) => `${o.job_type}@${o.lieu}`).sort();
+
+  const se = await get(`/offres/deck?limit=50&job_type=${encodeURIComponent('Sales Engineer')}`, 'user-cand');
+  assert.equal(se.status, 200);
+  assert.deepEqual(ids(se.body), ['Avant-vente / Sales Engineer@Lyon (69)', 'Sales Engineer@Lyon', 'Sales Engineer@Paris']);
+
+  // F : combinaison métier + localisation + contrat, sans doublon ni élargissement.
+  const combo = await get(`/offres/deck?limit=50&job_type=${encodeURIComponent('Sales Engineer')}&location=lyon&contract_type=CDI`, 'user-cand');
+  assert.deepEqual(ids(combo.body), ['Avant-vente / Sales Engineer@Lyon (69)', 'Sales Engineer@Lyon']);
+  assert.equal(new Set(combo.body.offers.map((o) => o.id)).size, combo.body.offers.length);
+
+  // Pagination par curseur inchangée avec le filtre élargi.
+  const page1 = await get(`/offres/deck?limit=1&job_type=${encodeURIComponent('Sales Engineer')}&location=lyon`, 'user-cand');
+  const page2 = await get(`/offres/deck?limit=1&job_type=${encodeURIComponent('Sales Engineer')}&location=lyon&cursor=${page1.body.next_cursor}`, 'user-cand');
+  assert.equal(page1.body.has_more, true);
+  assert.equal(page2.body.has_more, false);
+  assert.deepEqual([...page1.body.offers, ...page2.body.offers].map((o) => o.job_type).sort(), ['Avant-vente / Sales Engineer', 'Sales Engineer']);
+
+  const bdr = await get('/offres/deck?limit=50&job_type=BDR&location=lyon', 'user-cand');
+  assert.deepEqual(ids(bdr.body), ['BDR@Lyon', 'SDR / BDR@Lyon']);
+  const unknown = await get(`/offres/deck?limit=50&job_type=${encodeURIComponent('Growth Hacker Sales')}`, 'user-cand');
+  assert.deepEqual(ids(unknown.body), ['Growth Hacker Sales@Lyon']);
+});
+
 test('A/F/G/N. GET /candidats/deck : ville lisible, filtre, anonymes protégés, self exclu, score inchangé', async () => {
   resetDb();
   const all = await get('/candidats/deck?limit=50', 'user-rec');
