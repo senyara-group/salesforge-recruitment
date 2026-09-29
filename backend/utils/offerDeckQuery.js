@@ -26,6 +26,7 @@ const {
   canonicalizeTargetJobType,
 } = require('./yannisTaxonomies');
 const { parseLocationQuery, locationTextMatches } = require('./locationFilter');
+const identity = require('./jobSectorFilter');
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -308,11 +309,11 @@ function offerMatchesDeckFilters(offer, filters) {
   }
   if (filters.job_types.length) {
     if (offer.job_type == null) return false;
-    if (!filters.job_types.includes(offer.job_type)) return false;
+    if (!identity.matches(offer.job_type, filters.job_types, 'job')) return false;
   }
   if (filters.sectors.length) {
     if (offer.sector == null) return false;
-    if (!filters.sectors.includes(offer.sector)) return false;
+    if (!identity.matches(offer.sector, filters.sectors, 'sector')) return false;
   }
   if (filters.variable_shares.length) {
     if (offer.variable_share == null || offer.variable_share === '') return false;
@@ -400,10 +401,10 @@ function applySupabaseDeckFilters(query, filters) {
     q = q.gte('created_at', filters.published_since);
   }
   if (filters.job_types.length) {
-    q = q.in('job_type', filters.job_types);
+    q = q.filter('job_type', 'imatch', identity.exactPattern(filters.job_types, 'job'));
   }
   if (filters.sectors.length) {
-    q = q.in('sector', filters.sectors);
+    q = q.filter('sector', 'imatch', identity.exactPattern(filters.sectors, 'sector'));
   }
   if (filters.variable_shares.length) {
     q = q.in('variable_share', filters.variable_shares);

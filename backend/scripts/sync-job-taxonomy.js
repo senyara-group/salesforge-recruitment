@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { isDeepStrictEqual } = require('node:util');
-const { JOB_TYPE_DESCRIPTORS } = require('../utils/yannisTaxonomies');
+const { JOB_TYPE_DESCRIPTORS, SECTORS } = require('../utils/yannisTaxonomies');
 const { createJobTaxonomy, JobTaxonomyError, JOB_TYPE_ID_PATTERN } = require('../utils/jobTaxonomy');
 const { ADN_PROFILE_QUESTION_MODULES, ADN_QUESTION_KEYS, validateAdnModules } = require('../utils/adnProfileQuestions');
 
@@ -86,6 +86,13 @@ function assertNoScriptBreak(content, zone) {
 const ZONES = Object.freeze({
   [CANDIDATE_FILE]: Object.freeze([
     {
+      name: 'CANDIDATE_SECTOR_SUGGESTIONS', syntax: 'js',
+      render: () => [SECTORS.map(quoteJs).join(', ') + ','],
+      verify(content) {
+        if (!isDeepStrictEqual(JSON.parse(JSON.stringify(vm.runInNewContext(`[${content}]`))), [...SECTORS])) throw new JobTaxonomyError('sector suggestions mismatch');
+      },
+    },
+    {
       name: 'CANDIDATE_ADN_JOB_BUTTONS',
       syntax: 'html',
       render: renderAdnButtons,
@@ -121,6 +128,14 @@ const ZONES = Object.freeze({
     },
   ]),
   [RECRUITER_FILE]: Object.freeze([
+    {
+      name: 'RECRUITER_SECTOR_CHIPS', syntax: 'html',
+      render: () => renderRecruiterChips({ jobs: SECTORS.map(label => ({ label })) }),
+      verify(content) {
+        const labels = [...content.matchAll(/data-filter-value="([^"]+)"/g)].map(m => decodeHtml(m[1]));
+        if (!isDeepStrictEqual(labels, [...SECTORS])) throw new JobTaxonomyError('sector chips mismatch');
+      },
+    },
     {
       name: 'RECRUITER_FILTER_CHIPS',
       syntax: 'html',

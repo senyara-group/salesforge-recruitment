@@ -11,8 +11,8 @@ changement de scoring ni de matching. Voir aussi `LOCATION.md` (moteur du filtre
 | Mode de travail (`filt-remote`) | onsite, hybrid, remote | `offres.remote_mode` | `in` | exclu | OK |
 | Salaire min (`filt-salary-min`) | entier € | `salary_fixed_min/max` | `or` (max ≥ X, sinon min ≥ X) | **exclu par défaut ; nouvelle case « Inclure les offres sans salaire fixe »** | P2 corrigé |
 | Tags (`filt-tags`) | 7 tags = `OFFER_TAG_VOCABULARY` | `offres.tags` | `overlaps` | exclu | OK |
-| Métier (`filt-job-type`) | texte libre | `job_type` canonicalisé ou brut | `in` label canonique + texte d'alias brut (`keepAliasRaw`) | exclu | OK (Lot 4) |
-| Secteur (`filt-sector`) | texte libre | `sector` canonicalisé ou brut | `in` exact | exclu | **P2 documenté** : « SaaS » ne trouve pas « SaaS et Tech » (pas d'alias secteur) |
+| Métier (`filt-job-type`) | texte libre + suggestions | `job_type` canonicalisé ou brut | `imatch` ancré : libellé canonique → famille déclarée ; alias → libellé + cet alias | exclu | OK (Lot 4, Lot 7 : historique) |
+| Secteur (`filt-sector`) | texte libre + suggestions | `sector` canonicalisé ou brut | `imatch` ancré sur la famille déclarée | exclu | **Lot 7** : alias `SaaS` → `SaaS et Tech` |
 | Publication (`filt-published`) | 24h, 7d, 30d | `created_at` | `gte` | — | OK |
 | Localisation (`filt-location`) | texte / commune suggérée | `offres.lieu` | `match` mot entier, accents/casse ignorés | exclu | OK + autocomplétion |
 
@@ -21,11 +21,11 @@ changement de scoring ni de matching. Voir aussi `LOCATION.md` (moteur du filtre
 | Filtre UI | Valeur UI | Donnée (écriture profil) | Requête | Absent / NULL | Statut |
 |---|---|---|---|---|---|
 | Score ADN min | 50, 70, 85 | `score_adn` | `gte` | exclu | OK |
-| Métiers visés | 15 labels canoniques | `target_job_types` (canonicalisé, inconnu conservé) | `overlaps` | exclu | **P2 documenté** : texte d'alias historique non canonicalisé non retrouvé |
+| Métiers visés | 15 labels canoniques | `target_job_types` (canonicalisé, inconnu conservé) | post-filtre JS (scan borné) | exclu | **Lot 7** : alias historiques retrouvés |
 | Style de vente | hunter, farmer, full | `sales_style` | `in` | exclu | OK |
 | Expérience min | entier | `years_experience` | `gte` | exclu | OK |
 | Contrats souhaités | CDI, Alternance, Freelance, Mission | `desired_contracts` | `overlaps` | exclu | OK |
-| Secteurs | 10 secteurs canoniques | `sectors` | `overlaps` | exclu | OK |
+| Secteurs | 10 secteurs canoniques | `sectors` | post-filtre JS (scan borné) | exclu | **Lot 7** : alias historiques retrouvés |
 | Compétences | 6 compétences | `skills` (canonicalisées) | post-filtre JS canonique | exclu | OK |
 | Outils / Méthodes | 6 / 6 | `tools` / `methodologies` | `overlaps` | exclu | OK |
 | Disponibilité | immediate, 1_month, 3_months | `availability` | `in` | exclu | OK |
@@ -41,8 +41,6 @@ vrai handler (PostgREST simulé).
 - **P1** : aucun trouvé (aucun filtre visible sans chemin backend, aucune fuite, aucun 400 sur une valeur d'UI).
 - **P2 corrigés** : autocomplétion des communes unifiée sur les 4 champs ; salaire : les offres sans fixe renseigné étaient exclues silencieusement → case explicite + aide.
 - **P2 documentés (non corrigés, décision produit / données)** :
-  - secteur d'offre en texte libre côté recherche candidat, correspondance exacte ;
-  - `target_job_types` historiques en texte d'alias libre non retrouvés par le label canonique ;
   - communes homonymes indiscernables : seul le nom est stocké (pas de code INSEE) ;
   - filtre candidat « métier » en texte libre (pas de liste).
 - **P3** : filtres backend sans UI (`variable_share`, `sales_styles`, `customer_types`, `skills`, expérience côté offres) ; champs d'offre jamais renseignés par l'UI ; listes de chips dupliquées en dur (identiques aux constantes backend) ; `doRegister` mort (`r-ville` absent) ; la route d'auth accepte encore `ville`.
@@ -88,3 +86,19 @@ Résultats pour les 4 champs :
 - Échap ferme la liste.
 
 PostgREST n'a pas été testé contre une base réelle.
+
+## 7. Lot 7 — métiers / secteurs (READ OLD / WRITE CLEAN)
+
+- Écriture : `canonicalizeTargetJobType` / `canonicalizeSector` inchangés ; seul alias ajouté :
+  `SaaS` → `SaaS et Tech` (décision produit). Tech, Logiciel, Informatique, Industrie /
+  Manufacturing… restent des valeurs distinctes. Inconnu conservé tel quel.
+- Lecture / filtre (`utils/jobSectorFilter.js`) : jetons déclarés uniquement, règle de la
+  taxonomie (trim + casse ; pas de repli d'accents, pas d'ID ADN, pas de sous-chaîne). Métier
+  demandé par son libellé canonique → famille déclarée ; via un alias → libellé + cet alias
+  (Sales Engineer ne retrouve pas Solutions Engineer). Secteur → famille complète.
+- Offres : `imatch` PostgREST ancré (lettres non ASCII en classes explicites). Sourcing :
+  post-filtre JS dans le scan borné existant (curseur = dernière ligne inspectée).
+- Anonymat inchangé : seule la ville d'un anonyme est protégée ; métiers/secteurs ne sont
+  affichés sur aucune carte et restent filtrables pour tous.
+- Profil : une valeur hors liste enregistrée est affichée (chip active) et retirable.
+- Aucune migration, aucun backfill. Tests : `test/jobSectorConsistency.test.js`.

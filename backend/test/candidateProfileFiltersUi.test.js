@@ -42,7 +42,7 @@ test('profil structuré : invalides / arrays trop longs', () => {
     /trop de valeurs/
   );
   assert.doesNotThrow(() => normalizeCandidateProfileStructuredFields({ sectors: Array(MAX_MULTI + 5).fill('SaaS') }));
-  assert.deepEqual(normalizeCandidateProfileStructuredFields({ sectors: Array(MAX_MULTI + 5).fill('SaaS') }).sectors, ['SaaS']);
+  assert.deepEqual(normalizeCandidateProfileStructuredFields({ sectors: Array(MAX_MULTI + 5).fill('SaaS') }).sectors, ['SaaS et Tech']);
   assert.throws(() => normalizeCandidateProfileStructuredFields({ tools: 'HubSpot' }), /doit être un tableau/);
 });
 
