@@ -2418,7 +2418,10 @@ function esc(text = '') {
 // ------------------------------------------------------------
 if (window.SwipCommuneAutocomplete) {
   SwipCommuneAutocomplete.attach(document.getElementById('edit-ville'), { listId: 'edit-ville-list', statusId: 'edit-ville-status' });
-  SwipCommuneAutocomplete.attach(document.getElementById('filt-location'), { listId: 'filt-location-list', statusId: 'filt-location-status', revealList: true });
+  SwipCommuneAutocomplete.attach(document.getElementById('filt-location'), {
+    listId: 'filt-location-list', statusId: 'filt-location-status', revealList: true,
+    context: document.getElementById('filters-ov'),
+  });
 }
 function shortDate(value) {
   if (!value) return '';

@@ -7,11 +7,15 @@
  * - suggestions « Nom (département) », valeur insérée = nom de la commune (même
  *   format que les offres historiques) ;
  * - la saisie libre reste possible : une suggestion améliore et homogénéise la
- *   valeur, elle n'est jamais imposée (sauf si l'appelant l'exige, ex. offre) ;
+ *   valeur, elle n'est jamais imposée (sauf si l'appelant l'exige, ex. offre ; il
+ *   fournit alors ses propres messages via `statusMessages`) ;
  * - ARIA combobox / listbox, clavier ↑ ↓ Entrée Échap Tab, clic extérieur ;
  * - debounce, cache par requête, AbortController + numéro de séquence : une
  *   réponse obsolète arrivant en retard n'écrase jamais la plus récente ;
- * - erreur réseau / API non bloquante (message discret, saisie libre conservée).
+ * - une fermeture explicite (Échap, Tab, clic extérieur, sélection, fermeture du
+ *   contexte) annule la recherche en cours : une réponse tardive ne rouvre jamais
+ *   la liste, ni un champ qui n'a plus le focus ;
+ * - erreur réseau / API non bloquante (message discret).
  */
 (function (root) {
   'use strict';
@@ -20,6 +24,7 @@
   var MIN_CHARS = 2;
   var DEBOUNCE_MS = 250;
   var LIMIT = 8;
+  // Messages par défaut : champs à saisie libre (profil, filtres).
   var STATUS = {
     loading: 'Recherche des communes…',
     empty: 'Aucune commune trouvée : le texte saisi sera utilisé tel quel.',
@@ -49,8 +54,12 @@
   }
 
   /**
-   * options : listId, statusId, extraItems(query) → [{label,value}], shouldFetch(query),
-   * onInput(), onSelect(item), openOnFocus, doc, fetchImpl, setTimeoutImpl, clearTimeoutImpl.
+   * options : listId, statusId, statusMessages { loading, empty, error } (remplace les
+   * messages par défaut pour cette instance), extraItems(query) → [{label,value}],
+   * shouldFetch(query), onInput(), onSelect(item), openOnFocus, revealList,
+   * context (élément conteneur, ex. overlay de filtres : quand il perd la classe
+   * `on`, l'instance est fermée et réinitialisée), doc, fetchImpl, setTimeoutImpl,
+   * clearTimeoutImpl, MutationObserverImpl.
    */
   function attach(input, options) {
     options = options || {};
@@ -60,6 +69,11 @@
     var cancel = options.clearTimeoutImpl || root.clearTimeout.bind(root);
     var extraItems = options.extraItems || function () { return []; };
     var shouldFetch = options.shouldFetch || function (query) { return query.length >= MIN_CHARS; };
+    var messages = {};
+    Object.keys(STATUS).forEach(function (key) {
+      var custom = options.statusMessages && options.statusMessages[key];
+      messages[key] = typeof custom === 'string' && custom ? custom : STATUS[key];
+    });
     var list = options.listId ? doc.getElementById(options.listId) : null;
     var status = options.statusId ? doc.getElementById(options.statusId) : null;
     if (!input || !list) throw new Error('commune-autocomplete : champ ou liste introuvable');
@@ -87,17 +101,42 @@
 
     function setStatus(kind) {
       if (!status) return;
-      status.textContent = kind ? STATUS[kind] : '';
+      status.textContent = kind ? messages[kind] : '';
       status.hidden = !kind;
     }
     function optionId(index) { return baseId + '-opt-' + index; }
     function isOpen() { return list.classList.contains('on'); }
+    // Sans document réel (tests), activeElement peut être absent : on ne bloque pas.
+    function hasFocus() { return !doc.activeElement || doc.activeElement === input; }
+
+    /** Annule debounce + requête en vol : toute réponse encore attendue devient obsolète. */
+    function cancelPending() {
+      if (timer) { cancel(timer); timer = null; }
+      seq += 1;
+      if (controller) { controller.abort(); controller = null; }
+    }
 
     function close() {
       list.classList.remove('on');
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
       active = -1;
+    }
+
+    /** Fermeture demandée (utilisateur ou contexte) : rien ne doit rouvrir la liste ensuite. */
+    function dismiss() {
+      cancelPending();
+      if (status && !status.hidden && status.textContent === messages.loading) setStatus(null);
+      close();
+    }
+
+    /** Remise à zéro complète (contexte fermé) : pas de suggestion périmée à la réouverture. */
+    function reset() {
+      dismiss();
+      setStatus(null);
+      items = [];
+      while (list.firstChild) list.removeChild(list.firstChild);
+      list.scrollTop = 0;
     }
 
     function highlight(index) {
@@ -133,6 +172,8 @@
         });
         list.appendChild(option);
       });
+      // Nouveau rendu : on repart du haut (les premières suggestions sont les plus pertinentes).
+      list.scrollTop = 0;
       active = -1;
       input.removeAttribute('aria-activedescendant');
       if (items.length) {
@@ -148,7 +189,7 @@
       var item = items[index];
       if (!item) return;
       input.value = item.value;
-      close();
+      dismiss();
       setStatus(null);
       if (options.onSelect) options.onSelect(item);
     }
@@ -157,39 +198,40 @@
       var query = String(rawQuery || '').trim();
       var extras = extraItems(query) || [];
       if (!shouldFetch(query) || !fetchImpl) {
-        seq += 1; // toute réponse encore en vol devient obsolète
-        if (controller) controller.abort();
+        cancelPending(); // toute réponse encore en vol devient obsolète
         setStatus(null);
         render(extras);
         return Promise.resolve(extras);
       }
       if (cache[query]) {
-        seq += 1;
+        cancelPending();
         setStatus(cache[query].length ? null : 'empty');
         render(extras.concat(cache[query]));
         return Promise.resolve(items);
       }
-      seq += 1;
+      cancelPending();
       var mySeq = seq;
-      if (controller) controller.abort();
       controller = typeof root.AbortController === 'function' ? new root.AbortController() : null;
+      var signal = controller ? controller.signal : null;
       setStatus('loading');
       return Promise.resolve()
-        .then(function () { return fetchImpl(buildUrl(query), controller ? { signal: controller.signal } : undefined); })
+        .then(function () { return fetchImpl(buildUrl(query), signal ? { signal: signal } : undefined); })
         .then(function (response) {
           if (!response || !response.ok) throw new Error('geo api ' + (response && response.status));
           return response.json();
         })
         .then(function (data) {
-          if (mySeq !== seq) return items; // réponse obsolète : ignorée
           var communes = communeSuggestions(data);
+          if (mySeq !== seq) return items; // réponse obsolète ou liste fermée entre-temps : ignorée
           cache[query] = communes;
+          if (!hasFocus()) { setStatus(null); return items; } // l'utilisateur a quitté le champ
           setStatus(communes.length ? null : 'empty');
           render(extras.concat(communes));
           return items;
         })
         .catch(function (error) {
           if (mySeq !== seq || (error && error.name === 'AbortError')) return items;
+          if (!hasFocus()) { setStatus(null); return items; }
           setStatus('error');
           render(extras);
           return items;
@@ -200,8 +242,7 @@
       if (timer) cancel(timer);
       var value = input.value;
       if (!String(value).trim()) {
-        seq += 1;
-        if (controller) controller.abort();
+        cancelPending();
         setStatus(null);
         render(extraItems(''));
         return;
@@ -227,12 +268,11 @@
           select(active);
         }
       } else if (event.key === 'Escape') {
-        if (isOpen()) {
-          event.preventDefault();
-          close();
-        }
+        // Échap annule aussi une recherche en cours, même si la liste n'est pas encore ouverte.
+        if (isOpen()) event.preventDefault();
+        dismiss();
       } else if (event.key === 'Tab') {
-        close();
+        dismiss();
       }
     }
 
@@ -246,7 +286,7 @@
     function onOutside(event) {
       var target = event.target;
       if (target === input || (list.contains && list.contains(target))) return;
-      close();
+      if (isOpen() || timer || controller) dismiss();
     }
 
     input.addEventListener('input', onInput);
@@ -254,9 +294,24 @@
     input.addEventListener('focus', onFocus);
     doc.addEventListener('mousedown', onOutside);
 
+    // Contexte (overlay de filtres) : quel que soit le chemin de fermeture (fond,
+    // Appliquer, Réinitialiser…), la perte de la classe `on` réinitialise l'instance.
+    var observer = null;
+    var Observer = options.MutationObserverImpl || root.MutationObserver;
+    if (options.context && typeof Observer === 'function') {
+      var wasOpen = options.context.classList.contains('on');
+      observer = new Observer(function () {
+        var open = options.context.classList.contains('on');
+        if (wasOpen && !open) reset();
+        wasOpen = open;
+      });
+      observer.observe(options.context, { attributes: true, attributeFilter: ['class'] });
+    }
+
     return {
       search: search,
-      close: close,
+      close: dismiss,
+      reset: reset,
       isOpen: isOpen,
       items: function () { return items.slice(); },
       destroy: function () {
@@ -264,8 +319,8 @@
         input.removeEventListener('keydown', onKeydown);
         input.removeEventListener('focus', onFocus);
         doc.removeEventListener('mousedown', onOutside);
-        if (timer) cancel(timer);
-        if (controller) controller.abort();
+        if (observer) observer.disconnect();
+        cancelPending();
       },
     };
   }

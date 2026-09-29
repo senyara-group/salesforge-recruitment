@@ -3671,6 +3671,11 @@ if (window.SwipCommuneAutocomplete) {
     listId: 'of-lieu-list',
     statusId: 'of-lieu-status',
     openOnFocus: true,
+    // Sélection obligatoire : ne jamais laisser croire que le texte libre sera accepté.
+    statusMessages: {
+      empty: 'Aucune commune trouvée. Choisissez une suggestion, ou utilisez Remote / Télétravail ou France entière.',
+      error: 'Suggestions indisponibles. Réessayez dans un instant.',
+    },
     extraItems: (query) => (isRemoteLocationQuery(query) ? OFFER_LOCATION_SPECIAL : []),
     shouldFetch: (query) => query.length >= SwipCommuneAutocomplete.MIN_CHARS && !isRemoteLocationQuery(query),
     onInput: () => { LIEU_SELECTIONNE = false; },
@@ -3678,6 +3683,7 @@ if (window.SwipCommuneAutocomplete) {
   });
   SwipCommuneAutocomplete.attach(document.getElementById('filt-cand-location'), {
     listId: 'filt-cand-location-list', statusId: 'filt-cand-location-status', revealList: true,
+    context: document.getElementById('comp-filter-ov'),
   });
 } else {
   // Repli sans suggestions : la saisie libre reste acceptée pour ne pas bloquer la publication.

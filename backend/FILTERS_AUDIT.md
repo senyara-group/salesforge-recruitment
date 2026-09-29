@@ -65,6 +65,9 @@ vrai handler (PostgREST simulé).
 - **Interactions** : ↑/↓ (avec bouclage), Entrée, Échap et Tab ; `mousedown` sur une option ; un clic extérieur ferme la liste.
 - **Erreurs** : message discret, jamais bloquant ; la saisie libre est conservée.
 - **Sans le script** : les pages restent utilisables, avec une saisie libre pour tous les champs.
+- **Messages par instance** (`statusMessages`) : le lieu d'offre, où la sélection est obligatoire, n'annonce jamais que le texte libre sera accepté (« Aucune commune trouvée. Choisissez une suggestion, ou utilisez Remote / Télétravail ou France entière. » / « Suggestions indisponibles. Réessayez dans un instant. »).
+- **Fermeture** : Échap, Tab, clic extérieur ou sélection annulent la recherche en cours ; une réponse tardive n'ouvre jamais la liste d'un champ qui n'a plus le focus. Option `context` (overlay de filtres) : quand il perd la classe `on`, quel que soit le chemin de fermeture, l'instance est réinitialisée (aucune suggestion périmée à la réouverture). Le défilement de la liste repart du haut à chaque rendu.
+- **Validation du correctif** : 16 tests ciblés passent, dont les scénarios A–L et le refus de Paris saisi après Lille sélectionnée en création comme en modification (PUT accepté après sélection de Paris). Les sondes visuelles à 390×844, 430×932 et 1280×900 n'ont pas été exécutées lors de la reprise : aucun navigateur connecté. Le placement réel des suggestions et leur visibilité au-dessus du footer restent à vérifier en navigateur.
 
 ### Comportements
 
