@@ -148,17 +148,16 @@ for (const flag of [true, 'true']) {
     assert.equal(asA.status, 200, JSON.stringify(asA.body));
     assert.equal(asA.body.length, 1);
     const [row] = asA.body;
-    assert.equal(Object.hasOwn(row, 'snapshot'), false);
-    assert.equal(Object.hasOwn(row, 'candidat_id'), false);
+    // Liste blanche exacte : les champs lus par renderRecues, rien d'autre.
+    assert.deepEqual(Object.keys(row).sort(), ['av', 'badge', 'badgeBg', 'badgeColor', 'bg', 'hot', 'id', 'name', 'score', 'tags', 'titre']);
+    assert.equal(row.id, 'app-a');
     const serialized = JSON.stringify(asA.body);
-    for (const secret of [SECRET.nom, SECRET.ville, SECRET.email, SECRET.telephone, SECRET.cvPath, 'secret-cv.pdf', SECRET.lettre]) {
+    for (const secret of [SECRET.nom, SECRET.ville, SECRET.email, SECRET.telephone, SECRET.cvPath, 'secret-cv.pdf', SECRET.lettre, 'cand-anon', 'user-anon', 'offre-a', 'submitted_at']) {
       assert.ok(!serialized.includes(secret), `${label} fuite : ${secret}`);
     }
     // Candidature volontaire : identité révélée au recruteur de l'offre (comportement historique).
     assert.equal(row.name, `${SECRET.prenom} Q.`);
     assert.equal(row.av, 'ZQ');
-    // Champs consommés par renderRecues : toujours présents.
-    for (const key of ['id', 'hot', 'bg', 'av', 'name', 'badge', 'badgeBg', 'badgeColor', 'titre', 'tags', 'score']) assert.ok(Object.hasOwn(row, key), key);
     // Un autre recruteur n'obtient rien de ce candidat (la ligne historique recruteur_like est exclue).
     const asB = await call('GET', '/candidatures/recues', 'user-rec-b');
     assert.deepEqual(asB.body, []);
@@ -249,4 +248,32 @@ test('J — true et "true" produisent exactement la même exposition sur toutes 
     ]);
   };
   assert.equal(await exposure('true'), await exposure(true));
+});
+
+test('L — la réponse minimisée alimente toujours le vrai renderRecues (tableau de bord recruteur)', async () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const vm = require('node:vm');
+  const html = fs.readFileSync(path.join(__dirname, '../../frontend/_spaces/recruteur.html'), 'utf8');
+  const extract = (signature) => {
+    const start = html.indexOf(signature); let depth = 0;
+    for (let i = html.indexOf('{', start); i < html.length; i += 1) {
+      if (html[i] === '{') depth += 1;
+      if (html[i] === '}' && --depth === 0) return html.slice(start, i + 1);
+    }
+    throw new Error(signature);
+  };
+  seed(true);
+  const response = await call('GET', '/candidatures/recues?limit=4', 'user-rec-a');
+  const host = { innerHTML: '' };
+  const context = { document: { getElementById: (id) => (id === 'cands-recues' ? host : null) } };
+  vm.createContext(context);
+  vm.runInContext(`${extract('function esc(')}\n${extract('function renderRecues(')}`, context);
+  context.renderRecues(response.body);
+  assert.match(host.innerHTML, /viewCandidate\('app-a'\)/);
+  assert.match(host.innerHTML, new RegExp(`${SECRET.prenom} Q\.`));
+  assert.match(host.innerHTML, />ZQ</);
+  assert.match(host.innerHTML, /Account Executive/);
+  assert.match(host.innerHTML, /cr-score-v[^>]*>100</);
+  assert.doesNotMatch(host.innerHTML, /undefined|null/);
 });

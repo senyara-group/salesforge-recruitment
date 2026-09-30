@@ -55,8 +55,11 @@ révèlent l'identité au seul recruteur propriétaire de l'offre (contrôle par
 
 ## Minimisation (indépendante de l'anonymat)
 
-`/candidatures/recues` ne renvoie plus le `snapshot` brut (nom complet, ville, chemin
-du CV) ni l'identifiant candidat : l'interface n'en utilise aucun. Rien n'est modifié
-en base.
+`/candidatures/recues` ne renvoie que les champs lus par son seul consommateur
+(`renderRecues`, tableau de bord recruteur) : `id` (candidature), `name`, `av`, `bg`,
+`titre`, `tags`, `score`, `hot`, `badge`, `badgeBg`, `badgeColor`. Plus de `snapshot`
+brut (nom complet, ville, chemin du CV), d'identifiants candidat/offre ni de statut.
+Le snapshot reste stocké en base et sert toujours au pipeline (CV de candidature).
+Rien n'est modifié en base.
 
 Tests : `test/recruiterPrivacy.test.js`, `test/jobSectorConsistency.test.js` (Lot 7.1).
