@@ -59,8 +59,10 @@ button,input,textarea,select{font-family:inherit}
 .notif-s{font-size:12px;color:var(--ink3);margin-top:1px;line-height:1.4}
 .notif-time{font-size:10px;color:var(--mu);margin-top:3px;font-weight:600}
 .notif-empty{padding:28px 14px;text-align:center;font-size:12px;color:var(--mu)}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
+/* Centrée sans transform : une barre fixe en bas portant son propre transform
+   est recomposée à part pendant l'animation de la barre d'adresse Android. */
+.bnav{position:fixed;bottom:0;left:0;right:0;margin:0 auto;width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:color .15s,background-color .15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
 .bn-ico-wrap{position:relative;display:inline-flex}
 .nav-dot{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:max-content;background:var(--r);color:#fff;border-radius:999px;border:1.5px solid var(--w);padding:2px 6px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;white-space:nowrap}
@@ -1934,7 +1936,6 @@ button,input,textarea,select{font-family:inherit}
       <div class="form-feedback" id="cv-analysis-feedback" role="status"></div>
       <div id="cv-recovery" hidden>
         <button class="btn" type="button" onclick="recoverCvAnalysis()">Vérifier si l’analyse est disponible</button>
-        <button class="btn" id="cv-retry" type="button" hidden onclick="allowCvRetry()">Autoriser une nouvelle tentative malgré le risque de double consommation</button>
       </div>
       <div class="cv-actions-row card-footer">
         <button class="btn bp" id="cv-analyse-btn" type="button" onclick="analyseCVWithAI()">Analyser mon CV</button>
@@ -1942,7 +1943,7 @@ button,input,textarea,select{font-family:inherit}
       </div>
     </section>
     <section class="cv-waiting" id="cv-waiting" hidden aria-live="polite" aria-busy="true">
-      <div class="cv-waiting-head"><h2 class="sf">Analyse en cours</h2><p>Nous préparons votre diagnostic. Cela peut prendre jusqu’à une minute.</p></div>
+      <div class="cv-waiting-head"><h2 class="sf">Analyse en cours</h2><p>Nous préparons votre diagnostic. Cela peut prendre jusqu’à deux minutes pour un CV long.</p></div>
       <ol class="cv-wait-steps" id="cv-wait-steps">
         <li class="cv-wait-step" data-wait-step="1"><span class="cv-wait-index">1</span><span>Lecture du CV</span></li>
         <li class="cv-wait-step" data-wait-step="2"><span class="cv-wait-index">2</span><span>Analyse de la structure</span></li>
@@ -5142,9 +5143,15 @@ function renderAiQuota(kind, config) {
   if (!exhausted && usage) setFeedback(kind === 'cv' ? 'cv-analysis-feedback' : 'coach-setup-feedback', `${usage.remaining} ${kind === 'cv' ? 'analyse' : 'réponse'}${usage.remaining > 1 ? 's' : ''} restante${usage.remaining > 1 ? 's' : ''} ce mois-ci.`);
 }
 const CV_REQUEST_TIMEOUT_MS = 75000;
+// Délai laissé à une requête interrompue côté client pour atteindre le serveur
+// et y réserver son quota avant qu'une absence de réservation soit définitive.
+const CV_SETTLE_GRACE_MS = 5000;
+const CV_RECOVERY_POLL_MS = 10000;
+// Au-delà, toute réservation serveur a expiré (3 min) : plus de relance auto.
+const CV_RECOVERY_MAX_AGE_MS = 240000;
 let CV_IMPORTING = false;
 let CV_RECOVERING = false;
-let CV_RETRY_READY = false;
+let CV_RECOVERY_TIMER = null;
 function cvPendingKey() { return 'cv-pending:' + USER.id; }
 function cvPending() {
   const raw = sessionStorage.getItem(cvPendingKey());
@@ -5153,10 +5160,17 @@ function cvPending() {
   if (!/^[a-f0-9]{64}$/.test(value.fingerprint) || !Array.isArray(value.previousIds) || !Number.isFinite(value.startedAt)) throw new Error('Invalid recovery state');
   return value;
 }
+function clearCvPending() {
+  sessionStorage.removeItem(cvPendingKey());
+  if (CV_RECOVERY_TIMER) { clearTimeout(CV_RECOVERY_TIMER); CV_RECOVERY_TIMER = null; }
+}
+function scheduleCvRecovery(delay) {
+  if (CV_RECOVERY_TIMER) clearTimeout(CV_RECOVERY_TIMER);
+  CV_RECOVERY_TIMER = setTimeout(() => { CV_RECOVERY_TIMER = null; recoverCvAnalysis(); }, delay);
+}
 function updateCvRecovery() {
   const pending = cvPending();
   document.getElementById('cv-recovery').hidden = !pending;
-  document.getElementById('cv-retry').hidden = !pending || !CV_RETRY_READY;
   document.getElementById('cv-analyse-btn').disabled = Boolean(pending) || CV_ANALYSING || !CV_ALLOWED || !AI_AVAILABLE;
 }
 async function cvFingerprint(value) {
@@ -5165,34 +5179,36 @@ async function cvFingerprint(value) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
   return Array.from(new Uint8Array(bytes), n => n.toString(16).padStart(2, '0')).join('');
 }
+// GET uniquement : ne lance, ne consomme et n'écrase jamais une analyse.
+// Le statut est lu AVANT l'historique : une analyse qui se termine entre les
+// deux lectures est donc vue soit « en cours », soit dans l'historique.
 async function recoverCvAnalysis() {
   if (CV_RECOVERING || CV_ANALYSING) return;
   CV_RECOVERING = true;
-  CV_RETRY_READY = false;
   try {
     updateCvRecovery();
     const pending = cvPending();
     if (!pending) return;
+    const status = await cvRequest('GET', '/assistant/cv-analyses/status');
+    if (typeof status?.in_progress !== 'boolean') throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
     const history = await cvRequest('GET', '/assistant/cv-analyses');
     if (!Array.isArray(history)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
     const found = history.find(row => !pending.previousIds.includes(row.id) && row.request_fingerprint === pending.fingerprint && row.analysis && typeof row.analysis === 'object' && !Array.isArray(row.analysis));
+    const settledFor = Date.now() - (Number.isFinite(pending.settledAt) ? pending.settledAt : pending.startedAt);
     if (found) {
+      clearCvPending();
       renderCVAnalysis(found);
-      sessionStorage.removeItem(cvPendingKey());
-      cvFeedback('Analyse récupérée dans votre historique. Aucune nouvelle analyse n’a été lancée.');
+      cvFeedback('Analyse récupérée. Aucune nouvelle analyse n’a été lancée.');
+    } else if (status.in_progress || settledFor < CV_SETTLE_GRACE_MS) {
+      const age = Date.now() - pending.startedAt;
+      if (age < CV_RECOVERY_MAX_AGE_MS) scheduleCvRecovery(status.in_progress ? CV_RECOVERY_POLL_MS : CV_SETTLE_GRACE_MS);
+      cvFeedback('Votre analyse est toujours en cours. Le résultat s’affichera ici dès qu’il sera disponible, sans nouvelle analyse.');
     } else {
-      CV_RETRY_READY = Date.now() - pending.startedAt >= 180000;
-      cvFeedback('Aucun résultat disponible pour le moment. Vérifiez à nouveau dans quelques instants. Une nouvelle tentative peut consommer une autre analyse si la précédente se termine tardivement.', true);
+      clearCvPending();
+      cvFeedback('Cette analyse n’a pas abouti : aucun résultat n’a été enregistré et aucune analyse n’est en cours. Votre texte est conservé ; vous pouvez relancer l’analyse.', true);
     }
   } catch (error) { cvFeedback('La vérification n’a pas abouti. La relance reste bloquée pour éviter une double analyse. Réessayez la vérification.', true); }
   finally { CV_RECOVERING = false; updateCvRecovery(); }
-}
-function allowCvRetry() {
-  if (!CV_RETRY_READY || CV_RECOVERING || CV_ANALYSING) return;
-  sessionStorage.removeItem(cvPendingKey());
-  CV_RETRY_READY = false;
-  updateCvRecovery();
-  cvFeedback('Vous pouvez relancer manuellement. Cette nouvelle tentative peut consommer une analyse supplémentaire si la précédente aboutit.', true);
 }
 function cvFeedback(message, error = false) {
   setFeedback('cv-analysis-feedback', message, error);
@@ -5219,8 +5235,8 @@ function cvErrorMessage(error = {}) {
     NO_CV_STORED: 'Aucun CV enregistré. Importez un PDF ou un DOCX, ou collez votre texte.',
     CV_STORAGE_UNAVAILABLE: 'Le document ne peut pas être lu ou enregistré pour le moment. Réessayez ou collez votre texte.',
     AI_STORAGE_UNAVAILABLE: 'L’analyse ne peut pas être enregistrée pour le moment. Votre texte est conservé. Consultez l’historique puis réessayez plus tard.',
-    AI_TIMEOUT: 'L’Assistant SwipSales a dépassé le délai de réponse. Votre texte est conservé. Consultez l’historique puis réessayez.',
-    AI_INVALID_RESPONSE: 'La réponse de l’Assistant SwipSales est invalide. Votre texte est conservé. Réessayez.',
+    AI_TIMEOUT: 'L’analyse n’a pas pu aboutir dans le délai. Aucun résultat n’a été enregistré ni décompté. Votre texte est conservé ; vous pouvez relancer.',
+    AI_INVALID_RESPONSE: 'La réponse de l’Assistant SwipSales est invalide. Aucun résultat n’a été enregistré ni décompté. Votre texte est conservé ; vous pouvez relancer.',
     RESPONSE_UNREADABLE: 'La réponse du service est illisible ou incomplète. Votre texte est conservé. Réessayez.',
     AI_PROVIDER_ERROR: 'L’Assistant SwipSales est momentanément indisponible. Votre texte est conservé. Réessayez plus tard.',
     AI_NOT_CONFIGURED: 'L’Assistant SwipSales est momentanément indisponible. Réessayez plus tard.',
@@ -5259,7 +5275,7 @@ async function cvRequest(method, path, body) {
     }
     let data;
     try { data = JSON.parse(raw); } catch (_) { /* HTTP status takes precedence. */ }
-    if (!response.ok) throw Object.assign(new Error(), { status: response.status, code: data?.code || 'REQUEST_FAILED' });
+    if (!response.ok) throw Object.assign(new Error(), { status: response.status, code: data?.code || 'REQUEST_FAILED', cvState: data?.cv_analysis_state });
     if (!data || typeof data !== 'object') throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
     return data;
   };
@@ -5291,6 +5307,7 @@ async function loadCVTool() {
     bindCvDropzone();
     updateCvRecovery();
     if (cvPending()) {
+      // Après un rechargement : récupérer CETTE analyse (GET seulement).
       await recoverCvAnalysis();
       return;
     }
@@ -5556,17 +5573,25 @@ async function analyseCVWithAI() {
     if (!Array.isArray(previous)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
     const fingerprint = await cvFingerprint(payload);
     sessionStorage.setItem(cvPendingKey(), JSON.stringify({ fingerprint, previousIds: previous.map(row => row.id), startedAt: Date.now() }));
-    CV_RETRY_READY = false;
     const data = await cvRequest('POST', '/assistant/cv-analyses', payload);
     if (!data?.id || !data.analysis || typeof data.analysis !== 'object' || Array.isArray(data.analysis)) throw Object.assign(new Error(), { code: 'RESPONSE_UNREADABLE' });
-    sessionStorage.removeItem(cvPendingKey());
+    clearCvPending();
     renderCVAnalysis(data); setFeedback('cv-analysis-feedback', 'Analyse terminée. Relisez chaque proposition avant usage.');
     document.getElementById('cv-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
-    // Only a definitive rejection permits an immediate retry. Network/5xx/body
-    // failures can hide a successful insert or a request still running remotely.
-    if ([400, 401, 403, 413, 422, 429].includes(error.status)) sessionStorage.removeItem(cvPendingKey());
-    cvFeedback(cvPending() ? 'La réponse n’est pas confirmée. Votre texte est conservé. Vérifiez le résultat ci-dessous avant toute nouvelle analyse.' : cvErrorMessage(error), true);
+    // Only a definitive rejection permits an immediate retry: a 4xx refusal, or a
+    // server response stating that nothing was stored and the quota was released.
+    // Network/proxy/unreadable failures can hide a request still running remotely.
+    if ([400, 401, 403, 413, 422, 429].includes(error.status) || error.cvState === 'failed') clearCvPending();
+    let pending = null;
+    try { pending = cvPending(); } catch (_) { /* reported below as unconfirmed */ }
+    if (pending) {
+      sessionStorage.setItem(cvPendingKey(), JSON.stringify({ ...pending, settledAt: Date.now() }));
+      scheduleCvRecovery(CV_SETTLE_GRACE_MS);
+      cvFeedback('La réponse n’est pas encore confirmée. Votre texte est conservé. Nous vérifions automatiquement si cette analyse est disponible, sans en relancer une nouvelle.', true);
+    } else {
+      cvFeedback(cvErrorMessage(error), true);
+    }
     if (error.code === 'AI_QUOTA_EXCEEDED' || error.status === 403) CV_ALLOWED = false;
   }
   finally {

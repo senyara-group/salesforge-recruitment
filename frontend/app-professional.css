@@ -359,7 +359,12 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .coach-context { display: grid; gap: 10px; margin: 20px 0 8px; padding: 16px; border: 1px solid var(--bd); border-radius: 9px; }
 .coach-context legend { padding: 0 5px; color: var(--ink2); font-size: 12px; font-weight: 800; }
 .coach-context label { color: var(--ink2); font-size: 12px; }
-.coach-conversation { display: grid; grid-template-rows: auto minmax(280px, 1fr) auto auto; height: min(70dvh, 720px); min-height: 560px; }
+.coach-conversation { display: grid; grid-template-rows: auto minmax(280px, 1fr) auto auto; grid-template-columns: minmax(0, 1fr); height: min(70dvh, 720px); min-height: 560px; }
+/* Sans colonne explicite, la piste implicite « auto » et le min-width:auto des
+   enfants laissaient un contenu insécable élargir tout le Coach (en-tête,
+   messages, zone de saisie) au-delà de l'écran. */
+.coach-conversation > *, .coach-conversation-head > div { min-width: 0; }
+.coach-conversation-head h2 { overflow-wrap: anywhere; }
 .coach-conversation[hidden] { display: none; }
 .coach-conversation-head { padding: 15px 18px; border-bottom: 1px solid var(--bd); }
 .coach-conversation-head .feature-status { margin-bottom: 4px; }
@@ -373,6 +378,8 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .coach-message p, .coach-bubble {
   padding: 12px 14px; border-radius: 10px; background: #f1f4f8; color: var(--ink2);
   font-size: 13px; line-height: 1.55; white-space: pre-wrap;
+  /* Un mot ou une URL très longs reviennent à la ligne au lieu d'élargir la colonne. */
+  overflow-wrap: anywhere;
 }
 .coach-message.is-user p, .coach-message.is-user .coach-bubble { background: var(--b); color: #fff; border-bottom-right-radius: 4px; }
 .coach-message.is-assistant .coach-bubble { border-bottom-left-radius: 4px; }
@@ -391,7 +398,7 @@ input::placeholder, textarea::placeholder { color: #98a2b3; opacity: 1; }
 .coach-error { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 16px 10px; padding: 10px; border: 1px solid #fecdca; border-radius: 8px; background: var(--rs); color: var(--r); font-size: 12px; }
 .coach-error[hidden] { display: none; }
 .coach-composer { display: flex; align-items: flex-end; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--bd); background: var(--w); }
-.coach-composer textarea { flex: 1; max-height: 150px; resize: none; }
+.coach-composer textarea { flex: 1; min-width: 0; max-height: 150px; resize: none; }
 .candidate-status-actions { display: grid; justify-items: end; gap: 3px; flex-shrink: 0; max-width: 46%; min-width: 0; }
 .candidate-status-actions .chip { max-width: 100%; }
 .candidate-date { color: var(--mu); font-size: 11px; }
@@ -521,6 +528,8 @@ body.auth .shell, body.product-gateway .shell {
 
   .bnav {
     left: 0 !important;
+    right: auto;
+    margin: 0;
     top: 0;
     bottom: 0;
     transform: none !important;
@@ -651,12 +660,15 @@ body.auth .shell, body.product-gateway .shell {
   .coach-starters { grid-template-columns: minmax(0, 1fr); }
   .coach-starters button { min-height: 96px; }
   .coach-simulation-type-grid { grid-template-columns: minmax(0, 1fr); }
-  .coach-conversation { height: calc(100dvh - 156px); min-height: 480px; }
+  /* svh : hauteur stable quand la barre d'adresse mobile apparaît/disparaît,
+     sinon la zone de saisie collée au-dessus de la navigation basse saute. */
+  .coach-conversation { height: calc(100svh - 156px); min-height: 480px; }
+  .coach-conversation-head { flex-wrap: wrap; }
   .coach-messages { padding: 14px; }
   .coach-message { width: 92%; }
   .coach-composer { position: sticky; bottom: 67px; padding: 9px; }
   .coach-head-actions { width: 100%; }
-  .coach-head-actions .btn { flex: 1 1 auto; }
+  .coach-head-actions .btn { flex: 1 1 auto; min-height: 44px; }
   .filter-row, .hscroll, .pipe-cols, .plans-row {
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;

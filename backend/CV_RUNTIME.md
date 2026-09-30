@@ -82,12 +82,21 @@ Ambiguous POST failures preserve the marker across reloads and block new POSTs.
 The recovery button performs GET only, matching a new ID and exact fingerprint.
 Old matching results and new unrelated results do not unlock the pending request.
 
-After at least three minutes AND a successful empty reconciliation, an explicit
-retry authorization is offered with a double-consumption warning. It does not
-POST automatically. Failed history requests never authorize retry.
-This is not server idempotence: a late completion after explicit retry, another
-tab/device, cleared sessionStorage, or a direct API client can still duplicate a
-request. Closing the tab loses the marker. History is limited to ten records;
+Lot 7.1 (deterministic outcome). A server error response carries
+`cv_analysis_state`: `failed` (error before `db_insert`: nothing stored,
+reservation released, not counted) clears the marker and allows an immediate
+retry; `unknown` (error at `db_insert`/`finalize_usage`) keeps it. Proxy,
+network, timeout and unreadable failures keep it too. Verification reads
+`GET /assistant/cv-analyses/status` (read-only: an unfinalized, unexpired CV
+reservation of the user exists) BEFORE the history, then: matching result ->
+shown; still in progress (or less than 5 s since the client request settled) ->
+"en cours", automatic GET-only re-check every 10 s for at most 4 minutes; else ->
+definitive failure, marker cleared, clean retry. The former 3-minute "retry
+despite double consumption" button is removed. The CV AI call timeout is 120 s
+(below the 3-minute reservation expiry), so a slow analysis completes after the
+75-second browser wait and is recovered without a second analysis.
+This is not server idempotence: another tab/device, cleared sessionStorage, or a
+direct API client can still duplicate a request. Closing the tab loses the marker. History is limited to ten records;
 heavy parallel use can hide a completed result. These cases are not silently
 reported as a guarantee of single consumption.
 

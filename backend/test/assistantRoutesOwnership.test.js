@@ -9,17 +9,20 @@ const rows = {
   ai_cv_analyses: [{ id: 'analysis-b', user_id: 'user-b', improved_text: 'original-b' }],
   ai_conversations: [{ id: 'conversation-a', user_id: 'user-a', mode: 'pitch', title: 'Privée A', context_data: {} }, { id: 'conversation-b', user_id: 'user-b', mode: 'pitch', title: 'Privée B', context_data: {} }],
   ai_conversation_messages: [{ id: 'message-b', conversation_id: 'conversation-b', user_id: 'user-b', role: 'assistant', content: 'secret-b' }],
+  ai_usage_reservations: [],
 };
 const operations = [];
 let failCvInsert = false;
 
 class Query {
-  constructor(table) { this.table = table; this.filters = []; this.operation = 'select'; this.payload = null; }
+  constructor(table) { this.table = table; this.filters = []; this.predicates = []; this.operation = 'select'; this.payload = null; }
   select() { return this; }
   update(payload) { this.operation = 'update'; this.payload = payload; return this; }
   insert(payload) { this.operation = 'insert'; this.payload = payload; return this; }
   delete() { this.operation = 'delete'; return this; }
   eq(column, value) { this.filters.push([column, value]); return this; }
+  is(column, value) { this.filters.push([column, value]); return this; }
+  gt(column, value) { this.predicates.push((row) => row[column] > value); return this; }
   order() { return this; }
   limit() { return this; }
   async single() { return this.execute(true); }
@@ -30,7 +33,7 @@ class Query {
     if (this.table === 'ai_cv_analyses' && this.operation === 'insert' && failCvInsert) {
       return { data: null, error: new Error('persistence failed') };
     }
-    const matching = (rows[this.table] || []).filter((row) => this.filters.every(([key, value]) => row[key] === value));
+    const matching = (rows[this.table] || []).filter((row) => this.filters.every(([key, value]) => row[key] === value) && this.predicates.every((predicate) => predicate(row)));
     if (this.operation === 'insert') {
       const value = { id: `${this.table}-new`, ...(Array.isArray(this.payload) ? this.payload[0] : this.payload) };
       rows[this.table].push(value); return { data: single ? value : [value], error: null };
@@ -413,4 +416,105 @@ test('secret marker in invalid AI JSON, exception fields and diagnostics never r
   } finally {
     Object.assign(console, originals); providerError = null; quotaMode = 'exhausted';
   }
+});
+
+// --- Lot 7.1 : Optimiseur CV, état d'analyse jamais ambigu ---------------------
+const cvBody = () => ({ source_text: 'Entirely fictional candidate CV. '.repeat(8) });
+function cvProviderValue() {
+  return {
+    score: { readability: 70, quantified_impact: 60, ats_compatibility: 65, commercial_relevance: 55, diagnostic: 'Diagnostic fictif.' },
+    title: { current: '', suggested: '', reason: '' },
+    summary: '', rewrites: [], missing_metrics: [], keywords: [], alerts: [], priorities: [], improved_cv: 'CV fictif amélioré',
+  };
+}
+
+test('CV : un échec IA définitif (timeout, JSON malformé, provider) est explicite : rien d’enregistré, quota libéré', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = false;
+  try {
+    for (const [status, code] of [[504, 'AI_TIMEOUT'], [502, 'AI_INVALID_RESPONSE'], [502, 'AI_PROVIDER_ERROR']]) {
+      providerError = Object.assign(new Error(code), { status, code });
+      releaseCalls = 0; finalizeCalls = 0; operations.length = 0;
+      const response = await invoke('post', '/cv-analyses', { body: cvBody() });
+      assert.equal(response.statusCode, status);
+      assert.equal(response.payload.code, code);
+      assert.equal(response.payload.cv_analysis_state, 'failed');
+      assert.equal(operations.some((op) => op.table === 'ai_cv_analyses' && op.operation === 'insert'), false);
+      assert.equal(finalizeCalls, 0);
+      assert.equal(releaseCalls, 1);
+    }
+  } finally { providerError = null; quotaMode = 'exhausted'; }
+});
+
+test('CV : une erreur pendant ou après l’enregistrement reste « unknown » (le résultat peut exister)', async () => {
+  quotaMode = 'available'; providerError = null; providerValue = cvProviderValue();
+  try {
+    for (const setup of [() => { failCvInsert = true; }, () => { failFinalize = true; }]) {
+      failCvInsert = false; failFinalize = false; setup();
+      const response = await invoke('post', '/cv-analyses', { body: cvBody() });
+      assert.equal(response.statusCode, 503);
+      assert.equal(response.payload.cv_analysis_state, 'unknown');
+    }
+  } finally { failCvInsert = false; failFinalize = false; quotaMode = 'exhausted'; }
+});
+
+test('CV : l’appel IA laisse le temps à une génération longue, sous l’expiration de réservation (3 min)', async () => {
+  quotaMode = 'available'; providerError = null; providerValue = cvProviderValue(); failCvInsert = false; failFinalize = false;
+  try {
+    const response = await invoke('post', '/cv-analyses', { body: cvBody() });
+    assert.equal(response.statusCode, 201);
+    assert.ok(providerRequest.timeoutMs > 75000, 'le backend doit pouvoir terminer après l’attente navigateur (75 s)');
+    assert.ok(providerRequest.timeoutMs <= 120000, 'la réservation de quota (180 s) doit survivre à l’appel IA');
+    assert.equal(providerRequest.maxRetries, 0);
+    const { anthropicTimeout } = require('../utils/anthropic');
+    assert.equal(anthropicTimeout(providerRequest.timeoutMs), providerRequest.timeoutMs);
+    assert.equal(anthropicTimeout(999999), 120000);
+    const previous = process.env.ANTHROPIC_TIMEOUT_MS;
+    process.env.ANTHROPIC_TIMEOUT_MS = '999999';
+    try { assert.equal(anthropicTimeout(), 60000, 'le plafond par défaut (Coach) est inchangé'); }
+    finally { if (previous === undefined) delete process.env.ANTHROPIC_TIMEOUT_MS; else process.env.ANTHROPIC_TIMEOUT_MS = previous; }
+  } finally { quotaMode = 'exhausted'; }
+});
+
+test('CV status : lecture seule, scoped à l’utilisateur, seules les réservations CV actives non finalisées comptent', async () => {
+  const future = new Date(Date.now() + 60000).toISOString();
+  const past = new Date(Date.now() - 1000).toISOString();
+  rows.ai_usage_reservations.push(
+    { id: 'r-b', user_id: 'user-b', feature: 'cv', finalized_at: null, expires_at: future },
+    { id: 'r-coach', user_id: 'user-a', feature: 'coach', finalized_at: null, expires_at: future },
+    { id: 'r-done', user_id: 'user-a', feature: 'cv', finalized_at: past, expires_at: future },
+    { id: 'r-expired', user_id: 'user-a', feature: 'cv', finalized_at: null, expires_at: past },
+  );
+  try {
+    providerCalls = 0; releaseCalls = 0; finalizeCalls = 0; operations.length = 0;
+    let response = await invoke('get', '/cv-analyses/status');
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.payload, { in_progress: false });
+    assert.deepEqual(operations[0].filters, [['user_id', 'user-a'], ['feature', 'cv'], ['finalized_at', null]]);
+    rows.ai_usage_reservations.push({ id: 'r-live', user_id: 'user-a', feature: 'cv', finalized_at: null, expires_at: future });
+    response = await invoke('get', '/cv-analyses/status');
+    assert.deepEqual(response.payload, { in_progress: true });
+    assert.equal(operations.every((op) => op.operation === 'select'), true);
+    assert.equal(providerCalls + releaseCalls + finalizeCalls, 0, 'la vérification ne lance ni ne consomme rien');
+  } finally { rows.ai_usage_reservations.length = 0; }
+});
+
+test('CV quota (compte partiellement consommé) : échec, vérifications et double lecture ne décomptent rien ; succès = 1', async () => {
+  quotaMode = 'available'; failCvInsert = false; failFinalize = false; providerValue = cvProviderValue();
+  let used = 12; // 12 analyses déjà consommées ce mois-ci
+  try {
+    finalizeCalls = 0; releaseCalls = 0;
+    providerError = Object.assign(new Error('timeout'), { status: 504, code: 'AI_TIMEOUT' });
+    await invoke('post', '/cv-analyses', { body: cvBody() });
+    providerError = null;
+    await invoke('get', '/cv-analyses/status');
+    await invoke('get', '/cv-analyses');
+    await invoke('get', '/cv-analyses/status');
+    used += finalizeCalls;
+    assert.equal(used, 12);
+    const response = await invoke('post', '/cv-analyses', { body: cvBody() });
+    assert.equal(response.statusCode, 201);
+    used += finalizeCalls;
+    assert.equal(used, 13);
+    assert.equal(releaseCalls, 1);
+  } finally { providerError = null; quotaMode = 'exhausted'; }
 });

@@ -818,7 +818,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
 function mapCandidateDeckCard(profile, matching) {
   const axes = normalizeAxes(profile.axes);
-  const anon = profile.axes?.meta?.anonyme === true;
+  // Lecture unique du drapeau : true et l'historique "true" sont anonymes.
+  const anon = isAnonymousCandidate(profile);
   const shortName = profile.nom ? `${profile.nom.slice(0, 1)}.` : '';
   const name = anon
     ? 'Candidat anonyme'
@@ -838,7 +839,7 @@ function mapCandidateDeckCard(profile, matching) {
     role: profile.titre || 'Commercial',
     anon,
     // Ville déclarée (jamais d'adresse ni de coordonnées) ; masquée pour un profil anonyme.
-    location: anon || isAnonymousCandidate(profile) ? '' : readLocationText(profile.axes?.meta?.ville),
+    location: anon ? '' : readLocationText(profile.axes?.meta?.ville),
     certifie: false,
     avatar_url: anon ? '' : (profile.avatar_url || ''),
     m: fit,

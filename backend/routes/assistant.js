@@ -17,6 +17,7 @@ const { AI_SAFETY_FALLBACK, inspectAssistantOutput } = require('../utils/aiSafet
 const { COACH_MODES, COACH_MODE_LABELS, normalizeCoachReply, formatCoachReply, coachSystemPrompt, isObjectionMode, parseSimulationTypeInput, resolveStoredSimulationType, simulationLabel } = require('../utils/coachReply');
 const { usageFor, reserveUsage, releaseUsage, finalizeUsage } = require('../utils/aiUsage');
 
+const CV_AI_TIMEOUT_MS = 120000;
 const MODES = COACH_MODES;
 const MODE_LABELS = COACH_MODE_LABELS;
 
@@ -34,7 +35,7 @@ function publicConversation(conversation) {
   };
 }
 
-function publicError(res, error) {
+function publicError(res, error, extra = {}) {
   const response = publicAiError(error);
   const logPayload = aiLogMetadata(error, response.code);
 
@@ -43,8 +44,13 @@ function publicError(res, error) {
     error: response.message,
     code: response.code,
     ...(response.details ? response.details : {}),
+    ...extra,
   });
 }
+
+// Étapes après lesquelles une analyse CV a pu être enregistrée : l'issue d'une
+// erreur survenue à ces étapes ne peut pas être garantie au client.
+const CV_PERSISTING_STAGES = new Set(['db_insert', 'finalize_usage']);
 
 router.get('/config', authMiddleware, async (req, res) => {
   try {
@@ -90,6 +96,29 @@ router.get('/cv-analyses', authMiddleware, async (req, res) => {
       improved_text: row.improved_text, created_at: row.created_at, updated_at: row.updated_at,
       request_fingerprint: cvRequestFingerprint(row),
     })));
+  } catch (error) {
+    publicError(res, error);
+  }
+});
+
+// Lecture seule : indique si une analyse CV de l'utilisateur détient encore une
+// réservation de quota active (appel IA ou enregistrement en cours). Ne lance,
+// ne consomme et ne modifie rien.
+router.get('/cv-analyses/status', authMiddleware, async (req, res) => {
+  try {
+    await assertAiAccess(req.user.id, 'cv');
+
+    const { data, error } = await supabase
+      .from('ai_usage_reservations')
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('feature', 'cv')
+      .is('finalized_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .limit(1);
+
+    if (error) throw error;
+    res.json({ in_progress: Array.isArray(data) && data.length > 0 });
   } catch (error) {
     publicError(res, error);
   }
@@ -160,10 +189,12 @@ router.post(
         json: true,
         returnMeta: true,
 
-        // JSON CV : génération plus longue que le coach ;
-        // 55s / 0 retry évite le triple timeout SDK (~90s).
+        // JSON CV : génération plus longue que le coach (jusqu'à 5000 tokens,
+        // souvent > 55 s pour un CV long). 0 retry évite de multiplier le délai.
+        // Le navigateur cesse d'attendre à 75 s puis récupère CETTE analyse via
+        // /cv-analyses/status + l'historique : aucune seconde analyse requise.
         maxTokens: CV_MAX_TOKENS,
-        timeoutMs: 55000,
+        timeoutMs: CV_AI_TIMEOUT_MS,
         maxRetries: 0,
 
         messages: [
@@ -236,7 +267,8 @@ router.post(
       res.status(201).json(data);
     } catch (error) {
       await releaseUsage(reservation);
-      if (cvAnalysisStage === 'db_insert' || cvAnalysisStage === 'finalize_usage') {
+      const mayBePersisted = CV_PERSISTING_STAGES.has(cvAnalysisStage);
+      if (mayBePersisted) {
         error.code = 'AI_STORAGE_UNAVAILABLE';
         error.status = 503;
       }
@@ -245,7 +277,10 @@ router.post(
         elapsed_ms: Date.now() - cvAnalysisStartedAt,
         ...(error.diagnostics || {}),
       };
-      publicError(res, error);
+      // 'failed' : rien n'a été enregistré et la réservation est libérée, le
+      // client peut relancer sans vérification. 'unknown' : une analyse a pu
+      // être enregistrée, le client doit la chercher dans l'historique.
+      publicError(res, error, { cv_analysis_state: mayBePersisted ? 'unknown' : 'failed' });
     }
   },
 );

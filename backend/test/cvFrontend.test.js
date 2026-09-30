@@ -13,6 +13,7 @@ function harness() {
   };
   let deadline;
   let clears = 0;
+  const timers = [];
   const feedback = [];
   const storage = new Map();
   const context = {
@@ -21,7 +22,7 @@ function harness() {
     API: 'https://example.invalid', TOKEN: 'test', FormData, AbortController,
     CV_ALLOWED: true, CV_ANALYSING: false, AI_AVAILABLE: true,
     document: { getElementById: node },
-    setTimeout: fn => { deadline = fn; return 1; }, clearTimeout: () => { clears++; },
+    setTimeout: (fn, delay) => { deadline = fn; timers.push({ fn, delay }); return timers.length; }, clearTimeout: () => { clears++; },
     setFeedback: (id, message, error) => feedback.push({ id, message, error }),
     setBtn: (id, loading) => { node(id).disabled = loading; },
     startCvWaiting: () => { node('cv-waiting').hidden = false; },
@@ -31,7 +32,7 @@ function harness() {
   vm.createContext(context);
   vm.runInContext(section('const CV_REQUEST_TIMEOUT_MS', 'async function loadCVTool()') + '\n' + section('async function analyseCVWithAI()', 'async function saveImprovedCV()'), context);
   node('cv-source-text').value = 'Expérience commerciale et prospection. '.repeat(10);
-  return { context, node, feedback, timeout: () => deadline(), clears: () => clears };
+  return { context, node, feedback, timeout: () => deadline(), clears: () => clears, timers: () => timers.filter(t => t.delay !== 75000) };
 }
 const response = (status, raw) => ({ status, ok: status < 400, text: async () => raw });
 test('CV transport distinguishes HTTP, malformed JSON, fetch/body rejection and local serialization errors', async () => {
@@ -132,50 +133,206 @@ test('scan preserves prepared text; oversized extraction remains editable withou
   assert.match(h.feedback.at(-1).message, /31000.*30 000/);
 });
 
-test('uncertain POST survives reload, reconciles only a new matching result and never posts twice', async () => {
-  const h = harness(); const c = h.context; let posts = 0;
-  c.cvRequest = async method => {
-    if (method === 'GET') return [{ id: 'old' }];
-    posts++; throw { code: 'CV_REQUEST_TIMEOUT' };
+// Serveur simulé : route chaque requête par méthode + chemin et compte les POST.
+function cvServer(h, { history = [], inProgress = false, post } = {}) {
+  const state = { history, inProgress, posts: 0, gets: [] };
+  h.context.cvRequest = async (method, path) => {
+    if (method === 'POST') { state.posts++; return post(state); }
+    assert.equal(method, 'GET');
+    state.gets.push(path);
+    if (path === '/assistant/cv-analyses/status') return { in_progress: state.inProgress };
+    if (path === '/assistant/cv-analyses') return state.history;
+    assert.fail('unexpected ' + path);
   };
+  return state;
+}
+const expectedFingerprint = h => require('../utils/cvRequestFingerprint').cvRequestFingerprint({ source_text: h.node('cv-source-text').value });
+const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('uncertain POST survives reload, reconciles only a new matching result and never posts twice', async () => {
+  const h = harness(); const c = h.context;
+  const server = cvServer(h, { history: [{ id: 'old' }], inProgress: true, post: () => { throw { code: 'CV_REQUEST_TIMEOUT' }; } });
   await c.analyseCVWithAI();
-  assert.equal(posts, 1);
+  assert.equal(server.posts, 1);
   assert.equal(h.node('cv-analyse-btn').disabled, true);
   assert.equal(h.node('cv-waiting').hidden, true);
   const pending = c.cvPending();
   assert.doesNotMatch(JSON.stringify(pending), /commerciale|prospection/);
-  const expected = require('../utils/cvRequestFingerprint').cvRequestFingerprint({ source_text: h.node('cv-source-text').value });
+  const expected = expectedFingerprint(h);
   assert.equal(pending.fingerprint, expected);
+  assert.ok(Number.isFinite(pending.settledAt));
   const reloaded = harness();
   reloaded.context.sessionStorage = c.sessionStorage;
   reloaded.context.updateCvRecovery();
   assert.equal(reloaded.node('cv-analyse-btn').disabled, true);
-  await c.analyseCVWithAI(); assert.equal(posts, 1);
+  await c.analyseCVWithAI(); assert.equal(server.posts, 1);
   let rendered;
   c.renderCVAnalysis = row => { rendered = row; };
-  c.cvRequest = async method => { assert.equal(method, 'GET'); return [
+  server.history = [
     { id: 'old', request_fingerprint: expected, analysis: {} },
     { id: 'other', request_fingerprint: 'f'.repeat(64), analysis: {} },
-  ]; };
+  ];
   await c.recoverCvAnalysis();
   assert.equal(rendered, undefined); assert.ok(c.cvPending());
-  c.allowCvRetry(); assert.ok(c.cvPending()); // cooldown has not elapsed
-  c.cvRequest = async method => { assert.equal(method, 'GET'); return [{ id: 'new', request_fingerprint: expected, analysis: {} }]; };
+  server.history = [{ id: 'new', request_fingerprint: expected, analysis: {} }];
   await c.recoverCvAnalysis();
-  assert.equal(rendered.id, 'new'); assert.equal(c.cvPending(), null); assert.equal(posts, 1);
+  assert.equal(rendered.id, 'new'); assert.equal(c.cvPending(), null); assert.equal(server.posts, 1);
 });
 
-test('retry requires elapsed cooldown AND successful reconciliation AND explicit action', async () => {
+test('failed verification never unlocks a new analysis; only a confirmed absence does', async () => {
   const h = harness(); const c = h.context;
-  const pending = { fingerprint: 'a'.repeat(64), previousIds: [], startedAt: Date.now() - 180001 };
+  const pending = { fingerprint: 'a'.repeat(64), previousIds: [], startedAt: Date.now() - 180001, settledAt: Date.now() - 100000 };
   c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify(pending));
-  c.cvRequest = async () => { throw { code: 'NETWORK_ERROR' }; };
-  await c.recoverCvAnalysis(); c.allowCvRetry(); assert.ok(c.cvPending());
-  c.cvRequest = async method => { assert.equal(method, 'GET'); return []; };
-  await c.recoverCvAnalysis(); assert.ok(c.cvPending());
-  assert.equal(h.node('cv-retry').hidden, false);
-  c.allowCvRetry(); assert.equal(c.cvPending(), null);
+  for (const failure of [{ code: 'NETWORK_ERROR' }, { status: 500 }]) {
+    c.cvRequest = async () => { throw failure; };
+    await c.recoverCvAnalysis(); assert.ok(c.cvPending());
+    assert.equal(h.node('cv-analyse-btn').disabled, true);
+  }
+  for (const unreadable of [[], {}, { in_progress: 'false' }, null]) {
+    c.cvRequest = async (_method, path) => path.endsWith('/status') ? unreadable : [];
+    await c.recoverCvAnalysis(); assert.ok(c.cvPending());
+  }
+  const server = cvServer(h, { history: [], inProgress: false });
+  await c.recoverCvAnalysis();
+  assert.equal(c.cvPending(), null);
   assert.equal(h.node('cv-analyse-btn').disabled, false);
+  assert.match(h.feedback.at(-1).message, /n’a pas abouti.*relancer/);
+  assert.equal(server.posts, 0);
+});
+
+test('CV A/K : analyse normale réussie, une seule requête POST, aucun suivi résiduel', async () => {
+  const h = harness(); const c = h.context; let rendered;
+  c.renderCVAnalysis = row => { rendered = row; };
+  const server = cvServer(h, { post: () => ({ id: 'fresh', analysis: { score: { global: 70 } } }) });
+  await c.analyseCVWithAI();
+  assert.equal(server.posts, 1); assert.equal(rendered.id, 'fresh');
+  assert.equal(c.cvPending(), null);
+  assert.equal(h.node('cv-analyse-btn').disabled, false);
+  assert.deepEqual(server.gets, ['/assistant/cv-analyses']);
+  assert.equal(h.timers().length, 0, 'aucune vérification automatique après un succès');
+});
+
+test('CV B/C/D : analyse lente au-delà de 75 s, suivie automatiquement puis récupérée sans nouvelle consommation', async () => {
+  const h = harness(); const c = h.context; let rendered;
+  c.renderCVAnalysis = row => { rendered = row; };
+  const server = cvServer(h, { inProgress: true, post: () => { throw { code: 'CV_REQUEST_TIMEOUT' }; } });
+  await c.analyseCVWithAI();
+  assert.equal(server.posts, 1);
+  assert.match(h.feedback.at(-1).message, /vérifions automatiquement/);
+  const first = h.timers().at(-1);
+  assert.equal(first.delay, 5000);
+  first.fn(); await settle(); await settle();
+  assert.match(h.feedback.at(-1).message, /toujours en cours/);
+  assert.ok(c.cvPending());
+  assert.equal(h.node('cv-analyse-btn').disabled, true);
+  const second = h.timers().at(-1);
+  assert.equal(second.delay, 10000);
+  server.inProgress = false;
+  server.history = [{ id: 'slow', request_fingerprint: expectedFingerprint(h), analysis: {} }];
+  second.fn(); await settle(); await settle();
+  assert.equal(rendered.id, 'slow');
+  assert.equal(c.cvPending(), null);
+  assert.equal(server.posts, 1, 'la vérification ne relance jamais l’analyse');
+  assert.equal(server.gets.filter(p => p === '/assistant/cv-analyses/status').length, 2);
+  assert.match(h.feedback.at(-1).message, /récupérée.*Aucune nouvelle analyse/);
+});
+
+test('CV E/I : échec serveur déterministe (timeout IA, réponse IA malformée) libère immédiatement la relance', async () => {
+  for (const [status, code] of [[504, 'AI_TIMEOUT'], [502, 'AI_INVALID_RESPONSE']]) {
+    const h = harness(); const c = h.context;
+    let posts = 0;
+    c.fetch = async (_url, options) => {
+      if (options.method === 'POST') { posts++; return response(status, JSON.stringify({ code, cv_analysis_state: 'failed' })); }
+      return response(200, '[]');
+    };
+    await c.analyseCVWithAI();
+    assert.equal(posts, 1);
+    assert.equal(c.cvPending(), null, code + ' ne doit pas laisser un état ambigu');
+    assert.equal(h.node('cv-analyse-btn').disabled, false);
+    assert.equal(h.node('cv-recovery').hidden, true);
+    assert.match(h.feedback.at(-1).message, /ni décompté.*relancer/);
+    assert.doesNotMatch(h.feedback.at(-1).message, /historique|confirmée/);
+    await c.analyseCVWithAI();
+    assert.equal(posts, 2, 'relance propre possible');
+  }
+});
+
+test('CV : un 5xx de proxy sans état serveur (ou état unknown) reste en vérification, jamais relancé', async () => {
+  for (const body of ['<html>bad gateway</html>', JSON.stringify({ code: 'AI_STORAGE_UNAVAILABLE', cv_analysis_state: 'unknown' })]) {
+    const h = harness(); const c = h.context; let posts = 0;
+    c.fetch = async (_url, options) => {
+      if (options.method === 'POST') { posts++; return response(502, body); }
+      return response(200, '[]');
+    };
+    await c.analyseCVWithAI(); await c.analyseCVWithAI();
+    assert.equal(posts, 1);
+    assert.ok(c.cvPending());
+    assert.equal(h.node('cv-recovery').hidden, false);
+  }
+});
+
+test('CV F : double clic sur Vérifier ne déclenche qu’une vérification', async () => {
+  const h = harness(); const c = h.context; let release;
+  c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify({ fingerprint: 'a'.repeat(64), previousIds: [], startedAt: Date.now() - 90000, settledAt: Date.now() - 10000 }));
+  let statusCalls = 0;
+  c.cvRequest = async (method, path) => {
+    assert.equal(method, 'GET');
+    if (path.endsWith('/status')) { statusCalls++; return new Promise(resolve => { release = resolve; }); }
+    return [];
+  };
+  const first = c.recoverCvAnalysis();
+  await c.recoverCvAnalysis();
+  while (!release) await settle();
+  release({ in_progress: true }); await first;
+  assert.equal(statusCalls, 1);
+});
+
+test('CV G : après un timeout, aucune relance tant que l’analyse peut encore aboutir ; relance propre une fois l’échec confirmé', async () => {
+  const h = harness(); const c = h.context;
+  const server = cvServer(h, { inProgress: true, post: s => { if (s.posts === 1) throw { code: 'CV_REQUEST_TIMEOUT' }; return { id: 'second', analysis: {} }; } });
+  await c.analyseCVWithAI();
+  await c.analyseCVWithAI();
+  assert.equal(server.posts, 1);
+  await c.recoverCvAnalysis();
+  await c.analyseCVWithAI();
+  assert.equal(server.posts, 1, 'toujours en cours côté serveur : pas de seconde analyse');
+  // Juste après l'échec réseau, l'absence de réservation n'est pas encore probante.
+  server.inProgress = false;
+  const marker = c.cvPending();
+  c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify({ ...marker, settledAt: Date.now() }));
+  await c.recoverCvAnalysis();
+  assert.ok(c.cvPending());
+  c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify({ ...marker, settledAt: Date.now() - 6000 }));
+  await c.recoverCvAnalysis();
+  assert.equal(c.cvPending(), null);
+  await c.analyseCVWithAI();
+  assert.equal(server.posts, 2);
+  assert.equal(c.cvPending(), null);
+});
+
+test('CV H : après rechargement, la même analyse est retrouvée (GET seulement)', async () => {
+  const h = harness();
+  cvServer(h, { inProgress: true, post: () => { throw { code: 'NETWORK_ERROR' }; } });
+  await h.context.analyseCVWithAI();
+  const reloaded = harness(); let rendered;
+  reloaded.context.sessionStorage = h.context.sessionStorage;
+  reloaded.context.renderCVAnalysis = row => { rendered = row; };
+  const server = cvServer(reloaded, { inProgress: false, history: [{ id: 'after-reload', request_fingerprint: expectedFingerprint(h), analysis: {} }] });
+  await reloaded.context.recoverCvAnalysis();
+  assert.equal(rendered.id, 'after-reload');
+  assert.equal(server.posts, 0);
+  assert.equal(reloaded.context.cvPending(), null);
+});
+
+test('CV : la vérification automatique s’arrête une fois toute réservation serveur expirée', async () => {
+  const h = harness(); const c = h.context;
+  c.sessionStorage.setItem(c.cvPendingKey(), JSON.stringify({ fingerprint: 'a'.repeat(64), previousIds: [], startedAt: Date.now() - 250000, settledAt: Date.now() - 170000 }));
+  cvServer(h, { inProgress: true });
+  const before = h.timers().length;
+  await c.recoverCvAnalysis();
+  assert.equal(h.timers().length, before);
+  assert.ok(c.cvPending(), 'le bouton Vérifier reste disponible manuellement');
+  assert.doesNotMatch(html, /allowCvRetry|cv-retry|risque de double consommation/);
 });
 
 test('ambiguous POST errors stay locked; definitive rejections release the local marker', async () => {
