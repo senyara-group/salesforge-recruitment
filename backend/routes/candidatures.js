@@ -42,13 +42,10 @@ function formatRecruiterRow(row) {
   const name = [candidat.prenom, candidat.nom ? `${candidat.nom.slice(0, 1)}.` : ''].filter(Boolean).join(' ') || 'Candidat';
 
   return {
-    id: row.id,
-    offre_id: row.offre_id,
-    offre_title: row.offres?.titre || 'Offre',
-    statut: row.statut || 'envoyee',
-    statut_label: STATUS_LABELS[row.statut || 'envoyee'],
-    snapshot: row.snapshot || {},
-    candidat_id: candidat.id,
+    // Minimisation : uniquement les champs lus par renderRecues (recruteur.html),
+    // seul consommateur. Ni `snapshot` brut (nom complet, ville, chemin du CV), ni
+    // identifiants candidat/offre, ni statut : ils ne quittent pas le serveur.
+    id: row.id, // candidature : ouverture dans le pipeline (viewCandidate)
     av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
     bg: '#1340E0',
     name,

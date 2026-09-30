@@ -90,3 +90,18 @@ test('Coach Q/V : tous les modes partagent la même structure de conversation', 
   assert.equal(candidateHtml.split('id="coach-conversation"').length, 2);
   assert.match(candidateHtml, /function appendCoachMessage\(message\)[\s\S]*?content\.className = 'coach-bubble'/);
 });
+
+// Lot 7.2 : cause racine du débordement observé sur téléphone réel. La preuve de mise en
+// page est `npm run test:layout` (Chrome réel, émulation mobile, historique Coach rempli) ;
+// ce test verrouille les déclarations structurelles qu'elle a validées.
+test('Coach 7.2 : colonne racine contrainte (historique rempli) et barre d’outils non compressible', () => {
+  const layout = rule(sharedCss, '.coach-layout');
+  assert.match(layout, /display: grid/);
+  assert.match(layout, /grid-template-columns: minmax\(0, 1fr\)/, 'piste implicite auto : la liste d’historique élargissait tout le Coach');
+  assert.match(rule(sharedCss, '.coach-layout > *'), /min-width: 0/);
+  const toolbar = rule(sharedCss, '.cv-toolbar');
+  assert.match(toolbar, /flex: 0 0 auto/);
+  assert.match(toolbar, /max-width: 100%/);
+  // La liste d’historique reste un défilement horizontal interne sur mobile.
+  assert.match(rule(mobile, '.coach-history-list'), /display: flex; overflow-x: auto/);
+});

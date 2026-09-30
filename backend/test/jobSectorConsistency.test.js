@@ -526,3 +526,30 @@ test('Lot 7.1 anonymat : true et "true" protègent nom, initiales, avatar, ville
   // Le filtre lieu exclut exactement les mêmes profils (aucune ville anonyme sondable).
   assert.deepEqual(await candidateIds({ location: 'Lyon' }), ['person-2', 'person-3', 'person-4', 'person-5']);
 });
+
+// Lot 7.2 : contrat ANONYMITY.md — deck sourcing. true et "true" exposent exactement la
+// même carte ; aucune identité, ville, coordonnée, CV ni lettre (fichier ou texte).
+test('Lot 7.2 deck : true ≡ "true", aucun secret sérialisé (lettre texte incluse) ; non anonyme inchangé', async () => {
+  const secrets = { prenom: 'Zephyrine', nom: 'Quillondrake', ville: 'Villesecrete', email: 'zephyrine@mail.invalid', telephone: '+33699887766', lettre: 'Je suis Zephyrine, lettre secrete.' };
+  const profile = (flag) => ({
+    target_job_types: ['BDR'], sectors: ['SaaS'], nom: secrets.nom, prenom: secrets.prenom, email: secrets.email, telephone: secrets.telephone,
+    avatar_url: 'https://cdn.invalid/avatar.png', cv_url: 'https://cdn.invalid/cv.pdf', motivation_url: 'https://cdn.invalid/lm.pdf',
+    axes: { closing: 75, meta: { ville: secrets.ville, motivation: secrets.lettre, cv_file_name: 'cv.pdf', motivation_file_name: 'lm.pdf', ...(flag === undefined ? {} : { anonyme: flag }) } },
+  });
+  const cardFor = async (flag) => {
+    seedCandidates([profile(flag)]);
+    const response = await get(candidateUrl({}), 'user-rec');
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    return response.body.candidates.find((card) => card.user_id === 'person-0');
+  };
+  const [asBoolean, asString, visible] = [await cardFor(true), await cardFor('true'), await cardFor(false)];
+  assert.deepEqual(asString, asBoolean);
+  const serialized = JSON.stringify(asBoolean);
+  for (const secret of [...Object.values(secrets), 'avatar.png', 'cv.pdf', 'lm.pdf']) assert.ok(!serialized.includes(secret), secret);
+  assert.equal(asBoolean.letter_text, '');
+  assert.notEqual(asBoolean.pitch_text, secrets.lettre);
+  // Non anonyme : lettre et identité courte comme historiquement ; coordonnées jamais envoyées.
+  assert.equal(visible.letter_text, secrets.lettre);
+  assert.equal(visible.name, `${secrets.prenom} Q.`);
+  for (const secret of [secrets.email, secrets.telephone, secrets.nom]) assert.ok(!JSON.stringify(visible).includes(secret), secret);
+});
