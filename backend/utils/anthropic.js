@@ -5,9 +5,15 @@ const Anthropic = require('@anthropic-ai/sdk');
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5';
 const DEFAULT_TIMEOUT_MS = 30000;
 
+// Seul un appel explicite (analyse CV : longue génération JSON) peut dépasser
+// 60 s ; il doit rester sous l'expiration des réservations de quota (3 min).
+const MAX_EXPLICIT_TIMEOUT_MS = 120000;
+
 function anthropicTimeout(overrideMs) {
-  const value = Number(overrideMs == null ? process.env.ANTHROPIC_TIMEOUT_MS || DEFAULT_TIMEOUT_MS : overrideMs);
-  return Number.isFinite(value) ? Math.max(5000, Math.min(60000, value)) : DEFAULT_TIMEOUT_MS;
+  const explicit = overrideMs != null;
+  const value = Number(explicit ? overrideMs : process.env.ANTHROPIC_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
+  const max = explicit ? MAX_EXPLICIT_TIMEOUT_MS : 60000;
+  return Number.isFinite(value) ? Math.max(5000, Math.min(max, value)) : DEFAULT_TIMEOUT_MS;
 }
 
 let client = null;

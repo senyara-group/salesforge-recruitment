@@ -490,3 +490,39 @@ test('Lot 7 UI : suggestions métier/secteur issues des zones générées depuis
   const chips = [...recruiterHtml.match(/id="filt-sectors">([\s\S]*?)<\/div>/)[1].matchAll(/data-filter-value="([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(chips, [...SECTORS]);
 });
+
+// Lot 7.1 : représentation historique du drapeau d'anonymat. true et "true" sont
+// anonymes ; false, "false", null et l'absence ne le sont pas. Une seule lecture
+// (isAnonymousCandidate) : le nom ne peut plus fuiter quand seule la ville est masquée.
+test('Lot 7.1 anonymat : true et "true" protègent nom, initiales, avatar, ville et documents ; les autres valeurs non', async () => {
+  const flags = [true, 'true', false, 'false', null, undefined];
+  seedCandidates(flags.map((flag, i) => ({
+    target_job_types: ['BDR'], sectors: ['SaaS'],
+    nom: `Secretnom${i}`, prenom: `Secretprenom${i}`,
+    avatar_url: `https://cdn.invalid/avatar-${i}.png`, cv_url: `https://cdn.invalid/cv-${i}.pdf`, motivation_url: `https://cdn.invalid/lm-${i}.pdf`,
+    axes: { closing: 75, meta: { ville: 'Lyon', cv_file_name: `cv-${i}.pdf`, motivation_file_name: `lm-${i}.pdf`, ...(flag === undefined ? {} : { anonyme: flag }) } },
+  })));
+  const response = await get(candidateUrl({}), 'user-rec');
+  assert.equal(response.status, 200, JSON.stringify(response.body));
+  const byUser = new Map(response.body.candidates.map((card) => [card.user_id, card]));
+  flags.forEach((flag, i) => {
+    const card = byUser.get(`person-${i}`);
+    const label = JSON.stringify(flag);
+    assert.ok(card, label);
+    const anonymous = flag === true || flag === 'true';
+    assert.equal(card.anon, anonymous, label);
+    const serialized = JSON.stringify(card);
+    if (anonymous) {
+      assert.equal(card.name, 'Candidat anonyme', label);
+      assert.equal(card.initiales, '?', label);
+      for (const field of ['location', 'avatar_url', 'cv_url', 'cv_file_name', 'motivation_url', 'motivation_file_name']) assert.equal(card[field], '', `${label} ${field}`);
+      for (const secret of [`Secretnom${i}`, `Secretprenom${i}`, 'Lyon', `avatar-${i}`, `cv-${i}`, `lm-${i}`]) assert.ok(!serialized.includes(secret), `${label} ${secret}`);
+    } else {
+      assert.equal(card.name, `Secretprenom${i} S.`, label);
+      assert.equal(card.location, 'Lyon', label);
+      assert.equal(card.avatar_url, `https://cdn.invalid/avatar-${i}.png`, label);
+    }
+  });
+  // Le filtre lieu exclut exactement les mêmes profils (aucune ville anonyme sondable).
+  assert.deepEqual(await candidateIds({ location: 'Lyon' }), ['person-2', 'person-3', 'person-4', 'person-5']);
+});
