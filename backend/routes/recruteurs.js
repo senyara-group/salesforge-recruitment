@@ -682,11 +682,15 @@ router.post('/swipe', authMiddleware, requireRecruiterPlan, async (req, res) => 
 
     // Source de vérité fiable (table candidatures) plutôt que le tableau JSON
     // swipes_meta.liked_offer_ids, sujet aux mêmes pertes d'écriture concurrentes.
+    // Seule une candidature volontaire du candidat (swipe droit / super) autorise le
+    // match et donc la révélation de son identité : les lignes historiques
+    // `recruteur_like` sont exclues, comme dans /candidatures/recues et le pipeline.
     const { data: existingCandidatures } = await supabase
       .from('candidatures')
       .select('offre_id')
       .eq('candidat_id', candidat_id)
-      .in('offre_id', offreIds);
+      .in('offre_id', offreIds)
+      .or('lettre_type.is.null,lettre_type.neq.recruteur_like');
     const candidateLikedOfferId = existingCandidatures?.[0]?.offre_id || null;
 
     const { data: existingMatches, error: existingError } = offreIds.length

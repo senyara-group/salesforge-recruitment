@@ -851,8 +851,10 @@ function mapCandidateDeckCard(profile, matching) {
       .slice(0, 6)
       .map(([l, v]) => ({ l, v })),
     pitch_score: profile.axes?.resultat?.pitch_score || profile.score_adn || 0,
-    pitch_text: profile.axes?.resultat?.desc || profile.axes?.meta?.motivation || 'Profil candidat synchronise avec la base.',
-    letter_text: profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.',
+    // Lettre de motivation : texte libre du candidat, pouvant contenir son identité.
+    // Jamais envoyée pour un profil anonyme en sourcing (voir ANONYMITY.md).
+    pitch_text: profile.axes?.resultat?.desc || (anon ? '' : profile.axes?.meta?.motivation) || 'Profil candidat synchronise avec la base.',
+    letter_text: anon ? '' : (profile.axes?.meta?.motivation || profile.titre || 'Lettre de motivation non renseignee.'),
     letter_audio: Boolean(profile.axes?.meta?.audio_url),
     letter_video: Boolean(profile.axes?.meta?.video_url),
     cv_url: anon ? '' : (profile.cv_url || ''),
@@ -1276,8 +1278,10 @@ router.get('/:id/certificat-public', async (req, res) => {
       return res.status(404).json({ error: 'Certificat introuvable' });
     }
 
+    // Route publique appelée avec l'id visible dans le deck sourcing : le prénom d'un
+    // profil anonyme n'y est jamais renvoyé, sinon la carte anonyme serait ré-identifiable.
     res.json({
-      prenom: candidat.prenom || 'Un commercial',
+      prenom: (!isAnonymousCandidate(candidat) && candidat.prenom) || 'Un commercial',
       score: candidat.score_adn,
       certifie: true,
     });

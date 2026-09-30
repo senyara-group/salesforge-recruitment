@@ -47,8 +47,8 @@ function formatRecruiterRow(row) {
     offre_title: row.offres?.titre || 'Offre',
     statut: row.statut || 'envoyee',
     statut_label: STATUS_LABELS[row.statut || 'envoyee'],
-    snapshot: row.snapshot || {},
-    candidat_id: candidat.id,
+    // Ni `snapshot` brut (nom complet, ville, chemin du CV) ni identifiant candidat :
+    // inutilisés par l'interface, ils ne quittent pas le serveur (minimisation).
     av: `${candidat.prenom?.[0] || ''}${candidat.nom?.[0] || ''}`.toUpperCase() || 'SF',
     bg: '#1340E0',
     name,
