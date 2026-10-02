@@ -3,64 +3,9 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
-const { getUserEmail } = require('../utils/profiles');
+const { getUserEmail, getUserRole } = require('../utils/profiles');
+const { checkoutTypeForRole, resolveCheckoutPlan, hasActivePaidSubscription } = require('../utils/subscriptionCatalog');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
-
-const stripePrices = {
-  cand: {
-    // 'carriere' et 'carriere_coaching' réutilisent les Price ID Stripe existants
-    // (Premium et Platine) : tarifs inchangés, seul le nom candidat a changé.
-    month: {
-      carriere: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_MONTH,
-      carriere_coaching: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_MONTH,
-    },
-    year: {
-      carriere: process.env.STRIPE_PRICE_CANDIDAT_PREMIUM_YEAR,
-      carriere_coaching: process.env.STRIPE_PRICE_CANDIDAT_PLATINE_YEAR,
-    },
-  },
-  rec: {
-    month: {
-      solo: process.env.STRIPE_PRICE_RECRUTEUR_SOLO_MONTH,
-      starter: process.env.STRIPE_PRICE_RECRUTEUR_STARTER_MONTH,
-      pro: process.env.STRIPE_PRICE_RECRUTEUR_PRO_MONTH,
-      enterprise: process.env.STRIPE_PRICE_RECRUTEUR_ENTERPRISE_MONTH,
-    },
-    year: {
-      solo: process.env.STRIPE_PRICE_RECRUTEUR_SOLO_YEAR,
-      starter: process.env.STRIPE_PRICE_RECRUTEUR_STARTER_YEAR,
-      pro: process.env.STRIPE_PRICE_RECRUTEUR_PRO_YEAR,
-      enterprise: process.env.STRIPE_PRICE_RECRUTEUR_ENTERPRISE_YEAR,
-    },
-  },
-};
-
-const checkoutPlans = {
-  cand: {
-    month: {
-      carriere: { name: 'Candidat Carrière', amount: 1900 },
-      carriere_coaching: { name: 'Candidat Carrière Coaching', amount: 7900 },
-    },
-    year: {
-      carriere: { name: 'Candidat Carrière annuel', amount: 1500 },
-      carriere_coaching: { name: 'Candidat Carrière Coaching annuel', amount: 6300 },
-    },
-  },
-  rec: {
-    month: {
-      solo: { name: 'Recruteur Entrepreneur / Indépendant', amount: 8900 },
-      starter: { name: 'Recruteur Starter', amount: 14900 },
-      pro: { name: 'Recruteur Pro', amount: 39900 },
-      enterprise: { name: 'Recruteur Enterprise', amount: 79900 },
-    },
-    year: {
-      solo: { name: 'Recruteur Entrepreneur / Indépendant annuel', amount: 7100 },
-      starter: { name: 'Recruteur Starter annuel', amount: 11900 },
-      pro: { name: 'Recruteur Pro annuel', amount: 31900 },
-      enterprise: { name: 'Recruteur Enterprise annuel', amount: 63900 },
-    },
-  },
-};
 
 function getFrontendUrl(req) {
   return process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
@@ -117,10 +62,8 @@ router.get('/checkout', async (req, res) => {
       return res.redirect(process.env.FREEMIUM_REDIRECT_URL || `${getFrontendUrl(req)}/swipsales_start.html?role=candidat`);
     }
 
-    const priceId = stripePrices[type]?.[period]?.[plan];
-    const checkoutPlan = checkoutPlans[type]?.[period]?.[plan];
-
-    if (!priceId && !checkoutPlan) {
+    const resolved = resolveCheckoutPlan({ type, plan, period });
+    if (!resolved) {
       return res.status(400).json({
         error: 'Plan Stripe introuvable',
         plan,
@@ -129,7 +72,7 @@ router.get('/checkout', async (req, res) => {
       });
     }
 
-    const session = await createCheckoutSession({ req, priceId, checkoutPlan, plan, type, period });
+    const session = await createCheckoutSession({ req, ...resolved });
     res.redirect(session.url);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -139,27 +82,41 @@ router.get('/checkout', async (req, res) => {
 // Creer un lien de paiement Stripe Checkout
 router.post('/create-checkout', authMiddleware, async (req, res) => {
   try {
-    const { priceId, plan, billing, type } = req.body;
-    const checkoutType = type === 'rec' ? 'rec' : 'cand';
-    const period = billing === 'month' ? 'month' : 'year';
-    const normalizedPlan = String(plan || '').toLowerCase();
+    const { priceId, plan, billing, type } = req.body || {};
+    // Le Price ID et le montant sont toujours décidés ici, jamais par le client :
+    // sinon un candidat pourrait payer un prix et recevoir une autre formule (le
+    // webhook enregistre le plan des métadonnées).
+    if (priceId !== undefined) {
+      return res.status(400).json({ error: 'Formule invalide' });
+    }
 
-    const configuredPriceId = priceId || stripePrices[checkoutType]?.[period]?.[normalizedPlan];
-    const checkoutPlan = checkoutPlans[checkoutType]?.[period]?.[normalizedPlan];
+    const checkoutType = checkoutTypeForRole(await getUserRole(req.user.id));
+    if (!checkoutType || (type !== undefined && type !== checkoutType)) {
+      return res.status(403).json({ error: 'Formule non disponible pour ce compte' });
+    }
 
-    if (!configuredPriceId && !checkoutPlan) {
+    const resolved = resolveCheckoutPlan({ type: checkoutType, plan, period: billing });
+    if (!resolved) {
       return res.status(400).json({ error: 'Plan Stripe introuvable' });
     }
 
-    const session = await createCheckoutSession({
-      req,
-      priceId: configuredPriceId,
-      checkoutPlan,
-      userId: req.user.id,
-      plan: normalizedPlan || 'custom',
-      type: checkoutType,
-      period,
-    });
+    const { data: abonnements, error: abonnementError } = await supabase
+      .from('abonnements')
+      .select('plan, statut')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (abonnementError) throw abonnementError;
+    // Un nouveau checkout ouvrirait un second abonnement Stripe en parallèle
+    // (double facturation) : le changement de formule passe par une résiliation.
+    if (hasActivePaidSubscription(abonnements?.[0])) {
+      return res.status(409).json({
+        code: 'SUBSCRIPTION_ALREADY_ACTIVE',
+        error: 'Un abonnement est déjà actif sur ce compte. Pour changer de formule, résiliez-le depuis Compte > Abonnement ou écrivez à contact@swipsales.fr.',
+      });
+    }
+
+    const session = await createCheckoutSession({ req, ...resolved, userId: req.user.id });
 
     res.json({ url: session.url });
   } catch (error) {

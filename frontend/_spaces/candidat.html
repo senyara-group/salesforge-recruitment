@@ -652,6 +652,7 @@ button,input,textarea,select{font-family:inherit}
 .bill-opt.on{background:var(--w);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .bill-save{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px}
 .plans-row{display:grid;grid-template-columns:1fr;gap:12px;padding:16px 18px 24px}
+.pricing-plan-note{max-width:560px;margin:4px auto 0;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--ink2);font-size:12px;line-height:1.5;text-align:center}
 .plan-card{width:100%;background:var(--w);border:1.5px solid var(--bd);border-radius:16px;padding:20px 17px;position:relative;display:flex;flex-direction:column}
 .plan-card.pop{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}.plan-card.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
 .plan-card.active-plan{border-color:var(--g);box-shadow:0 0 0 3px var(--gs)}
@@ -663,7 +664,7 @@ button,input,textarea,select{font-family:inherit}
 .pc-old{font-size:13px;color:var(--mu);text-decoration:line-through;margin-right:3px}
 .pc-p{font-family:'Sora',sans-serif;font-size:32px;font-weight:900;letter-spacing:-1.5px;line-height:1}
 .pc-u{font-size:12px;color:var(--ink3)}.plan-card.dk .pc-u{color:rgba(255,255,255,.48)}
-.pc-h{font-size:11px;color:var(--mu);margin-bottom:14px}.plan-card.dk .pc-h{color:rgba(255,255,255,.33)}
+.pc-h{font-size:11px;color:var(--mu);margin-bottom:14px}.plan-card.dk .pc-h{color:rgba(255,255,255,.6)}
 .pc-fs{list-style:none;border-top:1px solid var(--bd);padding-top:12px;margin-bottom:13px;flex:1;display:flex;flex-direction:column;gap:7px}
 .plan-card.dk .pc-fs{border-top-color:rgba(255,255,255,.1)}
 .pc-fs li{font-size:12px;display:flex;gap:6px;align-items:flex-start;color:var(--ink2);line-height:1.5}.plan-card.dk .pc-fs li{color:rgba(255,255,255,.7)}
@@ -2081,6 +2082,7 @@ button,input,textarea,select{font-family:inherit}
       <button class="bill-opt on" onclick="setBill(this,'year')">Annuel <span class="bill-save">-20%</span></button>
     </div>
   </div>
+  <p class="pricing-plan-note" id="pricing-plan-note" role="status" hidden></p>
   <div class="plans-row" id="plans-row"></div>
 </div>
 
@@ -2271,6 +2273,7 @@ let PROFILE_MOTIVATION_URL = '';
 let PROFILE_AVATAR_URL = '';
 let CURRENT_PLAN = 'freemium';
 let CURRENT_PLAN_LOADED = false;
+let CURRENT_PLAN_PERIOD = null;
 let NOTIFICATIONS = [];
 let CANDIDAT_ID = null;
 let NOTIF_CHANNEL_MSG = null;
@@ -4472,6 +4475,7 @@ function renderProfile(p, a) {
   renderProfileCompetences(p.competences || {});
   renderProfilePrefs(p);
   CURRENT_PLAN = activeSubscriptionPlan(a);
+  CURRENT_PLAN_PERIOD = activeSubscriptionPeriod(a);
   CURRENT_PLAN_LOADED = true;
   const planName = document.getElementById('plan-n');
   const planDescription = document.getElementById('plan-d');
@@ -5880,25 +5884,60 @@ async function restartCoachConversation() {
 // ------------------------------------------------------------
 // PRICING
 // ------------------------------------------------------------
-const PLANS = {
-  month:[
-    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','3 ebooks commerciaux','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
-    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:19,u:'/mois',h:'Sans engagement',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','8 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Passer à Carrière',pop:true},
-    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:79,u:'/mois',h:'Sans engagement',feats:['Tout Carrière inclus','Bibliothèque complète : 15 ebooks','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Passer à Carrière Coaching',dk:true}
-  ],
-  year:[
-    {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',p:0,u:'',h:'Gratuit à vie',feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','3 ebooks commerciaux','Swipes, candidatures et messagerie'],cta:'Offre gratuite'},
-    {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',p:15,old:19,u:'/mois',h:'Facturé 180 €/an · Économie 48 €',feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','8 ebooks commerciaux','Optimisation du CV et du pitch'],cta:'Choisir Carrière',pop:true},
-    {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',p:63,old:79,u:'/mois',h:'Facturé 756 €/an · Économie 192 €',feats:['Tout Carrière inclus','Bibliothèque complète : 15 ebooks','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],cta:'Choisir Carrière Coaching',dk:true}
-  ]
-};
+// Catalogue unique des formules candidat. Les montants annuels affichés (prix
+// barré, facturé, économie) sont dérivés de monthly / annualMonthly, jamais
+// recopiés : ils doivent rester alignés sur backend/utils/subscriptionCatalog.js
+// (vérifié par test/subscriptionPlansConsistency.test.js).
+const CANDIDATE_PLANS = [
+  {id:'freemium',n:'Compte candidat',f:'La base, identique pour tous',monthly:0,feats:['Test ADN commercial, format court','Profil visible par les recruteurs','Import CV','3 ebooks commerciaux','Swipes, candidatures et messagerie']},
+  {id:'carriere',n:'Carrière',f:'Le bilan qui vaut aussi hors plateforme',monthly:19,annualMonthly:15,feats:['Tout le compte candidat inclus','Questionnaire ADN approfondi, 74 items','Restitution PDF téléchargeable','8 ebooks commerciaux','Optimisation du CV et du pitch'],pop:true},
+  {id:'carriere_coaching',n:'Carrière Coaching',f:'Suivi, benchmark et entraînement',monthly:79,annualMonthly:63,feats:['Tout Carrière inclus','Bibliothèque complète : 15 ebooks','Évaluation semestrielle et historique','Benchmark anonymisé par typologie de poste','Chatbot de coaching','Certification SwipSales'],dk:true}
+];
+const PLAN_PERIOD_LABELS = { month:'mensuelle', year:'annuelle' };
+const PLAN_CHANGE_NOTE = 'Vous avez déjà un abonnement actif. Pour changer de formule, résiliez-le depuis Compte > Abonnement puis choisissez la nouvelle formule, ou contactez l’équipe depuis Compte > Besoin d’aide.';
+const LEGACY_PLAN_NOTE = 'Votre formule actuelle n’est plus proposée. Pour la faire évoluer, contactez l’équipe depuis Compte > Besoin d’aide.';
 function activeSubscriptionPlan(abonnement) {
   const plan = String(abonnement?.plan || 'freemium').toLowerCase();
   const status = String(abonnement?.statut || abonnement?.status || 'actif').toLowerCase();
   return ['actif', 'active', 'trialing'].includes(status) ? plan : 'freemium';
 }
+function activeSubscriptionPeriod(abonnement) {
+  const period = String(abonnement?.periode || '').toLowerCase();
+  return activeSubscriptionPlan(abonnement) !== 'freemium' && Object.hasOwn(PLAN_PERIOD_LABELS, period) ? period : null;
+}
+function isCatalogPlan(plan) {
+  return CANDIDATE_PLANS.some(p => p.id === plan);
+}
+function planPriceView(plan, billing) {
+  if (!plan.monthly) return { price:'Gratuit', unit:'', old:'', hint:'Gratuit à vie' };
+  if (billing !== 'year') return { price:`${plan.monthly}€`, unit:'/mois', old:'', hint:'Sans engagement' };
+  const billed = plan.annualMonthly * 12;
+  return { price:`${plan.annualMonthly}€`, unit:'/mois', old:`${plan.monthly}€`, hint:`Facturé ${billed} €/an · Économie ${plan.monthly * 12 - billed} €` };
+}
+// Le CTA dépend de la formule détenue, jamais de l'onglet Mensuel/Annuel. Un
+// abonné payant ne repasse pas par le checkout : cela ouvrirait un second
+// abonnement Stripe (le serveur le refuse aussi, code SUBSCRIPTION_ALREADY_ACTIVE).
+function planCardModel(plan, billing, current) {
+  const active = plan.id === current.plan;
+  let cta;
+  if (active) cta = { label:'Offre active', action:'none' };
+  else if (plan.id === 'freemium') cta = { label:'Inclus dans votre formule', action:'none' };
+  else if (current.plan === 'freemium') cta = { label:`Passer à ${plan.n}`, action:'checkout' };
+  else cta = { label:'Changer de formule', action:'change' };
+  const period = active && current.period ? ` · ${PLAN_PERIOD_LABELS[current.period]}` : '';
+  return { ...plan, ...planPriceView(plan, billing), active, badge: active ? `Offre active${period}` : '', cta };
+}
+function setPricingNote(text) {
+  const note = document.getElementById('pricing-plan-note');
+  if (!note) return;
+  note.textContent = text;
+  note.hidden = !text;
+}
+function explainPlanChange() {
+  setPricingNote(PLAN_CHANGE_NOTE);
+  document.getElementById('pricing-plan-note')?.scrollIntoView?.({ block:'center', behavior:'smooth' });
+}
 async function selectPlan(plan, billing) {
-  if (plan === 'freemium') { toast('Vous êtes déjà en Freemium'); return; }
   try {
     const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'cand' });
     // Envoyer l'URL au parent pour éviter le problème iframe
@@ -5907,36 +5946,42 @@ async function selectPlan(plan, billing) {
     } else {
       window.location.href = url;
     }
-  } catch(e) { toast('Erreur paiement'); }
+  } catch(e) {
+    if (e.code === 'SUBSCRIPTION_ALREADY_ACTIVE') { setPricingNote(e.message); return; }
+    toast('Erreur paiement');
+  }
 }
 function setBill(btn, b) { document.querySelectorAll('.bill-opt').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); BILLING=b; renderPlans(); }
 async function loadCurrentPlan() {
   try {
     const abonnement = await api('GET', '/abonnements/current?t=' + Date.now());
     CURRENT_PLAN = activeSubscriptionPlan(abonnement);
+    CURRENT_PLAN_PERIOD = activeSubscriptionPeriod(abonnement);
   } catch(e) {
     CURRENT_PLAN = 'freemium';
+    CURRENT_PLAN_PERIOD = null;
   } finally {
     CURRENT_PLAN_LOADED = true;
   }
 }
-function isCurrentPlan(plan) {
-  return String(plan || '').toLowerCase() === CURRENT_PLAN;
-}
 function renderPlans() {
-  if (!CURRENT_PLAN_LOADED && TOKEN) loadCurrentPlan().then(renderPlans);
-  document.getElementById('plans-row').innerHTML=PLANS[BILLING].map(p=>{
-    const active = isCurrentPlan(p.id);
+  // Rien n'est marqué actif tant que la formule réelle n'est pas connue.
+  if (!CURRENT_PLAN_LOADED && TOKEN) { loadCurrentPlan().then(renderPlans); return; }
+  const current = { plan: CURRENT_PLAN, period: CURRENT_PLAN_PERIOD };
+  setPricingNote(current.plan !== 'freemium' && !isCatalogPlan(current.plan) ? LEGACY_PLAN_NOTE : '');
+  document.getElementById('plans-row').innerHTML=CANDIDATE_PLANS.map(plan=>{
+    const p = planCardModel(plan, BILLING, current);
+    const onclick = p.cta.action === 'checkout' ? ` onclick="selectPlan('${p.id}','${BILLING}')"` : p.cta.action === 'change' ? ' onclick="explainPlanChange()"' : '';
     return `
-    <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${active?' active-plan':''}">
-      ${active?'<div class="active-plan-badge">Offre active</div>':p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
-      <div class="pc-n sf">${p.n}</div><div class="pc-f">${p.f}</div>
-      <div class="pc-pr">${p.old?`<span class="pc-old">${p.old}€</span>`:''}
-        <span class="pc-p sf">${p.p===0?'Gratuit':p.p+'€'}</span><span class="pc-u">${p.u}</span>
+    <div class="plan-card${p.pop?' pop':''}${p.dk?' dk':''}${p.active?' active-plan':''}">
+      ${p.active?`<div class="active-plan-badge">${esc(p.badge)}</div>`:p.pop?'<div class="pop-ribbon">Le plus populaire</div>':''}
+      <div class="pc-n sf">${esc(p.n)}</div><div class="pc-f">${esc(p.f)}</div>
+      <div class="pc-pr">${p.old?`<span class="pc-old">${esc(p.old)}</span>`:''}
+        <span class="pc-p sf">${esc(p.price)}</span><span class="pc-u">${esc(p.unit)}</span>
       </div>
-      <div class="pc-h">${p.h}</div>
-      <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${f}</span></li>`).join('')}</ul>
-      <button class="pc-btn" ${active?'disabled':''} onclick="selectPlan('${p.id}','${BILLING}')">${active?'Offre active':p.cta}</button>
+      <div class="pc-h">${esc(p.hint)}</div>
+      <ul class="pc-fs">${p.feats.map(f=>`<li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${esc(f)}</span></li>`).join('')}</ul>
+      <button class="pc-btn" ${p.cta.action==='none'?'disabled':''}${onclick}>${esc(p.cta.label)}</button>
     </div>`;
   }).join('');
 }
