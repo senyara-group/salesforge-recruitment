@@ -4149,7 +4149,10 @@ async function selectPlan(plan, billing) {
     } else {
       window.location.href = url;
     }
-  } catch(e) { toast('Erreur paiement'); }
+  } catch(e) {
+    // 409 SUBSCRIPTION_ALREADY_ACTIVE : le serveur explique comment changer de formule.
+    toast(/^Un abonnement est déjà actif/.test(e.message || '') ? e.message : 'Erreur paiement');
+  }
 }
 // Palier "sur devis" : jamais de checkout Stripe automatique, contact manuel.
 function contactPartenaire() {

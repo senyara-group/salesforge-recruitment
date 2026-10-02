@@ -1204,6 +1204,22 @@ body.auth .shell, body.product-gateway .shell {
   border-color: var(--bm) !important;
   box-shadow: var(--sh-md);
 }
+/* Le fond clair ci-dessus ne doit pas s'appliquer à la carte sombre : son texte
+   reste blanc (.plan-card.dk), il deviendrait invisible. Les variantes « mise en
+   avant » et « offre active » gardent aussi leur bordure distinctive. */
+#p-pricing .plan-card.dk {
+  background: var(--ink);
+  border-color: var(--ink) !important;
+}
+#p-pricing .plan-card.pop {
+  border-color: var(--b) !important;
+  box-shadow: 0 0 0 3px var(--bs);
+}
+#p-pricing .plan-card.active-plan,
+#p-pricing .plan-card.active-plan:hover {
+  border-color: var(--g) !important;
+  box-shadow: 0 0 0 3px var(--gs);
+}
 
 /* ADN approfondi : parcours candidat isolé du test court. */
 #p-adn-deep .deep-adn-shell {
