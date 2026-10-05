@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
 const { ensureCandidateProfile, ensureRecruiterProfile } = require('../utils/profiles');
 const { STATUS_LABELS, assertTransition, canWithdraw } = require('../utils/applicationWorkflow');
+const { applicationMoves } = require('../utils/pipelineSummary');
 
 function initials(text = '') {
   return text
@@ -114,10 +115,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (error) throw error;
     if (!candidature) return res.status(404).json({ error: 'Candidature introuvable' });
     if (!canWithdraw(candidature.statut)) return res.status(409).json({ error: 'Cette candidature ne peut plus être retirée après prise de contact' });
-    const { data, error: updateError } = await supabase.from('candidatures')
+    let withdrawal = supabase.from('candidatures')
       .update({ statut: 'retiree', withdrawn_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq('id', candidature.id).eq('candidat_id', candidat.id).select('id,statut,withdrawn_at').single();
+      .eq('id', candidature.id).eq('candidat_id', candidat.id);
+    withdrawal = candidature.statut == null ? withdrawal.is('statut', null) : withdrawal.eq('statut', candidature.statut);
+    const { data, error: updateError } = await withdrawal.select('id,statut,withdrawn_at').maybeSingle();
     if (updateError) throw updateError;
+    if (!data) return res.status(409).json({ error: 'Cette candidature a changé. Actualisez vos candidatures.' });
     res.json({ ...data, statut_label: STATUS_LABELS.retiree });
   } catch (error) { res.status(error.status || 400).json({ error: error.message || error }); }
 });
@@ -131,12 +135,18 @@ router.put('/:id/status', authMiddleware, requireRecruiterPlan, async (req, res)
     if (!candidature) return res.status(404).json({ error: 'Candidature introuvable' });
     if (String(candidature.offres?.recruteur_id) !== String(recruteur.id)) return res.status(403).json({ error: 'Candidature non autorisée' });
     const nextStatus = String(req.body?.statut || '');
+    if (req.body?.expected_statut !== undefined && req.body.expected_statut !== (candidature.statut || 'envoyee')) {
+      return res.status(409).json({ error: 'Cette candidature a changé. Actualisez le pipeline.' });
+    }
     assertTransition(candidature.statut || 'envoyee', nextStatus);
-    const { data, error: updateError } = await supabase.from('candidatures')
+    let update = supabase.from('candidatures')
       .update({ statut: nextStatus, updated_at: new Date().toISOString() })
-      .eq('id', candidature.id).select('id,statut,updated_at').single();
+      .eq('id', candidature.id);
+    update = candidature.statut == null ? update.is('statut', null) : update.eq('statut', candidature.statut);
+    const { data, error: updateError } = await update.select('id,statut,updated_at').maybeSingle();
     if (updateError) throw updateError;
-    res.json({ ...data, statut_label: STATUS_LABELS[nextStatus] });
+    if (!data) return res.status(409).json({ error: 'Cette candidature a changé. Actualisez le pipeline.' });
+    res.json({ ...data, moves: applicationMoves(data.statut), statut_label: STATUS_LABELS[nextStatus] });
   } catch (error) { res.status(error.status || 400).json({ error: error.message || error, code: error.code }); }
 });
 

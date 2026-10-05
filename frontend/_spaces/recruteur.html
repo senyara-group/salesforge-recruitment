@@ -1101,6 +1101,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 }
 </style>
 <link rel="stylesheet" href="../app-professional.css">
+<link rel="stylesheet" href="../recruiter-dashboard.css">
+<script src="../recruiter-kanban.js"></script>
 <script src="../app-a11y.js" defer></script>
 </head>
 <body>
@@ -1215,16 +1217,11 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
           </button>
         </div>
       </section>
-      <section class="dash-panel dash-sourcing">
-        <div class="dash-sourcing-badge">Prêt à recruter ?</div>
-        <h2 class="dash-sourcing-title sf">Trouvez les bons profils, plus rapidement</h2>
-        <p class="dash-sourcing-copy">Parcourez des candidats commerciaux scorés et affinez avec vos filtres.</p>
-        <div class="dash-sourcing-visual" aria-hidden="true">
-          <span class="dsv-card dsv-a"></span>
-          <span class="dsv-card dsv-b"></span>
-          <span class="dsv-card dsv-c"></span>
-        </div>
-        <button class="btn bp" type="button" onclick="go('swipe')">Sourcer des candidats</button>
+      <section class="dash-panel" aria-labelledby="dash-pipeline-title">
+        <div class="sec-hd"><h2 class="sec-t sf" id="dash-pipeline-title">Votre pipeline de recrutement</h2><button class="btn bg2 bsm" type="button" onclick="loadDashboard()">Actualiser</button></div>
+        <p class="dash-summary-note">Candidatures reçues sur vos offres, réparties par étape actuelle.</p>
+        <div id="dash-stages" class="dash-stages" aria-live="polite"></div>
+        <p class="dash-summary-note">Les étapes terminées regroupent les recrutements, les refus et les retraits. Les likes de sourcing seuls ne sont pas des candidatures.</p>
       </section>
     </div>
 
@@ -1343,6 +1340,8 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <button class="btn bo blk" type="button" id="pipeline-load-more-btn" onclick="loadMorePipeline()">Charger plus de candidatures</button>
   </div>
   <div id="pipeline-end" class="pipeline-end" hidden>Fin de la liste chargée</div>
+  <p id="pipeline-feedback" role="status" aria-live="polite">Glissez une carte vers une étape autorisée, ou utilisez « Déplacer vers… ».</p>
+  <button class="btn bg2 bsm" type="button" onclick="loadPipeline()">Actualiser le pipeline</button>
 </div>
 
 <!-- POST OFFRE -->
@@ -2303,7 +2302,12 @@ function isGreetingPrenom(value, user) {
   }
   return true;
 }
+let DASHBOARD_GEN = 0;
 async function loadDashboard() {
+  const gen = ++DASHBOARD_GEN;
+  await PIPE_WRITER.idle();
+  if (PIPE_VIEW_PENDING) await PIPE_VIEW_PENDING;
+  if (gen !== DASHBOARD_GEN) return;
   const name = isGreetingPrenom(USER?.prenom, USER) ? String(USER.prenom).trim() : '';
   const greetEl = document.getElementById('topbar-greet');
   if (greetEl) { greetEl.textContent = ''; greetEl.hidden = true; }
@@ -2320,6 +2324,7 @@ async function loadDashboard() {
       api('GET', '/candidatures/recues?limit=4'),
       api('GET', '/offres/mine')
     ]);
+    if (gen !== DASHBOARD_GEN) return;
     renderDashStats(stats);
     document.getElementById('dash-co-plan').textContent = stats.plan_label;
     renderRecues(recues);
@@ -2328,7 +2333,12 @@ async function loadDashboard() {
     syncBnavPlan(stats);
     const nudge = document.getElementById('photo-nudge');
     if (nudge) nudge.style.display = stats.avatar_url ? 'none' : 'flex';
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    if (gen !== DASHBOARD_GEN) return;
+    document.getElementById('dash-stages').innerHTML = '<p role="alert">Statistiques indisponibles. Utilisez Actualiser pour réessayer.</p>';
+    ['kpi-recues','kpi-chauds','kpi-pipeline','kpi-offres'].forEach(id => document.getElementById(id).textContent = '—');
+    toast('Impossible de charger votre activité');
+  }
 }
 function companyInitials(entreprise) {
   const name = String(entreprise || '').trim();
@@ -2404,8 +2414,13 @@ async function updateAvatar(input) {
   }
 }
 function renderDashStats(s) {
+  document.getElementById('dash-stages').innerHTML = PIPE_STAGES.map(stage => {
+    const count = Number(s.stages?.[stage.key] || 0);
+    const width = s.pipeline ? Math.min(100, count / s.pipeline * 100) : 0;
+    return `<button type="button" class="dash-stage" onclick="go('pipeline')"><strong>${count}</strong><span>${stage.label}</span><div class="dash-stage-bar" aria-hidden="true"><i style="width:${width}%"></i></div></button>`;
+  }).join('');
   document.getElementById('kpi-recues').textContent = s.recues || '0';
-  document.getElementById('kpi-recues-t').textContent = s.recues_new ? '+' + s.recues_new + ' nouvelles' : 'Aucune nouvelle';
+  document.getElementById('kpi-recues-t').textContent = s.recues_new ? s.recues_new + ' sur les 7 derniers jours' : 'Aucune sur les 7 derniers jours';
   document.getElementById('kpi-recues-t').className = 'kpi-t ' + (s.recues_new > 0 ? 'tu' : 'tf');
   document.getElementById('kpi-chauds').textContent = s.chauds || '0';
   const chaudsT = document.getElementById('kpi-chauds-t');
@@ -3248,20 +3263,23 @@ let PIPELINE_HAS_MORE = false;
 let PIPELINE_LOADING = false;
 let PIPELINE_LOAD_GEN = 0;
 let PIPELINE_ABORT = null;
+let PIPELINE_COUNTS = null;
+let PIPE_VIEW_PENDING = null;
+let PIPE_DRAG_ID = null;
+let PIPE_RECONCILE = false;
+const PIPE_WRITER = RecruiterKanban.createWriter({
+  getState: () => PIPELINE, setState: state => { PIPELINE = state; },
+  getCounts: () => PIPELINE_COUNTS, setCounts: counts => { PIPELINE_COUNTS = counts; },
+  request: (id, statut, expected_statut) => api('PUT', '/candidatures/' + encodeURIComponent(id) + '/status', { statut, expected_statut }),
+  changed: () => renderPipeline()
+});
 
 function emptyPipelineState() {
   return Object.fromEntries(PIPE_STAGES.map((stage) => [stage.key, []]));
 }
 
 function mergePipelinePage(page) {
-  const next = emptyPipelineState();
-  PIPE_STAGES.forEach((stage) => {
-    const prev = PIPELINE[stage.key] || [];
-    const incoming = (page && page[stage.key]) || [];
-    const seen = new Set(prev.map((c) => String(c.id)));
-    next[stage.key] = prev.concat(incoming.filter((c) => !seen.has(String(c.id))));
-  });
-  PIPELINE = next;
+  PIPELINE = RecruiterKanban.merge(PIPELINE, page || {});
   PIPELINE_CURSOR = page?.next_cursor || null;
   PIPELINE_HAS_MORE = Boolean(page?.has_more && page?.next_cursor);
 }
@@ -3301,6 +3319,9 @@ async function fetchPipelinePage(cursor, fetchOpts) {
 
 async function loadPipeline() {
   const gen = ++PIPELINE_LOAD_GEN;
+  await PIPE_WRITER.idle();
+  if (PIPE_VIEW_PENDING) await PIPE_VIEW_PENDING;
+  if (gen !== PIPELINE_LOAD_GEN) return;
   if (PIPELINE_ABORT) {
     try { PIPELINE_ABORT.abort(); } catch (e) {}
   }
@@ -3311,6 +3332,8 @@ async function loadPipeline() {
   document.getElementById('pipe-cols').innerHTML = pipelineStateHtml('Chargement', 'Récupération des candidatures…', { loading: true });
   if (offersList) offersList.innerHTML = pipelineStateHtml('Chargement', 'Récupération des offres actives…', { loading: true });
   PIPELINE = emptyPipelineState();
+  PIPELINE_CARDS = {};
+  PIPELINE_COUNTS = null;
   PIPELINE_CURSOR = null;
   PIPELINE_HAS_MORE = false;
   PIPELINE_LOADING = true;
@@ -3320,6 +3343,11 @@ async function loadPipeline() {
   let pipelineError = null;
   let offers = null;
   let offersError = null;
+  try {
+    const stats = await api('GET', '/recruteurs/stats', null, true, { signal });
+    if (gen !== PIPELINE_LOAD_GEN) return;
+    PIPELINE_COUNTS = stats.stages;
+  } catch (e) { /* Cards remain usable; counts explicitly show loaded cards. */ }
 
   try {
     pipelinePage = await fetchPipelinePage(null, { signal });
@@ -3354,6 +3382,7 @@ async function loadPipeline() {
   }
 
   if (!pipelineError) {
+    PIPE_RECONCILE = false;
     mergePipelinePage(pipelinePage || emptyPipelineState());
     renderPipeline();
     syncPipelineLoadMore();
@@ -3368,6 +3397,7 @@ async function loadPipeline() {
 }
 
 async function loadMorePipeline() {
+  if (PIPE_WRITER.pending.size || PIPE_VIEW_PENDING) return;
   if (PIPELINE_LOADING || !PIPELINE_HAS_MORE || !PIPELINE_CURSOR) return;
   const gen = PIPELINE_LOAD_GEN;
   const cursor = PIPELINE_CURSOR;
@@ -3387,12 +3417,16 @@ async function loadMorePipeline() {
   } finally {
     if (gen === PIPELINE_LOAD_GEN) {
       PIPELINE_LOADING = false;
+      renderPipeline();
       syncPipelineLoadMore();
     }
   }
 }
 
 function renderPipeline() {
+  const focusCard = document.activeElement?.closest('[data-card-id]')?.dataset.cardId;
+  const focusMove = Boolean(document.activeElement?.dataset?.moveId);
+  PIPELINE_CARDS = {};
   const total = PIPE_STAGES.reduce((sum, stage) => sum + (PIPELINE[stage.key] || []).length, 0);
   if (!total) {
     document.getElementById('pipe-cols').innerHTML = pipelineStateHtml(
@@ -3412,10 +3446,11 @@ function renderPipeline() {
   document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => {
     const cards = PIPELINE[stage.key] || [];
     return `
-    <div class="pipe-col" data-stage="${stage.key}">
+    <div class="pipe-col" data-stage="${stage.key}" ondragover="pipelineDragOver(event,'${stage.key}')" ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('is-target')" ondrop="pipelineDrop(event,'${stage.key}')">
       <div class="pipe-col-hd">
         <div class="pipe-col-t sf"><span class="pipe-dot" style="background:${stage.color}"></span>${stage.label}</div>
-        <span class="pipe-count">${cards.length}</span>
+        <span class="pipe-count">${PIPELINE_COUNTS?.[stage.key] ?? cards.length}</span>
+        <span class="pipe-loaded">${cards.length} chargée(s)${PIPELINE_COUNTS ? '' : ' · total indisponible'}</span>
       </div>
       ${cards.length ? cards.map(c => {
         const matchScore = Number(c.score);
@@ -3425,7 +3460,8 @@ function renderPipeline() {
         const tags = (c.tags || []).slice(0, 3);
         const id = esc(String(c.id));
         return `
-        <div class="pipe-card" draggable="false" ondragstart="return false" onclick="openPipelineCandidate('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPipelineCandidate('${id}')}">
+        <article class="pipe-card" data-card-id="${id}" draggable="${Boolean(c.moves?.length && !PIPE_WRITER.pending.has(String(c.id)) && !PIPELINE_LOADING && !PIPE_VIEW_PENDING && !PIPE_RECONCILE && window.matchMedia('(min-width:1024px) and (pointer:fine)').matches)}" aria-busy="${PIPE_WRITER.pending.has(String(c.id))}" ondragstart="pipelineDragStart(event,'${id}')" ondragend="pipelineDragEnd()">
+          <button type="button" class="pipe-open" onclick="openPipelineCandidate('${id}')" aria-label="Voir ${esc(c.name)}">
           <div class="pipe-card-top">
             <div class="pc-av" style="background:${esc(c.bg || 'var(--b)')}">${esc(c.av || '?')}</div>
             <div class="pc-info">
@@ -3446,11 +3482,27 @@ function renderPipeline() {
             <div class="pc-tags">${tags.map(t => `<span class="pc-tag">${esc(t)}</span>`).join('')}</div>
             <span class="pc-cta">Voir →</span>
           </div>
-        </div>`;
+          </button>
+          <select class="pipe-move" data-move-id="${id}" aria-label="Déplacer ${esc(c.name)} vers" onchange="movePipelineCard('${id}',this.value)" ${(PIPE_WRITER.pending.has(String(c.id)) || PIPELINE_LOADING || PIPE_VIEW_PENDING || PIPE_RECONCILE || !c.moves?.length) ? 'disabled' : ''}>
+            <option value="">${PIPE_WRITER.pending.has(String(c.id)) ? 'Enregistrement…' : c.moves?.length ? 'Déplacer vers…' : 'Aucune transition'}</option>
+            ${(c.moves || []).map(move => `<option value="${esc(move.statut)}">${esc(move.label)}</option>`).join('')}
+          </select>
+        </article>`;
       }).join('') : `<div class="pipe-col-empty">Aucune candidature</div>`}
     </div>`;
   }).join('');
 
+  if (CURRENT_PIPELINE_CANDIDATE) {
+    const current = PIPELINE_CARDS[CURRENT_PIPELINE_CANDIDATE.id];
+    if (current) {
+      CURRENT_PIPELINE_CANDIDATE = current;
+      renderPipelineStatusOptions(current.statut);
+    } else document.getElementById('cov-status').disabled = true;
+  }
+  if (focusCard) {
+    const card = document.querySelector('[data-card-id="' + CSS.escape(focusCard) + '"]');
+    (focusMove ? card?.querySelector('.pipe-move:not(:disabled)') || card?.querySelector('.pipe-open') : card?.querySelector('.pipe-open'))?.focus({ preventScroll: true });
+  }
   const focusId = localStorage.getItem('sf_focus_candidature');
   if (focusId) {
     localStorage.removeItem('sf_focus_candidature');
@@ -3463,10 +3515,24 @@ let PIPELINE_CARDS = {};
 let CURRENT_PIPELINE_CANDIDATE = null;
 
 function openPipelineCandidate(candidatureId) {
+  if (PIPE_WRITER.pending.size || PIPELINE_LOADING || PIPE_VIEW_PENDING || PIPE_RECONCILE) return;
   const c = PIPELINE_CARDS[candidatureId];
   if (!c) return;
   CURRENT_PIPELINE_CANDIDATE = c;
-  if (c.candidat_id) api('POST', '/recruteurs/candidat-vu', { candidat_id: c.candidat_id, candidature_id: c.id }).catch(() => {});
+  if (c.candidat_id) {
+    ++DASHBOARD_GEN;
+    PIPE_VIEW_PENDING = api('POST', '/recruteurs/candidat-vu', { candidat_id: c.candidat_id, candidature_id: c.id }).then(result => {
+      const previous = RecruiterKanban.find(PIPELINE, c.id);
+      if (!previous || !result.stage) return;
+      PIPELINE = RecruiterKanban.put(PIPELINE, result.stage, { ...previous.card, statut: result.statut, moves: result.moves });
+      PIPELINE_COUNTS = RecruiterKanban.countsAfter(PIPELINE_COUNTS, previous.stage, result.stage);
+      CURRENT_PIPELINE_CANDIDATE = RecruiterKanban.find(PIPELINE, c.id).card;
+    }).catch(() => { PIPE_RECONCILE = true; toast('Consultation non synchronisée. Actualisez le pipeline.'); }).finally(() => {
+      PIPE_VIEW_PENDING = null;
+      renderPipeline();
+      renderPipelineStatusOptions(CURRENT_PIPELINE_CANDIDATE?.statut);
+    });
+  }
   document.getElementById('cov-av').textContent = c.av;
   document.getElementById('cov-av').style.background = c.bg;
   document.getElementById('cov-name').textContent = c.name;
@@ -3498,27 +3564,77 @@ function openPipelineCandidate(candidatureId) {
   }
   document.getElementById('cand-ov').classList.add('on');
 }
-const PIPELINE_TRANSITIONS = {
-  envoyee:['vu','contacte','refusee'], nouveau:['vu','contacte','refusee'], vu:['contacte','refusee'],
-  contacte:['repondu','entretien','refusee'], repondu:['entretien','refusee'], entretien:['offre','refusee'],
-  offre:['embauche','refusee'], embauche:[], refusee:[], retiree:[]
-};
 const PIPELINE_LABELS = { envoyee:'Candidature envoyée',nouveau:'À examiner',vu:'Profil consulté',contacte:'Contacté',repondu:'Réponse reçue',entretien:'Entretien',offre:'Proposition envoyée',embauche:'Recruté',refusee:'Non retenu',retiree:'Retirée' };
 function renderPipelineStatusOptions(status) {
   const select = document.getElementById('cov-status');
-  const values = [status, ...(PIPELINE_TRANSITIONS[status] || [])];
-  select.innerHTML = values.map(value => `<option value="${value}">${PIPELINE_LABELS[value] || value}</option>`).join('');
-  select.disabled = values.length === 1;
+  const values = [status, ...(CURRENT_PIPELINE_CANDIDATE?.moves || []).map(move => move.statut)];
+  select.innerHTML = values.map(value => `<option value="${esc(value || '')}">${esc(PIPELINE_LABELS[value] || value || 'Candidature')}</option>`).join('');
+  select.disabled = values.length === 1 || Boolean(PIPE_VIEW_PENDING) || PIPE_RECONCILE || PIPE_WRITER.pending.has(String(CURRENT_PIPELINE_CANDIDATE?.id));
 }
 async function updatePipelineStatus(status) {
   if (!CURRENT_PIPELINE_CANDIDATE || status === CURRENT_PIPELINE_CANDIDATE.statut) return;
-  const select = document.getElementById('cov-status'); select.disabled = true;
-  try {
-    const result = await api('PUT', '/candidatures/' + encodeURIComponent(CURRENT_PIPELINE_CANDIDATE.id) + '/status', { statut: status });
-    CURRENT_PIPELINE_CANDIDATE.statut = result.statut; toast('Étape mise à jour'); await loadPipeline();
-  } catch (error) { toast(error.message || 'Transition impossible'); renderPipelineStatusOptions(CURRENT_PIPELINE_CANDIDATE.statut); }
-  finally { select.disabled = false; }
+  return movePipelineCard(CURRENT_PIPELINE_CANDIDATE.id, status);
 }
+async function movePipelineCard(id, status) {
+  if (!status || PIPELINE_LOADING || PIPE_VIEW_PENDING || PIPE_RECONCILE) return;
+  if (PIPE_WRITER.pending.has(String(id))) return toast('Enregistrement en cours pour cette candidature');
+  // A late read must not repaint over this write, including the dashboard.
+  ++DASHBOARD_GEN;
+  const focused = document.activeElement?.dataset?.moveId === String(id);
+  try {
+    await PIPE_WRITER.move(id, status);
+    document.getElementById('pipeline-feedback').textContent = 'Étape enregistrée.';
+    toast('Étape mise à jour');
+  } catch (error) {
+    PIPE_RECONCILE = true;
+    document.getElementById('pipeline-feedback').textContent = 'Déplacement annulé. Vérification du statut enregistré…';
+    toast(error.message || 'Déplacement non enregistré');
+    // A network failure can hide a successful server write. Reconcile after
+    // the exact local rollback and after any other card has finished saving.
+    await loadPipeline();
+    document.getElementById('pipeline-feedback').textContent = PIPE_RECONCILE
+      ? 'Synchronisation indisponible. Actualisez avant de déplacer une carte.'
+      : 'Pipeline synchronisé avec les statuts enregistrés.';
+  } finally {
+    if (focused && (document.activeElement === document.body || document.activeElement?.closest('[data-card-id]')?.dataset.cardId === String(id))) {
+      document.querySelector('[data-move-id="' + CSS.escape(String(id)) + '"]')?.focus({ preventScroll: true });
+    }
+  }
+}
+function pipelineDragStart(event, id) {
+  if (!window.matchMedia('(min-width:1024px) and (pointer:fine)').matches || PIPELINE_LOADING || PIPE_VIEW_PENDING || PIPE_RECONCILE || PIPE_WRITER.pending.has(String(id)) || event.target.closest('select')) return event.preventDefault();
+  PIPE_DRAG_ID = id;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', String(id));
+  event.currentTarget.classList.add('is-dragging');
+}
+function pipelineDragOver(event, stage) {
+  const card = PIPELINE_CARDS[PIPE_DRAG_ID];
+  if (!card?.moves?.some(move => move.stage === stage) || RecruiterKanban.find(PIPELINE, PIPE_DRAG_ID)?.stage === stage) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  event.currentTarget.classList.add('is-target');
+}
+function pipelineDragEnd() {
+  PIPE_DRAG_ID = null;
+  document.querySelectorAll('.is-target,.is-dragging').forEach(el => el.classList.remove('is-target','is-dragging'));
+}
+function pipelineDrop(event, stage) {
+  event.preventDefault();
+  const id = PIPE_DRAG_ID;
+  const choices = PIPELINE_CARDS[id]?.moves?.filter(move => move.stage === stage) || [];
+  pipelineDragEnd();
+  if (!choices.length || RecruiterKanban.find(PIPELINE, id)?.stage === stage) return;
+  if (choices.length === 1 && stage !== 'termine') return movePipelineCard(id, choices[0].statut);
+  // A terminal column is not itself a persisted status. Never silently choose
+  // refusal or hiring: the existing status select presents both exact outcomes.
+  document.getElementById('pipeline-feedback').textContent = 'Précisez le résultat avec « Déplacer vers… » : ' + choices.map(choice => choice.label).join(' ou ') + '.';
+  document.querySelector('[data-move-id="' + CSS.escape(String(id)) + '"]')?.focus();
+}
+window.matchMedia('(min-width:1024px) and (pointer:fine)').addEventListener('change', () => {
+  pipelineDragEnd();
+  if (document.getElementById('p-pipeline').classList.contains('on') && !PIPELINE_LOADING) renderPipeline();
+});
 function openSnapshotCV() {
   const url = CURRENT_PIPELINE_CANDIDATE?.cv_snapshot?.url;
   if (!url) return toast('CV transmis indisponible');

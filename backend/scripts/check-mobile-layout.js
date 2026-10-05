@@ -107,7 +107,7 @@ async function openPage(browser, width, height) {
     x: Math.round(width / 2), y: Math.round(height * 0.6), xDistance, yDistance, speed: 1200,
     gestureSourceType: mobile ? 'touch' : 'mouse', repeatCount: 1,
   });
-  return { evaluate, navigate, swipe, close: () => browser.send('Target.closeTarget', { targetId }) };
+  return { evaluate, navigate, swipe, send, close: () => browser.send('Target.closeTarget', { targetId }) };
 }
 
 // Mesures exécutées DANS la page. Un élément compte comme débordant s'il sort du
@@ -262,4 +262,5 @@ async function main() {
   process.exit(failures ? 1 : 0);
 }
 
-main().catch((error) => { console.error(error); process.exit(2); });
+if (require.main === module) main().catch((error) => { console.error(error); process.exit(2); });
+module.exports = { findBrowser, serveFrontend, launchBrowser, openPage, MEASURE_HELPERS };

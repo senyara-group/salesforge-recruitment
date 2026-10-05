@@ -5,6 +5,7 @@ const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const { ensureRecruiterProfile, getUserEmail } = require('../utils/profiles');
 const requireRecruiterPlan = require('../middleware/requireRecruiterPlan');
+const { applicationMoves, pipelineSummary } = require('../utils/pipelineSummary');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
 const { recordCandidateLike, recordProfileView, countRecentLikes, countRecentProfileViews } = require('../utils/engagementTracking');
 const { compatibilityScore, hasContributingMatching } = require('../utils/recruiterMatching');
@@ -232,6 +233,8 @@ function normalizeCandidate(candidature, context = {}) {
     match_ids: context.matchIds || [],
     discussed: Boolean(context.discussed),
     statut: candidature.statut || 'envoyee',
+    moves: applicationMoves(candidature.statut),
+    created_at: candidature.created_at || null,
     offre_id: candidature.offre_id,
     offre_title: candidature.offres?.titre || 'Offre',
     cv_snapshot: candidature.snapshot?.cv || null,
@@ -353,31 +356,13 @@ router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => 
 router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const { data: offres, error: offresError } = await supabase
-      .from('offres')
-      .select('id, statut')
-      .eq('recruteur_id', recruteur.id);
-
-    if (offresError) return res.status(400).json({ error: offresError });
-    const offreIds = offres.map((offre) => offre.id);
-
-    const { data: candidatures, error: candidaturesError } = offreIds.length
-      ? await supabase.from('candidatures').select('id, statut, created_at').in('offre_id', offreIds).or('lettre_type.is.null,lettre_type.neq.recruteur_like')
-      : { data: [], error: null };
-
-    if (candidaturesError) return res.status(400).json({ error: candidaturesError });
-
-    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const activeOfferCount = offres.filter((offre) => offre.statut === 'active').length;
+    const summary = await pipelineSummary(supabase, recruteur.id);
+    const activeOfferCount = summary.offres;
     const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
     const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
     const { avatar_url } = await withFreshRecruiterAvatarUrl(recruteur);
     res.json({
-      recues: candidatures.length,
-      recues_new: candidatures.filter((c) => new Date(c.created_at).getTime() >= since).length,
-      chauds: candidatures.filter((c) => c.statut === 'repondu' || c.statut === 'entretien').length,
-      pipeline: candidatures.length,
-      offres: activeOfferCount,
+      ...summary,
       plan_label: `Plan ${planName} · ${activeOfferCount} offre${activeOfferCount > 1 ? 's' : ''} active${activeOfferCount > 1 ? 's' : ''}`,
       entreprise: recruteur.entreprise || '',
       avatar_url,
@@ -601,8 +586,9 @@ router.post('/candidat-vu', authMiddleware, requireRecruiterPlan, async (req, re
       return res.status(403).json({ error: 'Candidature non autorisee' });
     }
     if (['envoyee', 'nouveau'].includes(ownedApplication.statut)) {
-      await supabase.from('candidatures').update({ statut: 'vu', updated_at: new Date().toISOString() })
+      const { error: viewError } = await supabase.from('candidatures').update({ statut: 'vu', updated_at: new Date().toISOString() })
         .eq('id', ownedApplication.id).in('statut', ['envoyee', 'nouveau']);
+      if (viewError) throw viewError;
     }
 
     // Scénario 03-C : consultations de profil sans match, condition > 3 sur 7 jours.
@@ -618,7 +604,11 @@ router.post('/candidat-vu', authMiddleware, requireRecruiterPlan, async (req, re
       trackBrevoEvent(email, 'profil_consulte', { nb }, { NB_CONSULTATIONS_7J: nb }).catch(() => {});
     }).catch(() => {});
 
-    res.json({ ok: true });
+    const { data: current, error: currentError } = await supabase.from('candidatures')
+      .select('statut').eq('id', ownedApplication.id).maybeSingle();
+    if (currentError) throw currentError;
+    res.json({ ok: true, statut: current?.statut || 'envoyee',
+      stage: stageForStatut(current?.statut), moves: applicationMoves(current?.statut) });
   } catch (error) {
     publicError(res, error);
   }
