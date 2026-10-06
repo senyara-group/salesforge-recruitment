@@ -1,23 +1,12 @@
-/* Recruiter only, phones (< 720px): Sourcing deck density and Messages height.
-   Loaded after app-professional.css and recruiter-dashboard.css. Desktop and
-   tablet rules are untouched; every selector is scoped to #p-swipe/#p-messages. */
+/* Recruiter only, phones (< 720px): Sourcing deck density.
+   Loaded after messages-mobile.css (shared --app-topbar-h / --app-bnav-h) and
+   recruiter-dashboard.css. Every selector is scoped to #p-swipe. */
 @media (max-width: 719px) {
-  :root {
-    /* Real heights of the sticky top bar and of the fixed bottom navigation
-       (.bnav: 5px top padding + 47px items + max(8px, safe-area) bottom). */
-    --rec-topbar-h: 55px;
-    --rec-bnav-h: calc(52px + max(8px, env(safe-area-inset-bottom, 0px)));
-  }
-  @media (max-width: 380px) {
-    :root { --rec-topbar-h: 53px; } /* .topbar padding 10px 12px at this width */
-  }
-
-  /* ---------- Sourcing ---------- */
   /* Clear the fixed navigation with its real height plus a visible gap. */
-  #p-swipe.page.on { padding-bottom: calc(var(--rec-bnav-h) + 16px); }
+  #p-swipe.page.on { padding-bottom: calc(var(--app-bnav-h) + 16px); }
   /* The sticky header stays visible over the deck: keep it short and flush
      with the top bar (no strip of scrolled content between both). */
-  #p-swipe .swipe-hd { top: var(--rec-topbar-h); padding: 8px 16px; }
+  #p-swipe .swipe-hd { top: var(--app-topbar-h); padding: 8px 16px; }
   #p-swipe .swipe-hd .page-kicker { display: none; }
   #p-swipe .swipe-hd .page-title { font-size: 18px; }
   #p-swipe .cand-filter-bar { margin-top: 6px; }
@@ -51,23 +40,4 @@
   #p-swipe .cand-predict-v { font-size: 13px; }
 
   #p-swipe .deck-actions { min-height: 60px; padding: 6px 16px; }
-
-  /* ---------- Messages ---------- */
-  /* An open conversation is a full-height messenger between the top bar and
-     the bottom navigation: header, scrollable messages, composer. The page
-     heading is replaced by the conversation header (with its back button). */
-  #p-messages.thread-open.page.on { padding-bottom: var(--rec-bnav-h); }
-  #p-messages.thread-open > .messages-page { padding: 8px 12px; }
-  #p-messages.thread-open .page-heading { display: none; }
-  #p-messages.thread-open .messages-workspace {
-    height: calc(100vh - var(--rec-topbar-h) - var(--rec-bnav-h) - 16px);
-    height: calc(100dvh - var(--rec-topbar-h) - var(--rec-bnav-h) - 16px);
-    /* Very short viewports scroll the page instead of crushing the thread. */
-    min-height: 300px;
-  }
-  #p-messages.thread-open .conversation-panel { min-height: 0; }
-  /* The shared sticky offset (app-professional.css) is resolved against the
-     overflow:hidden .chat-panel and lifted the composer over the last
-     messages. The composer is now simply the last row of the column. */
-  #p-messages .chat-compose { position: static; bottom: auto; }
 }
