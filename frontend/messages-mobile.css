@@ -1,0 +1,33 @@
+/* Candidate and recruiter spaces, phones (< 720px): shared app chrome heights
+   and the Messages layout. Both spaces use the same Messages DOM (#p-messages,
+   .messages-workspace, .chat-panel, .chat-body, .chat-compose). Loaded after
+   app-professional.css. Tablet and desktop rules are untouched. */
+@media (max-width: 719px) {
+  :root {
+    /* Real heights of the sticky top bar and of the fixed bottom navigation
+       (.bnav: 5px top padding + 47px items + max(8px, safe-area) bottom). */
+    --app-topbar-h: 55px;
+    --app-bnav-h: calc(52px + max(8px, env(safe-area-inset-bottom, 0px)));
+  }
+  @media (max-width: 380px) {
+    :root { --app-topbar-h: 53px; } /* .topbar padding 10px 12px at this width */
+  }
+
+  /* An open conversation is a full-height messenger between the top bar and
+     the bottom navigation: header, scrollable messages, composer. The page
+     heading is replaced by the conversation header (with its back button). */
+  #p-messages.thread-open.page.on { padding-bottom: var(--app-bnav-h); }
+  #p-messages.thread-open > .messages-page { padding: 8px 12px; }
+  #p-messages.thread-open .page-heading { display: none; }
+  #p-messages.thread-open .messages-workspace {
+    height: calc(100vh - var(--app-topbar-h) - var(--app-bnav-h) - 16px);
+    height: calc(100dvh - var(--app-topbar-h) - var(--app-bnav-h) - 16px);
+    /* Very short viewports scroll the page instead of crushing the thread. */
+    min-height: 300px;
+  }
+  #p-messages.thread-open .conversation-panel { min-height: 0; }
+  /* The shared sticky offset (app-professional.css) is resolved against the
+     overflow:hidden .chat-panel and lifted the composer over the last
+     messages. The composer is now simply the last row of the column. */
+  #p-messages .chat-compose { position: static; bottom: auto; }
+}
