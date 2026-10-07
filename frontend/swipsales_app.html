@@ -404,7 +404,7 @@ async function openRoleSpace(){
         type: 'env',
         SUPABASE_URL: env.SUPABASE_URL,
         SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
-      }, '*');
+      }, window.location.origin);
     });
  
     if (paymentSuccess) {
@@ -519,12 +519,21 @@ async function bootApp(){
 }
  
 bootApp();
-// Intercepter les redirections Stripe depuis l'iframe
-window.addEventListener('message', (event) => {
-  if (event.data?.type === 'stripe_redirect' && event.data?.url) {
-    window.location.href = event.data.url;
-  }
-});
+// Intercepter les redirections Stripe depuis l'iframe. Seule l'application chargée
+// dans #app-frame (même origine) peut demander une redirection, et uniquement vers
+// Stripe Checkout en https : jamais d'URL javascript:, data: ou d'un autre site.
+const STRIPE_CHECKOUT_ORIGIN = 'https://checkout.stripe.com';
+function isStripeCheckoutUrl(value) {
+  try { return new URL(String(value)).origin === STRIPE_CHECKOUT_ORIGIN; } catch (e) { return false; }
+}
+let stripeNavigate = (url) => { window.location.href = url; };
+function handleStripeRedirectMessage(event) {
+  if (event.origin !== window.location.origin || event.source !== frame.contentWindow) return false;
+  if (event.data?.type !== 'stripe_redirect' || !isStripeCheckoutUrl(event.data.url)) return false;
+  stripeNavigate(event.data.url);
+  return true;
+}
+window.addEventListener('message', handleStripeRedirectMessage);
 </script>
 </body>
 </html>

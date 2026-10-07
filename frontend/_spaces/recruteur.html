@@ -1881,7 +1881,10 @@ let NOTIF_CHANNEL_CAND = null;
 
 let supabaseClient = null;
 
+// Supabase config comes only from the SwipSales shell that embeds this page
+// (same origin, direct parent): never from another site or window.
 window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || window.parent === window || e.source !== window.parent) return;
   if (e.data?.type === 'env' && !supabaseClient && e.data.SUPABASE_URL) {
     supabaseClient = supabase.createClient(e.data.SUPABASE_URL, e.data.SUPABASE_ANON_KEY);
   }
@@ -2501,10 +2504,10 @@ function renderRecues(list) {
     return;
   }
   document.getElementById('cands-recues').innerHTML = list.map(c => `
-    <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${c.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();viewCandidate('${c.id}')}">
-      <div class="cr-av" style="background:${c.bg}">${c.av}</div>
+    <div class="cand-recue${c.hot?' hot':''}" onclick="viewCandidate('${esc(c.id)}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();viewCandidate('${esc(c.id)}')}">
+      <div class="cr-av" style="background:${esc(c.bg)}">${esc(c.av)}</div>
       <div class="cr-info">
-        <div class="cr-name sf">${esc(c.name)}${c.badge?`<span class="cr-badge" style="background:${c.badgeBg};color:${c.badgeColor}">${esc(c.badge)}</span>`:''}</div>
+        <div class="cr-name sf">${esc(c.name)}${c.badge?`<span class="cr-badge" style="background:${esc(c.badgeBg)};color:${esc(c.badgeColor)}">${esc(c.badge)}</span>`:''}</div>
         <div class="cr-title">${esc(c.titre || '')}</div>
         <div class="cr-meta">${(c.tags||[]).map(t=>`<span class="cr-tag">${esc(t)}</span>`).join('')}</div>
       </div>
@@ -2957,7 +2960,16 @@ function candDocs(c) {
   if (c.cv_url) docs.push({ label: c.cv_file_name || 'CV', url: c.cv_url, icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>' });
   if (c.motivation_url) docs.push({ label: c.motivation_file_name || 'Lettre de motivation', url: c.motivation_url, icon: '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>' });
   if (!docs.length) return '';
-  return `<div class="cand-docs">${docs.map(doc=>`<button class="cand-doc" type="button" onclick='window.open(${JSON.stringify(doc.url)},"_blank","noopener")'><svg viewBox="0 0 24 24">${doc.icon}</svg><span>${esc(doc.label)}</span></button>`).join('')}</div>`;
+  // The URL stays data (escaped attribute, never JavaScript source) and only an
+  // https document link is ever opened.
+  return `<div class="cand-docs">${docs.filter(doc => isHttpsUrl(doc.url)).map(doc=>`<button class="cand-doc" type="button" data-url="${esc(doc.url)}" onclick="openCandidateDoc(this)"><svg viewBox="0 0 24 24">${doc.icon}</svg><span>${esc(doc.label)}</span></button>`).join('')}</div>`;
+}
+function isHttpsUrl(value) {
+  try { return new URL(String(value)).protocol === 'https:'; } catch (e) { return false; }
+}
+function openCandidateDoc(button) {
+  const url = button?.dataset?.url;
+  if (isHttpsUrl(url)) window.open(url, '_blank', 'noopener');
 }
 function buildCandCard(c) {
   const d = document.createElement('div'); d.className = 'swipe-card';
@@ -3168,7 +3180,9 @@ function showMatch(cand, r) {
   }
   document.getElementById('ov-cand').textContent = cand.initiales === '?' ? cand.name.slice(0,2).toUpperCase() : cand.initiales;
   document.getElementById('ov-title').textContent = 'Match confirmé';
-  document.getElementById('ov-sub').innerHTML = `Avec <strong>${cand.name}</strong> · Score ${cand.m}%`;
+  // The name is the candidate's own free text.
+  const ovName = document.createElement('strong'); ovName.textContent = cand.name;
+  document.getElementById('ov-sub').replaceChildren('Avec ', ovName, ` · Score ${Number(cand.m) || 0}%`);
   document.getElementById('ov').classList.add('on');
 }
 function closeOv(e) { if (e.target===document.getElementById('ov')||e.target.closest('.sh-actions')) document.getElementById('ov').classList.remove('on'); }
@@ -3581,7 +3595,10 @@ function openPipelineCandidate(candidatureId) {
   document.getElementById('cov-name').textContent = c.name;
   document.getElementById('cov-role').textContent = c.role;
   document.getElementById('cov-score').textContent = c.score;
-  document.getElementById('cov-tags').innerHTML = c.tags.map(t => `<span class="pc-tag">${t}</span>`).join('');
+  // Tags come from the candidate profile: text nodes only.
+  document.getElementById('cov-tags').replaceChildren(...(c.tags || []).map(t => {
+    const tag = document.createElement('span'); tag.className = 'pc-tag'; tag.textContent = t; return tag;
+  }));
   document.getElementById('cov-offer').textContent = c.offre_title || 'Offre';
   document.getElementById('cov-note').value = c.internal_note || '';
   renderPipelineStatusOptions(c.statut || 'envoyee');
@@ -3710,7 +3727,11 @@ function toggleFullProfile(c) {
   const el = document.getElementById('cov-full-profile');
   if (el.style.display === 'block') { el.style.display = 'none'; return; }
   el.innerHTML = (c.axes_full && c.axes_full.length)
-    ? `<div class="cand-adn-bars">${c.axes_full.map(a => `<div class="cadn-row"><div class="cadn-l">${esc(a.l)}</div><div class="cadn-tr"><div class="cadn-f" style="width:${a.v}%"></div></div><div class="cadn-v sf">${a.v}</div></div>`).join('')}</div>`
+    ? `<div class="cand-adn-bars">${c.axes_full.map(a => {
+      // Axis values are scores: a number 0–100, whatever the profile holds.
+      const v = Math.max(0, Math.min(100, Math.round(Number(a.v)) || 0));
+      return `<div class="cadn-row"><div class="cadn-l">${esc(a.l)}</div><div class="cadn-tr"><div class="cadn-f" style="width:${v}%"></div></div><div class="cadn-v sf">${v}</div></div>`;
+    }).join('')}</div>`
     : '<div class="loading-state">Détails ADN non disponibles pour ce candidat.</div>';
   el.style.display = 'block';
 }
@@ -4357,7 +4378,7 @@ async function selectPlan(plan, billing) {
     const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'rec' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
+      window.parent.postMessage({ type: 'stripe_redirect', url }, location.origin);
     } else {
       window.location.href = url;
     }
