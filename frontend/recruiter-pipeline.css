@@ -66,13 +66,20 @@
   background: #F2F5F9; font: 900 12px/1.4 'Sora', sans-serif;
 }
 #p-pipeline .pc-score small { font-size: 9px; font-weight: 800; margin-left: 1px; }
+/* Linked offer: read as context, not as a third job line (small "Offre" label,
+   regular weight, after a hairline). */
 #p-pipeline .pc-offer {
-  margin-top: 7px; font-size: 11px; color: var(--ink3); font-weight: 600;
+  margin-top: 6px; padding-top: 5px; border-top: 1px solid #EEF2F7;
+  font-size: 11px; color: var(--ink3); font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#p-pipeline .pc-offer::before {
+  content: 'Offre'; margin-right: 6px; padding: 1px 5px; border-radius: 4px; background: #F2F5F9;
+  font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3);
 }
 /* One line of chips: status, ADN, then each tag only if it fits whole (a tag that
    does not fit wraps to a second line, which is clipped: never a cut fragment). */
-#p-pipeline .pc-meta { display: flex; flex-wrap: wrap; gap: 4px; margin: 7px 0 0; height: 20px; overflow: clip; }
+#p-pipeline .pc-meta { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; height: 20px; overflow: clip; }
 #p-pipeline .pc-chip, #p-pipeline .pc-tag {
   display: inline-flex; height: 20px; align-items: center; max-width: 100%; min-width: 0;
   padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; line-height: 1.45;
@@ -149,7 +156,12 @@
   #p-pipeline #pipeline-load-more, #p-pipeline .pipeline-end { padding-left: var(--pk-gutter); padding-right: var(--pk-gutter); }
 }
 @media (min-width: 1024px) and (pointer: fine) {
-  #p-pipeline .pipe-move { min-height: 28px; height: 28px; padding: 2px 8px; font-size: 11.5px; }
+  /* Secondary action with a mouse: sized to its label, always visible (no hover
+     dependency), same native select, keyboard and options. */
+  #p-pipeline .pipe-move {
+    display: block; width: fit-content; max-width: 100%; field-sizing: content; min-height: 26px; height: 26px;
+    padding: 2px 6px; font-size: 11px; color: var(--ink3); background-color: var(--w);
+  }
 }
 
 /* Tablet: lanes side by side in a horizontal strip (not a shrunken desktop). */
@@ -166,5 +178,7 @@
   #p-pipeline .pipe-col { width: min(300px, 84vw) !important; min-width: 0 !important; }
   #p-pipeline .pipe-col-hd { padding: 10px 12px 9px; }
   #p-pipeline .pipe-kanban-hd .sec-hd { align-items: start; }
-  #p-pipeline .pipe-refresh { min-height: 36px; padding: 6px 10px; font-size: 12px; }
+  /* Short label next to the title; full name kept as the accessible name. */
+  #p-pipeline .pipe-refresh { min-height: 44px; padding: 6px 12px; font-size: 12px; }
+  #p-pipeline .pipe-refresh-more { display: none; }
 }
