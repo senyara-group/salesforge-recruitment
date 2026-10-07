@@ -103,16 +103,14 @@ test('badge Messages : au plus une lecture des fils par 30 s en navigation, forc
 
 function offersSandbox() {
   const list = { innerHTML: '' };
-  const sandbox = { JSON, Array, renders: [], toasts: [], pending: [],
+  const sandbox = { JSON, Array, Map, renders: [], toasts: [], pending: [],
     document: { getElementById: () => list },
     renderOffers: (offers) => { sandbox.renders.push(offers); list.innerHTML = 'cards'; },
     toast: (text) => sandbox.toasts.push(text),
     api: () => { const d = deferred(); sandbox.pending.push(d); return d.promise; } };
   vm.runInNewContext([
-    'let OFFERS_SNAPSHOT = null;',
-    extract(html, 'function rememberOffers(offers)'),
-    extract(html, 'function forgetOffers()'),
-    'let OFFERS_LOAD_GEN = 0;',
+    'const API_GET_IN_FLIGHT = new Map();',
+    html.slice(html.indexOf('let OFFERS_SNAPSHOT = null;'), html.indexOf('async function loadOffers()')),
     extract(html, 'async function loadOffers()'),
     'this.h = { loadOffers, rememberOffers, forgetOffers };',
   ].join('\n'), sandbox);
@@ -165,8 +163,8 @@ test('Offres : une réponse dépassée ne remplace pas la plus récente ; écrit
   for (const write of [/api\('DELETE', '\/offres\/' \+ encodeURIComponent\(id\)\);\s*forgetOffers\(\);/,
     /api\('PATCH', '\/offres\/' \+ encodeURIComponent\(id\) \+ '\/status', \{ statut \}\);\s*forgetOffers\(\);/,
     /else await api\('POST', '\/offres', payload\);\s*forgetOffers\(\);/]) assert.match(html, write);
-  assert.match(html, /renderDashRecentOffers\(offers \|\| \[\]\);\s*rememberOffers\(offers\);/);
-  assert.match(html, /if \(!offersError\) \{\s*rememberOffers\(offers\);/);
+  assert.match(html, /renderDashRecentOffers\(offers \|\| \[\]\);\s*rememberOffers\(offers, offersEpoch\);/);
+  assert.match(html, /if \(!offersError\) \{\s*rememberOffers\(offers, offersEpoch\);/);
 });
 
 test('Pipeline : compteurs, cartes et offres demandés ensemble, chacun avec sa propre erreur', async () => {
@@ -183,7 +181,7 @@ test('Pipeline : compteurs, cartes et offres demandés ensemble, chacun avec sa 
     api: (method, url) => { requested.push(url); pending[url] = deferred(); return pending[url].promise; },
     fetchPipelinePage: () => { requested.push('pipeline'); pending.pipeline = deferred(); return pending.pipeline.promise; } };
   vm.runInNewContext([
-    'let PIPELINE_LOAD_GEN = 0, PIPELINE_ABORT = null, PIPELINE = null, PIPELINE_CARDS = {}, PIPELINE_COUNTS = null, PIPELINE_CURSOR = null, PIPELINE_HAS_MORE = false, PIPELINE_LOADING = false, PIPE_RECONCILE = false;',
+    'let PIPELINE_LOAD_GEN = 0, PIPELINE_ABORT = null, PIPELINE = null, PIPELINE_CARDS = {}, PIPELINE_COUNTS = null, PIPELINE_CURSOR = null, PIPELINE_HAS_MORE = false, PIPELINE_LOADING = false, PIPE_RECONCILE = false, OFFERS_EPOCH = 0;',
     extract(html, 'async function loadPipeline()'),
     'this.load = loadPipeline; this.counts = () => PIPELINE_COUNTS;',
   ].join('\n'), sandbox);
@@ -238,4 +236,109 @@ test('/candidats/deck : rôle et fiche recruteur lus une seule fois, exclusions 
   assert.deepEqual(response.body.candidates.map((c) => c.id), [uuid(3), uuid(4)], 'déjà vus, matchés et même personne exclus');
   assert.deepEqual(queryLog.filter(([op, column, value]) => op === 'eq' && column === 'id' && value === 'user-rec'), [],
     'plus de relecture du rôle dans users');
+});
+
+// Review f11ed48 (P2) : lecture après écriture sur Offres. Faux serveur dont chaque GET
+// lit l'état au moment où il part et répond quand le test le décide ; vraies fonctions
+// api/apiRequest, cache Offres, loadOffers, setOfferStatus, deleteOffer, loadDashboard.
+function offersRaceSandbox() {
+  const server = { offers: [{ id: 'o1', statut: 'active' }] };
+  const gets = [];
+  const list = { innerHTML: '' };
+  const json = (data) => ({ status: 200, ok: true, json: async () => data });
+  const sandbox = { API: '', TOKEN: 't', Map, JSON, Array, Date, USER: { id: 'u', prenom: 'Camille', entreprise: 'Équipe' },
+    confirm: () => true, toast() {}, go() {}, refreshAccessToken: async () => null, loadPipeline() {},
+    document: { getElementById: (id) => (id === 'offers-list' ? list : { textContent: '', innerHTML: '', style: {}, classList: { contains: () => false } }) },
+    renderOffers: (offers) => { list.innerHTML = `offres:${JSON.stringify(offers)}`; },
+    PIPE_WRITER: { idle: async () => {} }, PIPE_VIEW_PENDING: null, isGreetingPrenom: () => true, takeBootStats: () => null,
+    renderDashLogo() {}, renderDashStats() {}, renderRecues() {}, renderDashRecentOffers() {}, syncBnavPlan() {},
+    fetch: (url, opts) => {
+      if (opts.method === 'PATCH') { server.offers = server.offers.map((o) => ({ ...o, statut: JSON.parse(opts.body).statut })); return Promise.resolve(json({})); }
+      if (opts.method === 'DELETE') { server.offers = []; return Promise.resolve(json({})); }
+      if (opts.method === 'PUT') { server.offers = server.offers.map((o) => ({ ...o, ...JSON.parse(opts.body) })); return Promise.resolve(json({})); }
+      if (url !== '/offres/mine') return Promise.resolve(json(url.includes('stats') ? { plan_label: '' } : []));
+      const read = JSON.parse(JSON.stringify(server.offers)); // état lu au départ de la requête
+      const d = deferred();
+      gets.push({ respond: () => d.resolve(json(read)), fail: () => d.reject(new Error('réseau')), read });
+      return d.promise;
+    } };
+  vm.runInNewContext([
+    extract(html, 'const API_GET_IN_FLIGHT = new Map();', ';'),
+    extract(html, 'function api(method, path, body, allowRefresh = true, fetchOpts = null)'),
+    extract(html, 'async function apiRequest(method, path, body, allowRefresh = true, fetchOpts = null)'),
+    html.slice(html.indexOf('let OFFERS_SNAPSHOT = null;'), html.indexOf('async function loadOffers()')),
+    extract(html, 'async function loadOffers()'),
+    extract(html, 'async function deleteOffer(id)'),
+    extract(html, 'async function setOfferStatus(id, statut)'),
+    'let DASHBOARD_GEN = 0;',
+    extract(html, 'async function loadDashboard()'),
+    'this.h = { api, loadOffers, deleteOffer, setOfferStatus, forgetOffers, loadDashboard, snapshot: () => OFFERS_SNAPSHOT && OFFERS_SNAPSHOT.offers };',
+  ].join('\n'), sandbox);
+  return { sandbox, server, gets, list };
+}
+const settleAll = async () => { for (let i = 0; i < 5; i += 1) await flush(); };
+const MUTATIONS = {
+  // Même séquence que postOffre : écriture PUT réussie, puis forgetOffers, puis relecture.
+  modification: async (h) => { await h.api('PUT', '/offres/o1', { titre: 'Nouveau titre' }); h.forgetOffers(); h.loadOffers(); },
+  'clôture': (h) => h.setOfferStatus('o1', 'closed'),
+  suppression: (h) => h.deleteOffer('o1'),
+};
+const ORDERS = {
+  'ancienne avant nouvelle': ([old, fresh]) => { old.respond(); fresh.respond(); },
+  'ancienne APRÈS nouvelle': ([old, fresh]) => { fresh.respond(); old.respond(); },
+  'ancienne en erreur': ([old, fresh]) => { old.fail(); fresh.respond(); },
+  'nouvelle en erreur': ([old, fresh]) => { fresh.fail(); old.respond(); },
+};
+
+for (const [mutationName, mutate] of Object.entries(MUTATIONS)) {
+  for (const [orderName, play] of Object.entries(ORDERS)) {
+    test(`Offres : ${mutationName} pendant la revalidation, ${orderName} → jamais l’état d’avant l’écriture`, async () => {
+      const { sandbox, server, gets, list } = offersRaceSandbox();
+      const first = sandbox.h.loadOffers(); gets[0].respond(); await first; // liste déjà vue
+      const before = list.innerHTML;
+
+      sandbox.h.loadOffers(); // retour sur Offres : liste en cache + revalidation (ANCIEN GET)
+      await flush();
+      assert.equal(gets.length, 2);
+      await mutate(sandbox.h);
+      await settleAll();
+      assert.equal(gets.length, 3, 'une nouvelle lecture serveur part après l’écriture');
+      assert.notDeepEqual(gets[2].read, gets[1].read, 'le nouveau GET lit l’état écrit');
+      play([gets[1], gets[2]]);
+      await settleAll();
+
+      const after = `offres:${JSON.stringify(server.offers)}`;
+      assert.notEqual(list.innerHTML, before, 'l’ancien état n’est jamais réaffiché');
+      if (orderName === 'nouvelle en erreur') {
+        assert.match(list.innerHTML, /Impossible de charger vos offres/, 'erreur visible, pas l’ancienne liste');
+        assert.equal(sandbox.h.snapshot(), null, 'aucune liste antérieure gardée en cache');
+      } else {
+        assert.equal(list.innerHTML, after, 'UI = état écrit');
+        assert.deepEqual(JSON.parse(JSON.stringify(sandbox.h.snapshot())), server.offers);
+      }
+      // Visite suivante : affichage immédiat jamais antérieur à l'écriture, puis relecture.
+      sandbox.h.loadOffers();
+      await flush();
+      assert.ok(list.innerHTML === after || /spinner/.test(list.innerHTML), list.innerHTML);
+    });
+  }
+}
+
+test('Offres : un GET Activité parti avant l’écriture ne remet pas l’ancienne liste en cache', async () => {
+  const { sandbox, server, gets, list } = offersRaceSandbox();
+  const first = sandbox.h.loadOffers(); gets[0].respond(); await first;
+  const dashboard = sandbox.h.loadDashboard(); // Activité : GET parti avant l'écriture
+  await settleAll();
+  sandbox.h.loadOffers(); // retour Offres : rejoint ce GET (lecture normale dédupliquée)
+  await flush();
+  assert.equal(gets.length, 2, 'lecture normale : déduplication conservée');
+  await sandbox.h.setOfferStatus('o1', 'closed');
+  await settleAll();
+  assert.equal(gets.length, 3);
+  gets[2].respond(); await settleAll();
+  gets[1].respond(); await dashboard; await settleAll(); // réponse Activité tardive, d'avant l'écriture
+  assert.equal(list.innerHTML, `offres:${JSON.stringify(server.offers)}`);
+  assert.deepEqual(JSON.parse(JSON.stringify(sandbox.h.snapshot())), server.offers, 'le cache reste l’état écrit');
+  sandbox.h.loadOffers();
+  assert.equal(list.innerHTML, `offres:${JSON.stringify(server.offers)}`, 'visite suivante : aucun état obsolète affiché');
 });

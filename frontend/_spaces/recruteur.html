@@ -1970,7 +1970,10 @@ const API_GET_IN_FLIGHT = new Map();
 function api(method, path, body, allowRefresh = true, fetchOpts = null) {
   if (method !== 'GET' || !allowRefresh || (fetchOpts && fetchOpts.signal)) return apiRequest(method, path, body, allowRefresh, fetchOpts);
   if (!API_GET_IN_FLIGHT.has(path)) {
-    API_GET_IN_FLIGHT.set(path, apiRequest(method, path, body, allowRefresh, fetchOpts).finally(() => API_GET_IN_FLIGHT.delete(path)));
+    // Only clear its own entry: a write may already have replaced it (forgetOffers).
+    const request = apiRequest(method, path, body, allowRefresh, fetchOpts)
+      .finally(() => { if (API_GET_IN_FLIGHT.get(path) === request) API_GET_IN_FLIGHT.delete(path); });
+    API_GET_IN_FLIGHT.set(path, request);
   }
   return API_GET_IN_FLIGHT.get(path);
 }
@@ -2340,6 +2343,7 @@ async function loadDashboard() {
   if (!USER) return;
   document.getElementById('dash-co-name').textContent = USER.entreprise || '—';
   renderDashLogo('', USER.entreprise);
+  const offersEpoch = OFFERS_EPOCH;
   try {
     const [stats, recues, offers] = await Promise.all([
       takeBootStats() || api('GET', '/recruteurs/stats'),
@@ -2351,7 +2355,7 @@ async function loadDashboard() {
     document.getElementById('dash-co-plan').textContent = stats.plan_label;
     renderRecues(recues);
     renderDashRecentOffers(offers || []);
-    rememberOffers(offers);
+    rememberOffers(offers, offersEpoch);
     renderDashLogo(stats.avatar_url, USER.entreprise || stats.entreprise);
     syncBnavPlan(stats);
     const nudge = document.getElementById('photo-nudge');
@@ -3369,6 +3373,7 @@ async function loadPipeline() {
   // Counts, cards and offers are independent: the three requests start together
   // (they used to wait for each other) and each keeps its own failure handling.
   const settle = (request) => request.then((value) => ({ value }), (error) => ({ error }));
+  const offersEpoch = OFFERS_EPOCH;
   const statsRequest = settle(api('GET', '/recruteurs/stats', null, true, { signal }));
   const pipelineRequest = settle(fetchPipelinePage(null, { signal }));
   const offersRequest = settle(api('GET', '/offres/mine', null, true, { signal }));
@@ -3406,7 +3411,7 @@ async function loadPipeline() {
   PIPELINE_LOADING = false;
 
   if (!offersError) {
-    rememberOffers(offers);
+    rememberOffers(offers, offersEpoch);
     renderPipelineOffers(offers || []);
   } else if (offersList) {
     offersList.innerHTML = pipelineStateHtml(
@@ -3858,13 +3863,23 @@ if (window.SwipCommuneAutocomplete) {
 // at once, then always re-reads the list and only redraws when it changed. Any write
 // on an offer drops it so a stale status is never shown.
 let OFFERS_SNAPSHOT = null;
-function rememberOffers(offers) {
+// Bumped by every offer write: a read started before a write never feeds the list
+// (`epoch` is OFFERS_EPOCH when that read started).
+let OFFERS_EPOCH = 0;
+function rememberOffers(offers, epoch) {
+  if (epoch !== OFFERS_EPOCH) return;
   OFFERS_SNAPSHOT = Array.isArray(offers) ? { offers, key: JSON.stringify(offers) } : null;
 }
-function forgetOffers() { OFFERS_SNAPSHOT = null; }
+function forgetOffers() {
+  OFFERS_SNAPSHOT = null;
+  OFFERS_EPOCH += 1;
+  OFFERS_LOAD_GEN += 1; // an Offres read started before the write never paints
+  API_GET_IN_FLIGHT.delete('/offres/mine'); // the next read is a new server read
+}
 let OFFERS_LOAD_GEN = 0;
 async function loadOffers() {
   const gen = ++OFFERS_LOAD_GEN;
+  const epoch = OFFERS_EPOCH;
   const list = document.getElementById('offers-list');
   const shown = OFFERS_SNAPSHOT;
   if (shown) renderOffers(shown.offers);
@@ -3872,7 +3887,7 @@ async function loadOffers() {
   try {
     const offers = await api('GET', '/offres/mine');
     if (gen !== OFFERS_LOAD_GEN) return;
-    rememberOffers(offers);
+    rememberOffers(offers, epoch);
     if (!shown || !OFFERS_SNAPSHOT || shown.key !== OFFERS_SNAPSHOT.key) renderOffers(offers);
   } catch(e) {
     if (gen !== OFFERS_LOAD_GEN) return;
