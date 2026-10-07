@@ -1,0 +1,184 @@
+/* Recruiter Pipeline (Kanban) V2 — visual layer only, loaded last.
+   Every selector is scoped to #p-pipeline. The drag & drop engine, transitions,
+   counts and markup hooks (data-stage, .pipe-col, .pipe-card, .pipe-move,
+   .is-target, .is-dragging) are unchanged; some shared rules above use
+   !important, hence the few !important below. */
+
+/* Stage identity: one accent + one light tint per stage, from the SwipSales
+   palette (--b, --pu, --a, --ink3) plus a teal and an indigo for the two stages
+   that had no distinct colour. The label always names the stage. */
+#p-pipeline [data-stage] { --stage: var(--b); --stage-soft: #F4F7FF; --stage-line: #D9E3FC; }
+#p-pipeline [data-stage="vu"] { --stage: var(--pu); --stage-soft: #F8F5FE; --stage-line: #E5DAFA; }
+#p-pipeline [data-stage="contacte"] { --stage: #0E7490; --stage-soft: #F1F8FA; --stage-line: #CFE6EC; }
+#p-pipeline [data-stage="entretien"] { --stage: var(--a); --stage-soft: #FDF8F0; --stage-line: #F3E1C4; }
+#p-pipeline [data-stage="offre"] { --stage: #4338CA; --stage-soft: #F5F5FE; --stage-line: #DDDBF8; }
+#p-pipeline [data-stage="termine"] { --stage: var(--ink3); --stage-soft: #F5F7FA; --stage-line: #DFE5EE; }
+
+/* ---------- Columns ---------- */
+#p-pipeline .pipe-col {
+  display: flex; flex-direction: column; min-width: 0; padding: 0 !important;
+  background: var(--stage-soft) !important;
+  border: 1px solid var(--stage-line) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  overflow: clip; /* rounds the header; not a scroll container */
+  transition: opacity .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+#p-pipeline .pipe-col-hd {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px;
+  margin: 0; padding: 11px 12px 10px;
+  background: rgba(255, 255, 255, .72);
+  border-bottom: 1px solid var(--stage-line);
+  box-shadow: inset 0 3px 0 var(--stage);
+}
+#p-pipeline .pipe-col-t {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px;
+  font: 800 12px/1.2 'Sora', sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--ink);
+}
+#p-pipeline .pipe-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--stage); }
+#p-pipeline .pipe-count {
+  min-width: 26px; padding: 2px 8px; border-radius: 999px; text-align: center;
+  font: 800 12px/1.4 'Sora', sans-serif; color: var(--stage);
+  background: var(--w); border: 1px solid var(--stage-line);
+}
+#p-pipeline .pipe-loaded { flex-basis: 100%; font-size: 10.5px; font-weight: 600; color: var(--ink3); }
+#p-pipeline .pipe-col-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; flex: 1; min-height: 0; }
+
+/* ---------- Cards ---------- */
+#p-pipeline .pipe-card {
+  margin: 0; padding: 10px 11px; background: var(--w);
+  border: 1px solid #E3E9F2 !important; border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(9, 20, 34, .05) !important;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
+}
+#p-pipeline .pipe-card:hover { border-color: var(--stage-line) !important; box-shadow: 0 6px 16px rgba(9, 20, 34, .08) !important; transform: translateY(-1px); }
+#p-pipeline .pipe-card[draggable=true] { cursor: grab; }
+#p-pipeline .pipe-card[draggable=true]:active { cursor: grabbing; }
+#p-pipeline .pipe-open { padding: 0; border-radius: 8px; }
+#p-pipeline .pipe-open:focus-visible { outline: 2px solid var(--b); outline-offset: 3px; }
+#p-pipeline .pipe-card-top { display: flex; align-items: center; gap: 9px; margin: 0; }
+#p-pipeline .pc-av { width: 30px; height: 30px; border-radius: 8px; font-size: 11px; }
+#p-pipeline .pc-info { flex: 1; min-width: 0; }
+#p-pipeline .pc-n { font-size: 13px; line-height: 1.25; }
+#p-pipeline .pc-r { font-size: 11.5px; line-height: 1.3; margin-top: 1px; }
+#p-pipeline .pc-score {
+  flex-shrink: 0; align-self: flex-start; padding: 2px 7px; border-radius: 999px;
+  background: #F2F5F9; font: 900 12px/1.4 'Sora', sans-serif;
+}
+#p-pipeline .pc-score small { font-size: 9px; font-weight: 800; margin-left: 1px; }
+/* Linked offer: read as context, not as a third job line (small "Offre" label,
+   regular weight, after a hairline). */
+#p-pipeline .pc-offer {
+  margin-top: 6px; padding-top: 5px; border-top: 1px solid #EEF2F7;
+  font-size: 11px; color: var(--ink3); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#p-pipeline .pc-offer::before {
+  content: 'Offre'; margin-right: 6px; padding: 1px 5px; border-radius: 4px; background: #F2F5F9;
+  font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3);
+}
+/* One line of chips: status, ADN, then each tag only if it fits whole (a tag that
+   does not fit wraps to a second line, which is clipped: never a cut fragment). */
+#p-pipeline .pc-meta { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; height: 20px; overflow: clip; }
+#p-pipeline .pc-chip, #p-pipeline .pc-tag {
+  display: inline-flex; height: 20px; align-items: center; max-width: 100%; min-width: 0;
+  padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#p-pipeline .pc-chip.status { background: #F2F5F9; color: var(--ink2); border: 0; }
+#p-pipeline .pc-chip.status.is-embauche { background: var(--gs); color: var(--g); }
+#p-pipeline .pc-chip.status.is-refusee { background: var(--rs); color: var(--r); }
+#p-pipeline .pc-chip.adn { background: var(--pus); color: var(--pu); border: 0; }
+#p-pipeline .pc-tag { max-width: 8em; background: var(--w); color: var(--ink3); border: 1px solid #E3E9F2; font-weight: 600; }
+
+/* "Déplacer vers…": compact on desktop with a mouse, 44px everywhere else (touch). */
+#p-pipeline .pipe-move {
+  margin-top: 8px; border-color: #E3E9F2; border-radius: 8px; background-color: #F8FAFC;
+  color: var(--ink2); font-size: 12px; font-weight: 600;
+}
+#p-pipeline .pipe-move:hover:not(:disabled) { border-color: var(--stage-line); background-color: var(--w); }
+#p-pipeline .pipe-move:focus-visible { outline: 2px solid var(--b); outline-offset: 1px; }
+
+/* ---------- Empty column / empty pipeline ---------- */
+#p-pipeline .pipe-col-empty {
+  padding: 12px 10px; border: 1px dashed var(--stage-line); border-radius: 10px;
+  background: rgba(255, 255, 255, .55); color: var(--ink3); font-size: 11.5px; font-weight: 600; text-align: center;
+}
+#p-pipeline .pipe-cols > .pipe-state,
+#p-pipeline .pipe-cols > .pipe-state.is-surface { min-height: 0; padding: 30px 20px; gap: 8px; }
+#p-pipeline .pipe-flow {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; list-style: none; margin: 6px 0 4px; padding: 0;
+}
+#p-pipeline .pipe-flow li {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: var(--stage-soft); border: 1px solid var(--stage-line);
+  font-size: 11.5px; font-weight: 700; color: var(--ink2);
+}
+
+/* ---------- Drag & drop feedback (classes set by the existing handlers) ---------- */
+#p-pipeline .pipe-card.is-ghost {
+  opacity: .5; background: transparent; box-shadow: none !important; transform: none;
+  border-style: dashed !important; border-color: var(--stage-line) !important;
+}
+#p-pipeline .pipe-cols.is-dragging-board .pipe-col.no-drop { opacity: .45; }
+#p-pipeline .pipe-cols.is-dragging-board .pipe-col.can-drop .pipe-col-body {
+  outline: 1.5px dashed var(--stage-line); outline-offset: -5px; border-radius: 12px;
+}
+#p-pipeline .pipe-col.is-target { background: var(--w) !important; box-shadow: inset 0 0 0 2px var(--stage) !important; }
+#p-pipeline .pipe-col.is-target .pipe-col-body { outline: 0; }
+/* Drop placeholder: where the card will land (cards are ordered by date, so the
+   placeholder only says "here", at the top of the column). */
+#p-pipeline .pipe-col.is-target .pipe-col-body::before {
+  content: 'Déposer ici'; order: -1; display: flex; align-items: center; justify-content: center; min-height: 52px;
+  border: 1.5px dashed var(--stage); border-radius: 10px; background: var(--stage-soft);
+  color: var(--stage); font-size: 12px; font-weight: 800;
+}
+#p-pipeline .pipe-col[data-stage="termine"].is-target .pipe-col-body::before { content: 'Déposer, puis préciser le résultat'; }
+#p-pipeline .pipe-col.is-target .pipe-col-empty { display: none; }
+
+/* ---------- Page structure ---------- */
+#p-pipeline .pipe-kanban-hd .sec-hd { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 4px 12px; }
+#p-pipeline #pipeline-feedback { margin: 2px 0 0; padding: 0; }
+#p-pipeline .pipe-refresh { flex-shrink: 0; }
+
+/* Desktop with side navigation: one gutter for headers and board, lanes of a
+   readable width with the next stage visible at the edge. A long column keeps
+   growing with the page (vertical page scroll, as before: no nested scroll). */
+@media (min-width: 1024px) {
+  #p-pipeline.page.on { --pk-gutter: clamp(20px, 2.2vw, 36px); }
+  #p-pipeline > .sec { width: auto; max-width: none; margin: 0; padding-left: var(--pk-gutter); padding-right: var(--pk-gutter); }
+  #p-pipeline .pipe-cols {
+    display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; scroll-snap-type: none;
+    padding: 2px var(--pk-gutter) 14px;
+  }
+  #p-pipeline .pipe-col { flex: 1 0 256px; width: 256px; min-width: 256px; max-width: 340px; }
+  #p-pipeline .pipe-cols:has(> .pipe-state) { display: block; }
+  #p-pipeline #pipeline-load-more, #p-pipeline .pipeline-end { padding-left: var(--pk-gutter); padding-right: var(--pk-gutter); }
+}
+@media (min-width: 1024px) and (pointer: fine) {
+  /* Secondary action with a mouse: sized to its label, always visible (no hover
+     dependency), same native select, keyboard and options. */
+  #p-pipeline .pipe-move {
+    display: block; width: fit-content; max-width: 100%; field-sizing: content; min-height: 26px; height: 26px;
+    padding: 2px 6px; font-size: 11px; color: var(--ink3); background-color: var(--w);
+  }
+}
+
+/* Tablet: lanes side by side in a horizontal strip (not a shrunken desktop). */
+@media (min-width: 720px) and (max-width: 1023px) {
+  #p-pipeline .pipe-cols { display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 18px 12px; scroll-padding-inline: 18px; }
+  #p-pipeline .pipe-cols:has(> .pipe-state) { display: block; }
+  #p-pipeline .pipe-col { flex: 0 0 280px; width: 280px; scroll-snap-align: start; }
+}
+
+/* Phones: one lane at a time with the next one peeking; "Déplacer vers…" stays
+   the main action (44px, from the shared rule). */
+@media (max-width: 719px) {
+  #p-pipeline .pipe-cols { padding-left: 14px; padding-right: 14px; scroll-padding-inline: 14px; }
+  #p-pipeline .pipe-col { width: min(300px, 84vw) !important; min-width: 0 !important; }
+  #p-pipeline .pipe-col-hd { padding: 10px 12px 9px; }
+  #p-pipeline .pipe-kanban-hd .sec-hd { align-items: start; }
+  /* Short label next to the title; full name kept as the accessible name. */
+  #p-pipeline .pipe-refresh { min-height: 44px; padding: 6px 12px; font-size: 12px; }
+  #p-pipeline .pipe-refresh-more { display: none; }
+}

@@ -1105,6 +1105,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <link rel="stylesheet" href="../recruiter-dashboard.css">
 <link rel="stylesheet" href="../recruiter-mobile.css">
 <link rel="stylesheet" href="../recruiter-desktop.css">
+<link rel="stylesheet" href="../recruiter-pipeline.css">
 <script src="../recruiter-kanban.js"></script>
 <script src="../app-a11y.js" defer></script>
 </head>
@@ -1332,8 +1333,9 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <div class="sec-hd" style="margin-bottom:0">
       <div>
         <div class="sec-t sf">Candidatures</div>
-        <div class="pipeline-cands-sub">Classées par étape — ouvrez une carte pour qualifier et contacter.</div>
+        <p id="pipeline-feedback" role="status" aria-live="polite" class="pipeline-cands-sub">Glissez une carte vers une étape autorisée, ou utilisez « Déplacer vers… ».</p>
       </div>
+      <button class="btn bg2 bsm pipe-refresh" type="button" onclick="loadPipeline()" aria-label="Actualiser le pipeline">Actualiser<span class="pipe-refresh-more"> le pipeline</span></button>
     </div>
   </div>
   <div class="pipe-kanban-wrap">
@@ -1343,8 +1345,6 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
     <button class="btn bo blk" type="button" id="pipeline-load-more-btn" onclick="loadMorePipeline()">Charger plus de candidatures</button>
   </div>
   <div id="pipeline-end" class="pipeline-end" hidden>Fin de la liste chargée</div>
-  <p id="pipeline-feedback" role="status" aria-live="polite">Glissez une carte vers une étape autorisée, ou utilisez « Déplacer vers… ».</p>
-  <button class="btn bg2 bsm" type="button" onclick="loadPipeline()">Actualiser le pipeline</button>
 </div>
 
 <!-- POST OFFRE -->
@@ -3331,11 +3331,12 @@ function pipelineStateHtml(title, copy, options = {}) {
   const kind = options.error ? ' error' : '';
   const surface = options.surface ? ' is-surface' : '';
   const action = options.actionHtml || '';
+  const steps = options.stepsHtml || '';
   const spin = options.loading ? '<div class="spinner" aria-hidden="true"></div>' : '';
   const icon = options.icon
     ? `<div class="pipe-state-ico" aria-hidden="true">${options.icon}</div>`
     : '';
-  return `<div class="pipe-state${kind}${surface}" role="status">${spin}${icon}<b>${title}</b><span>${copy}</span>${action}</div>`;
+  return `<div class="pipe-state${kind}${surface}" role="status">${spin}${icon}<b>${title}</b><span>${copy}</span>${steps}${action}</div>`;
 }
 
 async function fetchPipelinePage(cursor, fetchOpts) {
@@ -3474,6 +3475,8 @@ function renderPipeline() {
       'Les candidats qui postulent à vos offres apparaîtront ici.',
       {
         surface: true,
+        // How the board fills, without six empty columns: the stages in order.
+        stepsHtml: `<ol class="pipe-flow" aria-label="Étapes du pipeline">${PIPE_STAGES.map(stage => `<li data-stage="${stage.key}"><span class="pipe-dot" aria-hidden="true"></span>${stage.label}</li>`).join('')}</ol>`,
         icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
         actionHtml: '<button class="btn bp bsm" type="button" onclick="go(\'swipe\')">Sourcer des candidats</button>'
       }
@@ -3485,19 +3488,24 @@ function renderPipeline() {
   PIPE_STAGES.forEach(stage => (PIPELINE[stage.key] || []).forEach(c => { PIPELINE_CARDS[c.id] = c; }));
   document.getElementById('pipe-cols').innerHTML = PIPE_STAGES.map(stage => {
     const cards = PIPELINE[stage.key] || [];
+    const count = PIPELINE_COUNTS?.[stage.key] ?? cards.length;
+    // Loaded/total detail only when it says something (partial page or no total).
+    const loaded = !PIPELINE_COUNTS ? `${cards.length} chargée(s) · total indisponible`
+      : cards.length < count ? `${cards.length} chargée(s) sur ${count}` : '';
     return `
     <div class="pipe-col" data-stage="${stage.key}" ondragover="pipelineDragOver(event,'${stage.key}')" ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('is-target')" ondrop="pipelineDrop(event,'${stage.key}')">
       <div class="pipe-col-hd">
-        <div class="pipe-col-t sf"><span class="pipe-dot" style="background:${stage.color}"></span>${stage.label}</div>
-        <span class="pipe-count">${PIPELINE_COUNTS?.[stage.key] ?? cards.length}</span>
-        <span class="pipe-loaded">${cards.length} chargée(s)${PIPELINE_COUNTS ? '' : ' · total indisponible'}</span>
+        <div class="pipe-col-t sf"><span class="pipe-dot" aria-hidden="true"></span>${stage.label}</div>
+        <span class="pipe-count" aria-label="${count} candidature${count > 1 ? 's' : ''}">${count}</span>
+        ${loaded ? `<span class="pipe-loaded">${loaded}</span>` : ''}
       </div>
+      <div class="pipe-col-body">
       ${cards.length ? cards.map(c => {
         const matchScore = Number(c.score);
         const scoreColor = matchScore >= 90 ? 'var(--pu)' : matchScore >= 80 ? 'var(--b)' : 'var(--a)';
         const statusLabel = PIPELINE_LABELS[c.statut] || c.statut || 'Candidature';
         const adn = c.score_adn != null && c.score_adn !== '' ? Number(c.score_adn) : null;
-        const tags = (c.tags || []).slice(0, 3);
+        const tags = (c.tags || []).slice(0, 2);
         const id = esc(String(c.id));
         return `
         <article class="pipe-card" data-card-id="${id}" draggable="${Boolean(c.moves?.length && !PIPE_WRITER.pending.has(String(c.id)) && !PIPELINE_LOADING && !PIPE_VIEW_PENDING && !PIPE_RECONCILE && window.matchMedia('(min-width:1024px) and (pointer:fine)').matches)}" aria-busy="${PIPE_WRITER.pending.has(String(c.id))}" ondragstart="pipelineDragStart(event,'${id}')" ondragend="pipelineDragEnd()">
@@ -3508,19 +3516,13 @@ function renderPipeline() {
               <div class="pc-n sf">${esc(c.name)}</div>
               <div class="pc-r">${esc(c.role || 'Commercial')}</div>
             </div>
-            <div class="pc-score-box">
-              <span class="pc-score sf" style="color:${scoreColor}">${Number.isFinite(matchScore) ? esc(String(matchScore)) : '—'}</span>
-              <div class="pc-score-l">Match</div>
-            </div>
+            <span class="pc-score sf" style="color:${scoreColor}" title="Score de match">${Number.isFinite(matchScore) ? esc(String(matchScore)) + '<small>%</small>' : '—'}</span>
           </div>
+          ${c.offre_title ? `<div class="pc-offer">${esc(c.offre_title)}</div>` : ''}
           <div class="pc-meta">
-            <span class="pc-chip status">${esc(statusLabel)}</span>
+            <span class="pc-chip status is-${esc(String(c.statut || 'envoyee'))}">${esc(statusLabel)}</span>
             ${Number.isFinite(adn) ? `<span class="pc-chip adn">ADN ${esc(String(adn))}</span>` : ''}
-            ${c.offre_title ? `<span class="pc-chip">${esc(c.offre_title)}</span>` : ''}
-          </div>
-          <div class="pc-foot">
-            <div class="pc-tags">${tags.map(t => `<span class="pc-tag">${esc(t)}</span>`).join('')}</div>
-            <span class="pc-cta">Voir →</span>
+            ${tags.map(t => `<span class="pc-tag">${esc(t)}</span>`).join('')}
           </div>
           </button>
           <select class="pipe-move" data-move-id="${id}" aria-label="Déplacer ${esc(c.name)} vers" onchange="movePipelineCard('${id}',this.value)" ${(PIPE_WRITER.pending.has(String(c.id)) || PIPELINE_LOADING || PIPE_VIEW_PENDING || PIPE_RECONCILE || !c.moves?.length) ? 'disabled' : ''}>
@@ -3529,6 +3531,7 @@ function renderPipeline() {
           </select>
         </article>`;
       }).join('') : `<div class="pipe-col-empty">Aucune candidature</div>`}
+      </div>
     </div>`;
   }).join('');
 
@@ -3647,6 +3650,20 @@ function pipelineDragStart(event, id) {
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', String(id));
   event.currentTarget.classList.add('is-dragging');
+  pipelineMarkDropTargets(id, event.currentTarget);
+}
+// Visual only: shows which columns accept the card (same rule as pipelineDragOver,
+// from the card's own transitions). The source card fades once the browser has
+// taken its drag image, so the image itself stays the full card.
+function pipelineMarkDropTargets(id, cardEl) {
+  const from = RecruiterKanban.find(PIPELINE, id)?.stage;
+  const allowed = new Set((PIPELINE_CARDS[id]?.moves || []).map(move => move.stage));
+  document.getElementById('pipe-cols')?.classList.add('is-dragging-board');
+  document.querySelectorAll('#pipe-cols .pipe-col').forEach(col => {
+    const stage = col.dataset.stage;
+    col.classList.add(stage === from ? 'is-source' : allowed.has(stage) ? 'can-drop' : 'no-drop');
+  });
+  requestAnimationFrame(() => { if (PIPE_DRAG_ID === id) cardEl.classList.add('is-ghost'); });
 }
 function pipelineDragOver(event, stage) {
   const card = PIPELINE_CARDS[PIPE_DRAG_ID];
@@ -3658,6 +3675,8 @@ function pipelineDragOver(event, stage) {
 function pipelineDragEnd() {
   PIPE_DRAG_ID = null;
   document.querySelectorAll('.is-target,.is-dragging').forEach(el => el.classList.remove('is-target','is-dragging'));
+  document.querySelectorAll('#p-pipeline .is-ghost,#p-pipeline .is-source,#p-pipeline .can-drop,#p-pipeline .no-drop,#p-pipeline .is-dragging-board')
+    .forEach(el => el.classList.remove('is-ghost','is-source','can-drop','no-drop','is-dragging-board'));
 }
 function pipelineDrop(event, stage) {
   event.preventDefault();
