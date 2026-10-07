@@ -1,0 +1,50 @@
+/* Recruiter only, desktop with side navigation (>= 1024px): Sourcing layout.
+   Loaded last. Every selector is scoped to #p-swipe; phones and tablets are untouched.
+
+   1. The page re-centred itself with `margin: 0 auto` (recruteur.html >= 720px and
+      app-professional.css >= 1080px), which cancelled the side navigation offset
+      (`.page { margin-left: 220px | 236px }`): below ~1600px wide the fixed side
+      navigation covered the title, the Filtres button and the left of the card.
+   2. The deck was locked at 400px (app-professional.css >= 1080px, !important):
+      a large empty band under it on tall screens, and long profiles clipped
+      without any way to read the end of the card.
+   The card now takes its natural height, capped by the height left under the
+   header (the card body scrolls beyond), and the empty state is a compact card
+   right under the header instead of a large dashed void. */
+@media (min-width: 1024px) {
+  #p-swipe.page.on {
+    display: flex !important; flex-direction: column; align-items: center; gap: 12px;
+    width: auto; max-width: none; margin: 0 0 0 220px;
+    height: calc(100dvh - 64px); min-height: 0; /* fixed top bar */
+    padding: 20px clamp(24px, 3vw, 48px) 24px;
+  }
+  #p-swipe .swipe-hd,
+  #p-swipe .deck-wrap { width: 100%; max-width: 1120px; margin: 0; }
+
+  /* Deck: grows with the window (320 → 560px floor) and with a long profile, but
+     never past the space left in the viewport (never below a usable card +
+     actions either: very short windows scroll the page instead). */
+  #p-swipe .deck-wrap { flex: 0 1 auto; min-height: clamp(388px, calc(100dvh - 252px), 448px); }
+  #p-swipe .deck-area {
+    display: flex; flex-direction: column; flex: 1 1 auto;
+    height: auto !important; min-height: clamp(320px, calc(100dvh - 400px), 560px) !important; max-height: none !important;
+  }
+  #p-swipe #deck-cards { display: flex; flex: 1 1 auto; height: auto; min-height: 0; }
+  #p-swipe .swipe-card:last-child {
+    flex: 1 1 auto; height: auto !important; min-height: 0; max-height: none;
+  }
+  #p-swipe .cand-body { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  #p-swipe #deck-cards > .loading-state { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+  /* Empty state (all profiles seen, or filters without result): compact card. */
+  #p-swipe .deck-wrap:has(.deck-area.is-empty) { flex: 0 0 auto; min-height: 0; }
+  #p-swipe .deck-area.is-empty { height: auto !important; min-height: 0 !important; }
+  #p-swipe .deck-area.is-empty .deck-empty.on {
+    position: static; inset: auto; min-height: 300px;
+    padding: 44px 24px; border: 0; border-radius: 0; background: var(--w);
+  }
+  #p-swipe .deck-empty-copy { max-width: 380px; }
+}
+@media (min-width: 1280px) {
+  #p-swipe.page.on { margin-left: 236px; }
+}

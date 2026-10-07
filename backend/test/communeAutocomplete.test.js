@@ -441,7 +441,7 @@ function offerPage() {
     DRAFT_SKILLS: [], renderDraftSkillsAccordion() {},
     OF_TYPE: 'CDI', OF_REMOTE: '', OF_TAGS: [], EDITING_OFFER_ID: '', EDITING_OFFER_STATUS: 'active',
     showErr: (id, message) => errors.push(message), isValidSalaire: () => true, parseOptionalSalaryInput: () => null,
-    setBtn() {}, toast() {}, go() {}, initNotifications() {},
+    setBtn() {}, toast() {}, go() {}, initNotifications() {}, forgetOffers() {},
     api: async (method, url, body) => { apiCalls.push({ method, url, lieu: body.lieu }); return {}; },
   };
   const start = recruteur.indexOf('const OFFER_LOCATION_SPECIAL');
