@@ -1104,6 +1104,7 @@ textarea.form-field{min-height:90px;resize:vertical;line-height:1.6}
 <link rel="stylesheet" href="../messages-mobile.css">
 <link rel="stylesheet" href="../recruiter-dashboard.css">
 <link rel="stylesheet" href="../recruiter-mobile.css">
+<link rel="stylesheet" href="../recruiter-desktop.css">
 <script src="../recruiter-kanban.js"></script>
 <script src="../app-a11y.js" defer></script>
 </head>
@@ -1962,7 +1963,18 @@ function refreshAccessToken() {
   }
   return REFRESH_PROMISE;
 }
-async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
+// Identical GETs in flight at the same time share one request (e.g. /offres/mine
+// asked by the Activité page and by the notifications setup at start-up). Nothing
+// is cached once the response is back; abortable calls keep their own request.
+const API_GET_IN_FLIGHT = new Map();
+function api(method, path, body, allowRefresh = true, fetchOpts = null) {
+  if (method !== 'GET' || !allowRefresh || (fetchOpts && fetchOpts.signal)) return apiRequest(method, path, body, allowRefresh, fetchOpts);
+  if (!API_GET_IN_FLIGHT.has(path)) {
+    API_GET_IN_FLIGHT.set(path, apiRequest(method, path, body, allowRefresh, fetchOpts).finally(() => API_GET_IN_FLIGHT.delete(path)));
+  }
+  return API_GET_IN_FLIGHT.get(path);
+}
+async function apiRequest(method, path, body, allowRefresh = true, fetchOpts = null) {
   const h = { 'Content-Type': 'application/json' };
   if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
   const r = await fetch(API + path, {
@@ -1972,7 +1984,7 @@ async function api(method, path, body, allowRefresh = true, fetchOpts = null) {
     signal: fetchOpts && fetchOpts.signal,
   });
   if (r.status === 401 && allowRefresh && await refreshAccessToken()) {
-    return api(method, path, body, false, fetchOpts);
+    return apiRequest(method, path, body, false, fetchOpts);
   }
   const d = await r.json();
   if (!r.ok) {
@@ -2305,6 +2317,14 @@ function isGreetingPrenom(value, user) {
   return true;
 }
 let DASHBOARD_GEN = 0;
+// Stats read by the start-up plan check, used once by the first Activité render
+// when still fresh (the same request was otherwise sent twice in a row).
+let BOOT_STATS = null;
+function takeBootStats() {
+  const boot = BOOT_STATS;
+  BOOT_STATS = null;
+  return boot && Date.now() - boot.at < 10000 ? boot.stats : null;
+}
 async function loadDashboard() {
   const gen = ++DASHBOARD_GEN;
   await PIPE_WRITER.idle();
@@ -2322,7 +2342,7 @@ async function loadDashboard() {
   renderDashLogo('', USER.entreprise);
   try {
     const [stats, recues, offers] = await Promise.all([
-      api('GET', '/recruteurs/stats'),
+      takeBootStats() || api('GET', '/recruteurs/stats'),
       api('GET', '/candidatures/recues?limit=4'),
       api('GET', '/offres/mine')
     ]);
@@ -2331,6 +2351,7 @@ async function loadDashboard() {
     document.getElementById('dash-co-plan').textContent = stats.plan_label;
     renderRecues(recues);
     renderDashRecentOffers(offers || []);
+    rememberOffers(offers);
     renderDashLogo(stats.avatar_url, USER.entreprise || stats.entreprise);
     syncBnavPlan(stats);
     const nudge = document.getElementById('photo-nudge');
@@ -3345,14 +3366,23 @@ async function loadPipeline() {
   let pipelineError = null;
   let offers = null;
   let offersError = null;
+  // Counts, cards and offers are independent: the three requests start together
+  // (they used to wait for each other) and each keeps its own failure handling.
+  const settle = (request) => request.then((value) => ({ value }), (error) => ({ error }));
+  const statsRequest = settle(api('GET', '/recruteurs/stats', null, true, { signal }));
+  const pipelineRequest = settle(fetchPipelinePage(null, { signal }));
+  const offersRequest = settle(api('GET', '/offres/mine', null, true, { signal }));
   try {
-    const stats = await api('GET', '/recruteurs/stats', null, true, { signal });
+    const stats = await statsRequest;
+    if (stats.error) throw stats.error;
     if (gen !== PIPELINE_LOAD_GEN) return;
-    PIPELINE_COUNTS = stats.stages;
+    PIPELINE_COUNTS = stats.value.stages;
   } catch (e) { /* Cards remain usable; counts explicitly show loaded cards. */ }
 
   try {
-    pipelinePage = await fetchPipelinePage(null, { signal });
+    const page = await pipelineRequest;
+    if (page.error) throw page.error;
+    pipelinePage = page.value;
   } catch (e) {
     if (e && e.name === 'AbortError') {
       if (gen !== PIPELINE_LOAD_GEN) return;
@@ -3361,7 +3391,9 @@ async function loadPipeline() {
     pipelineError = e;
   }
   try {
-    offers = await api('GET', '/offres/mine', null, true, { signal });
+    const result = await offersRequest;
+    if (result.error) throw result.error;
+    offers = result.value;
   } catch (e) {
     if (e && e.name === 'AbortError') {
       if (gen !== PIPELINE_LOAD_GEN) return;
@@ -3374,6 +3406,7 @@ async function loadPipeline() {
   PIPELINE_LOADING = false;
 
   if (!offersError) {
+    rememberOffers(offers);
     renderPipelineOffers(offers || []);
   } else if (offersList) {
     offersList.innerHTML = pipelineStateHtml(
@@ -3780,6 +3813,7 @@ async function postOffre() {
     };
     if (EDITING_OFFER_ID) await api('PUT', '/offres/' + encodeURIComponent(EDITING_OFFER_ID), payload);
     else await api('POST', '/offres', payload);
+    forgetOffers();
     toast(EDITING_OFFER_ID ? 'Offre mise à jour' : 'Offre publiée !');
     EDITING_OFFER_ID = ''; EDITING_OFFER_STATUS = 'active';
     go('pipeline');
@@ -3820,14 +3854,30 @@ if (window.SwipCommuneAutocomplete) {
   document.getElementById('of-lieu')?.addEventListener('input', () => { LIEU_SELECTIONNE = true; });
 }
 
+// Last /offres/mine answer (Offres, Activité or Pipeline). The Offres page shows it
+// at once, then always re-reads the list and only redraws when it changed. Any write
+// on an offer drops it so a stale status is never shown.
+let OFFERS_SNAPSHOT = null;
+function rememberOffers(offers) {
+  OFFERS_SNAPSHOT = Array.isArray(offers) ? { offers, key: JSON.stringify(offers) } : null;
+}
+function forgetOffers() { OFFERS_SNAPSHOT = null; }
+let OFFERS_LOAD_GEN = 0;
 async function loadOffers() {
+  const gen = ++OFFERS_LOAD_GEN;
   const list = document.getElementById('offers-list');
-  list.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  const shown = OFFERS_SNAPSHOT;
+  if (shown) renderOffers(shown.offers);
+  else list.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
     const offers = await api('GET', '/offres/mine');
-    renderOffers(offers);
+    if (gen !== OFFERS_LOAD_GEN) return;
+    rememberOffers(offers);
+    if (!shown || !OFFERS_SNAPSHOT || shown.key !== OFFERS_SNAPSHOT.key) renderOffers(offers);
   } catch(e) {
-    list.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
+    if (gen !== OFFERS_LOAD_GEN) return;
+    if (shown) toast('Impossible d’actualiser vos offres');
+    else list.innerHTML = '<div class="loading-state">Impossible de charger vos offres</div>';
   }
 }
 function offerStatusLabel(status = '') {
@@ -3849,6 +3899,7 @@ async function deleteOffer(id) {
   if (!confirm('Supprimer ce brouillon ?')) return;
   try {
     await api('DELETE', '/offres/' + encodeURIComponent(id));
+    forgetOffers();
     toast('Offre supprimée');
     if (document.getElementById('p-pipeline')?.classList.contains('on')) loadPipeline();
     else loadOffers();
@@ -3861,6 +3912,7 @@ async function setOfferStatus(id, statut) {
   if (!confirm(`Voulez-vous ${action} cette offre ?`)) return;
   try {
     await api('PATCH', '/offres/' + encodeURIComponent(id) + '/status', { statut });
+    forgetOffers();
     toast(statut === 'closed' ? 'Offre clôturée, historique conservé' : 'Offre réactivée');
     if (document.getElementById('p-pipeline')?.classList.contains('on')) loadPipeline(); else loadOffers();
   } catch (error) { toast(error.message || 'Mise à jour impossible'); }
@@ -3985,18 +4037,26 @@ function setMessageBadges(unreadCount) {
   });
   document.title = hasUnread ? 'Nouveaux messages - Swip Sales' : 'Espace recruteur - Swip Sales';
 }
-async function refreshMessageBadge() {
+// /messages/threads returns every conversation with its latest messages: it was
+// re-read on each page change just for the unread dot. Page changes now refresh it
+// at most every 30 s; a realtime new-message event and the Messages page always do.
+const MESSAGE_BADGE_MAX_AGE = 30000;
+let MESSAGE_BADGE_AT = 0;
+async function refreshMessageBadge(force = false) {
   if (!USER) return;
+  if (!force && Date.now() - MESSAGE_BADGE_AT < MESSAGE_BADGE_MAX_AGE) return;
+  MESSAGE_BADGE_AT = Date.now();
   try {
     const threads = await api('GET', '/messages/threads');
     setMessageBadges(threads.filter(t => t.ur).length);
-  } catch(e) {}
+  } catch(e) { MESSAGE_BADGE_AT = 0; }
 }
 async function loadMessages() {
   if (!USER) return;
   const list = document.getElementById('msgs-list');
   try {
     THREADS = await api('GET', '/messages/threads');
+    MESSAGE_BADGE_AT = Date.now();
     setMessageBadges(THREADS.filter(t=>t.ur).length);
     if (!THREADS.length) {
       list.classList.add('empty');
@@ -4159,7 +4219,7 @@ async function initNotifications() {
         const openMatchIds = ACTIVE_THREAD?.match_ids?.length ? ACTIVE_THREAD.match_ids : (ACTIVE_THREAD?.match_id ? [ACTIVE_THREAD.match_id] : []);
         if (document.getElementById('p-messages')?.classList.contains('on') && openMatchIds.includes(row.match_id)) return;
         pushNotification({ type: 'message', icon: '💬', title: 'Nouveau message', text: 'Un candidat vous a écrit', page: 'messages' });
-        refreshMessageBadge();
+        refreshMessageBadge(true);
       })
       .subscribe();
 
@@ -4323,9 +4383,14 @@ if (!USER && localStorage.getItem('sf_rec_user')) {
 const startParam = new URLSearchParams(location.search).get('start');
 
 if (TOKEN && USER) {
-  api('GET', '/recruteurs/stats?t=' + Date.now())
-    .then(async () => { HAS_PLAN = true; await loadCurrentPlan(); })
-    .catch(async () => { HAS_PLAN = false; await loadCurrentPlan(); })
+  // The plan check (stats) and the current plan are independent: fetch both at
+  // once. The stats answer is handed to the Activité page instead of being re-read.
+  Promise.all([
+    api('GET', '/recruteurs/stats?t=' + Date.now())
+      .then((stats) => { HAS_PLAN = true; BOOT_STATS = { stats, at: Date.now() }; })
+      .catch(() => { HAS_PLAN = false; }),
+    loadCurrentPlan(),
+  ])
     .finally(() => {
       go(startParam || getLastPage());
       initNotifications();

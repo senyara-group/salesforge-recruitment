@@ -356,11 +356,14 @@ router.put('/profil', authMiddleware, requireRecruiterPlan, async (req, res) => 
 router.get('/stats', authMiddleware, requireRecruiterPlan , async (req, res) => {
   try {
     const recruteur = await ensureRecruiterProfile(req.user.id);
-    const summary = await pipelineSummary(supabase, recruteur.id);
+    // Independent reads: the logo URL no longer waits for the counts.
+    const [summary, { avatar_url }] = await Promise.all([
+      pipelineSummary(supabase, recruteur.id),
+      withFreshRecruiterAvatarUrl(recruteur),
+    ]);
     const activeOfferCount = summary.offres;
     const PLAN_DISPLAY_NAMES = { solo: 'Entrepreneur', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
     const planName = PLAN_DISPLAY_NAMES[req.recruiterPlan] || req.recruiterPlan;
-    const { avatar_url } = await withFreshRecruiterAvatarUrl(recruteur);
     res.json({
       ...summary,
       plan_label: `Plan ${planName} · ${activeOfferCount} offre${activeOfferCount > 1 ? 's' : ''} active${activeOfferCount > 1 ? 's' : ''}`,

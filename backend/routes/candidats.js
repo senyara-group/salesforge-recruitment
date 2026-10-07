@@ -389,16 +389,9 @@ function dedupeBy(items, keyGetter) {
   });
 }
 
-async function recruiterSeenCandidateIds(userId) {
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (userRow?.role !== 'recruteur') return [];
-
-  const recruteur = await ensureRecruiterProfile(userId);
+// `recruteur` : fiche déjà obtenue par ensureRecruiterProfile, qui a vérifié le rôle
+// (la relire ici coûtait deux allers-retours Supabase séquentiels par page de deck).
+async function recruiterSeenCandidateIds(recruteur) {
   const { data: offres, error: offresError } = await supabase
     .from('offres')
     .select('id')
@@ -897,9 +890,9 @@ async function fetchCandidateDeckBatch(filters, cursor, batchSize, { seenIds, ex
 
 router.get('/deck', authMiddleware, requireRecruiterPlan, async (req, res) => {
   try {
-    await ensureRecruiterProfile(req.user.id);
+    const recruteur = await ensureRecruiterProfile(req.user.id);
     const filters = parseCandidateDeckQuery(req.query || {});
-    const seenCandidateIds = await recruiterSeenCandidateIds(req.user.id);
+    const seenCandidateIds = await recruiterSeenCandidateIds(recruteur);
     const { page, next_cursor, has_more } = await fetchCandidateDeckRows(filters, {
       seenIds: seenCandidateIds,
       excludeUserId: req.user.id,
