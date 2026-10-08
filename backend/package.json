@@ -11,6 +11,7 @@
     "taxonomy:sync": "node scripts/sync-job-taxonomy.js --write",
     "taxonomy:check": "node scripts/sync-job-taxonomy.js",
     "start": "node server.js",
+    "brevo:run": "node scripts/run-brevo-automation.js",
     "dev": "nodemon server.js",
     "test:layout": "node scripts/check-mobile-layout.js",
     "test:layout:recruiter-desktop": "node scripts/check-recruiter-desktop-layout.js",
@@ -36,6 +37,7 @@
     "stripe": "^22.2.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "nodemon": "^3.1.14"
   }
 }

@@ -125,13 +125,14 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const { data: offre, error: offreError } = await supabase
       .from('offres')
-      .select('id, titre, statut, auto_candidature, recruteurs(id, user_id, matching, questions)')
+      .select('id, titre, statut, auto_candidature, recruteurs(id, user_id, matching, questions)' + (process.env.BREVO_OUTBOX_ENABLED === 'true' ? ', expires_at' : ''))
       .eq('id', offre_id)
       .maybeSingle();
 
     if (offreError) return res.status(400).json({ error: offreError });
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
     if (offre.statut && offre.statut !== 'active') return res.status(409).json({ error: 'Cette offre n’accepte plus de candidatures' });
+    if (offre.expires_at && Date.parse(offre.expires_at) <= Date.now()) return res.status(409).json({ error: 'Cette offre a expire' });
 
     const usage = await markOfferSeenAndCount(candidat, offre_id);
     await markCandidateChoice({ ...candidat, swipes_meta: usage }, offre_id, action);

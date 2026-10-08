@@ -12,6 +12,7 @@ const {
   applySupabaseCursor,
 } = require('../utils/offerDeckQuery');
 const { normalizeOfferStructuredFields } = require('../utils/offerWrite');
+const { expirationPatch, excludeExpired } = require('../utils/offerExpiration');
 
 const AVATAR_BUCKET = process.env.AVATAR_BUCKET || 'profile-photos';
 const DECK_SELECT = 'id, titre, type, contract_type, lieu, salaire, description, tags, statut, auto_candidature, created_at, job_type, remote_mode, salary_fixed_min, salary_fixed_max, has_variable, variable_note, variable_share, sales_styles, sector, customer_types, skills, experience_min, experience_max, city_code, latitude, longitude, recruteur_id, recruteurs(entreprise, secteur, avatar_meta)';
@@ -89,7 +90,7 @@ function validateOfferPayload(body = {}) {
     error.status = 400;
     throw error;
   }
-  return normalizeOfferStructuredFields(body);
+  return { ...normalizeOfferStructuredFields(body), ...expirationPatch(body) };
 }
 
 function isPlausibleSalaire(s) {
@@ -117,6 +118,7 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
     .eq('statut', 'active');
 
   if (excludeOfferId) query = query.neq('id', excludeOfferId);
+  query = excludeExpired(query);
 
   const { data: offresActives, error: countError } = await query;
   if (countError) {
@@ -126,6 +128,16 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
   }
 
   if (offresActives.length >= limit) {
+    if (process.env.BREVO_OUTBOX_ENABLED === 'true') {
+      const recruiter = await supabase.from('recruteurs').select('user_id').eq('id', recruteurId).single();
+      if (!recruiter.error && recruiter.data?.user_id) {
+        const queued = await supabase.rpc('enqueue_brevo_event', {
+          recipient: recruiter.data.user_id, event: 'offer_limit_reached', payload: { plan, limit },
+          event_key: `offer_limit:${recruteurId}:${plan}:${new Date().toISOString().slice(0, 10)}`,
+        });
+        if (queued.error) console.error('[brevo] quota event not persisted', queued.error.code);
+      }
+    }
     const error = new Error(`Limite de ${limit} offre${limit > 1 ? 's' : ''} active${limit > 1 ? 's' : ''} atteinte — passez a un plan superieur pour publier plus d'offres`);
     error.status = 403;
     error.code = 'OFFER_LIMIT_REACHED';
@@ -134,10 +146,10 @@ async function assertOfferLimitNotReached(recruteurId, plan, excludeOfferId) {
 }
 
 router.get('/', async (req, res) => {
-  const { data, error } = await supabase
+  const { data, error } = await excludeExpired(supabase
     .from('offres')
     .select('*, recruteurs(entreprise, secteur, avatar_meta)')
-    .or('statut.eq.active,statut.is.null');
+    .or('statut.eq.active,statut.is.null'));
 
   if (error) return res.status(400).json({ error });
   res.json(await attachRecruiterLogos(data || []));
@@ -166,6 +178,7 @@ router.get('/deck', authMiddleware, async (req, res) => {
     // Filtrage SQL + cursor + limit(+1) AVANT enrichissement (signed URLs).
     let query = supabase.from('offres').select(DECK_SELECT);
     query = applySupabaseDeckFilters(query, filters);
+    query = excludeExpired(query);
     if (seenOfferIds.length) {
       query = query.not('id', 'in', `(${seenOfferIds.join(',')})`);
     }
@@ -211,11 +224,11 @@ router.get('/mine', authMiddleware, requireRecruiterPlan, async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const { data, error } = await supabase
+  const { data, error } = await excludeExpired(supabase
     .from('offres')
     .select('*, recruteurs(entreprise, secteur, avatar_meta)')
     .eq('id', req.params.id)
-    .or('statut.eq.active,statut.is.null')
+    .or('statut.eq.active,statut.is.null'))
     .single();
 
   if (error) return res.status(400).json({ error });
@@ -252,6 +265,7 @@ router.post('/', authMiddleware, requireRecruiterPlan, async (req, res) => {
     const { data, error } = await supabase
       .from('offres')
       .insert({
+        ...expirationPatch(req.body),
         titre, type, lieu, salaire, description, statut, auto_candidature,
         tags: structured.tags,
         contract_type: structured.contract_type,
@@ -317,6 +331,7 @@ router.put('/:id', authMiddleware, requireRecruiterPlan, async (req, res) => {
       .from('offres')
       .update({
         titre, type, lieu, salaire, description, statut, auto_candidature,
+        ...expirationPatch(req.body),
         tags: structured.tags,
         contract_type: structured.contract_type,
         remote_mode: structured.remote_mode,

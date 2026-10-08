@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/auth');
 const { getUserEmail, getUserRole } = require('../utils/profiles');
 const { checkoutTypeForRole, resolveCheckoutPlan, hasActivePaidSubscription } = require('../utils/subscriptionCatalog');
 const { trackBrevoEvent } = require('../utils/brevoEvents');
+const { captureStripeAutomation } = require('../utils/stripeAutomation');
 
 function getFrontendUrl(req) {
   return process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
@@ -117,6 +118,14 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
     }
 
     const session = await createCheckoutSession({ req, ...resolved, userId: req.user.id });
+    if (process.env.BREVO_OUTBOX_ENABLED === 'true') {
+      const queued = await supabase.rpc('enqueue_brevo_event', {
+        recipient: req.user.id, event: 'checkout_started',
+        payload: { plan: resolved.plan, facturation: resolved.period === 'year' ? 'ANNUEL' : 'MENSUEL' },
+        event_key: 'checkout_started:' + session.id,
+      });
+      if (queued.error) console.error('[brevo] checkout event not persisted', queued.error.code);
+    }
 
     res.json({ url: session.url });
   } catch (error) {
@@ -169,6 +178,7 @@ router.post('/cancel-subscription', authMiddleware, async (req, res) => {
 
 // IMPORTANT: cette route doit recevoir le raw body, configure dans server.js.
 router.post('/webhook', async (req, res) => {
+  let verified = false;
   try {
     const sig = req.headers['stripe-signature'];
     const event = stripe.webhooks.constructEvent(
@@ -176,10 +186,13 @@ router.post('/webhook', async (req, res) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    verified = true;
+    await captureStripeAutomation(supabase, stripe, event);
 
     // Événement le plus fiable — paiement confirmé
-    if (event.type === 'checkout.session.completed') {
+    if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
       const session = event.data.object;
+      if (!['paid', 'no_payment_required'].includes(session.payment_status)) return res.json({ received: true });
       const userId = session.metadata?.userId;
       const plan = session.metadata?.plan;
       const period = session.metadata?.period || 'month';
@@ -189,13 +202,14 @@ router.post('/webhook', async (req, res) => {
         return res.json({ received: true });
       }
 
-      await supabase.from('abonnements').upsert({
+      const saved = await supabase.from('abonnements').upsert({
         user_id: userId,
         stripe_customer_id: session.customer,
         plan,
         statut: 'actif',
         periode: period,
       }, { onConflict: 'user_id' });
+      if (saved.error) throw saved.error;
 
       getUserEmail(userId).then((email) => {
         trackBrevoEvent(email, 'abonnement_active', { plan }, {
@@ -216,20 +230,22 @@ router.post('/webhook', async (req, res) => {
         return res.json({ received: true });
       }
 
-      const statut = sub.status === 'active' ? 'actif' : 'inactif';
-      const dateFin = sub.cancel_at_period_end && sub.current_period_end
-        ? new Date(sub.current_period_end * 1000).toISOString()
+      const statut = ['active', 'trialing'].includes(sub.status) ? 'actif' : 'inactif';
+      const periodEnd = sub.current_period_end || sub.items?.data?.[0]?.current_period_end;
+      const dateFin = sub.cancel_at_period_end && periodEnd
+        ? new Date(periodEnd * 1000).toISOString()
         : null;
 
       // On lit l'état précédent pour ne déclencher l'événement de résiliation qu'une seule fois.
-      const { data: previous } = await supabase
+      const { data: previous, error: previousError } = await supabase
         .from('abonnements')
         .select('resiliation_programmee')
         .eq('user_id', userId)
         .maybeSingle();
+      if (previousError) throw previousError;
       const wasAlreadyFlagged = Boolean(previous?.resiliation_programmee);
 
-      await supabase.from('abonnements').upsert({
+      const saved = await supabase.from('abonnements').upsert({
         user_id: userId,
         stripe_customer_id: sub.customer,
         plan,
@@ -238,6 +254,7 @@ router.post('/webhook', async (req, res) => {
         date_fin: dateFin,
         resiliation_programmee: Boolean(sub.cancel_at_period_end),
       }, { onConflict: 'user_id' });
+      if (saved.error) throw saved.error;
 
       getUserEmail(userId).then((email) => {
         trackBrevoEvent(email, 'abonnement_mis_a_jour', { plan, statut }, {
@@ -265,7 +282,7 @@ router.post('/webhook', async (req, res) => {
         return res.json({ received: true });
       }
 
-      await supabase.from('abonnements').upsert({
+      const saved = await supabase.from('abonnements').upsert({
         user_id: userId,
         stripe_customer_id: sub.customer,
         plan: 'freemium',
@@ -274,6 +291,7 @@ router.post('/webhook', async (req, res) => {
         date_fin: null,
         resiliation_programmee: false,
       }, { onConflict: 'user_id' });
+      if (saved.error) throw saved.error;
 
       // Scénario 04-E : point de départ du délai de 30 jours avant réactivation à froid.
       getUserEmail(userId).then((email) => {
@@ -287,7 +305,7 @@ router.post('/webhook', async (req, res) => {
     res.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error.message);
-    res.status(400).json({ error: error.message });
+    res.status(verified ? 500 : 400).json({ error: verified ? 'Webhook temporairement indisponible' : 'Signature Stripe invalide' });
   }
 });
 

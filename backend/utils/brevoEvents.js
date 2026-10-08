@@ -32,11 +32,11 @@ async function brevoRequest(path, method, body) {
         'content-type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => '');
-      console.warn(`Brevo API ${method} ${path} -> ${response.status}: ${detail}`);
+      console.warn(`Brevo API ${method} ${path} -> ${response.status}`);
       return false;
     }
     return true;
@@ -50,6 +50,9 @@ async function brevoRequest(path, method, body) {
 // `attributes` : clés en MAJUSCULES par convention Brevo (ex: SCORE_ADN, TEST_ADN_TERMINE).
 async function upsertBrevoContact(email, attributes = {}) {
   if (!email) return false;
+  if (process.env.BREVO_OUTBOX_ENABLED === 'true') {
+    return enqueue(email, '__contact_update', {}, attributes);
+  }
   return brevoRequest('/contacts', 'POST', {
     email,
     attributes,
@@ -62,6 +65,38 @@ async function upsertBrevoContact(email, attributes = {}) {
 // `contactProperties` : si fournies, mettent aussi à jour les attributs du contact en un seul appel.
 async function trackBrevoEvent(email, eventName, eventProperties = {}, contactProperties = {}) {
   if (!email) return false;
+  if (process.env.BREVO_OUTBOX_ENABLED === 'true') {
+    // These are captured transactionally by SQL / the signed Stripe webhook.
+    // Suppress the old post-response emission to avoid two workflow entries.
+    if (new Set(['compte_candidat_cree', 'compte_recruteur_active', 'test_adn_termine',
+      'offre_publiee', 'candidature_recue', 'match_cree', 'premier_message_envoye', 'abonnement_active',
+      'abonnement_mis_a_jour', 'resiliation_enregistree', 'abonnement_termine']).has(eventName)) return true;
+    const names = { like_recu: 'like_received', profil_consulte: 'profile_viewed',
+      swipe_effectue: 'swipe_performed', premier_message_envoye: 'first_message_sent' };
+    return enqueue(email, names[eventName] || eventName, eventProperties, contactProperties);
+  }
+  return deliverBrevoEvent(email, eventName, eventProperties, contactProperties);
+}
+
+async function enqueue(email, eventName, properties, contactProperties) {
+  const db = require('../supabase');
+  const owner = await db.from('users').select('id').eq('email', email).maybeSingle();
+  if (owner.error || !owner.data?.id) {
+    console.error('[brevo] recipient not resolved', owner.error?.code || 'missing user');
+    return false;
+  }
+  const { error } = await db.from('brevo_outbox').insert({
+    user_id: owner.data.id, event_name: eventName, properties, contact_properties: contactProperties,
+  });
+  if (error) {
+    // No direct-send fallback: that would bypass retries and could double-send.
+    console.error('[brevo] outbox insert failed', error.code || 'database error');
+    return false;
+  }
+  return true;
+}
+
+async function deliverBrevoEvent(email, eventName, eventProperties = {}, contactProperties = {}) {
   const body = {
     event_name: eventName,
     identifiers: { email_id: email },
@@ -73,4 +108,4 @@ async function trackBrevoEvent(email, eventName, eventProperties = {}, contactPr
   return brevoRequest('/events', 'POST', body);
 }
 
-module.exports = { upsertBrevoContact, trackBrevoEvent };
+module.exports = { upsertBrevoContact, trackBrevoEvent, deliverBrevoEvent, brevoRequest };

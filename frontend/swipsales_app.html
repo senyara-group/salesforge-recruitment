@@ -382,7 +382,8 @@ async function openRoleSpace(){
     }
     setPageTitle(profile.role === 'recruteur' ? 'Espace recruteur' : 'Espace candidat');
     const onboardingRole = localStorage.getItem('sf_onboarding_role');
-    const start = onboardingRole === profile.role
+    const preferencesRequested = new URLSearchParams(window.location.search).get('preferences') === '1';
+    const start = preferencesRequested ? (profile.role === 'recruteur' ? 'settings' : 'profile') : onboardingRole === profile.role
       ? (profile.role === 'recruteur' ? 'dashboard' : 'test')
       : '';
     const recruiterParams = new URLSearchParams();

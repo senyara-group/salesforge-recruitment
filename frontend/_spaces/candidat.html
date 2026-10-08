@@ -1187,6 +1187,7 @@ button,input,textarea,select{font-family:inherit}
 <link rel="stylesheet" href="../app-professional.css">
 <link rel="stylesheet" href="../messages-mobile.css">
 <script src="../app-a11y.js" defer></script>
+<script defer src="../automation-tracking.js"></script>
 </head>
 <body>
 <div class="app">
@@ -3309,6 +3310,7 @@ function toggleCardDesc(event, offreId) {
 }
 function buildCard(o) {
   const d = document.createElement('div'); d.className = 'swipe-card';
+  d.dataset.offerId = o.id;
   const cc = o.m >= 90 ? 'var(--pu)' : o.m >= 80 ? 'var(--b)' : 'var(--a)';
   const identityTags = (o.tagsDisplay || o.tags || []).slice(0, 4);
   const bodyTags = (o.tagsDisplay || o.tags || []).slice(0, 6);
@@ -3355,7 +3357,7 @@ function attachDrag(card, offre) {
   const point = e => e.touches?.[0] || e.changedTouches?.[0] || e;
   const s = e => {
     if (card !== top()) return;
-    if (e.target.closest('.card-desc-toggle')) return;
+    if (e.target.closest('.card-desc-toggle, .automation-save')) return;
     const p = point(e);
     sx=p.clientX; sy=p.clientY; cx=0; cy=0;
     // On ne capture pas encore le geste : si le doigt part du corps scrollable de la
@@ -3409,6 +3411,7 @@ async function fly(card, dir, offre) {
 }
 async function doSwipe(action, offre, attempt = 1) {
   try {
+    if (attempt === 1) await window.SwipAutomation?.record(offre.id, action === 'pass' ? 'dismissed' : 'application_started');
     const r = await api('POST', '/swipes', { offre_id: offre.id, action });
     if (r.match) showMatch(offre, r);
     else if (r.candidature_sent) toast(action === 'super' ? 'Candidature prioritaire envoyée' : 'Candidature envoyée');
@@ -3579,6 +3582,7 @@ function refreshTestProgress() {
   if (id) updateTestProgress(id);
 }
 function showTestStep(id) {
+  if (id === 'ts-jobs') globalThis.SwipAutomation?.adnStarted();
   hideAllTestSteps();
   const el = document.getElementById(id); if (el) el.style.display = 'block';
   updateTestProgress(id);
@@ -6007,7 +6011,7 @@ if (TOKEN && USER) {
   const start = params.get('start');
   const paymentSuccess = params.get('payment') === 'success';
 
-  let targetPage = pageFromHash() || (start === 'test' ? 'test' : getLastPage());
+  let targetPage = pageFromHash() || (APP_PAGES.includes(start) ? start : getLastPage());
   if (paymentSuccess) {
     const returnTo = localStorage.getItem(returnAfterUpgradeKey());
     if (returnTo && APP_PAGES.includes(returnTo)) targetPage = returnTo;
