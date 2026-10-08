@@ -27,7 +27,9 @@ create table if not exists public.brevo_outbox (
   last_error text,
   check (email is not null or user_id is not null)
 );
-create index if not exists brevo_outbox_pending on public.brevo_outbox(available_at) where delivered_at is null;
+drop index if exists public.brevo_outbox_pending;
+create index if not exists brevo_outbox_pending_v2 on public.brevo_outbox(available_at)
+  where delivered_at is null and discarded_at is null;
 alter table public.brevo_outbox enable row level security;
 revoke all on public.brevo_outbox from anon, authenticated;
 grant all on public.brevo_outbox to service_role;
@@ -69,7 +71,11 @@ begin
   if tg_op = 'INSERT' then
     perform public.enqueue_brevo_event(candidate_user,'application_submitted',payload,'application_submitted:'||new.id);
     perform public.enqueue_brevo_event(recruiter_user,'application_received',payload,'application_received:'||new.id);
-    perform public.enqueue_brevo_event(recruiter_user,'offer_first_application',payload,'offer_first_application:'||new.offre_id);
+    -- Applications received before installation count: "first" must be literally first.
+    if not exists(select 1 from public.candidatures c where c.offre_id = new.offre_id and c.id <> new.id
+      and c.lettre_type is distinct from 'recruteur_like') then
+      perform public.enqueue_brevo_event(recruiter_user,'offer_first_application',payload,'offer_first_application:'||new.offre_id);
+    end if;
   elsif new.statut is distinct from old.statut then
     perform public.enqueue_brevo_event(candidate_user,'application_status_changed',
       payload || jsonb_build_object('previous_status',old.statut),
@@ -169,8 +175,13 @@ begin
       'signup_completed:'||new.user_id);
   end if;
   if tg_table_name = 'candidats' then
-    perform public.enqueue_brevo_event(new.user_id,'profile_updated','{}',
-      'profile_updated:'||new.id||':'||gen_random_uuid());
+    -- "update of" fires for every listed column present in the SET clause, even
+    -- unchanged: whole-profile saves must not produce empty profile_updated events.
+    if tg_op = 'INSERT' or (new.prenom, new.nom, new.titre, new.axes, new.score_adn, new.skills)
+      is distinct from (old.prenom, old.nom, old.titre, old.axes, old.score_adn, old.skills) then
+      perform public.enqueue_brevo_event(new.user_id,'profile_updated','{}',
+        'profile_updated:'||new.id||':'||gen_random_uuid());
+    end if;
     if tg_op = 'UPDATE' then
       if new.score_adn is not null and (new.score_adn is distinct from old.score_adn
         or new.axes->'resultat' is distinct from old.axes->'resultat') then

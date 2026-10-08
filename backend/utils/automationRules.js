@@ -1,6 +1,9 @@
 const { CONTRIBUTING_MATCHING_KEYS, findAxisValue, sanitizeMatchingWeight, compatibilityScore } = require('./recruiterMatching');
 const identity = require('./jobSectorFilter');
 const DAY = 86400000;
+const NEW_OFFER_WINDOW = 2 * DAY;
+// Unanswered-message reminders only look at recent conversations (see scheduler query).
+const MESSAGE_LOOKBACK = 7 * DAY;
 
 function profileCompletion(profile) {
   const meta = profile.axes?.meta || {};
@@ -39,20 +42,29 @@ function buildScheduledEvents(snapshot, now, installedAt) {
   const offers = snapshot.offers.filter((o) => isOpenOffer(o, now));
   const offerMap = new Map(offers.map((o) => [o.id, o]));
   const applied = new Set(snapshot.applications.filter((a) => a.lettre_type !== 'recruteur_like').map((a) => `${a.candidat_id}:${a.offre_id}`));
+  // A recorded right swipe is a completed attempt, even when no candidature row was
+  // created (e.g. an older recruiter-side row already existed for this pair).
+  for (const candidate of snapshot.candidates) {
+    for (const id of candidate.swipes_meta?.liked_offer_ids || []) applied.add(`${candidate.id}:${id}`);
+  }
   const week = Math.floor((now - installedAt) / (7 * DAY));
   const enqueue = (user, name, properties, key) => {
     if (opted.has(user)) events.push({ user_id: user, event_name: name, properties, dedupe_key: key });
   };
   for (const candidate of snapshot.candidates) {
     const completion = profileCompletion(candidate);
-    if (completion < 100) enqueue(candidate.user_id, 'profile_incomplete', { completion }, `profile_incomplete:${candidate.id}:${week}`);
+    // Leave a day after signup before the first "complete your profile" reminder.
+    if (completion < 100 && now - Date.parse(candidate.created_at) >= DAY) enqueue(candidate.user_id, 'profile_incomplete', { completion }, `profile_incomplete:${candidate.id}:${week}`);
     const ranked = offers.filter((o) => !applied.has(`${candidate.id}:${o.id}`)
       && !(candidate.swipes_meta?.passed_offer_ids || []).includes(o.id)).map((o) => ({
         offre_id: o.id, poste: o.titre, entreprise: recruiters.get(o.recruteur_id)?.entreprise || '',
         score: recommendationScore(candidate, o, recruiters.get(o.recruteur_id)), created_at: o.created_at,
       })).filter((o) => o.score != null && o.score >= 70).sort((a, b) => b.score - a.score || a.offre_id.localeCompare(b.offre_id));
     for (const item of ranked) {
-      if (Date.parse(item.created_at) >= installedAt) enqueue(candidate.user_id, 'compatible_offer_found', item,
+      // "New" offer: published after installation and within the last 48 hours, so an
+      // opt-in or a long scheduler pause never turns into one event per old offer.
+      const created = Date.parse(item.created_at);
+      if (created >= installedAt && now - created <= NEW_OFFER_WINDOW) enqueue(candidate.user_id, 'compatible_offer_found', item,
         `compatible_offer:${candidate.id}:${item.offre_id}`);
     }
     if (ranked.length && week > 0) enqueue(candidate.user_id, 'weekly_recommendations',
@@ -101,13 +113,16 @@ function buildScheduledEvents(snapshot, now, installedAt) {
     if (!previous || Date.parse(message.created_at) > Date.parse(previous.created_at)) latest.set(message.match_id, message);
   }
   const recruiterUsers = new Set(snapshot.recruiters.map((r) => r.user_id));
+  const matches = new Map((snapshot.matches || []).map((m) => [m.id, m]));
   for (const message of latest.values()) {
-    if (!recruiterUsers.has(message.sender_id) || !candidates.has(message.receiver_id) || now - Date.parse(message.created_at) < 2 * DAY) continue;
-    const match = (snapshot.matches || []).find((m) => m.id === message.match_id);
+    const sentAt = Date.parse(message.created_at);
+    if (!recruiterUsers.has(message.sender_id) || !candidates.has(message.receiver_id) || now - sentAt < 2 * DAY
+      || sentAt < installedAt) continue;
+    const match = matches.get(message.match_id);
     if (!match || snapshot.applications.some((a) => a.candidat_id === match.candidat_id && a.offre_id === match.offre_id
       && ['refusee', 'retiree', 'embauche'].includes(a.statut))) continue;
     enqueue(message.receiver_id, 'recruiter_message_unanswered', { conversation_id: message.match_id, message_id: message.id }, `unanswered:${message.id}`);
   }
   return events;
 }
-module.exports = { DAY, profileCompletion, isOpenOffer, recommendationScore, buildScheduledEvents };
+module.exports = { DAY, NEW_OFFER_WINDOW, MESSAGE_LOOKBACK, profileCompletion, isOpenOffer, recommendationScore, buildScheduledEvents };

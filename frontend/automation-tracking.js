@@ -66,7 +66,7 @@
       enabled = true;
       const expirySection = document.getElementById('automation-expiry-section');
       if (expirySection) expirySection.hidden = false;
-      const container = document.querySelector('#p-settings .account-layout') || document.getElementById('p-profile');
+      const container = document.querySelector('#p-settings .account-layout, #p-account .account-layout');
       if (container) {
         const section = document.createElement('section');
         section.className = 'account-section card-sec';

@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../supabase');
 const auth = require('../middleware/auth');
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ACTIVITY_PRECISION_MS = 3600000;
 
 router.use(auth);
 router.use((req, res, next) => {
@@ -11,6 +12,11 @@ router.use((req, res, next) => {
 });
 router.post('/activity', async (req, res, next) => {
   try {
+    // Hourly precision is enough for 7/14/30 day reminders, and each write queues a
+    // Brevo contact update: skip pings that would not change the stored hour.
+    const current = await db.from('automation_activity').select('last_active_at').eq('user_id', req.user.id).maybeSingle();
+    if (current.error) throw current.error;
+    if (current.data && Date.now() - Date.parse(current.data.last_active_at) < ACTIVITY_PRECISION_MS) return res.sendStatus(204);
     const { error } = await db.from('automation_activity').upsert({ user_id: req.user.id, last_active_at: new Date().toISOString() });
     if (error) throw error;
     res.sendStatus(204);

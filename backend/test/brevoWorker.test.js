@@ -56,3 +56,32 @@ test('no key means no claim, and invalid template IDs never become sends', async
   assert.equal(retryDelay(2), 60);
   assert.ok(retryDelay(100) <= 86400);
 });
+test('Brevo events receive scalar properties only; templates keep the lists', async () => {
+  const { eventScalars } = require('../utils/brevoWorker');
+  const flat = eventScalars({ nb: 2, offres: [{ offre_id: 'o1', poste: 'Sales', score: 91 }, { offre_id: 'o2', poste: 'AE', score: 80 }],
+    candidats: [{ candidat_id: 'c1', score: 88 }], date_fin: null, nested: { a: 1 } });
+  assert.deepEqual(flat, { nb: 2, offre_1_id: 'o1', offre_1_poste: 'Sales', offre_1_score: 91, offre_2_id: 'o2', offre_2_poste: 'AE',
+    offre_2_score: 80, candidat_1_id: 'c1', candidat_1_score: 88 });
+  process.env.BREVO_API_KEY = 'test-only'; process.env.FRONTEND_URL = 'https://example.test';
+  process.env.BREVO_TRANSACTIONAL_TEMPLATES = '{"message_received":55}';
+  const f = fixture({ properties: { conversation_id: 'm1', offres: [{ offre_id: 'o1' }] } });
+  let delivered; const sent = [];
+  await runWorker({ db: f.db, now, prepare, deliver: async (_email, _name, props) => { delivered = props; return true; },
+    request: async (path, _method, body) => { sent.push({ path, body }); return true; } });
+  assert.ok(Object.values(delivered).every((value) => typeof value !== 'object'));
+  const email = sent.find((r) => r.path === '/smtp/email').body;
+  assert.deepEqual(email.params.offres, [{ offre_id: 'o1' }]);
+  assert.equal(email.headers['X-Mailin-custom'], 'event_id:event1');
+  assert.deepEqual(email.tags, ['message_received']);
+  delete process.env.BREVO_TRANSACTIONAL_TEMPLATES;
+});
+test('a permanently failing event is discarded after the last attempt instead of retrying forever', async () => {
+  const { MAX_ATTEMPTS } = require('../utils/brevoWorker');
+  process.env.BREVO_API_KEY = 'test-only'; process.env.FRONTEND_URL = 'https://example.test';
+  const f = fixture({ attempts: MAX_ATTEMPTS });
+  await runWorker({ db: f.db, now, prepare, request: async () => false });
+  const final = f.writes.find((w) => w.patch.last_error);
+  assert.ok(final.patch.discarded_at);
+  assert.match(final.patch.last_error, /^max attempts: contact update rejected/);
+  assert.equal(final.patch.available_at, undefined);
+});

@@ -27,6 +27,9 @@ async function captureStripeAutomation(db, stripe, event) {
     properties.numero_paiement = object.number || object.id;
     properties.invoice_id = object.id;
     properties.payment_url = object.hosted_invoice_url || '';
+    // subscription_create = first payment (already covered by subscription_started),
+    // subscription_cycle = renewal, subscription_update = proration after a change.
+    properties.billing_reason = object.billing_reason || '';
   } else if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
     if (!['paid', 'no_payment_required'].includes(object.payment_status)) return;
     name = 'subscription_started';
@@ -35,19 +38,30 @@ async function captureStripeAutomation(db, stripe, event) {
     name = 'subscription_ended';
   } else if (event.type === 'customer.subscription.updated') {
     name = 'subscription_updated';
-    const result = await db.from('abonnements').select('plan,resiliation_programmee').eq('user_id', userId).maybeSingle();
+    // Stripe's previous_attributes says what this event changed; the stored row is only
+    // a fallback (webhooks can arrive out of order or be retried after the row moved).
+    const changed = event.data.previous_attributes || {};
+    const result = await db.from('abonnements').select('plan,statut,resiliation_programmee').eq('user_id', userId).maybeSingle();
     if (result.error) throw result.error;
     const previous = result.data;
-    if (object.cancel_at_period_end && !previous?.resiliation_programmee) name = 'subscription_cancel_scheduled';
-    else if (!object.cancel_at_period_end && previous?.resiliation_programmee) name = 'subscription_reactivated';
-    else if (previous && plan && plan !== previous.plan) { name = 'plan_changed'; properties.ancien_plan = previous.plan; properties.nouveau_plan = plan; }
+    const wasCancelling = 'cancel_at_period_end' in changed ? Boolean(changed.cancel_at_period_end) : Boolean(previous?.resiliation_programmee);
+    const previousPlan = changed.metadata?.plan || previous?.plan;
+    if (object.cancel_at_period_end && !wasCancelling) name = 'subscription_cancel_scheduled';
+    else if (!object.cancel_at_period_end && wasCancelling) name = 'subscription_reactivated';
+    // A paid-to-paid change only: freemium -> paid is subscription_started, not plan_changed.
+    else if (plan && previousPlan && previousPlan !== 'freemium' && plan !== previousPlan
+      && (changed.metadata?.plan || changed.items)) {
+      name = 'plan_changed'; properties.ancien_plan = previousPlan; properties.nouveau_plan = plan;
+    }
     const periodEnd = object.current_period_end || object.items?.data?.[0]?.current_period_end;
     properties.date_fin = periodEnd ? new Date(periodEnd * 1000).toISOString() : '';
   }
   if (!name) return;
   const { error } = await db.from('brevo_outbox').upsert({
-    user_id: userId, event_name: name, properties, dedupe_key: `stripe:${event.id}:${name}`,
+    user_id: userId, event_name: name, properties, dedupe_key: `stripe:${event.id}`,
   }, { onConflict: 'dedupe_key', ignoreDuplicates: true });
+  // One automation event per Stripe event: a retried webhook can never add a second row,
+  // even if the stored subscription moved between attempts.
   if (error) throw error; // Stripe retries the webhook if persistence failed.
 }
 module.exports = { captureStripeAutomation, stripeObjectId };

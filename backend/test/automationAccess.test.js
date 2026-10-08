@@ -6,11 +6,14 @@ const backend = path.resolve(__dirname, '..');
 const calls = [];
 let candidateExists = true;
 let expired = false;
+let storedActivity = null;
 const fakeDb = {
   from(table) {
     const query = { select: () => query, eq: (key, value) => { calls.push({ table, key, value }); return query; },
-      maybeSingle: async () => ({ data: table === 'candidats' ? candidateExists ? { id: 'c1' } : null
-        : { id: 'o1', statut: 'active', expires_at: expired ? '2020-01-01T00:00:00Z' : null } }) };
+      upsert: async (row) => { calls.push({ table, upsert: row }); storedActivity = row.last_active_at; return {}; },
+      maybeSingle: async () => ({ data: table === 'automation_activity' ? storedActivity && { last_active_at: storedActivity }
+        : table === 'candidats' ? candidateExists ? { id: 'c1' } : null
+          : { id: 'o1', statut: 'active', expires_at: expired ? '2020-01-01T00:00:00Z' : null } }) };
     return query;
   },
   rpc: async (name, args) => { calls.push({ name, args }); return {}; },
@@ -47,5 +50,23 @@ test('tracking verifies session, candidate role and offer availability; client c
     assert.ok(!calls.some((c) => c.name));
     process.env.BREVO_OUTBOX_ENABLED = 'false';
     assert.equal((await send()).status, 503);
+  } finally { delete process.env.BREVO_OUTBOX_ENABLED; await new Promise((resolve) => server.close(resolve)); }
+});
+
+test('activity pings are stored for the session owner at most once per hour', async () => {
+  const server = app.listen(0);
+  const ping = () => fetch(`http://127.0.0.1:${server.address().port}/automation/activity`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test' }, body: JSON.stringify({ user_id: 'victim' }) });
+  try {
+    process.env.BREVO_OUTBOX_ENABLED = 'true';
+    calls.length = 0; storedActivity = null;
+    assert.equal((await ping()).status, 204);
+    assert.equal((await ping()).status, 204);
+    const writes = calls.filter((c) => c.upsert);
+    assert.equal(writes.length, 1, 'second ping within the hour does not queue another contact update');
+    assert.equal(writes[0].upsert.user_id, 'authenticated-owner');
+    storedActivity = new Date(Date.now() - 2 * 3600000).toISOString();
+    assert.equal((await ping()).status, 204);
+    assert.equal(calls.filter((c) => c.upsert).length, 2, 'a return after a pause is recorded');
   } finally { delete process.env.BREVO_OUTBOX_ENABLED; await new Promise((resolve) => server.close(resolve)); }
 });

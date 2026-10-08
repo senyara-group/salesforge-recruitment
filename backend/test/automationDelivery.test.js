@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { prepareDelivery } = require('../utils/automationDelivery');
 const now = Date.parse('2026-10-08T12:00:00Z');
 function fixture() {
-  const tables = { automation_preferences: [{ user_id: 'u1', marketing_enabled: true }],
+  const tables = { users: [{ id: 'u1', role: 'candidat' }, { id: 'u2', role: 'recruteur' }], automation_preferences: [{ user_id: 'u1', marketing_enabled: true }],
     candidats: [{ id: 'c1', user_id: 'u1', prenom: 'Own', axes: { closing: 92 } }],
     offres: [{ id: 'o1', recruteur_id: 'r1', statut: 'active' }],
     recruteurs: [{ id: 'r1', user_id: 'u2', matching: { closing: 100 } }],
@@ -44,4 +44,28 @@ test('recruiter emails reveal only the submitted snapshot, never live passive id
   assert.ok(!JSON.stringify(result.properties).includes('PRIVATE LIVE'));
   f.tables.candidatures[0].lettre_type = 'recruteur_like';
   assert.equal((await prepareDelivery(f.db, row, now)).properties.candidat, 'Candidat anonyme');
+});
+test('contact role comes from the account, and passed or swiped offers cancel view reminders', async () => {
+  let f = fixture(); f.tables.candidats = [];
+  const result = await prepareDelivery(f.db, { user_id: 'u1', event_name: 'signup_completed', properties: {} }, now);
+  assert.equal(result.contact.ROLE, 'CANDIDAT', 'a candidate without profile row is not labelled recruiter');
+  for (const meta of [{ passed_offer_ids: ['o1'] }, { liked_offer_ids: ['o1'] }]) {
+    f = fixture(); f.tables.candidats[0].swipes_meta = meta;
+    assert.equal((await prepareDelivery(f.db, { user_id: 'u1', event_name: 'offer_viewed_without_application', properties: { offre_id: 'o1' } }, now)).allowed, false);
+  }
+  f = fixture(); f.tables.users = [];
+  assert.equal((await prepareDelivery(f.db, { user_id: 'u1', event_name: 'message_received', properties: {} }, now)).reason, 'recipient removed');
+});
+test('unanswered recruiter messages survive the application that created the match, with offer context', async () => {
+  const f = fixture();
+  Object.assign(f.tables.recruteurs[0], { entreprise: 'Acme' }); Object.assign(f.tables.offres[0], { titre: 'Account Executive' });
+  f.tables.matchs.push({ id: 'm1', candidat_id: 'c1', offre_id: 'o1' });
+  f.tables.candidatures.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'candidate_like', statut: 'vu' });
+  f.tables.messages.push({ id: 'msg1', match_id: 'm1', created_at: '2026-10-05T10:00:00Z' });
+  const row = { user_id: 'u1', event_name: 'recruiter_message_unanswered', properties: { conversation_id: 'm1', message_id: 'msg1' } };
+  const result = await prepareDelivery(f.db, row, now);
+  assert.equal(result.allowed, true, result.reason);
+  assert.deepEqual([result.properties.poste, result.properties.entreprise], ['Account Executive', 'Acme']);
+  f.tables.candidatures[0].statut = 'refusee';
+  assert.equal((await prepareDelivery(f.db, row, now)).reason, 'application closed');
 });

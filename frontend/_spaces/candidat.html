@@ -3411,7 +3411,9 @@ async function fly(card, dir, offre) {
 }
 async function doSwipe(action, offre, attempt = 1) {
   try {
-    if (attempt === 1) await window.SwipAutomation?.record(offre.id, action === 'pass' ? 'dismissed' : 'application_started');
+    // Not awaited: tracking must never slow a swipe. The request is still issued before
+    // the swipe call, so a failed send is left as an interrupted attempt.
+    if (attempt === 1) window.SwipAutomation?.record(offre.id, action === 'pass' ? 'dismissed' : 'application_started');
     const r = await api('POST', '/swipes', { offre_id: offre.id, action });
     if (r.match) showMatch(offre, r);
     else if (r.candidature_sent) toast(action === 'super' ? 'Candidature prioritaire envoyée' : 'Candidature envoyée');

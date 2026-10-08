@@ -1,11 +1,11 @@
-const { buildScheduledEvents } = require('./automationRules');
+const { buildScheduledEvents, MESSAGE_LOOKBACK } = require('./automationRules');
 
-async function readAll(db, table, fields) {
+async function readAll(db, table, fields, filter = (query) => query) {
   const rows = [];
   for (let offset = 0; ; offset += 500) {
     let query = db.from(table).select(fields).order(['automation_preferences', 'automation_activity', 'offer_interactions'].includes(table) ? 'user_id' : 'id');
     if (table === 'offer_interactions') query = query.order('offre_id');
-    const result = await query.range(offset, offset + 499);
+    const result = await filter(query).range(offset, offset + 499);
     if (result.error) throw result.error;
     rows.push(...result.data);
     if (result.data.length < 500) return rows;
@@ -17,6 +17,10 @@ async function runScheduler(db, now = Date.now()) {
   if (expired.error) throw expired.error;
   const installed = await db.from('automation_installation').select('started_at').eq('id', 1).single();
   if (installed.error) throw installed.error;
+  const installedAt = Date.parse(installed.data.started_at);
+  // Only recent messages can still be unanswered reminders: older ones were handled
+  // by earlier runs (dedupe on message id) or predate the installation.
+  const messagesSince = new Date(Math.max(installedAt, now - MESSAGE_LOOKBACK)).toISOString();
   const specs = {
     candidates: ['candidats', 'id,user_id,created_at,automation_changed_at,prenom,nom,score_adn,axes,skills,target_job_types,sectors,desired_contracts,swipes_meta'],
     recruiters: ['recruteurs', 'id,user_id,entreprise,matching'],
@@ -25,11 +29,11 @@ async function runScheduler(db, now = Date.now()) {
     activities: ['automation_activity', 'user_id,last_active_at'],
     applications: ['candidatures', 'id,candidat_id,offre_id,lettre_type,statut'],
     interactions: ['offer_interactions', 'user_id,offre_id,viewed_at,application_started_at,saved_at,dismissed_at'],
-    messages: ['messages', 'id,match_id,sender_id,receiver_id,created_at'],
+    messages: ['messages', 'id,match_id,sender_id,receiver_id,created_at', (query) => query.gte('created_at', messagesSince)],
     matches: ['matchs', 'id,candidat_id,offre_id'],
   };
   const entries = await Promise.all(Object.entries(specs).map(async ([name, spec]) => [name, await readAll(db, ...spec)]));
-  const events = buildScheduledEvents(Object.fromEntries(entries), now, Date.parse(installed.data.started_at));
+  const events = buildScheduledEvents(Object.fromEntries(entries), now, installedAt);
   for (const event of events.filter((e) => e.event_name === 'compatible_candidates_found')) {
     for (let offset = 0; offset < event.properties.candidats.length; offset += 100) {
       const result = await db.rpc('enqueue_candidate_discoveries', {

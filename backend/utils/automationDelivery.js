@@ -2,6 +2,10 @@ const { profileCompletion, isOpenOffer, recommendationScore } = require('./autom
 const MARKETING_EVENTS = new Set(['profile_incomplete', 'compatible_offer_found', 'offer_viewed_without_application',
   'application_abandoned', 'weekly_recommendations', 'user_inactive', 'compatible_candidates_found',
   'offer_expiring', 'saved_offer_expiring', 'recruiter_message_unanswered']);
+// Reminders about an offer itself: dropped once the offer closes, or the candidate applied,
+// swiped or dismissed it. A conversation reminder is not one (its candidate usually applied).
+const OFFER_REMINDERS = new Set(['compatible_offer_found', 'offer_viewed_without_application', 'application_abandoned',
+  'offer_expiring', 'saved_offer_expiring', 'compatible_candidates_found']);
 
 async function single(query) {
   const result = await query.maybeSingle();
@@ -10,8 +14,10 @@ async function single(query) {
 }
 
 async function prepareDelivery(db, row, now) {
-  let userId = row.user_id;
-  if (!userId && row.email) userId = (await single(db.from('users').select('id').eq('email', row.email)))?.id;
+  const account = row.user_id
+    ? await single(db.from('users').select('id,role').eq('id', row.user_id))
+    : row.email ? await single(db.from('users').select('id,role').eq('email', row.email)) : null;
+  const userId = account?.id;
   if (!userId) return { allowed: false, reason: 'recipient removed' };
   const preference = await single(db.from('automation_preferences').select('marketing_enabled').eq('user_id', userId));
   const contact = { ...row.contact_properties, AUTOMATION_MARKETING_ALLOWED: preference?.marketing_enabled === true };
@@ -41,7 +47,9 @@ async function prepareDelivery(db, row, now) {
       contact.NOM = metadata.nom;
     }
   }
-  contact.ROLE = candidate ? 'CANDIDAT' : 'RECRUTEUR';
+  // users.role is the account role even before the candidate/recruiter row exists.
+  contact.ROLE = account.role ? (String(account.role).startsWith('recruteur') ? 'RECRUTEUR' : 'CANDIDAT')
+    : candidate ? 'CANDIDAT' : 'RECRUTEUR';
   if (row.event_name === 'offer_published') contact.OFFRE_PUBLIEE = true;
   const subscription = await single(db.from('abonnements').select('plan,statut,periode,resiliation_programmee,date_fin').eq('user_id', userId));
   if (subscription) {
@@ -63,7 +71,7 @@ async function prepareDelivery(db, row, now) {
     const application = await single(db.from('candidatures').select('candidat_id').eq('id', properties.application_id));
     if (application) properties.candidat_id = application.candidat_id;
   }
-  if (properties.offre_id && !MARKETING_EVENTS.has(row.event_name)) {
+  if (properties.offre_id && (!MARKETING_EVENTS.has(row.event_name) || row.event_name === 'recruiter_message_unanswered')) {
     const offer = await single(db.from('offres').select('id,titre,recruteur_id,job_type,sector,contract_type,type').eq('id', properties.offre_id));
     if (offer) {
       const recruiter = await single(db.from('recruteurs').select('user_id,entreprise,matching').eq('id', offer.recruteur_id));
@@ -84,7 +92,7 @@ async function prepareDelivery(db, row, now) {
       }
     }
   }
-  if (MARKETING_EVENTS.has(row.event_name) && properties.offre_id) {
+  if (OFFER_REMINDERS.has(row.event_name) && properties.offre_id) {
     const offer = await single(db.from('offres').select('id,statut,expires_at,recruteur_id,job_type,sector,contract_type,type').eq('id', properties.offre_id));
     if (!offer || !isOpenOffer(offer, now)) return { allowed: false, reason: 'offer unavailable' };
     if (['offer_expiring', 'saved_offer_expiring'].includes(row.event_name) && offer.expires_at !== properties.date_fin) return { allowed: false, reason: 'expiration changed' };
@@ -97,6 +105,9 @@ async function prepareDelivery(db, row, now) {
       }
       const application = await single(db.from('candidatures').select('id,lettre_type').eq('candidat_id', candidate.id).eq('offre_id', properties.offre_id));
       if (application && application.lettre_type !== 'recruteur_like') return { allowed: false, reason: 'already applied' };
+      const choices = candidate.swipes_meta || {};
+      if ((choices.liked_offer_ids || []).map(String).includes(String(properties.offre_id))) return { allowed: false, reason: 'already applied' };
+      if ((choices.passed_offer_ids || []).map(String).includes(String(properties.offre_id))) return { allowed: false, reason: 'offer dismissed' };
       const interaction = await single(db.from('offer_interactions').select('dismissed_at,saved_at').eq('user_id', userId).eq('offre_id', properties.offre_id));
       if (interaction?.dismissed_at || (row.event_name === 'saved_offer_expiring' && !interaction?.saved_at)) return { allowed: false, reason: 'offer dismissed' };
     }

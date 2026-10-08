@@ -1,8 +1,32 @@
 const { brevoRequest, deliverBrevoEvent } = require('./brevoEvents');
 const { prepareDelivery, templateFor } = require('./automationDelivery');
 
+// ~17 hours of cumulative backoff (11 waits); afterwards the row is discarded and kept for inspection.
+const MAX_ATTEMPTS = 12;
+
 function retryDelay(attempts) {
   return Math.min(24 * 3600, 30 * 2 ** Math.min(attempts - 1, 12));
+}
+
+// Brevo event_properties only accept string, number, boolean and date values:
+// lists become numbered scalars (offre_1_poste, candidat_1_score...), nulls are dropped.
+// Transactional template params keep the original nested lists.
+function eventScalars(properties) {
+  const flat = {};
+  for (const [key, value] of Object.entries(properties)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) {
+      const prefix = key.replace(/s$/, '');
+      value.forEach((item, index) => {
+        if (item && typeof item === 'object') {
+          for (const [field, inner] of Object.entries(item)) {
+            if (inner != null && typeof inner !== 'object') flat[`${prefix}_${index + 1}_${field.replace(/^(offre|candidat)_/, '')}`] = inner;
+          }
+        } else if (item != null) flat[`${prefix}_${index + 1}`] = item;
+      });
+    } else if (typeof value !== 'object') flat[key] = value;
+  }
+  return flat;
 }
 
 function eventProperties(row, baseUrl) {
@@ -51,16 +75,18 @@ async function runWorker({ db, request = brevoRequest, deliver = deliverBrevoEve
       // Validate configuration before sending an event that cannot be rolled back.
       const templateId = templateFor(row.event_name, properties);
       if (row.event_name !== '__contact_update' && !row.event_delivered_at) {
-        const success = await deliver(email, row.event_name, properties, prepared.contact);
+        const success = await deliver(email, row.event_name, eventScalars(properties), prepared.contact);
         if (!success) throw new Error('event rejected');
         const checkpoint = await db.from('brevo_outbox').update({ event_delivered_at: now().toISOString() })
           .eq('id', row.id).eq('lease_token', row.lease_token);
         if (checkpoint.error) throw checkpoint.error;
       }
       if (templateId && !row.email_delivered_at) {
+        // Brevo documents no deduplication for these headers: the email_delivered_at
+        // checkpoint is the real guard, X-Mailin-custom makes the event_id visible in logs.
         const sent = await request('/smtp/email', 'POST', {
-          to: [{ email }], templateId, params: properties,
-          headers: { 'Idempotency-Key': row.id },
+          to: [{ email }], templateId, params: properties, tags: [row.event_name],
+          headers: { 'Idempotency-Key': row.id, 'X-Mailin-custom': `event_id:${row.id}` },
         });
         if (!sent) throw new Error('transactional email rejected');
         const checkpoint = await db.from('brevo_outbox').update({ email_delivered_at: now().toISOString() })
@@ -74,9 +100,12 @@ async function runWorker({ db, request = brevoRequest, deliver = deliverBrevoEve
       delivered += 1;
     } catch (failure) {
       // Do not persist provider responses containing personal data or credentials.
+      const reason = String(failure.code || failure.message || 'delivery failed').slice(0, 160);
+      const exhausted = row.attempts >= MAX_ATTEMPTS;
       const result = await db.from('brevo_outbox').update({
-        available_at: new Date(now().getTime() + retryDelay(row.attempts) * 1000).toISOString(),
-        leased_until: null, lease_token: null, last_error: String(failure.code || failure.message || 'delivery failed').slice(0, 160),
+        ...(exhausted ? { discarded_at: now().toISOString() }
+          : { available_at: new Date(now().getTime() + retryDelay(row.attempts) * 1000).toISOString() }),
+        leased_until: null, lease_token: null, last_error: exhausted ? `max attempts: ${reason}`.slice(0, 160) : reason,
       }).eq('id', row.id).eq('lease_token', row.lease_token);
       if (result.error) throw result.error;
     }
@@ -84,4 +113,4 @@ async function runWorker({ db, request = brevoRequest, deliver = deliverBrevoEve
   return { claimed: rows?.length || 0, delivered };
 }
 
-module.exports = { runWorker, retryDelay, eventProperties };
+module.exports = { runWorker, retryDelay, eventProperties, eventScalars, MAX_ATTEMPTS };
