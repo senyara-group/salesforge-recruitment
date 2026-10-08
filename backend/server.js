@@ -30,7 +30,8 @@ app.get('/', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    AUTOMATION_ENABLED: process.env.BREVO_OUTBOX_ENABLED === 'true'
   });
 });
  
@@ -44,6 +45,7 @@ app.use('/api/candidatures', require('./routes/candidatures'));
 app.use('/api/swipes', require('./routes/swipes'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/abonnements', require('./routes/abonnements'));
+app.use('/api/automation', require('./routes/automation'));
 app.use('/api/coaching', require('./routes/coaching'));
 app.use('/api/bilan-carriere', require('./routes/bilanCarriere'));
 app.use('/api/community', require('./routes/community'));
