@@ -14,7 +14,8 @@
     "dev": "nodemon server.js",
     "test:layout": "node scripts/check-mobile-layout.js",
     "test:layout:recruiter-desktop": "node scripts/check-recruiter-desktop-layout.js",
-    "perf:recruiter": "node scripts/measure-recruiter-journeys.js"
+    "perf:recruiter": "node scripts/measure-recruiter-journeys.js",
+    "test:security:xss": "node scripts/check-xss-sinks.js"
   },
   "keywords": [],
   "author": "",

@@ -148,9 +148,7 @@ const resendBtn = document.getElementById('resend-btn');
 function frError(text){
   const msg = String(text || '').toLowerCase();
   if (msg.includes('adresses jetables')) return text;
-  if (msg.includes('user already registered')) {
-    return 'Un compte existe déjà avec cet email. <a href="swipsales_app.html?login=1" style="color:inherit;font-weight:800;text-decoration:underline">Se connecter</a> à la place.';
-  }
+  if (msg.includes('user already registered')) return ACCOUNT_EXISTS_HTML;
   if (msg.includes('password')) return 'Mot de passe : 8 caractères minimum.';
   if (msg.includes('email')) return 'Adresse email invalide.';
   if (msg.includes('signup disabled')) return 'La création de compte est temporairement indisponible.';
@@ -176,9 +174,14 @@ function lockRole(role){
   document.getElementById('start-sub').innerHTML = `Cet espace est réservé aux ${role === 'recruteur' ? 'recruteurs' : 'candidats'}. <a href="swipsales_start.html?role=${role === 'recruteur' ? 'candidat' : 'recruteur'}" style="color:inherit;text-decoration:underline">Ce n'est pas le bon profil ?</a>`;
 }
 
+// The only message carrying markup is this fixed one; any other text (server
+// errors included) is displayed as plain text.
+const ACCOUNT_EXISTS_HTML = 'Un compte existe déjà avec cet email. <a href="swipsales_app.html?login=1" style="color:inherit;font-weight:800;text-decoration:underline">Se connecter</a> à la place.';
 function showMessage(text, type = 'error'){
   message.className = `msg ${type}`;
-  message.innerHTML = type === 'error' ? frError(text) : text;
+  const shown = type === 'error' ? frError(text) : text;
+  if (shown === ACCOUNT_EXISTS_HTML) message.innerHTML = shown;
+  else message.textContent = shown;
 }
 
 function showConfirmMail(email){

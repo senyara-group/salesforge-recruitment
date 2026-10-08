@@ -2283,7 +2283,10 @@ let NOTIF_CHANNEL_APPLICATION = null;
 
 let supabaseClient = null;
 
+// Supabase config comes only from the SwipSales shell that embeds this page
+// (same origin, direct parent): never from another site or window.
 window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || window.parent === window || e.source !== window.parent) return;
   if (e.data?.type === 'env' && !supabaseClient && e.data.SUPABASE_URL) {
     supabaseClient = supabase.createClient(e.data.SUPABASE_URL, e.data.SUPABASE_ANON_KEY);
   }
@@ -2442,7 +2445,7 @@ function adn(axes) {
   axes = Object.fromEntries(Object.entries(axes || {}).filter(([, v]) => typeof v === 'number'));
   if (!axes || !Object.keys(axes).length) return '<div class="empty-state profile-adn-empty"><b>Découvrez votre profil commercial</b><span>Répondez à quelques questions pour identifier vos forces, votre style de vente et enrichir votre profil.</span><button class="btn bp bsm" type="button" onclick="go(\'test\')">Faire mon évaluation</button></div>';
   return Object.entries(axes).map(([l, v]) =>
-    `<div class="adn-row"><div class="adn-l">${l}</div><div class="adn-tr"><div class="adn-f" style="width:${v}%"></div></div><div class="adn-s sf" style="color:${v<80?'var(--a)':'var(--b)'}">${v}</div></div>`
+    `<div class="adn-row"><div class="adn-l">${esc(l)}</div><div class="adn-tr"><div class="adn-f" style="width:${v}%"></div></div><div class="adn-s sf" style="color:${v<80?'var(--a)':'var(--b)'}">${v}</div></div>`
   ).join('');
 }
 function cChip(s) { return {vu:'chip-b',envoyee:'chip-g',nouveau:'chip-g',contacte:'chip-a',repondu:'chip-a',entretien:'chip-pu',offre:'chip-g',embauche:'chip-g',refusee:'chip-r',retiree:'chip-r'}[s]||'chip-b'; }
@@ -2822,7 +2825,7 @@ function renderHomeKPIs(s) {
 }
 function renderInsights(ins) {
   document.getElementById('insights-el').innerHTML = ins.map(i =>
-    `<div class="insight${i.hot?' hot':''}" onclick="go('${i.page}')"><div class="ins-type">${i.type}</div><div class="ins-title sf">${i.title}</div><div class="ins-text">${i.text}</div></div>`
+    `<div class="insight${i.hot?' hot':''}" onclick="go('${esc(i.page)}')"><div class="ins-type">${esc(i.type)}</div><div class="ins-title sf">${esc(i.title)}</div><div class="ins-text">${esc(i.text)}</div></div>`
   ).join('');
 }
 function renderHomeCands(c) {
@@ -2831,7 +2834,7 @@ function renderHomeCands(c) {
     return;
   }
   document.getElementById('home-cands').innerHTML = c.map(x =>
-    `<div class="tr-item" onclick="go('candidatures')"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${x.sl}</span></div></div>`
+    `<div class="tr-item" onclick="go('candidatures')"><div class="tr-logo" style="background:${esc(x.bg)}">${esc(x.co)}</div><div class="tr-info"><div class="tr-title sf">${esc(x.title)}</div><div class="tr-sub">${esc(x.sub)}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${esc(x.sl)}</span></div></div>`
   ).join('');
 }
 async function snooze() {
@@ -2920,7 +2923,7 @@ function renderBench(d) {
   document.getElementById('bench-tip').textContent = d.conseil;
 }
 function renderComm(d) {
-  document.getElementById('cm-avs').innerHTML = d.members.map(m => `<div class="cm-av" style="background:${m.bg}">${m.av}</div>`).join('') + `<div class="cm-av" style="background:var(--b)">+${d.count-d.members.length}</div>`;
+  document.getElementById('cm-avs').innerHTML = d.members.map(m => `<div class="cm-av" style="background:${esc(m.bg)}">${esc(m.av)}</div>`).join('') + `<div class="cm-av" style="background:var(--b)">+${d.count-d.members.length}</div>`;
   document.getElementById('cm-desc').textContent = d.desc;
 }
 async function startModule() {
@@ -3427,9 +3430,14 @@ function showMatch(o, r) {
   document.getElementById('ov-co').style.background = o.cc; document.getElementById('ov-co').textContent = o.ci;
   document.getElementById('ov-user').textContent = USER ? ((USER.prenom||'?')[0]+(USER.nom||'?')[0]).toUpperCase() : 'YS';
   document.getElementById('ov-title').textContent = 'Match confirmé';
-  document.getElementById('ov-sub').innerHTML = `Avec <strong>${o.co}</strong> — ${o.titre}`;
+  // Company and offer title are written by the recruiter: text nodes only.
+  const ovCompany = document.createElement('strong'); ovCompany.textContent = o.co;
+  document.getElementById('ov-sub').replaceChildren('Avec ', ovCompany, ` — ${o.titre}`);
   document.getElementById('ov-score').textContent = o.m + '%'; document.getElementById('ov-type').textContent = o.type; const ovLieu = document.getElementById('ov-lieu'); ovLieu.textContent = o.lieuDisplay || 'Non précisé'; ovLieu.title = o.lieuDisplay || ''; ovLieu.classList.add('is-text');
-  if (r.questions) document.getElementById('ov-prep-qs').innerHTML = r.questions.map(q => `<div class="prep-q">"${q}"</div>`).join('');
+  // Preparation questions are free text saved by the recruiter.
+  if (r.questions) document.getElementById('ov-prep-qs').replaceChildren(...r.questions.map(q => {
+    const item = document.createElement('div'); item.className = 'prep-q'; item.textContent = `"${q}"`; return item;
+  }));
   document.getElementById('ov').classList.add('on');
 }
 function closeOv(e) { if (e.target===document.getElementById('ov')||e.target.closest('.sh-actions')) document.getElementById('ov').classList.remove('on'); }
@@ -3453,7 +3461,7 @@ function renderCands(c) {
     return;
   }
   document.getElementById('cands-list').innerHTML = c.map(x =>
-    `<div class="tr-item"><div class="tr-logo" style="background:${x.bg}">${x.co}</div><div class="tr-info"><div class="tr-title sf">${x.title}</div><div class="tr-sub">${x.sub}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${x.sl}</span><div class="candidate-date">${x.date}</div>${x.can_withdraw?`<button class="link-danger" type="button" onclick="withdrawApplication('${x.id}')">Retirer</button>`:''}</div></div>`
+    `<div class="tr-item"><div class="tr-logo" style="background:${esc(x.bg)}">${esc(x.co)}</div><div class="tr-info"><div class="tr-title sf">${esc(x.title)}</div><div class="tr-sub">${esc(x.sub)}</div></div><div class="candidate-status-actions"><span class="chip ${cChip(x.statut)}">${esc(x.sl)}</span><div class="candidate-date">${esc(x.date)}</div>${x.can_withdraw?`<button class="link-danger" type="button" onclick="withdrawApplication('${esc(x.id)}')">Retirer</button>`:''}</div></div>`
   ).join('');
 }
 async function withdrawApplication(id) {
@@ -5943,7 +5951,7 @@ async function selectPlan(plan, billing) {
     const { url } = await api('POST', '/stripe/create-checkout', { plan, billing, type:'cand' });
     // Envoyer l'URL au parent pour éviter le problème iframe
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'stripe_redirect', url }, '*');
+      window.parent.postMessage({ type: 'stripe_redirect', url }, location.origin);
     } else {
       window.location.href = url;
     }
