@@ -93,13 +93,18 @@
       }
       ['pointerdown', 'keydown'].forEach((name) => document.addEventListener(name, () => { lastInteraction = Date.now(); activity(); }, { passive: true }));
       document.addEventListener('visibilitychange', observeTopCard);
+      if (adnPending) adnStarted();
       await activity();
       setInterval(activity, 60000);
     } catch (_) { /* Deployment flags and temporary outages keep the product usable. */ }
   }
   let adnTracked = false;
+  let adnPending = false;
   async function adnStarted() {
-    if (!enabled || adnTracked) return;
+    // The questionnaire can open before init() finished: remember it and send once ready.
+    if (!enabled) { adnPending = true; return; }
+    adnPending = false;
+    if (adnTracked) return;
     try { await request('POST', '/adn-started'); adnTracked = true; } catch (_) { }
   }
   window.SwipAutomation = { record, adnStarted };

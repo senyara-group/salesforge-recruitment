@@ -12,7 +12,14 @@ async function main() {
     global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(10000) }) },
   });
   if (process.env.BREVO_SCHEDULER_ENABLED === 'true') {
-    console.log(await require('../utils/automationScheduler').runScheduler(db));
+    // A scheduler failure must not hold back service notifications already queued:
+    // report it (non-zero exit) but still run the worker.
+    try {
+      console.log(await require('../utils/automationScheduler').runScheduler(db));
+    } catch (error) {
+      console.error('[brevo scheduler]', error.code || error.message);
+      process.exitCode = 1;
+    }
   }
   const batches = Math.max(1, Math.min(100, Number(process.env.BREVO_WORKER_BATCHES) || 20));
   let claimed = 0; let delivered = 0;

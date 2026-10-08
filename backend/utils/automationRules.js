@@ -1,9 +1,21 @@
 const { CONTRIBUTING_MATCHING_KEYS, findAxisValue, sanitizeMatchingWeight, compatibilityScore } = require('./recruiterMatching');
 const identity = require('./jobSectorFilter');
 const DAY = 86400000;
-const NEW_OFFER_WINDOW = 2 * DAY;
-// Unanswered-message reminders only look at recent conversations (see scheduler query).
-const MESSAGE_LOOKBACK = 7 * DAY;
+// Every reminder delay lives here, and only here. Brevo workflows must not add their own
+// wait on these events: they arrive once the delay has elapsed.
+const DELAYS = Object.freeze({
+  signupGrace: DAY, // profile_incomplete: not before one day after signup
+  reminderPeriod: 7 * DAY, // profile_incomplete, weekly_recommendations: once per week
+  newOfferWindow: 2 * DAY, // compatible_offer_found: offers published less than 48h ago
+  viewedReminder: DAY, // offer_viewed_without_application
+  abandonedReminder: DAY, // application_abandoned
+  unansweredMessage: 2 * DAY, // recruiter_message_unanswered
+  messageLookback: 7 * DAY, // only recent conversations are scanned
+  expiringWindow: 3 * DAY, // offer_expiring, saved_offer_expiring
+  inactivityDays: Object.freeze([30, 14, 7]), // user_inactive milestones, highest first
+});
+const NEW_OFFER_WINDOW = DELAYS.newOfferWindow;
+const MESSAGE_LOOKBACK = DELAYS.messageLookback;
 
 function profileCompletion(profile) {
   const meta = profile.axes?.meta || {};
@@ -47,14 +59,14 @@ function buildScheduledEvents(snapshot, now, installedAt) {
   for (const candidate of snapshot.candidates) {
     for (const id of candidate.swipes_meta?.liked_offer_ids || []) applied.add(`${candidate.id}:${id}`);
   }
-  const week = Math.floor((now - installedAt) / (7 * DAY));
+  const week = Math.floor((now - installedAt) / DELAYS.reminderPeriod);
   const enqueue = (user, name, properties, key) => {
     if (opted.has(user)) events.push({ user_id: user, event_name: name, properties, dedupe_key: key });
   };
   for (const candidate of snapshot.candidates) {
     const completion = profileCompletion(candidate);
     // Leave a day after signup before the first "complete your profile" reminder.
-    if (completion < 100 && now - Date.parse(candidate.created_at) >= DAY) enqueue(candidate.user_id, 'profile_incomplete', { completion }, `profile_incomplete:${candidate.id}:${week}`);
+    if (completion < 100 && now - Date.parse(candidate.created_at) >= DELAYS.signupGrace) enqueue(candidate.user_id, 'profile_incomplete', { completion }, `profile_incomplete:${candidate.id}:${week}`);
     const ranked = offers.filter((o) => !applied.has(`${candidate.id}:${o.id}`)
       && !(candidate.swipes_meta?.passed_offer_ids || []).includes(o.id)).map((o) => ({
         offre_id: o.id, poste: o.titre, entreprise: recruiters.get(o.recruteur_id)?.entreprise || '',
@@ -72,7 +84,7 @@ function buildScheduledEvents(snapshot, now, installedAt) {
     const lastActive = activities.get(candidate.user_id);
     if (Number.isFinite(lastActive)) {
       const inactive = Math.floor((now - lastActive) / DAY);
-      const milestone = [30, 14, 7].find((days) => inactive >= days);
+      const milestone = DELAYS.inactivityDays.find((days) => inactive >= days);
       if (milestone) {
         const fresh = ranked.filter((o) => Date.parse(o.created_at) > lastActive);
         enqueue(candidate.user_id, 'user_inactive', { days: milestone, nb: fresh.length, offres: fresh.slice(0, 5) },
@@ -91,7 +103,7 @@ function buildScheduledEvents(snapshot, now, installedAt) {
     if (fresh.length) enqueue(recruiter.user_id, 'compatible_candidates_found',
       { offre_id: offer.id, poste: offer.titre, nb: fresh.length, candidats: fresh.map((c) => ({ candidat_id: c.candidat_id, score: c.score })) },
       `compatible_candidates:${offer.id}`);
-    if (offer.expires_at && Date.parse(offer.expires_at) - now <= 3 * DAY) enqueue(recruiter.user_id, 'offer_expiring',
+    if (offer.expires_at && Date.parse(offer.expires_at) - now <= DELAYS.expiringWindow) enqueue(recruiter.user_id, 'offer_expiring',
       { offre_id: offer.id, poste: offer.titre, date_fin: offer.expires_at, role: 'RECRUTEUR' }, `offer_expiring:rec:${offer.id}:${offer.expires_at}`);
   }
   for (const interaction of snapshot.interactions) {
@@ -99,12 +111,12 @@ function buildScheduledEvents(snapshot, now, installedAt) {
     const offer = offerMap.get(interaction.offre_id);
     if (!candidate || !offer || interaction.dismissed_at || applied.has(`${candidate.id}:${offer.id}`)) continue;
     const payload = { offre_id: offer.id, poste: offer.titre, entreprise: recruiters.get(offer.recruteur_id)?.entreprise || '' };
-    if (interaction.application_started_at && now - Date.parse(interaction.application_started_at) >= DAY) {
+    if (interaction.application_started_at && now - Date.parse(interaction.application_started_at) >= DELAYS.abandonedReminder) {
       enqueue(candidate.user_id, 'application_abandoned', payload, `application_abandoned:${candidate.id}:${offer.id}:${interaction.application_started_at}`);
-    } else if (interaction.viewed_at && !interaction.application_started_at && now - Date.parse(interaction.viewed_at) >= DAY) {
+    } else if (interaction.viewed_at && !interaction.application_started_at && now - Date.parse(interaction.viewed_at) >= DELAYS.viewedReminder) {
       enqueue(candidate.user_id, 'offer_viewed_without_application', payload, `offer_viewed:${candidate.id}:${offer.id}:${interaction.viewed_at}`);
     }
-    if (interaction.saved_at && offer.expires_at && Date.parse(offer.expires_at) - now <= 3 * DAY) enqueue(candidate.user_id,
+    if (interaction.saved_at && offer.expires_at && Date.parse(offer.expires_at) - now <= DELAYS.expiringWindow) enqueue(candidate.user_id,
       'saved_offer_expiring', { ...payload, date_fin: offer.expires_at }, `saved_expiring:${candidate.id}:${offer.id}:${offer.expires_at}`);
   }
   const latest = new Map();
@@ -116,7 +128,7 @@ function buildScheduledEvents(snapshot, now, installedAt) {
   const matches = new Map((snapshot.matches || []).map((m) => [m.id, m]));
   for (const message of latest.values()) {
     const sentAt = Date.parse(message.created_at);
-    if (!recruiterUsers.has(message.sender_id) || !candidates.has(message.receiver_id) || now - sentAt < 2 * DAY
+    if (!recruiterUsers.has(message.sender_id) || !candidates.has(message.receiver_id) || now - sentAt < DELAYS.unansweredMessage
       || sentAt < installedAt) continue;
     const match = matches.get(message.match_id);
     if (!match || snapshot.applications.some((a) => a.candidat_id === match.candidat_id && a.offre_id === match.offre_id
@@ -125,4 +137,4 @@ function buildScheduledEvents(snapshot, now, installedAt) {
   }
   return events;
 }
-module.exports = { DAY, NEW_OFFER_WINDOW, MESSAGE_LOOKBACK, profileCompletion, isOpenOffer, recommendationScore, buildScheduledEvents };
+module.exports = { DAY, DELAYS, NEW_OFFER_WINDOW, MESSAGE_LOOKBACK, profileCompletion, isOpenOffer, recommendationScore, buildScheduledEvents };

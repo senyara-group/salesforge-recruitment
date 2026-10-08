@@ -3,6 +3,16 @@ const { prepareDelivery, templateFor } = require('./automationDelivery');
 
 // ~17 hours of cumulative backoff (11 waits); afterwards the row is discarded and kept for inspection.
 const MAX_ATTEMPTS = 12;
+// Triggers record facts as soon as the migration is installed, even while the worker is
+// off: a notification never accepted by Brevo within this window is dropped as stale
+// instead of arriving days late (contact updates are always applied: they re-read
+// current data). Override with BREVO_MAX_EVENT_AGE_HOURS.
+const DEFAULT_MAX_EVENT_AGE_HOURS = 72;
+
+function maxEventAgeMs() {
+  const hours = Number(process.env.BREVO_MAX_EVENT_AGE_HOURS);
+  return (Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_MAX_EVENT_AGE_HOURS) * 3600000;
+}
 
 function retryDelay(attempts) {
   return Math.min(24 * 3600, 30 * 2 ** Math.min(attempts - 1, 12));
@@ -35,6 +45,10 @@ function eventProperties(row, baseUrl) {
   properties.lien = `${baseUrl.replace(/\/$/, '')}/swipsales_app.html`;
   properties.lien_preferences = `${properties.lien}?preferences=1`;
   if (row.event_name === 'payment_failed' && properties.payment_url) properties.lien = properties.payment_url;
+  // Data minimisation: candidate identifiers are used server-side (score, snapshot lookup)
+  // but no email needs them, so they never leave SwipSales.
+  delete properties.candidat_id;
+  if (Array.isArray(properties.candidats)) properties.candidats = properties.candidats.map(({ score }) => ({ score }));
   return properties;
 }
 
@@ -53,6 +67,13 @@ async function runWorker({ db, request = brevoRequest, deliver = deliverBrevoEve
         .eq('id', row.id).eq('lease_token', row.lease_token).select('id').maybeSingle();
       if (lease.error) throw lease.error;
       if (!lease.data) continue;
+      if (row.event_name !== '__contact_update' && !row.event_delivered_at
+        && now().getTime() - Date.parse(row.created_at) > maxEventAgeMs()) {
+        const stale = await db.from('brevo_outbox').update({ discarded_at: now().toISOString(),
+          leased_until: null, lease_token: null, last_error: 'stale: older than max event age' }).eq('id', row.id).eq('lease_token', row.lease_token);
+        if (stale.error) throw stale.error;
+        continue;
+      }
       const prepared = await prepare(db, row, now().getTime());
       if (!prepared.allowed) {
         const discarded = await db.from('brevo_outbox').update({ discarded_at: now().toISOString(),
@@ -113,4 +134,4 @@ async function runWorker({ db, request = brevoRequest, deliver = deliverBrevoEve
   return { claimed: rows?.length || 0, delivered };
 }
 
-module.exports = { runWorker, retryDelay, eventProperties, eventScalars, MAX_ATTEMPTS };
+module.exports = { runWorker, retryDelay, eventProperties, eventScalars, MAX_ATTEMPTS, DEFAULT_MAX_EVENT_AGE_HOURS };

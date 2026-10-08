@@ -1,16 +1,20 @@
 # Contrat SwipSales → Brevo (pour la configuration des parcours)
 
-État au 8 octobre 2026, branche `claude/brevo-automation`. **Rien n'est actif** : ce contrat décrit ce que l'application enverra une fois la migration appliquée et les flags activés après recette. Il ne garantit pas qu'un email part : seul un test sur un contact de recette le prouve.
+État au 8 octobre 2026, branche `claude/brevo-automation`. Document de passation destiné au responsable Brevo : il se lit sans connaître le code. La répartition des tâches est dans [CHECKLIST_PASSATION.md](CHECKLIST_PASSATION.md), le fonctionnement technique dans [BREVO_AUTOMATION.md](BREVO_AUTOMATION.md).
+
+**Rien n'est actif** : ce contrat décrit ce que l'application enverra une fois la migration appliquée et les flags activés après recette. Il ne garantit pas qu'un email part : seul un test sur un contact de recette le prouve.
 
 ## 1. Règles générales
 
 - **Identification du contact** : chaque événement est envoyé à Brevo (`POST /v3/events`) avec `identifiers.email_id` = email du compte SwipSales du **destinataire** indiqué ci-dessous. Jamais une adresse fournie par le navigateur.
 - **Avant chaque événement**, le contact est créé/mis à jour avec les attributs de la section 4.
-- **Propriétés d'événement = valeurs simples uniquement** (texte, nombre, booléen ; contrainte Brevo). Les listes sont aplaties : `offre_1_poste`, `offre_1_entreprise`, `offre_1_score`, `offre_1_id`, …, `offre_5_*` ; `candidat_1_id`, `candidat_1_score`, …, `candidat_20_*`. Une valeur absente n'est pas transmise : prévoir un texte par défaut dans le modèle.
+- **Propriétés d'événement = valeurs simples uniquement** (texte, nombre, booléen ; contrainte Brevo). Les listes sont aplaties : `offre_1_poste`, `offre_1_entreprise`, `offre_1_score`, `offre_1_id`, …, `offre_5_*` ; `candidat_1_score`, …, `candidat_20_score`. Une valeur absente n'est pas transmise : prévoir un texte par défaut dans le modèle.
 - **Propriétés communes à tous les événements** : `event_id` (identifiant unique, à utiliser pour repérer un doublon), `occurred_at` (ISO), `lien` (application, connexion requise), `lien_preferences` (ouvre les préférences d'emails). `prenom` est ajouté quand il est connu.
-- **Propriétés techniques** : d'autres propriétés peuvent apparaître (`candidat_id`, `created_at`, `match_id`…). Elles servent au suivi ; ne pas les afficher dans un email.
+- **Propriétés techniques** : d'autres propriétés peuvent apparaître (`created_at`, `match_id`, `application_id`…). Elles servent au suivi ; ne pas les afficher dans un email.
 - **Livraison « au moins une fois »** : un même `event_id` peut exceptionnellement arriver deux fois (timeout réseau après acceptation par Brevo). Ne jamais promettre « exactement une fois ».
-- **Délais** : les relances (section 3) sont émises **après** le délai prévu. **Ne pas ajouter de second délai 24 h / 48 h dans Brevo.**
+- **Délais** : les relances (section 3) sont émises **après** le délai prévu ; tous les délais sont calculés par SwipSales, à un seul endroit. **Ne pas ajouter de second délai 24 h / 48 h dans Brevo.**
+- **Fraîcheur** : une notification qui n'a pas pu être transmise à Brevo dans les **72 heures** suivant le fait (service arrêté, panne) est abandonnée plutôt qu'envoyée en retard.
+- **Identifiants de candidats** : jamais transmis à Brevo (ni dans les événements ni dans les emails) ; seuls les scores de compatibilité le sont.
 - **Relances = marketing** : elles ne partent que si l'utilisateur a coché « Recevoir les recommandations et relances SwipSales par email » (attribut `AUTOMATION_MARKETING_ALLOWED=true`). **Valeur par défaut : non coché.** Dans chaque parcours de relance, vérifier aussi `AUTOMATION_MARKETING_ALLOWED` juste avant l'email.
 - **Un seul responsable par email** : soit le parcours Brevo, soit le mapping transactionnel applicatif (section 6), jamais les deux.
 - **Aucune donnée sensible transmise** : pas de contenu de message, pas de réponse ADN, pas de pièce jointe, pas d'identité d'un candidat qui n'a pas postulé volontairement à l'offre du recruteur.
@@ -23,7 +27,7 @@ Ces événements sont **des notifications de service** (pas de condition de cons
 |---|---|---|---|
 | `signup_completed` | le nouvel utilisateur | création de la fiche candidat ou recruteur | `role` = `CANDIDAT` \| `RECRUTEUR` |
 | `profile_updated` | candidat | changement réel de prénom, nom, titre, axes, score ADN ou compétences | `completion` (0–100) |
-| `adn_started` | candidat | ouverture de la 1re étape du test ADN, consentement ADN vérifié (max 1/jour) | — |
+| `adn_started` | candidat | affichage du questionnaire ADN (consentement ADN et éligibilité vérifiés ; max 1/jour) | — |
 | `adn_completed` | candidat | résultat ADN enregistré ou modifié | `score` |
 | `application_submitted` | candidat | candidature envoyée par swipe (like ou super-like) | `application_id`, `offre_id`, `poste`, `entreprise`, `statut`, `score`* |
 | `application_received` | recruteur propriétaire de l'offre | idem | idem + `candidat` (prénom nom **figés dans la candidature**) |
@@ -33,7 +37,7 @@ Ces événements sont **des notifications de service** (pas de condition de cons
 | `message_sent` | expéditeur | chaque message | idem `message_received` |
 | `first_message_sent` | les deux participants | premier message d'une conversation | idem |
 | `message_read` | expéditeur du message lu | message marqué lu | idem (un événement par message lu) |
-| `match_created` | candidat **et** recruteur (2 événements) | création d'une conversation | `conversation_id`, `match_id`, `offre_id`, `candidat_id`, `poste`, `entreprise`, `score`*, `candidat`** |
+| `match_created` | candidat **et** recruteur (2 événements) | création d'une conversation | `conversation_id`, `match_id`, `offre_id`, `poste`, `entreprise`, `score`*, `candidat`** |
 | `offer_published` | recruteur | publication ou réactivation d'une offre | `offre_id`, `poste`, `entreprise`, `expires_at` (si défini) |
 | `offer_limit_reached` | recruteur | quota d'offres actives atteint (max 1/jour/formule) | `plan`, `limit` |
 | `like_received` | candidat | like d'un recruteur (ancien `like_recu`) | `nb` (likes 7 jours) |
@@ -59,7 +63,7 @@ Toutes ces relances exigent `AUTOMATION_MARKETING_ALLOWED = true`. Elles sont **
 | 6 | Message sans réponse | `recruiter_message_unanswered` | candidat | 48 h après le dernier message, s'il vient du recruteur | `conversation_id`, `message_id`, `offre_id`, `poste`, `entreprise` | réponse du candidat ou nouveau message, candidature `refusee` / `retiree` / `embauche` |
 | 7 | Recommandations | `weekly_recommendations` | candidat | 1×/semaine, à partir d'une semaine après l'installation | `nb`, `offre_1_*` … `offre_5_*` (`id`, `poste`, `entreprise`, `score`) | plus aucune offre valide |
 | 8 | Inactivité | `user_inactive` | candidat | 7, 14 puis 30 jours sans activité (seul le palier atteint le plus élevé si le service reprend tard) | `days`, `nb`, `offre_1_*` … `offre_5_*` (offres créées depuis la dernière visite) | retour de l'utilisateur |
-| 9 | Nouveaux profils compatibles | `compatible_candidates_found` | recruteur propriétaire de l'offre | nouveaux profils compatibles (≥ 70) inscrits ou mis à jour après l'installation, regroupés par offre | `offre_id`, `poste`, `nb`, `candidat_1_id`, `candidat_1_score` … `candidat_20_*` (**identifiants et scores uniquement**) | offre fermée, plus de profil compatible non candidat |
+| 9 | Nouveaux profils compatibles | `compatible_candidates_found` | recruteur propriétaire de l'offre | nouveaux profils compatibles (≥ 70) inscrits ou mis à jour après l'installation, regroupés par offre | `offre_id`, `poste`, `nb`, `candidat_1_score` … `candidat_20_score` (**scores uniquement**, aucune identité ni identifiant) | offre fermée, plus de profil compatible non candidat |
 | 10a | Offre bientôt expirée | `offer_expiring` | recruteur | dans les 3 derniers jours avant `date_fin` | `offre_id`, `poste`, `date_fin`, `role` | offre fermée, date modifiée |
 | 10b | Offre enregistrée bientôt expirée | `saved_offer_expiring` | candidat | idem, si l'offre est enregistrée | `offre_id`, `poste`, `entreprise`, `date_fin` | offre désenregistrée, candidature, date modifiée |
 
@@ -123,6 +127,10 @@ Pour qu'un email parte directement de l'application, fournir à l'équipe techni
 - Un email transactionnel porte le tag = nom de l'événement et l'en-tête `X-Mailin-custom: event_id:<id>` (traçabilité dans les logs Brevo).
 
 ## 7. Transition depuis les anciens événements français
+
+**Jusqu'à la bascule, rien ne change** : tant que `BREVO_OUTBOX_ENABLED=false`, l'application continue d'émettre les anciens noms exactement comme aujourd'hui, même une fois le nouveau code déployé et la migration appliquée. Les parcours actuels restent fonctionnels et aucun nouvel événement n'est envoyé.
+
+**Le jour de la bascule** (coordonné avec l'équipe technique) : préparer les nouveaux parcours inactifs à l'avance → au moment où le flag passe à `true`, activer les nouveaux parcours et désactiver les anciens qui font double emploi. Les deux familles ne doivent jamais être actives en même temps sur une même notification. Attention aux anciens parcours déclenchés par un **attribut ou une date** (par exemple `DERNIERE_CONNEXION`, `ABONNEMENT_DATE_FIN`) : ces attributs restent alimentés après la bascule, ces parcours continueraient donc à envoyer en parallèle des nouveaux (`user_inactive`, `subscription_cancel_scheduled`…). Les désactiver s'ils sont remplacés.
 
 Quand `BREVO_OUTBOX_ENABLED=true`, l'application **cesse d'émettre** les anciens noms ci-dessous. Les **six parcours actifs** relevés dans le compte (#4 Onboarding candidat, #6 R01, #8 C03, #10 C06, #11 R04, #12 R10) utilisent ces noms : **ils ne se déclencheront plus** s'ils ne sont pas réorientés avant la bascule.
 

@@ -179,6 +179,12 @@ router.post('/cancel-subscription', authMiddleware, async (req, res) => {
 // IMPORTANT: cette route doit recevoir le raw body, configure dans server.js.
 router.post('/webhook', async (req, res) => {
   let verified = false;
+  let automationError = null;
+  // A Brevo capture failure must never block the subscription itself: the business
+  // update below still runs, and the 500 makes Stripe retry the (idempotent) capture.
+  const ack = () => (automationError
+    ? res.status(500).json({ error: 'Webhook temporairement indisponible' })
+    : res.json({ received: true }));
   try {
     const sig = req.headers['stripe-signature'];
     const event = stripe.webhooks.constructEvent(
@@ -187,19 +193,24 @@ router.post('/webhook', async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
     verified = true;
-    await captureStripeAutomation(supabase, stripe, event);
+    try {
+      await captureStripeAutomation(supabase, stripe, event);
+    } catch (error) {
+      automationError = error;
+      console.error('[brevo] Stripe automation not persisted', error.code || error.message);
+    }
 
     // Événement le plus fiable — paiement confirmé
     if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
       const session = event.data.object;
-      if (!['paid', 'no_payment_required'].includes(session.payment_status)) return res.json({ received: true });
+      if (!['paid', 'no_payment_required'].includes(session.payment_status)) return ack();
       const userId = session.metadata?.userId;
       const plan = session.metadata?.plan;
       const period = session.metadata?.period || 'month';
 
       if (!userId || !plan) {
         console.warn('Webhook checkout.session.completed — userId ou plan manquant', session.metadata);
-        return res.json({ received: true });
+        return ack();
       }
 
       const saved = await supabase.from('abonnements').upsert({
@@ -227,7 +238,7 @@ router.post('/webhook', async (req, res) => {
 
       if (!userId) {
         console.warn('Webhook subscription.updated — userId manquant');
-        return res.json({ received: true });
+        return ack();
       }
 
       const statut = ['active', 'trialing'].includes(sub.status) ? 'actif' : 'inactif';
@@ -279,7 +290,7 @@ router.post('/webhook', async (req, res) => {
 
       if (!userId) {
         console.warn('Webhook subscription.deleted — userId manquant');
-        return res.json({ received: true });
+        return ack();
       }
 
       const saved = await supabase.from('abonnements').upsert({
@@ -302,7 +313,7 @@ router.post('/webhook', async (req, res) => {
       }).catch(() => {});
     }
 
-    res.json({ received: true });
+    ack();
   } catch (error) {
     console.error('Webhook error:', error.message);
     res.status(verified ? 500 : 400).json({ error: verified ? 'Webhook temporairement indisponible' : 'Signature Stripe invalide' });

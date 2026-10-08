@@ -85,3 +85,32 @@ test('a permanently failing event is discarded after the last attempt instead of
   assert.match(final.patch.last_error, /^max attempts: contact update rejected/);
   assert.equal(final.patch.available_at, undefined);
 });
+test('notifications older than the max age are dropped as stale; contact updates are not', async () => {
+  process.env.BREVO_API_KEY = 'test-only'; process.env.FRONTEND_URL = 'https://example.test';
+  const old = '2026-10-01T12:00:00Z';
+  const f = fixture({ created_at: old });
+  await runWorker({ db: f.db, now, prepare, deliver: async () => { throw new Error('must not send a stale event'); },
+    request: async () => { throw new Error('must not contact Brevo'); } });
+  assert.ok(f.writes.some((w) => w.patch.discarded_at && /^stale/.test(w.patch.last_error)));
+  const contact = fixture({ created_at: old, event_name: '__contact_update' }); let contacted = false;
+  await runWorker({ db: contact.db, now, prepare, request: async () => { contacted = true; return true; } });
+  assert.ok(contacted, 'contact state is still synchronised');
+  const accepted = fixture({ created_at: old, event_delivered_at: '2026-10-01T12:01:00Z' }); let emailed = false;
+  process.env.BREVO_TRANSACTIONAL_TEMPLATES = '{"message_received":55}';
+  await runWorker({ db: accepted.db, now, prepare, request: async (p) => { if (p === '/smtp/email') emailed = true; return true; } });
+  assert.ok(emailed, 'an event Brevo already accepted still completes its email step');
+  delete process.env.BREVO_TRANSACTIONAL_TEMPLATES;
+  process.env.BREVO_MAX_EVENT_AGE_HOURS = '400';
+  const kept = fixture({ created_at: old }); let sent = false;
+  await runWorker({ db: kept.db, now, prepare, deliver: async () => { sent = true; return true; }, request: async () => true });
+  assert.ok(sent, 'the window is configurable');
+  delete process.env.BREVO_MAX_EVENT_AGE_HOURS;
+});
+test('candidate identifiers never leave SwipSales, scores do', () => {
+  const { eventProperties, eventScalars } = require('../utils/brevoWorker');
+  const props = eventProperties({ id: 'e', created_at: 'x', event_name: 'compatible_candidates_found',
+    properties: { offre_id: 'o1', nb: 2, candidat_id: 'c9', candidats: [{ candidat_id: 'c1', score: 91 }, { candidat_id: 'c2', score: 80 }] } }, 'https://example.test');
+  assert.ok(!JSON.stringify(props).includes('"c1"') && !('candidat_id' in props));
+  assert.deepEqual(eventScalars(props).candidat_1_score, 91);
+  assert.ok(!Object.keys(eventScalars(props)).some((key) => key.endsWith('_id') && key.startsWith('candidat')));
+});

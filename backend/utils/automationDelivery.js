@@ -1,4 +1,4 @@
-const { profileCompletion, isOpenOffer, recommendationScore } = require('./automationRules');
+const { DAY, profileCompletion, isOpenOffer, recommendationScore } = require('./automationRules');
 const MARKETING_EVENTS = new Set(['profile_incomplete', 'compatible_offer_found', 'offer_viewed_without_application',
   'application_abandoned', 'weekly_recommendations', 'user_inactive', 'compatible_candidates_found',
   'offer_expiring', 'saved_offer_expiring', 'recruiter_message_unanswered']);
@@ -114,7 +114,7 @@ async function prepareDelivery(db, row, now) {
   }
   if (row.event_name === 'user_inactive') {
     const activity = activityState;
-    if (!activity || now - Date.parse(activity.last_active_at) < properties.days * 86400000) return { allowed: false, reason: 'user returned' };
+    if (!activity || now - Date.parse(activity.last_active_at) < properties.days * DAY) return { allowed: false, reason: 'user returned' };
   }
   if (candidate && Array.isArray(properties.offres)) {
     const available = [];

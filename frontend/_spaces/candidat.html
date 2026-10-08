@@ -3584,7 +3584,6 @@ function refreshTestProgress() {
   if (id) updateTestProgress(id);
 }
 function showTestStep(id) {
-  if (id === 'ts-jobs') globalThis.SwipAutomation?.adnStarted();
   hideAllTestSteps();
   const el = document.getElementById(id); if (el) el.style.display = 'block';
   updateTestProgress(id);
@@ -3843,6 +3842,8 @@ function showAdnQuestionnaire() {
   if (sticky) sticky.hidden = false;
   if (body) body.hidden = false;
   refreshTestProgress();
+  // Questionnaire really opened (consent and eligibility verified): Brevo adn_started.
+  globalThis.SwipAutomation?.adnStarted();
 }
 function formatAdnEligibleDate(value) {
   if (!value) return null;
