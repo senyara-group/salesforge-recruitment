@@ -39,7 +39,7 @@ Ce document décrit le fonctionnement, l'installation et les limites. Le code ne
 - `offer_first_application` tient compte des candidatures antérieures à l'installation.
 - `profile_incomplete` attend 24 h après l'inscription, puis une fois par semaine.
 - `compatible_offer_found` ne concerne que les offres publiées depuis moins de 48 h : une inscription aux relances ou une longue pause ne déclenche pas un événement par ancienne offre ; les offres plus anciennes alimentent `weekly_recommendations`.
-- Un swipe de candidature enregistré (`swipes_meta.liked_offer_ids`) compte comme tentative aboutie, même sans ligne de candidature créée.
+- `application_abandoned` : la route de swipe enregistre `swipes_meta.liked_offer_ids` **avant** de créer la candidature ; un like seul ne vaut donc pas candidature. Une candidature du candidat (tout statut, y compris retirée) annule la relance ; un like ne l'annule que si une ligne existe déjà pour ce couple (ancienne ligne `recruteur_like`, cas où le swipe répond « déjà envoyée »). Tableau de décision complet dans le contrat, section 3.
 - `recruiter_message_unanswered` ne considère que les messages des 7 derniers jours postérieurs à l'installation, et n'est pas annulé par la candidature qui a créé la conversation.
 - `adn_started` est émis à l'affichage réel du questionnaire ADN (après consentement et éligibilité), y compris si le module de suivi termine de se charger après l'ouverture.
 - L'activité (`/api/automation/activity`) est enregistrée au plus une fois par heure par utilisateur.
@@ -60,7 +60,7 @@ Avec `BREVO_OUTBOX_ENABLED=false` (valeur par défaut) :
 - les anciens événements français et attributs sont émis exactement comme avant ; les parcours Brevo actuels continuent de fonctionner ;
 - la date de fin d'offre est masquée et refusée par l'API (503), les listes d'offres ne filtrent pas l'expiration ;
 - la route `/api/automation/*` répond 503 ; le module navigateur ne fait rien ;
-- si la migration est déjà appliquée, les triggers remplissent la file sans rien envoyer (les notifications de plus de 72 h seront écartées à l'activation).
+- si la migration est déjà appliquée, les triggers remplissent la file sans rien envoyer. **Une partie de ces faits a déjà été notifiée par les anciens événements** : sans la [procédure de bascule](#procédure-de-bascule-anti-doublons), ceux de moins de 72 h déclencheraient une seconde notification à l'activation.
 
 Changements Stripe actifs **quel que soit le flag** (corrections, testées dans `stripeWebhookSubscriptions.test.js`) :
 - un checkout non payé (`payment_status` ni `paid` ni `no_payment_required`) n'active plus l'abonnement ; `checkout.session.async_payment_succeeded` est traité comme le paiement confirmé ;
@@ -81,7 +81,7 @@ Avec le flag actif, une erreur de capture Brevo (file indisponible, migration ab
 2. Déployer backend + frontend de la même révision, **trois flags à `false`**. `npm ci` (PGlite est une dépendance de développement).
 3. Le responsable Brevo prépare attributs, parcours et modèles sur des contacts de recette selon le contrat, en réorientant les anciens noms français (les six parcours actifs ne se déclencheront plus après bascule sinon).
 4. Dans Stripe (mode test), créer/vérifier l'endpoint webhook avec : `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`.
-5. En recette uniquement : `BREVO_OUTBOX_ENABLED=true` (captures applicatives, préférences, suivi d'interactions, date de fin d'offre) **sur le serveur web et le job**, puis `BREVO_AUTOMATION_ENABLED=true` (worker), puis `BREVO_SCHEDULER_ENABLED=true` (relances).
+5. En recette uniquement, en suivant la [procédure de bascule](#procédure-de-bascule-anti-doublons) : `BREVO_OUTBOX_ENABLED=true` (captures applicatives, préférences, suivi d'interactions, date de fin d'offre) **sur le serveur web et le job**, puis `BREVO_AUTOMATION_ENABLED=true` (worker), puis `BREVO_SCHEDULER_ENABLED=true` (relances).
 6. Planifier le job (voir ci-dessous).
 7. Recetter les dix scénarios, leurs annulations, les rôles et l'anonymat ; vérifier dans Brevo l'événement **et** l'email délivré. Contrôler la file :
    ```sql
@@ -89,21 +89,99 @@ Avec le flag actif, une erreur de capture Brevo (file indisponible, migration ab
           count(*) filter (where discarded_at is not null) as ecartes, max(last_error) as derniere_erreur
    from brevo_outbox group by event_name order by 1;
    ```
-8. Après validation : même migration en production, déploiement, réorientation des parcours, activation des flags et des jobs. Consigner l'heure de bascule.
+8. Après validation : même migration en production, déploiement, puis **[procédure de bascule](#procédure-de-bascule-anti-doublons)** (flags, file, parcours, jobs, dans cet ordre).
 
 **Arrêt d'urgence** : `BREVO_AUTOMATION_ENABLED=false` sur le job (les faits restent en file ; au-delà de 72 h, les notifications seront écartées à la reprise). Ne pas supprimer triggers/tables sans plan de reprise.
+
+## Procédure de bascule (anti-doublons)
+
+### Risque
+
+Les triggers SQL capturent les faits **dès l'installation de la migration**, quel que soit le flag. Tant que `BREVO_OUTBOX_ENABLED=false`, l'application émet en parallèle les anciens événements français, qui alimentent les anciens parcours. Au démarrage du worker, la file contient donc, sous les nouveaux noms, des faits **déjà notifiés** par l'ancien système. La règle des 72 h n'écarte que les plus anciens : ceux des trois derniers jours déclencheraient une **seconde notification** via les nouveaux parcours.
+
+### Événements concernés
+
+Seuls ces six événements capturés par trigger ont un équivalent émis par l'ancien système tant que le flag est inactif :
+
+| Événement de la file | Déjà notifié avant la bascule par |
+|---|---|
+| `signup_completed` | `compte_candidat_cree` / `compte_recruteur_active` |
+| `adn_completed` | `test_adn_termine` |
+| `offer_published` | `offre_publiee` |
+| `application_received` | `candidature_recue` |
+| `match_created` | `match_cree` |
+| `first_message_sent` | `premier_message_envoye` |
+
+Ne sont **pas** concernés :
+- créés uniquement flag actif, donc absents de la file avant la bascule : événements Stripe, `checkout_started`, `offer_limit_reached`, `adn_started`, mises à jour de contact, interactions, relances du planificateur ;
+- sans équivalent ancien, donc jamais notifiés : `profile_updated`, `application_submitted`, `application_status_changed`, `offer_first_application`, `message_received`, `message_sent`, `message_read`. S'ils datent de moins de 72 h, ils seront envoyés à l'activation. Les écarter aussi est une décision produit (même requête, avec leurs noms et un motif distinct).
+
+### Instant de bascule T
+
+T est l'instant (UTC) à partir duquel **toutes** les instances du serveur web tournent avec `BREVO_OUTBOX_ENABLED=true`, c'est-à-dire n'émettent plus les anciens noms. Sur Railway : l'heure à laquelle le nouveau déploiement du service web est actif **et** le précédent retiré (journal de déploiement). Un fait créé pendant le court recouvrement des deux déploiements peut avoir été notifié ou non : avec T pris à la fin du recouvrement, il est écarté (pas de doublon ; au pire une notification manquée). Faire la bascule à une heure creuse.
+
+### Déroulé (recette, puis production)
+
+Pré-requis : migration appliquée ; nouveaux parcours Brevo construits **inactifs** ; services cron déployés avec `BREVO_AUTOMATION_ENABLED=false` (le job se termine sans rien réserver).
+
+1. Passer `BREVO_OUTBOX_ENABLED=true` sur le **serveur web** et les **jobs** (`BREVO_AUTOMATION_ENABLED` reste `false`). Attendre la fin du déploiement web et **noter T**.
+2. Désactiver dans Brevo les anciens parcours remplacés : ils ne reçoivent plus d'événements après T, mais ceux déclenchés par un attribut ou une date continueraient.
+3. **Aperçu** (Supabase, SQL editor ; remplacer la date d'exemple par T) :
+   ```sql
+   with p as (select timestamptz '2026-10-20T06:00:00Z' as t)
+   select o.event_name, count(*) as a_ecarter, min(o.created_at) as premier, max(o.created_at) as dernier
+   from public.brevo_outbox o, p
+   where o.created_at < p.t
+     and o.delivered_at is null and o.discarded_at is null and o.event_delivered_at is null
+     and o.event_name in ('signup_completed','adn_completed','offer_published',
+                          'application_received','match_created','first_message_sent')
+   group by o.event_name order by 1;
+   ```
+   Conserver ce résultat (capture ou export CSV) avec la valeur de T.
+4. **Écarter**, sans suppression : les lignes restent en base, marquées et motivées.
+   ```sql
+   begin;
+   with p as (select timestamptz '2026-10-20T06:00:00Z' as t)
+   update public.brevo_outbox o
+   set discarded_at = now(),
+       last_error = 'cutover ' || to_char(p.t at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') || ': already notified by legacy event'
+   from p
+   where o.created_at < p.t
+     and o.delivered_at is null and o.discarded_at is null and o.event_delivered_at is null
+     and o.event_name in ('signup_completed','adn_completed','offer_published',
+                          'application_received','match_created','first_message_sent')
+   returning o.event_name, o.created_at;
+   -- Le nombre de lignes renvoyées doit être égal au total de l'aperçu (étape 3) ; sinon : rollback;
+   commit;
+   ```
+5. **Vérifier** :
+   ```sql
+   with p as (select timestamptz '2026-10-20T06:00:00Z' as t)
+   select
+     count(*) filter (where o.created_at < p.t and o.discarded_at is null and o.delivered_at is null and o.event_delivered_at is null
+       and o.event_name in ('signup_completed','adn_completed','offer_published',
+                          'application_received','match_created','first_message_sent')) as restant_a_ecarter, -- attendu : 0
+     count(*) filter (where o.created_at >= p.t and o.last_error like 'cutover %') as posterieurs_ecartes, -- attendu : 0
+     count(*) filter (where o.created_at >= p.t and o.discarded_at is null) as nouveaux_preserves
+   from public.brevo_outbox o, p;
+   ```
+   Trace permanente : `select event_name, created_at, discarded_at, last_error from public.brevo_outbox where last_error like 'cutover %';`
+6. **Seulement ensuite** : activer les nouveaux parcours Brevo, puis `BREVO_AUTOMATION_ENABLED=true` sur le job worker, puis `BREVO_SCHEDULER_ENABLED=true` sur le job planificateur.
+7. Consigner T, les nombres écartés et l'heure d'activation ; prévenir le responsable Brevo.
+
+Retour arrière avant l'étape 6 : remettre `BREVO_OUTBOX_ENABLED=false` partout ; les anciens événements reprennent et le nouveau système n'a rien envoyé. Après l'étape 6, ne pas repasser le web à `false` tant que le job envoie (doublons) : arrêter d'abord le job (`BREVO_AUTOMATION_ENABLED=false`).
 
 ## Exploitation du job (sans endpoint public)
 
 Le worker n'est **pas** une route HTTP : c'est un processus court lancé par un planificateur, qui lit `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `BREVO_API_KEY`, `FRONTEND_URL` (HTTPS), les trois flags, et en option `BREVO_TRANSACTIONAL_TEMPLATES`, `BREVO_WORKER_BATCHES` (20 par défaut, lots de 5) et `BREVO_MAX_EVENT_AGE_HOURS` (72).
 
 Sur Railway (hébergement actuel) : la configuration d'un fichier `railway*.json` prévaut sur le tableau de bord, et `railway.json` décrit le serveur web. Deux fichiers dédiés sont fournis, **inactifs tant qu'aucun service ne les utilise** :
-- [`railway.brevo-worker.json`](../../../railway.brevo-worker.json) : `npm --prefix backend run brevo:run` chaque minute, sans redémarrage automatique. Service à configurer avec `BREVO_SCHEDULER_ENABLED=false` (worker seul).
+- [`railway.brevo-worker.json`](../../../railway.brevo-worker.json) : `npm --prefix backend run brevo:run` toutes les 5 minutes (intervalle minimal imposé par Railway entre deux exécutions cron), sans redémarrage automatique. Service à configurer avec `BREVO_SCHEDULER_ENABLED=false` (worker seul).
 - [`railway.brevo-scheduler.json`](../../../railway.brevo-scheduler.json) : même commande toutes les 15 minutes. Service à configurer avec `BREVO_SCHEDULER_ENABLED=true` (le calcul offres × candidats est coûteux).
 
-Pour chacun : créer un service depuis le même dépôt, renseigner son *Config file path* (`/railway.brevo-worker.json` ou `/railway.brevo-scheduler.json`), copier les variables d'environnement, et **ne générer aucun domaine public**. Vérifier dans les journaux Railway qu'une exécution se termine bien (« Brevo automation disabled » tant que les flags sont à `false`).
+Pour chacun : créer un service depuis le même dépôt, renseigner son *Config file path* (`/railway.brevo-worker.json` ou `/railway.brevo-scheduler.json`), copier les variables d'environnement, et **ne générer aucun domaine public**. Le service web reste décrit par `railway.json` (seul fichier lu par défaut) et n'est pas modifié par ces deux fichiers. Vérifier dans les journaux Railway qu'une exécution se termine bien (« Brevo automation disabled » tant que les flags sont à `false`).
 
-Le processus se termine à la fin du lot. Code de sortie non nul : erreur du worker, ou du planificateur (le worker s'exécute quand même dans ce cas, pour ne pas retenir les notifications de service). Deux exécutions qui se chevauchent sont sans danger (baux exclusifs). Surveiller les logs du service et la requête de file ci-dessus.
+Le processus se termine à la fin du lot. Code de sortie non nul : erreur du worker, ou du planificateur (le worker s'exécute quand même dans ce cas, pour ne pas retenir les notifications de service). Si une exécution dure encore à l'échéance suivante, Railway saute la nouvelle ; deux exécutions des deux services qui se chevauchent sont sans danger (baux exclusifs). Avec un passage toutes les 5 minutes, une notification arrive chez Brevo jusqu'à ~5 minutes après le fait. Surveiller les logs du service et la requête de file ci-dessus.
 
 ## Limites connues
 

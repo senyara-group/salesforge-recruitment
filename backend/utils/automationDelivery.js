@@ -106,7 +106,8 @@ async function prepareDelivery(db, row, now) {
       const application = await single(db.from('candidatures').select('id,lettre_type').eq('candidat_id', candidate.id).eq('offre_id', properties.offre_id));
       if (application && application.lettre_type !== 'recruteur_like') return { allowed: false, reason: 'already applied' };
       const choices = candidate.swipes_meta || {};
-      if ((choices.liked_offer_ids || []).map(String).includes(String(properties.offre_id))) return { allowed: false, reason: 'already applied' };
+      // Same rule as the scheduler: a like counts only with an existing (recruiter-side) row.
+      if (application && (choices.liked_offer_ids || []).map(String).includes(String(properties.offre_id))) return { allowed: false, reason: 'already applied' };
       if ((choices.passed_offer_ids || []).map(String).includes(String(properties.offre_id))) return { allowed: false, reason: 'offer dismissed' };
       const interaction = await single(db.from('offer_interactions').select('dismissed_at,saved_at').eq('user_id', userId).eq('offre_id', properties.offre_id));
       if (interaction?.dismissed_at || (row.event_name === 'saved_offer_expiring' && !interaction?.saved_at)) return { allowed: false, reason: 'offer dismissed' };

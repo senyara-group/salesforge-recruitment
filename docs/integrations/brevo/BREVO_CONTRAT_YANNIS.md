@@ -58,7 +58,7 @@ Toutes ces relances exigent `AUTOMATION_MARKETING_ALLOWED = true`. Elles sont **
 | 1 | Profil incomplet | `profile_incomplete` | candidat | 1×/semaine tant que < 100 %, pas avant 24 h après l'inscription | `completion` | profil à 100 % |
 | 2 | Nouvelle offre compatible | `compatible_offer_found` | candidat | offre publiée depuis < 48 h (et après l'installation), score ≥ 70 | `offre_id`, `poste`, `entreprise`, `score` | offre fermée/expirée, score < 70, déjà postulé, offre passée |
 | 3 | Offre consultée sans candidature | `offer_viewed_without_application` | candidat | 24 h après la 1re consultation (carte visible 2 s), une seule fois par offre | `offre_id`, `poste`, `entreprise` | candidature, swipe, offre passée/écartée, offre fermée |
-| 4 | Tentative de candidature interrompue | `application_abandoned` | candidat | 24 h après un swipe de candidature **dont l'envoi n'a pas abouti** | `offre_id`, `poste`, `entreprise` | candidature enregistrée, offre fermée |
+| 4 | Tentative de candidature interrompue | `application_abandoned` | candidat | 24 h après un swipe de candidature (like ou super-like) **sans candidature enregistrée** — définition exacte ci-dessous | `offre_id`, `poste`, `entreprise` | candidature enregistrée (quel que soit son statut, y compris retirée), offre fermée, offre passée |
 | 5 | Suivi de candidature | `application_submitted`, `application_received`, `application_status_changed` | voir section 2 | immédiat | voir section 2 | — (service) |
 | 6 | Message sans réponse | `recruiter_message_unanswered` | candidat | 48 h après le dernier message, s'il vient du recruteur | `conversation_id`, `message_id`, `offre_id`, `poste`, `entreprise` | réponse du candidat ou nouveau message, candidature `refusee` / `retiree` / `embauche` |
 | 7 | Recommandations | `weekly_recommendations` | candidat | 1×/semaine, à partir d'une semaine après l'installation | `nb`, `offre_1_*` … `offre_5_*` (`id`, `poste`, `entreprise`, `score`) | plus aucune offre valide |
@@ -68,7 +68,21 @@ Toutes ces relances exigent `AUTOMATION_MARKETING_ALLOWED = true`. Elles sont **
 | 10b | Offre enregistrée bientôt expirée | `saved_offer_expiring` | candidat | idem, si l'offre est enregistrée | `offre_id`, `poste`, `entreprise`, `date_fin` | offre désenregistrée, candidature, date modifiée |
 
 Notes produit :
-- Scénario 4 : la candidature se fait par swipe, sans formulaire multiétape. « Interrompue » = l'envoi a été tenté mais aucune candidature n'a été enregistrée (erreur réseau, échec de copie du CV…).
+- Scénario 4 — **définition exacte d'une candidature abandonnée**. La candidature se fait par swipe, sans formulaire multiétape. `application_abandoned` est émis une seule fois par offre, 24 h après la **première tentative** (swipe like ou super-like) si, au moment du calcul **et** au moment de l'envoi :
+  - aucune candidature du candidat n'existe pour cette offre ;
+  - le candidat n'a pas passé l'offre ;
+  - l'offre est toujours ouverte et non expirée ;
+  - le candidat a accepté les relances.
+
+  | Situation | Relance ? |
+  |---|---|
+  | Envoi échoué côté serveur (copie du CV, enregistrement), même si le swipe a été comptabilisé | oui |
+  | Envoi interrompu (réseau, fermeture de l'application), si la tentative a pu être signalée au serveur | oui |
+  | Candidature envoyée, quel que soit son statut ensuite | non |
+  | Candidature retirée par le candidat | non (choix délibéré) |
+  | Swipe « passer » (aucune intention de candidature) | non |
+  | Ancienne ligne créée côté recruteur + swipe like du candidat (l'application lui a répondu « déjà envoyée ») | non |
+  | Moins de 24 h après la tentative | pas encore |
 - Scénario 8 : seuls les candidats sont concernés. L'activité est enregistrée avec une précision d'une heure, sessions OAuth comprises ; un onglet laissé en arrière-plan ne compte pas.
 - Scénario 10 : la date de fin est **facultative** et choisie par le recruteur ; les offres existantes n'en ont pas. Les offres expirées sont fermées automatiquement et refusent les candidatures.
 - `nb` peut valoir 0 dans `user_inactive` : prévoir une variante de texte.
@@ -130,7 +144,9 @@ Pour qu'un email parte directement de l'application, fournir à l'équipe techni
 
 **Jusqu'à la bascule, rien ne change** : tant que `BREVO_OUTBOX_ENABLED=false`, l'application continue d'émettre les anciens noms exactement comme aujourd'hui, même une fois le nouveau code déployé et la migration appliquée. Les parcours actuels restent fonctionnels et aucun nouvel événement n'est envoyé.
 
-**Le jour de la bascule** (coordonné avec l'équipe technique) : préparer les nouveaux parcours inactifs à l'avance → au moment où le flag passe à `true`, activer les nouveaux parcours et désactiver les anciens qui font double emploi. Les deux familles ne doivent jamais être actives en même temps sur une même notification. Attention aux anciens parcours déclenchés par un **attribut ou une date** (par exemple `DERNIERE_CONNEXION`, `ABONNEMENT_DATE_FIN`) : ces attributs restent alimentés après la bascule, ces parcours continueraient donc à envoyer en parallèle des nouveaux (`user_inactive`, `subscription_cancel_scheduled`…). Les désactiver s'ils sont remplacés.
+**Risque de doublon à la bascule** : SwipSales enregistre les nouveaux événements dès l'installation technique, alors que les anciens parcours fonctionnent encore. Six d'entre eux (`signup_completed`, `adn_completed`, `offer_published`, `application_received`, `match_created`, `first_message_sent`) concernent des faits **déjà notifiés** par les anciens événements. L'équipe technique les écarte (sans les supprimer) juste avant l'activation, selon la procédure de bascule de [BREVO_AUTOMATION.md](BREVO_AUTOMATION.md#procédure-de-bascule-anti-doublons).
+
+**Le jour de la bascule** (coordonné avec l'équipe technique) : préparer les nouveaux parcours **inactifs** à l'avance ; désactiver les anciens parcours remplacés dès que l'équipe technique a basculé le flag ; **n'activer les nouveaux parcours qu'après confirmation** par l'équipe technique que les événements historiques ont été écartés. Les deux familles ne doivent jamais être actives en même temps sur une même notification. Attention aux anciens parcours déclenchés par un **attribut ou une date** (par exemple `DERNIERE_CONNEXION`, `ABONNEMENT_DATE_FIN`) : ces attributs restent alimentés après la bascule, ces parcours continueraient donc à envoyer en parallèle des nouveaux (`user_inactive`, `subscription_cancel_scheduled`…). Les désactiver s'ils sont remplacés.
 
 Quand `BREVO_OUTBOX_ENABLED=true`, l'application **cesse d'émettre** les anciens noms ci-dessous. Les **six parcours actifs** relevés dans le compte (#4 Onboarding candidat, #6 R01, #8 C03, #10 C06, #11 R04, #12 R10) utilisent ces noms : **ils ne se déclencheront plus** s'ils ne sont pas réorientés avant la bascule.
 

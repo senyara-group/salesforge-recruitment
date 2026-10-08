@@ -5,7 +5,7 @@
   },
   "deploy": {
     "startCommand": "npm --prefix backend run brevo:run",
-    "cronSchedule": "* * * * *",
+    "cronSchedule": "*/5 * * * *",
     "restartPolicyType": "NEVER"
   }
 }

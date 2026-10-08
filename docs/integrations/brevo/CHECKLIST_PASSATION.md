@@ -39,13 +39,13 @@ Répartition : **Développement** (backend, Supabase, hébergement) / **Responsa
 - [ ] Appliquer `backend/brevo_outbox_migration.sql` sur la base de **recette** (SQL editor Supabase), puis vérifier : `select count(*) from brevo_outbox;` = 0 et présence des fonctions `claim_brevo_events`, `enqueue_brevo_event`.
 - [ ] Déployer backend + frontend en recette, **trois flags à `false`** ; vérifier que les anciens parcours Brevo reçoivent toujours leurs événements français.
 - [ ] Ajouter `BREVO_API_KEY` (clé avec droits contacts, événements, emails transactionnels) aux variables de recette ; `FRONTEND_URL` en HTTPS.
-- [ ] Créer les deux services cron Railway (worker chaque minute, planificateur toutes les 15 min) avec les mêmes variables, sans domaine public.
+- [ ] Créer les deux services cron Railway (worker toutes les 5 min — minimum Railway —, planificateur toutes les 15 min) avec les mêmes variables, sans domaine public.
 - [ ] Stripe test : créer l'endpoint webhook (aucun n'existe sur le compte test au 8 octobre) avec les 6 événements listés dans `BREVO_AUTOMATION.md` ; reporter `STRIPE_WEBHOOK_SECRET`.
-- [ ] Recette : `BREVO_OUTBOX_ENABLED=true` **sur le web et les jobs**, puis `BREVO_AUTOMATION_ENABLED=true`, puis `BREVO_SCHEDULER_ENABLED=true`.
+- [ ] Recette puis production : dérouler la **procédure de bascule anti-doublons** (`BREVO_AUTOMATION.md`) : flag `BREVO_OUTBOX_ENABLED=true` sur le web et les jobs → noter T → aperçu → écarter les 6 événements historiques déjà notifiés (trace conservée) → vérifier → feu vert au responsable Brevo → `BREVO_AUTOMATION_ENABLED=true` → `BREVO_SCHEDULER_ENABLED=true`.
 - [ ] Fournir au responsable Brevo des comptes de recette candidat et recruteur (adresses de test).
 - [ ] Surveiller la file (requête dans `BREVO_AUTOMATION.md`) et les journaux des jobs pendant la recette.
 - [ ] Recevoir du responsable Brevo la liste des modèles à envoyer depuis l'application (`BREVO_TRANSACTIONAL_TEMPLATES`) et la renseigner.
-- [ ] Production, après validation : migration → déploiement → (bascule coordonnée) flags → jobs. Consigner l'heure.
+- [ ] Production, après validation : migration → déploiement → procédure de bascule → jobs. Consigner T, les nombres écartés et l'heure d'activation.
 
 ## 3. Responsable Brevo : à créer ou configurer
 
@@ -56,6 +56,7 @@ Répartition : **Développement** (backend, Supabase, hébergement) / **Responsa
 - [ ] Préparer les modèles avec les variables exactes du contrat et un texte par défaut pour les valeurs absentes (`score`, `prenom`, `entreprise`…).
 - [ ] Décider pour chaque notification : envoi par parcours **ou** par l'application (modèle transactionnel), jamais les deux ; communiquer les IDs des modèles transactionnels.
 - [ ] Préparer la réorientation des six parcours actifs (#4, #6, #8, #10, #11, #12) vers les nouveaux noms ; identifier les anciens parcours déclenchés par attribut/date à désactiver à la bascule.
+- [ ] À la bascule : désactiver les anciens parcours remplacés dès le passage du flag ; **n'activer les nouveaux parcours qu'après le feu vert technique** (événements historiques écartés).
 - [ ] Corriger les modèles défectueux déjà constatés (#22 « Bonjour , », liens `__CTA_LIEN__`, délais R10/R04).
 - [ ] Lister les 14 notifications de facturation attendues en regard des 9 événements Stripe disponibles (contrat, section 5).
 - [ ] Recette sur contacts de test : événement reçu, entrée dans le parcours, email délivré, variables remplies, sortie de parcours.

@@ -69,9 +69,6 @@ test('reminders respect signup grace, the 48h new-offer window, installation dat
   const late = buildScheduledEvents(data, now, now - 20 * DAY);
   assert.ok(!late.some((e) => e.event_name === 'compatible_offer_found'), 'an opt-in does not replay old offers one by one');
   assert.ok(late.some((e) => e.event_name === 'weekly_recommendations'), 'older offers still feed the weekly digest');
-  data = fixture(); data.interactions[0].application_started_at = date(2);
-  data.candidates[0].swipes_meta = { liked_offer_ids: ['o1'] };
-  assert.ok(!buildScheduledEvents(data, now, now - 20 * DAY).some((e) => e.event_name === 'application_abandoned'));
   data = fixture(); data.matches = [{ id: 'm1', candidat_id: 'c1', offre_id: 'o1' }];
   data.messages = [{ id: 'msg1', match_id: 'm1', sender_id: 'u2', receiver_id: 'u1', created_at: date(3) }];
   assert.ok(!buildScheduledEvents(data, now, now - 1 * DAY).some((e) => e.event_name === 'recruiter_message_unanswered'),
@@ -81,4 +78,29 @@ test('inactivity sends only the highest reached milestone once per inactivity pe
   const data = fixture(); data.activities = [{ user_id: 'u1', last_active_at: date(40) }];
   const inactive = buildScheduledEvents(data, now, now - 60 * DAY).filter((e) => e.event_name === 'user_inactive');
   assert.deepEqual(inactive.map((e) => e.properties.days), [30]);
+});
+test('application_abandoned: definition by outcome of the swipe attempt', () => {
+  const abandoned = (mutate) => {
+    const data = fixture(); data.interactions[0].application_started_at = date(2); mutate(data);
+    return buildScheduledEvents(data, now, now - 20 * DAY).some((e) => e.event_name === 'application_abandoned');
+  };
+  // Failed send: the swipe route stored the like, then the candidature insert (or CV copy) failed.
+  assert.equal(abandoned((d) => { d.candidates[0].swipes_meta = { liked_offer_ids: ['o1'] }; }), true, 'a like alone is not an application');
+  // Interrupted send: the request never reached the server, nothing recorded.
+  assert.equal(abandoned(() => {}), true);
+  // Sent, at any pipeline status, including withdrawn by the candidate.
+  for (const statut of ['envoyee', 'vu', 'refusee', 'retiree']) {
+    assert.equal(abandoned((d) => { d.applications.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'candidate_like', statut }); }), false, statut);
+  }
+  // Historical recruiter-side row + like: the swipe answered "already sent", nothing to finish.
+  assert.equal(abandoned((d) => {
+    d.applications.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'recruteur_like', statut: 'nouveau' });
+    d.candidates[0].swipes_meta = { liked_offer_ids: ['o1'] };
+  }), false);
+  // A recruiter-side row is not the candidate's application: a failed attempt is still reminded.
+  assert.equal(abandoned((d) => { d.applications.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'recruteur_like', statut: 'nouveau' }); }), true);
+  // "Pass" swipe: no application intent (recorded as dismissed, never as application_started).
+  assert.equal(abandoned((d) => { d.interactions[0].dismissed_at = date(2); d.candidates[0].swipes_meta = { passed_offer_ids: ['o1'] }; }), false);
+  // Not before 24 hours.
+  assert.equal(abandoned((d) => { d.interactions[0].application_started_at = new Date(now - 3600000).toISOString(); }), false);
 });

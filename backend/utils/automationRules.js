@@ -54,10 +54,16 @@ function buildScheduledEvents(snapshot, now, installedAt) {
   const offers = snapshot.offers.filter((o) => isOpenOffer(o, now));
   const offerMap = new Map(offers.map((o) => [o.id, o]));
   const applied = new Set(snapshot.applications.filter((a) => a.lettre_type !== 'recruteur_like').map((a) => `${a.candidat_id}:${a.offre_id}`));
-  // A recorded right swipe is a completed attempt, even when no candidature row was
-  // created (e.g. an older recruiter-side row already existed for this pair).
+  // The swipe route records liked_offer_ids BEFORE creating the candidature, so a like
+  // alone is not a completed application: a failed send must still be reminded. A like
+  // only counts when a row exists for the pair (the historical recruiter-side row for
+  // which the swipe answers "already sent" without creating a candidate row).
+  const anyRow = new Set(snapshot.applications.map((a) => `${a.candidat_id}:${a.offre_id}`));
   for (const candidate of snapshot.candidates) {
-    for (const id of candidate.swipes_meta?.liked_offer_ids || []) applied.add(`${candidate.id}:${id}`);
+    for (const id of candidate.swipes_meta?.liked_offer_ids || []) {
+      const key = `${candidate.id}:${id}`;
+      if (anyRow.has(key)) applied.add(key);
+    }
   }
   const week = Math.floor((now - installedAt) / DELAYS.reminderPeriod);
   const enqueue = (user, name, properties, key) => {

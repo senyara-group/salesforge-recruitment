@@ -49,10 +49,8 @@ test('contact role comes from the account, and passed or swiped offers cancel vi
   let f = fixture(); f.tables.candidats = [];
   const result = await prepareDelivery(f.db, { user_id: 'u1', event_name: 'signup_completed', properties: {} }, now);
   assert.equal(result.contact.ROLE, 'CANDIDAT', 'a candidate without profile row is not labelled recruiter');
-  for (const meta of [{ passed_offer_ids: ['o1'] }, { liked_offer_ids: ['o1'] }]) {
-    f = fixture(); f.tables.candidats[0].swipes_meta = meta;
-    assert.equal((await prepareDelivery(f.db, { user_id: 'u1', event_name: 'offer_viewed_without_application', properties: { offre_id: 'o1' } }, now)).allowed, false);
-  }
+  f = fixture(); f.tables.candidats[0].swipes_meta = { passed_offer_ids: ['o1'] };
+  assert.equal((await prepareDelivery(f.db, { user_id: 'u1', event_name: 'offer_viewed_without_application', properties: { offre_id: 'o1' } }, now)).allowed, false);
   f = fixture(); f.tables.users = [];
   assert.equal((await prepareDelivery(f.db, { user_id: 'u1', event_name: 'message_received', properties: {} }, now)).reason, 'recipient removed');
 });
@@ -68,4 +66,19 @@ test('unanswered recruiter messages survive the application that created the mat
   assert.deepEqual([result.properties.poste, result.properties.entreprise], ['Account Executive', 'Acme']);
   f.tables.candidatures[0].statut = 'refusee';
   assert.equal((await prepareDelivery(f.db, row, now)).reason, 'application closed');
+});
+test('application_abandoned is rechecked at send time with the same definition', async () => {
+  const send = async (mutate) => {
+    const f = fixture(); mutate(f);
+    return (await prepareDelivery(f.db, { user_id: 'u1', event_name: 'application_abandoned', properties: { offre_id: 'o1' } }, now)).allowed;
+  };
+  assert.equal(await send((f) => { f.tables.candidats[0].swipes_meta = { liked_offer_ids: ['o1'] }; }), true, 'failed send after the like');
+  assert.equal(await send(() => {}), true, 'interrupted send');
+  assert.equal(await send((f) => { f.tables.candidatures.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'candidate_like', statut: 'envoyee' }); }), false, 'sent');
+  assert.equal(await send((f) => { f.tables.candidatures.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'prioritaire', statut: 'retiree' }); }), false, 'withdrawn');
+  assert.equal(await send((f) => {
+    f.tables.candidatures.push({ candidat_id: 'c1', offre_id: 'o1', lettre_type: 'recruteur_like', statut: 'nouveau' });
+    f.tables.candidats[0].swipes_meta = { liked_offer_ids: ['o1'] };
+  }), false, 'historical recruiter row + like');
+  assert.equal(await send((f) => { f.tables.candidats[0].swipes_meta = { passed_offer_ids: ['o1'] }; }), false, 'passed');
 });
