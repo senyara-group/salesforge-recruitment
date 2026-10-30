@@ -53,7 +53,13 @@ input:focus{border-color:var(--b);box-shadow:0 0 0 3px var(--bs)}
 .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
 .role-btn{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:14px 12px;font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}
 .role-btn:hover{border-color:var(--b);color:var(--b);box-shadow:0 0 0 3px var(--bs)}
-iframe{display:none;width:100%;height:100dvh;border:0;background:#fff}
+/* L'espace connecté (et sa navigation basse position:fixed) vit dans cette iframe :
+   sa barre est fixée au bas de l'IFRAME, pas de l'écran. En 100dvh dans le flux, la
+   hauteur suivait la barre d'adresse (mise à jour décalée après son animation) et le
+   document parent pouvait rebondir : la barre basse sautait avec l'iframe entière.
+   Fixe et à 100% du viewport initial, l'iframe ne bouge ni ne change de taille. */
+iframe{display:none;position:fixed;top:0;left:0;width:100%;height:100%;border:0;background:#fff}
+html:has(> body:not(.auth)){overscroll-behavior:none}
 @media (max-width:380px){
   body.auth{padding:14px}
   .card,.role-choice{padding:22px 18px;border-radius:16px}

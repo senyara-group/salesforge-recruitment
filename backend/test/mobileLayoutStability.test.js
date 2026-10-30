@@ -11,6 +11,10 @@ const ROOT = path.resolve(__dirname, '../..');
 const candidateHtml = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/candidat.html'), 'utf8');
 const sharedCss = fs.readFileSync(path.join(ROOT, 'frontend/app-professional.css'), 'utf8').replace(/\r\n/g, '\n');
 const candidateCss = candidateHtml.slice(candidateHtml.indexOf('<style>'), candidateHtml.indexOf('</style>'));
+const recruiterHtml = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/recruteur.html'), 'utf8');
+const recruiterCss = recruiterHtml.slice(recruiterHtml.indexOf('<style>'), recruiterHtml.indexOf('</style>'));
+const shellHtml = fs.readFileSync(path.join(ROOT, 'frontend/swipsales_app.html'), 'utf8').replace(/\r\n/g, '\n');
+const shellCss = shellHtml.slice(shellHtml.indexOf('<style>'), shellHtml.indexOf('</style>'));
 
 // Déclarations d'une règle dont le sélecteur est exactement `selector`, dans un bloc donné.
 function rule(css, selector) {
@@ -47,12 +51,37 @@ test('navigation basse : centrée sans transform sur la barre fixe, desktop ancr
 });
 
 test('navigation basse : aucune transition de propriété de mise en page, zone tactile et safe-area', () => {
-  const item = rule(candidateCss, '.bn');
-  const transition = item.match(/transition:([^;]*)/)[1];
-  assert.doesNotMatch(transition, /^\s*(all\s*)?\.?\d/, 'transition « all » implicite interdite');
-  assert.deepEqual(transition.split(',').map((part) => part.trim().split(/\s+/)[0]).sort(), ['background-color', 'color']);
+  for (const css of [candidateCss, recruiterCss]) {
+    const item = rule(css, '.bn');
+    const transition = item.match(/transition:([^;]*)/)[1];
+    assert.doesNotMatch(transition, /^\s*(all\s*)?\.?\d/, 'transition « all » implicite interdite');
+    assert.deepEqual(transition.split(',').map((part) => part.trim().split(/\s+/)[0]).sort(), ['background-color', 'color']);
+    assert.match(rule(css, '.bnav'), /padding:6px 0 max\(8px,env\(safe-area-inset-bottom\)\)/);
+  }
   assert.match(rule(sharedCss, '.bn'), /min-height: 46px/);
-  assert.match(rule(candidateCss, '.bnav'), /padding:6px 0 max\(8px,env\(safe-area-inset-bottom\)\)/);
+});
+
+// Tremblement de la barre basse : la cause racine est l'iframe du shell. La barre est
+// position:fixed DANS l'iframe, donc fixée au bas de l'iframe et non de l'écran.
+test('navigation basse : l’iframe du shell ne suit ni la barre d’adresse ni le rebond du document', () => {
+  const frame = rule(shellCss, 'iframe');
+  assert.match(frame, /position:fixed;top:0;left:0;width:100%;height:100%/);
+  assert.doesNotMatch(frame, /[dsl]?vh/, 'une hauteur en unités de viewport redimensionne l’iframe avec la barre d’adresse');
+  assert.match(rule(shellCss, 'html:has(> body:not(.auth))'), /overscroll-behavior:none/);
+});
+
+test('navigation basse recruteur : même positionnement que le candidat, sans transform', () => {
+  const nav = rule(recruiterCss, '.bnav');
+  assert.match(nav, /position:fixed/);
+  assert.doesNotMatch(nav, /transform/);
+  assert.match(nav, /left:0;right:0;margin:0 auto/);
+});
+
+test('swipe : aucun écouteur touchmove non passif global (bloquerait chaque défilement)', () => {
+  for (const html of [candidateHtml, recruiterHtml]) {
+    assert.doesNotMatch(html, /window\.addEventListener\('touchmove'/);
+    assert.match(html, /card\.addEventListener\('touchmove',m,\{passive:false\}\)/);
+  }
 });
 
 test('Coach L/M/P : colonne contrainte, enfants rétrécissables, actions et zone de saisie dans la largeur', () => {

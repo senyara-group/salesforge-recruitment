@@ -61,8 +61,10 @@ button,input,textarea,select{font-family:inherit}
 .notif-s{font-size:12px;color:var(--ink3);margin-top:1px;line-height:1.4}
 .notif-time{font-size:10px;color:var(--mu);margin-top:3px;font-weight:600}
 .notif-empty{padding:28px 14px;text-align:center;font-size:12px;color:var(--mu)}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:.15s;padding:4px 0;position:relative}
+/* Centrée sans transform : une barre fixe en bas portant son propre transform
+   est recomposée à part pendant l'animation de la barre d'adresse Android. */
+.bnav{position:fixed;bottom:0;left:0;right:0;margin:0 auto;width:100%;max-width:430px;background:var(--w);border-top:1px solid var(--bd);box-shadow:0 -2px 10px rgba(9,20,34,.03);display:flex;z-index:50;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:color .15s,background-color .15s;padding:4px 0;position:relative}
 .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}.bn span{font-size:10px;font-weight:600}.bn.on{color:var(--b)}
 .bn-ico-wrap{position:relative;display:inline-flex}
 .nav-dot{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:max-content;background:var(--r);color:#fff;border-radius:999px;border:1.5px solid var(--w);padding:2px 6px;font-size:8px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:.2px;white-space:nowrap}
@@ -3101,7 +3103,9 @@ function attachDrag(card, cand) {
   };
   const e2 = e => { pending=false; if (!on) return; on=false; if (e.cancelable) e.preventDefault(); card.style.transition='transform .35s ease,opacity .3s ease'; const up = cy < -82 && Math.abs(cy) > Math.abs(cx) * .7; if(up)fly(card,'u',cand);else if(cx>82)fly(card,'r',cand);else if(cx<-82)fly(card,'l',cand);else{card.style.transform='';card.querySelectorAll('.sw-lbl').forEach(l=>l.style.opacity=0)} cx=0;cy=0; };
   card.addEventListener('mousedown',s); card.addEventListener('touchstart',s,{passive:true});
-  window.addEventListener('mousemove',m); window.addEventListener('touchmove',m,{passive:false});
+  // touchmove part toujours vers la cible du touchstart : écouté sur la carte, un
+  // écouteur non passif ne bloque plus chaque défilement de l'application entière.
+  window.addEventListener('mousemove',m); card.addEventListener('touchmove',m,{passive:false});
   window.addEventListener('mouseup',e2); window.addEventListener('touchend',e2); window.addEventListener('touchcancel',e2);
 }
 async function fly(card, dir, cand) {
