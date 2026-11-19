@@ -45,7 +45,7 @@
   --font-display: 'Sora', Inter, sans-serif;  /* titres, chiffres */
   --font-body: 'Inter', system-ui, sans-serif; /* tout le reste */
   --fs-xs: 11.5px;  --fs-sm: 12.5px;  --fs-md: 14px;  --fs-lg: 16px;
-  --fs-xl: 20px;    --fs-2xl: 26px;   --fs-3xl: 34px;
+  --fs-xl: 20px;    --fs-title: 24px; --fs-2xl: 26px;   --fs-3xl: 34px;
 
   /* --- Rayons --- */
   --rad-s: 8px;     /* boutons compacts, champs */

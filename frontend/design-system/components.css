@@ -96,7 +96,7 @@ button { font-family: inherit; cursor: pointer; }
    EN-TÊTES DE PAGE ET SECTIONS
    ===================================================================== */
 .page-kicker { font-size: 12px; font-weight: 600; color: var(--ink3); margin-bottom: var(--sp-1); }
-.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0; color: var(--ink); }
+.page-title, .sec-t.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0; color: var(--ink); }
 .page-intro { font-size: var(--fs-md); color: var(--ink3); margin: 6px 0 0; line-height: 1.55; max-width: 640px; }
 .page-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-4); flex-wrap: wrap; }
 .page-heading-inline { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-3); }
@@ -109,8 +109,7 @@ button { font-family: inherit; cursor: pointer; }
 .sec-t { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 700; color: var(--ink); }
 .section-divider { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); border-top: 1px solid var(--bd); padding-top: 22px; }
 .section-divider p { margin: 3px 0 0; font-size: 13px; color: var(--ink3); }
-.cv-panel .section-divider, .card-sec .section-divider { border-top: 0; padding-top: 0; }
-@media (min-width: 1024px) { .page-title { font-size: var(--fs-2xl); } }
+@media (min-width: 1024px) { .page-title, .sec-t.page-title { font-size: var(--fs-2xl); } }
 
 /* =====================================================================
    BOUTONS — variantes canoniques : .bp (principal), .bo (contour),
@@ -163,9 +162,10 @@ small { font-weight: 400; color: var(--ink3); }
 .card-sec-t { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
 .account-section h1, .account-section h2 { margin: 0; font-family: var(--font-display); font-size: 19px; font-weight: 700; }
 .account-section p { margin: 0; font-size: var(--fs-md); color: var(--ink2); line-height: 1.55; }
+.account-section { padding: 22px 24px; }
 .account-section .btn { align-self: flex-start; }
 .account-section.is-upsell { background: var(--bs); border-color: var(--bm); }
-.account-value { padding: 11px 12px; border-radius: var(--rad-s); background: var(--bg); font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+.account-value { font-size: 15px; font-weight: 600; color: var(--ink); }
 .account-value strong, .account-value span { display: block; }
 .account-value span { margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink3); }
 
@@ -198,7 +198,7 @@ small { font-weight: 400; color: var(--ink3); }
 .menu-list { background: var(--w); border: 1px solid var(--bd); border-radius: var(--rad-l); overflow: hidden; }
 .menu-i { display: flex; align-items: center; gap: var(--sp-3); padding: 13px 18px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: var(--fs-md); font-weight: 500; }
 .menu-i:last-child { border-bottom: 0; }
-.menu-ico { width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--rad-s); background: var(--bs); color: var(--b); display: flex; align-items: center; justify-content: center; }
+.menu-ico { width: 30px; height: 30px; flex-shrink: 0; border-radius: var(--rad-s); background: var(--bg); color: inherit; display: flex; align-items: center; justify-content: center; }
 .menu-ico svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 /* =====================================================================
@@ -327,11 +327,7 @@ select.form-field, textarea.form-field { width: 100%; min-height: 44px; border: 
 /* KPI cliquable et repère de couleur */
 .kpi-link { cursor: pointer; }
 .kpi-link:hover { background: var(--surface-tint); }
-.kpi-tone-blue { box-shadow: inset 3px 0 0 var(--b); }
-.kpi-tone-green { box-shadow: inset 3px 0 0 var(--g); }
-.kpi-tone-amber { box-shadow: inset 3px 0 0 var(--a); }
-.kpi-tone-purple { box-shadow: inset 3px 0 0 var(--pu); }
-.kpi-tone-slate { box-shadow: inset 3px 0 0 var(--bd2); }
+/* .kpi-tone-* : repère de couleur porté par l’icône (.kpi-ico), pas de liseré (maquette) */
 .kpi-t.tf { color: var(--ink3); }
 
 /* États de survol communs */

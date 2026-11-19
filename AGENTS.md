@@ -43,6 +43,8 @@ Polices chargées par toutes ces pages : Sora (600–800) et Inter (400–700), 
 Maquettes de référence (toutes les vues candidat, restylées sans rien ajouter ni retirer) :
 https://claude.ai/artifact/J53SnsENRiULXqDyzZr1y2
 
+La maquette fait foi pour l’apparence. Sa feuille (`project/swip.css`) porte les mêmes classes que le site : pour vérifier un écart, l’appliquer au vrai site et comparer le rendu élément par élément. Seule exception assumée : les éléments que la maquette omettait (icônes des cartes d’accueil, des outils, des documents du profil et de la zone de dépôt du CV, cœur de l’écran Match) restent affichés.
+
 ### Principes visuels (piste « Clarté »)
 
 - Surfaces blanches sur fond `--bg`, bordures fines `--bd`, ombres très légères.
@@ -140,7 +142,7 @@ Recruteur : `.form-group` (champ du formulaire de publication), `.form-hint-err`
 |---|---|
 | `.card-sec` > `.card-sec-hd` > `.card-sec-t` | Carte de contenu générique |
 | `.account-section` (`.is-upsell` pour une porte d'accès payante) + `.account-value` | Bloc de réglage, consentement, accès réservé |
-| `.kpi-grid` > `.kpi` > `.kpi-l` / `.kpi-v` / `.kpi-t(.tu/.tf)` | Indicateurs (2 colonnes en mobile, 4 dès 720 px). Cliquable : `.kpi-link` ou `button.kpi`. Repère de couleur : `.kpi-tone-blue/-green/-amber/-purple/-slate`. Avec icône : `.kpi-card` + `.kpi-ico` |
+| `.kpi-grid` > `.kpi` > `.kpi-l` / `.kpi-v` / `.kpi-t(.tu/.tf)` | Indicateurs (2 colonnes en mobile, 4 dès 720 px). Cliquable : `.kpi-link` ou `button.kpi`. Avec icône : `.kpi-card` + `.kpi-ico`, dont la couleur suit `.kpi-tone-blue/-green/-amber/-purple/-slate` (pas de liseré, comme la maquette) |
 | `.tr-list` > `.tr-item` > `.tr-logo`, `.tr-info` (`.tr-title`, `.tr-sub`), `.candidate-status-actions`, `.candidate-date` | Liste de suivi (candidatures, offres…) |
 | `.menu-list` > `.menu-i` > `.menu-ico`, `.menu-txt` | Liste de raccourcis |
 | `.opts` > `.opt(.sel)` > `.ob(-f/-c/-h/-a)`, `.ot`, `.oh` + `.step-nav` | Choix d'une option (tests, questionnaires) |
