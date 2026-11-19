@@ -118,26 +118,8 @@ function namesFromAuthUser(user = {}) {
   };
 }
 
-async function ensureUserProfile(user, requestedRole = null) {
-  const existing = await findUserProfile(user);
-  const requested = normalizeRequestedRole(requestedRole);
-
-  if (!existing && !requested) {
-    const error = new Error('ROLE_REQUIRED');
-    error.status = 409;
-    throw error;
-  }
-
-  // Le role d'un compte existant ne doit JAMAIS etre modifie implicitement par une
-  // valeur de contexte (ex: sf_pending_role perime cote client). Seule la creation
-  // initiale d'un compte, ou l'appel explicite a /auth/role, peut fixer le role.
-  const role = existing ? normalizeRole(existing.role, user.email) : requested;
-
-  // Rien n'a change depuis la derniere fois : pas besoin de reecrire en base
-  if (existing && existing.role === role && existing.email === user.email) {
-    return existing;
-  }
-
+// Ecrit la ligne users (id, email, role). Utilise a la connexion et au choix du role.
+async function upsertUserRow(user, role) {
   const { data, error } = await supabase
     .from('users')
     .upsert({
@@ -170,6 +152,29 @@ async function ensureUserProfile(user, requestedRole = null) {
   return data[0] || { id: user.id, email: user.email, role };
 }
 
+async function ensureUserProfile(user, requestedRole = null) {
+  const existing = await findUserProfile(user);
+  const requested = normalizeRequestedRole(requestedRole);
+
+  if (!existing && !requested) {
+    const error = new Error('ROLE_REQUIRED');
+    error.status = 409;
+    throw error;
+  }
+
+  // Le role d'un compte existant ne doit JAMAIS etre modifie implicitement par une
+  // valeur de contexte (ex: sf_pending_role perime cote client). Seule la creation
+  // initiale d'un compte, ou l'appel explicite a /auth/role, peut fixer le role.
+  const role = existing ? normalizeRole(existing.role, user.email) : requested;
+
+  // Rien n'a change depuis la derniere fois : pas besoin de reecrire en base
+  if (existing && existing.role === role && existing.email === user.email) {
+    return existing;
+  }
+
+  return upsertUserRow(user, role);
+}
+
 async function setUserRole(user, requestedRole) {
   const role = normalizeRequestedRole(requestedRole);
   if (!role) {
@@ -178,18 +183,7 @@ async function setUserRole(user, requestedRole) {
     throw error;
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .upsert({
-      id: user.id,
-      email: user.email,
-      role,
-    })
-    .select('*')
-    .limit(1);
-
-  if (error) throw error;
-  return data[0] || { id: user.id, email: user.email, role };
+  return upsertUserRow(user, role);
 }
 
 async function hydrateRoleProfile(profile) {
@@ -436,6 +430,11 @@ router.post('/login', async (req, res) => {
     profile = await hydrateRoleProfile(profile);
     profile = await applyOAuthNames(profile, data.user);
   } catch (error) {
+    // Compte sans role (ex: fiche users orpheline d'un ancien compte) : on renvoie la
+    // session pour que l'utilisateur choisisse son espace au lieu d'etre bloque.
+    if (error.message === 'ROLE_REQUIRED') {
+      return res.status(409).json({ error: 'ROLE_REQUIRED', ...sessionPayload(data.session), user: data.user });
+    }
     return res.status(error.status || 400).json({ error: error.message || 'Connexion impossible' });
   }
 

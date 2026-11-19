@@ -155,6 +155,7 @@ function frError(text){
   if (msg.includes('email not confirmed')) return 'Votre email n’est pas encore confirmé.';
   if (msg.includes('user already registered')) return 'Un compte existe déjà avec cet email.';
   if (msg.includes('signup disabled')) return 'La création de compte est temporairement indisponible.';
+  if (msg.includes('role_required')) return 'Choisis ton espace (candidat ou recruteur) pour continuer.';
   return text || 'Une erreur est survenue.';
 }
  
@@ -470,6 +471,13 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
+    // Compte sans espace attribue : on garde la session et on propose le choix.
+    if (res.status === 409 && data.error === 'ROLE_REQUIRED' && data.token) {
+      storeSession(data);
+      history.replaceState(null, '', window.location.pathname);
+      showRoleChoice();
+      return;
+    }
     if (!res.ok) {
       const error = data.error?.message || data.error || 'Connexion impossible';
       showMessage(error);
