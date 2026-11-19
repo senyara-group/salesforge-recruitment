@@ -67,8 +67,9 @@
   /* --- Coque de l'application --- */
   --sidebar-w: 232px;     /* barre latérale (≥ 1024 px) */
   --topbar-h: 60px;
+  --topbar-h-m: 56px;     /* barre du haut en mobile (< 1024 px) */
   --bottombar-h: 72px;    /* barre basse (mobile) */
-  --content-max: 1360px;  /* largeur maximale du contenu d’une page */
+  --content-max: 1600px;  /* largeur maximale du contenu d’une page */
   --tap: 44px;            /* hauteur minimale d’une cible tactile */
 
   /* --- Superpositions --- */

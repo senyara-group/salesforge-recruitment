@@ -134,8 +134,8 @@ test('C/D/E — vrai rendu dashboard avec zéro et 12001 candidatures, aucune di
 });
 test('A/B/F/G — CSS scoped : scroll naturel, largeur bornée, mobile empilé et desktop sans double padding', () => {
   assert.match(html, /design-system\/components\.css[\s\S]*design-system\/features\.css/);
-  // Largeur bornée : le contenu d'une page ne dépasse pas --content-max (1360 px).
-  assert.match(spaceCss, /--content-max:1360px/);
+  // Largeur bornée : le contenu d’une page ne dépasse pas --content-max (1600 px).
+  assert.match(spaceCss, /--content-max:1600px/);
   assert.match(ds.rule(ds.media(spaceCss, '(min-width:1024px)'), ':where(.page.on)>*'), /max-width:var\(--content-max\)/);
   // Pas de double padding : la page porte les marges, le conteneur du tableau de bord aucune.
   assert.doesNotMatch(ds.rule(css, '.dash-shell'), /padding/);

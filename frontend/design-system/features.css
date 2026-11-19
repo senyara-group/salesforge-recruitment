@@ -104,9 +104,25 @@
   .card-body { padding: var(--sp-6) 26px; gap: 14px; }
   .card-title { font-size: 22px; }
   .card-meta-mobile { display: none; }
-  .card-desc { -webkit-line-clamp: 4; }
+  .card-desc { -webkit-line-clamp: 8; }
 }
 .deck-actions { display: flex; justify-content: center; align-items: center; gap: 18px; }
+/* Opportunités et sourcing : l’écran tient dans la fenêtre, sans défilement. La carte occupe tout
+   l’espace restant et les boutons du swipe restent toujours visibles. */
+#p-swipe.page.on { height: calc(100dvh - var(--topbar-h-m)); overflow: hidden; gap: var(--sp-3); padding-bottom: calc(var(--bottombar-h) + var(--sp-3)); }
+#p-swipe .deck-wrap { min-height: 0; align-items: stretch; gap: 14px; }
+#p-swipe .deck-area { flex: 1; min-height: 0; height: auto; max-width: none; }
+#p-swipe .deck-actions { flex: none; }
+@media (min-width: 1024px) { #p-swipe.page.on { height: calc(100dvh - var(--topbar-h)); padding-bottom: var(--sp-6); } }
+/* Téléphone peu haut : la ligne lieu · contrat répète les pastilles de l’identité, on la retire et on resserre. */
+@media (max-width: 1023px) and (max-height: 760px) {
+  #p-swipe .card-meta-mobile { display: none; }
+  #p-swipe .card-identity { padding: 14px 16px; }
+  #p-swipe .card-identity-inner { gap: var(--sp-2); }
+  #p-swipe .card-body { padding: 12px 16px; gap: var(--sp-2); }
+  #p-swipe .card-desc-block { padding-top: 10px; }
+  #p-swipe .card-desc { -webkit-line-clamp: 2; }
+}
 .db { width: 58px; height: 58px; border-radius: var(--rad-pill); border: 1px solid var(--bd); background: var(--w); display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-2); cursor: pointer; }
 .db svg { stroke: currentColor; fill: none; stroke-width: 2.2; }
 .db-pass { color: var(--r); }
@@ -189,9 +205,11 @@
 .test-sl { font-size: var(--fs-sm); font-weight: 600; color: var(--pu); }
 .test-st { font-size: 15px; font-weight: 700; }
 .test-body { background: var(--w); border: 1px solid var(--bd); border-radius: var(--rad-l); padding: 26px; display: flex; flex-direction: column; gap: var(--sp-4); }
-.test-body > div { display: flex; flex-direction: column; gap: var(--sp-4); }
+/* Une étape est affichée par le JS en display:block (style en ligne) : l’espacement passe par les marges. */
+.test-body > div > * + * { margin-top: var(--sp-4); }
+.test-body > div > .qt + .qh { margin-top: 6px; }
 .qt { font-family: var(--font-display); font-size: 21px; font-weight: 700; letter-spacing: -.01em; line-height: 1.3; }
-.qh { font-size: var(--fs-md); color: var(--ink3); line-height: 1.55; margin-top: -8px; }
+.qh { font-size: var(--fs-md); color: var(--ink3); line-height: 1.55; }
 .job-pick-count { margin: 0; font-size: 13px; color: var(--ink3); }
 .sc-box { background: var(--bg); border-radius: var(--rad); padding: var(--sp-4) 18px; display: flex; flex-direction: column; gap: 10px; }
 .sc-tag { align-self: flex-start; font-size: var(--fs-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--pu); }
@@ -234,10 +252,10 @@
 .prefs-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .pc { height: 36px; padding: 0 14px; border: 1px solid var(--bd); border-radius: var(--rad-pill); background: var(--w); font-size: 13px; font-weight: 600; color: var(--ink2); }
 .pc.on, .pc.sel { border-color: var(--b); background: var(--bs); color: var(--b2); }
-.analyzing { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); text-align: center; padding: var(--sp-10) var(--sp-5); }
+.analyzing { display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); text-align: center; padding: var(--sp-10) var(--sp-5); }
 .analyzing h3 { margin: 0; font-size: 22px; font-weight: 700; }
-.analyzing p { margin: 0; font-size: var(--fs-md); color: var(--ink3); }
-.ana-bar { width: 100%; max-width: 420px; height: 8px; border-radius: var(--rad-pill); background: var(--pus); overflow: hidden; }
+.analyzing p { margin: 0; font-size: var(--fs-md); color: var(--ink3); line-height: 1.55; }
+.ana-bar { width: 100%; height: 10px; border-radius: var(--rad-pill); background: var(--pus); overflow: hidden; }
 .ana-fill { height: 100%; border-radius: var(--rad-pill); background: var(--pu); }
 .ana-st { font-size: 13px; color: var(--ink2); font-weight: 600; }
 .res-shell { display: flex; flex-direction: column; gap: var(--sp-4); }
@@ -288,7 +306,7 @@
 .cv-panel { background: var(--w); border: 1px solid var(--bd); border-radius: var(--rad-l); padding: 22px; display: flex; flex-direction: column; gap: 14px; }
 .cv-dropzone { border: 1.5px dashed var(--bd2); border-radius: var(--rad-l); background: var(--surface-sunken); padding: 28px; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); text-align: center; }
 .cv-dropzone strong { font-size: 15px; }
-.cv-file-chip { height: 28px; padding: 0 10px; border-radius: var(--rad-pill); background: var(--w); border: 1px solid var(--bd); font-size: var(--fs-sm); font-weight: 600; color: var(--ink2); display: inline-flex; align-items: center; }
+.cv-file-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 28px; padding: 0 10px; border-radius: var(--rad-pill); background: var(--w); border: 1px solid var(--bd); font-size: var(--fs-sm); font-weight: 600; color: var(--ink2); display: inline-flex; align-items: center; }
 .cv-text-alt summary { font-size: 13px; font-weight: 600; color: var(--b); cursor: pointer; }
 .cv-waiting { background: var(--w); border: 1px solid var(--bd); border-radius: var(--rad-l); padding: var(--sp-6); display: flex; flex-direction: column; gap: 14px; }
 .cv-wait-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -399,7 +417,13 @@
 .chat-input { flex: 1; height: 44px; border: 1px solid var(--bd); border-radius: var(--rad); padding: 0 14px; font: 400 var(--fs-md) var(--font-body); }
 .chat-send { width: 44px; height: 44px; border: 0; border-radius: var(--rad); background: var(--b); color: var(--on-color); display: flex; align-items: center; justify-content: center; }
 .chat-send svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
-@media (min-width: 1024px) { .conversations-panel { max-width: 330px; } }
+@media (min-width: 1024px) {
+  .conversations-panel { max-width: 360px; overflow-y: auto; }
+  /* Messages et coach occupent toute la hauteur de l’écran sur ordinateur */
+  #p-messages.page.on { height: calc(100dvh - var(--topbar-h)); }
+  #p-messages .messages-page { flex: 1; min-height: 0; }
+  #p-messages .messages-workspace { flex: 1; min-height: 0; }
+}
 
 /* ---------- Profil candidat ---------- */
 .profile-hero { background: var(--w); border: 1px solid var(--bd); border-radius: var(--rad-l); padding: var(--sp-6); display: flex; flex-direction: column; gap: 18px; }
@@ -434,7 +458,8 @@
 .profile-resource-row { display: flex; align-items: center; gap: var(--sp-3); border: 1px solid var(--bd); border-radius: var(--rad); padding: 10px 14px; flex-wrap: wrap; }
 .profile-resource-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--rad-s); background: var(--bs); color: var(--b); display: flex; align-items: center; justify-content: center; }
 .profile-resource-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; }
-.profile-resource-name { font-size: var(--fs-md); font-weight: 600; }
+.profile-resource-row > div:not([class]) { flex: 1; min-width: 0; }
+.profile-resource-name { font-size: var(--fs-md); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-resource-meta { font-size: 12px; color: var(--ink3); }
 .profile-resource-actions { display: flex; gap: 4px; margin-left: auto; }
 .profile-resource-actions button { height: 32px; padding: 0 10px; border: 1px solid var(--bd); border-radius: var(--rad-s); background: var(--w); font-size: var(--fs-sm); font-weight: 600; color: var(--ink2); }
@@ -461,8 +486,10 @@
 .profile-check-label { flex: 1; }
 .profile-docs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .profile-doc-tile { border: 1px solid var(--bd); border-radius: var(--rad); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.profile-doc-tile, .profile-doc-copy { min-width: 0; }
 .profile-doc-copy { display: flex; flex-direction: column; gap: 2px; }
-.profile-doc-copy span { font-size: var(--fs-sm); color: var(--ink3); }
+/* Noms de fichiers longs : une ligne terminée par « … » */
+.profile-doc-copy span { font-size: var(--fs-sm); color: var(--ink3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-doc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .comp-display { display: flex; flex-wrap: wrap; gap: 6px; }
 .comp-pill { height: 28px; padding: 0 11px; border-radius: var(--rad-pill); background: var(--bs); color: var(--b2); font-size: var(--fs-sm); font-weight: 600; display: inline-flex; align-items: center; }
@@ -617,6 +644,7 @@
 .resource-open-affordance svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 .doc-open { width: 28px; height: 28px; flex-shrink: 0; border: 1px solid var(--bd); border-radius: var(--rad-s); color: var(--ink3); display: flex; align-items: center; justify-content: center; }
 .doc-open svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.doc-open.resource-open-affordance { width: auto; height: auto; border: 0; border-radius: 0; color: var(--b); } /* lien « Consulter » : texte, pas une case icône */
 a.doc-item:hover, .doc-item[role="link"]:hover { border-color: var(--bm); }
 
 /* Messagerie : affichage de la liste ou de la conversation */
@@ -1025,3 +1053,6 @@ button.kpi:hover { background: var(--surface-tint); }
 /* Test ADN, choix des postes : coche visible, focus visible, libellés longs (adnMultiJob) */
 .opt { width: 100%; }
 .job-pick .opt:focus-visible { outline: 2px solid var(--b); outline-offset: 2px; }
+
+/* Coach sur ordinateur : la conversation occupe la hauteur de l’écran (après la règle de base ci-dessus) */
+@media (min-width: 1024px) { .coach-conversation { height: max(560px, calc(100dvh - 250px)); } }

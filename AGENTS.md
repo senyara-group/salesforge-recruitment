@@ -53,7 +53,7 @@ La maquette fait foi pour l’apparence. Sa feuille (`project/swip.css`) porte l
 - Couleurs sémantiques par paires fond / texte : `--gs`/`--gt` succès, `--as`/`--at` attente, `--rs`/`--rt` erreur, `--pus`/`--put` ADN et premium, `--bs`/`--b2` information.
 - Rayons : `--rad-s` (8) champs et petits boutons, `--rad` (10) boutons, `--rad-l` (14) cartes, `--rad-xl` (16) cartes de swipe et feuilles.
 - Le swipe est le cœur du produit : la pile `.swipe-card` et les boutons `.db-*` restent les éléments les plus visibles des écrans Opportunités et Sourcing.
-- Cible tactile : `--tap` (44 px) pour `.btn`, `.page-back-btn`, les lignes de suggestions, le sélecteur du pipeline. Largeur maximale du contenu d'une page : `--content-max` (1360 px).
+- Cible tactile : `--tap` (44 px) pour `.btn`, `.page-back-btn`, les lignes de suggestions, le sélecteur du pipeline. Largeur maximale du contenu d’une page : `--content-max` (1600 px).
 - Pipeline recruteur : chaque étape a sa couleur `--stage` (posée par `[data-stage]`), déclinée en fond (`--stage-soft`) et bordure (`--stage-line`) avec `color-mix`.
 
 ## Règles d'or

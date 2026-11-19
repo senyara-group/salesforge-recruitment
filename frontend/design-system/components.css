@@ -21,7 +21,7 @@ button { font-family: inherit; cursor: pointer; }
    ===================================================================== */
 .app { min-height: 100dvh; background: var(--bg); }
 
-.topbar { position: sticky; top: 0; z-index: var(--z-topbar); height: 56px; background: var(--w); border-bottom: 1px solid var(--bd); padding: 0 14px; display: flex; align-items: center; gap: var(--sp-3); }
+.topbar { position: sticky; top: 0; z-index: var(--z-topbar); height: var(--topbar-h-m); background: var(--w); border-bottom: 1px solid var(--bd); padding: 0 14px; display: flex; align-items: center; gap: var(--sp-3); }
 .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .logo-m { width: 32px; height: 32px; border-radius: var(--rad-s); background: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .logo-m img { width: 19px; height: auto; }
