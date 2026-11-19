@@ -12,6 +12,7 @@ const SPACES = [
   { name: 'recruteur', file: '_spaces/recruteur.html', page: 'p-settings' },
 ];
 const read = (file) => fs.readFileSync(path.join(FRONTEND, file), 'utf8');
+const ds = require('./helpers/designSystemCss');
 
 function pageBlock(html, id) {
   const start = html.indexOf(`<div id="${id}" class="page">`);
@@ -56,13 +57,18 @@ for (const space of SPACES) {
   });
 
   test(`${space.name} : mobile (statique) — zone tactile ≥ 44 px, retour à la ligne, focus visible`, () => {
-    const html = read(space.file);
-    const rule = html.match(/\.support-contact-link\{([^}]*)\}/);
+    // Le style vient du design system chargé par l'espace (composant .btn + modificateur).
+    assert.match(read(space.file), /href="\.\.\/design-system\/components\.css"/);
+    const css = ds.read('components');
+    const tokens = ds.read('tokens');
+    const rule = ds.rule(css, '.btn.support-contact-link');
     assert.ok(rule);
-    assert.match(rule[1], /min-height:44px/);
-    assert.match(rule[1], /max-width:100%/);
-    assert.match(rule[1], /overflow-wrap:anywhere/);
-    assert.match(html, /\.support-contact-link:focus-visible\{outline:2px solid var\(--b\)/);
+    assert.match(rule, /min-height:var\(--tap\)/);
+    assert.match(tokens, /--tap:44px/);
+    assert.match(rule, /max-width:100%/);
+    assert.match(rule, /white-space:normal/);
+    assert.match(rule, /overflow-wrap:anywhere/);
+    assert.match(ds.rule(css, '.btn.support-contact-link:focus-visible'), /outline:2px solid var\(--b\)/);
   });
 }
 

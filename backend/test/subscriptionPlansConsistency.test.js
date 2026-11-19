@@ -11,7 +11,10 @@ const FRONTEND = path.join(__dirname, '../../frontend');
 // Le dépôt est extrait en CRLF sous Windows (core.autocrlf) : on normalise.
 const readText = (file) => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 const candidateHtml = readText(path.join(FRONTEND, '_spaces/candidat.html'));
-const sharedCss = readText(path.join(FRONTEND, 'app-professional.css'));
+// Feuilles du design system, dans l'ordre de chargement des espaces.
+const DS_FILES = ['tokens', 'components', 'features'];
+const dsCss = DS_FILES.map((name) => readText(path.join(FRONTEND, `design-system/${name}.css`)));
+const tokensCss = dsCss[0];
 
 // ------------------------------------------------------------------
 // Harnais frontend : exécute la vraie section PRICING de candidat.html
@@ -292,9 +295,9 @@ function cssRules(source, order) {
   return rules;
 }
 
-const candidateStyle = candidateHtml.slice(candidateHtml.indexOf('<style>') + 7, candidateHtml.indexOf('</style>'));
-assert.ok(candidateHtml.indexOf('</style>') < candidateHtml.indexOf('app-professional.css'), 'le CSS partagé est chargé après le style local');
-const ALL_RULES = [...cssRules(candidateStyle, 0), ...cssRules(sharedCss, 1e6)];
+assert.match(candidateHtml, /design-system\/tokens\.css[\s\S]*design-system\/components\.css[\s\S]*design-system\/features\.css/, 'design system chargé dans l’ordre tokens, composants, blocs métier');
+assert.doesNotMatch(candidateHtml, /<style[\s>]/, 'aucun style local ne vient s’intercaler dans la cascade');
+const ALL_RULES = dsCss.flatMap((css, i) => cssRules(css, i * 1e6));
 
 // Ne retient que les sélecteurs dont on sait évaluer la correspondance pour une
 // carte de #p-pricing : [#p-pricing ]?.plan-card(.classe)* sans pseudo-classe.
@@ -325,7 +328,7 @@ function winning(classes, properties) {
   return best?.rule || null;
 }
 
-const ROOT_TOKENS = Object.fromEntries([...sharedCss.slice(0, sharedCss.indexOf('}')).matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+const ROOT_TOKENS = Object.fromEntries([...tokensCss.slice(0, tokensCss.indexOf('}')).matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 function resolveColor(value) {
   const token = value.match(/var\((--[\w-]+)\)/);
   const color = token ? ROOT_TOKENS[token[1]] : value;

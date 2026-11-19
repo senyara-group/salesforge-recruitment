@@ -8,7 +8,12 @@ const { applicationMoves } = require('../utils/pipelineSummary');
 const { TRANSITIONS } = require('../utils/applicationWorkflow');
 const { emptyPipelineStages, stageForStatut, comparePipelineNewestFirst } = require('../utils/pipelineQuery');
 const html = fs.readFileSync(path.join(__dirname, '../../frontend/_spaces/recruteur.html'), 'utf8');
-const css = fs.readFileSync(path.join(__dirname, '../../frontend/recruiter-dashboard.css'), 'utf8');
+const ds = require('./helpers/designSystemCss');
+const spaceCss = ds.spaceCss();
+// Règles du tableau de bord et du pipeline dans le design system (blocs métier).
+const css = ds.blocks(ds.read('features'))
+  .filter((b) => /dash-|pipe|\.pc-|\.po-|data-stage|candidate-workflow/.test(b.prelude) || b.prelude.startsWith('@media'))
+  .map((b) => `${b.prelude}{${b.body}}`).join('\n');
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function card(id, statut = 'envoyee', created_at = '2026-10-01T00:00:00Z') {
@@ -128,14 +133,22 @@ test('C/D/E — vrai rendu dashboard avec zéro et 12001 candidatures, aucune di
   }
 });
 test('A/B/F/G — CSS scoped : scroll naturel, largeur bornée, mobile empilé et desktop sans double padding', () => {
-  assert.match(html, /app-professional.css[\s\S]*recruiter-dashboard.css/);
-  assert.match(css, /max-width: 1360px/);
-  assert.match(css, /#p-dashboard \.dash-shell \{ padding: 0; \}/);
-  assert.match(css, /scrollbar-width: auto/);
-  assert.match(css, /#p-dashboard \.dash-bottom \{ grid-template-columns: minmax\(0, 1fr\)/);
-  assert.doesNotMatch(css, /(?:html|body|#p-dashboard)[^{]*\{[^}]*(?:overflow-y:\s*hidden|height:\s*100(?:d?vh|%))/);
-  assert.match(css, /#p-pipeline \.pipe-cols \{ display: flex; overflow-x: auto/);
-  assert.match(css, /#p-dashboard \.dash-stages \{[^}]*repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(html, /design-system\/components\.css[\s\S]*design-system\/features\.css/);
+  // Largeur bornée : le contenu d'une page ne dépasse pas --content-max (1360 px).
+  assert.match(spaceCss, /--content-max:1360px/);
+  assert.match(ds.rule(ds.media(spaceCss, '(min-width:1024px)'), ':where(.page.on)>*'), /max-width:var\(--content-max\)/);
+  // Pas de double padding : la page porte les marges, le conteneur du tableau de bord aucune.
+  assert.doesNotMatch(ds.rule(css, '.dash-shell'), /padding/);
+  // Défilement horizontal naturel et visible du kanban.
+  const cols = ds.rule(css, '.pipe-cols');
+  assert.match(cols, /display:flex/);
+  assert.match(cols, /overflow-x:auto/);
+  assert.match(cols, /scrollbar-width:(auto|thin)/);
+  // Mobile empilé : une colonne, deux à partir de 720 px.
+  assert.match(ds.rule(css, '.dash-mid,.dash-bottom'), /grid-template-columns:1fr/);
+  assert.match(ds.rule(ds.media(css, '(min-width:720px)'), '.dash-bottom'), /grid-template-columns:1fr 1fr/);
+  assert.doesNotMatch(spaceCss, /(?:html|body|#p-dashboard)[^{]*\{[^}]*(?:overflow-y:\s*hidden|height:\s*100(?:d?vh|%))/);
+  assert.match(ds.rule(ds.media(css, '(min-width:1440px)'), '.dash-stages'), /repeat\(6,minmax\(0,1fr\)\)/);
 });
 test('S/T — alternative native clavier/tactile, drag réservé au pointeur fin desktop', () => {
   assert.match(html, /<select class="pipe-move"[^>]*aria-label=/);
@@ -143,7 +156,9 @@ test('S/T — alternative native clavier/tactile, drag réservé au pointeur fin
   assert.match(html, /\(min-width:1024px\) and \(pointer:fine\)/);
   assert.match(html, /<button type="button" class="pipe-open"/);
   assert.match(html, /id="pipeline-feedback" role="status" aria-live="polite"/);
-  assert.match(css, /\.pipe-move \{[^}]*min-height: 44px/);
+  assert.match(ds.rule(css, '.pipe-move'), /min-height:var\(--tap\)/);
+  assert.match(spaceCss, /--tap:44px/);
+  assert.match(ds.media(css, '(min-width:1024px) and (pointer:fine)'), /\.pipe-move\{/); // version compacte réservée à la souris
   assert.doesNotMatch(css, /touch-action:\s*none/);
 });
 test('dépôt terminal : choix explicite du résultat, aucun recrutement/refus arbitraire', () => {

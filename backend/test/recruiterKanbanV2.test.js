@@ -10,7 +10,11 @@ const { applicationMoves } = require('../utils/pipelineSummary');
 
 const ROOT = path.resolve(__dirname, '../..');
 const html = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/recruteur.html'), 'utf8');
-const css = fs.readFileSync(path.join(ROOT, 'frontend/recruiter-pipeline.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const ds = require('./helpers/designSystemCss');
+// Section « Pipeline (kanban) » de features.css, jusqu'à la section suivante.
+const featuresRaw = fs.readFileSync(path.join(ds.DIR, 'features.css'), 'utf8');
+const css = ds.compact(featuresRaw.slice(featuresRaw.indexOf('---------- Pipeline (kanban) ----------'), featuresRaw.indexOf('---------- Moteur de matching ----------')))
+  .replace(/^[^.\[@]*/, '');
 
 function extract(signature) {
   const start = html.indexOf(signature);
@@ -23,14 +27,16 @@ function extract(signature) {
   throw new Error(signature);
 }
 
-test('CSS V2 : chaque sélecteur est limité au Pipeline et la feuille est chargée en dernier', () => {
+test('CSS V2 : chaque sélecteur du Pipeline est préfixé par ses propres classes, design system chargé', () => {
   const selectors = [];
   const body = css.replace(/@media[^{]*\{/g, '');
   for (const match of body.matchAll(/([^{}]+)\{[^{}]*\}/g)) selectors.push(...match[1].split(',').map((s) => s.trim()).filter(Boolean));
   assert.ok(selectors.length > 40);
-  assert.deepEqual(selectors.filter((s) => !s.startsWith('#p-pipeline')), []);
+  // Aucune règle du kanban ne déborde sur un autre écran : classes pipe-*, pc-*, po-*,
+  // pipeline-*, candidate-workflow ou attribut data-stage uniquement.
+  assert.deepEqual(selectors.filter((s) => !/^(\[data-stage|\.pipe|\.pc-|\.po-|\.pipeline-|\.candidate-workflow)/.test(s)), []);
   assert.doesNotMatch(css, /:root|(^|[\s,}])(html|body)\b/);
-  assert.match(html, /recruiter-desktop\.css">\s*<link rel="stylesheet" href="\.\.\/recruiter-pipeline\.css">/);
+  assert.match(html, /href="\.\.\/design-system\/tokens\.css">\s*<link rel="stylesheet" href="\.\.\/design-system\/components\.css">\s*<link rel="stylesheet" href="\.\.\/design-system\/features\.css">/);
 });
 
 test('cibles de dépôt : marquées depuis les transitions de la carte, source neutre, nettoyées au dragend', () => {

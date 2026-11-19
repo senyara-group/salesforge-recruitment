@@ -17,7 +17,7 @@ const { inspectAssistantOutput } = require('../utils/aiSafety');
 
 const assistantSource = fs.readFileSync(path.join(__dirname, '../routes/assistant.js'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../../frontend/_spaces/candidat.html'), 'utf8');
-const css = fs.readFileSync(path.join(__dirname, '../../frontend/app-professional.css'), 'utf8');
+const css = require('./helpers/designSystemCss').read('features');
 
 test('1. simulation legacy sans subtype → recruitment', () => {
   assert.equal(parseSimulationTypeInput({}), 'recruitment');

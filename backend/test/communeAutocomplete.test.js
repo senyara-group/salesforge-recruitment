@@ -10,6 +10,7 @@ const { parseLocationQuery, locationTextMatches } = require('../utils/locationFi
 
 const FRONTEND = path.resolve(__dirname, '../../frontend');
 const read = (file) => fs.readFileSync(path.join(FRONTEND, file), 'utf8').replace(/\r\n/g, '\n');
+const ds = require('./helpers/designSystemCss');
 
 // ------------------------------------------------------------------ faux DOM
 class FakeElement {
@@ -313,9 +314,13 @@ test('T/U. mobile : liste en flux dans les feuilles de filtres (non rognée), ci
   // Validé aussi en navigateur réel (Chrome headless, 390/430/desktop) : voir backend/FILTERS_AUDIT.md.
   for (const [file, field] of [['_spaces/candidat.html', 'filt-location'], ['_spaces/recruteur.html', 'filt-cand-location']]) {
     const html = read(file);
-    assert.match(html, /\.autocomplete-list\.is-inline\{position:static;[^}]*max-height:264px;scroll-margin-bottom:104px\}/, file);
-    assert.match(html, /\.autocomplete-item\{min-height:44px;/, file);
-    assert.match(html, /\.autocomplete-status\[hidden\]\{display:none\}/, file);
+    // Style : composant « saisie avec suggestions » du design system chargé par la page.
+    assert.match(html, /href="\.\.\/design-system\/components\.css"/, file);
+    const css = ds.read('components');
+    assert.match(ds.rule(css, '.autocomplete-list.is-inline'), /position:static;[^]*max-height:264px;scroll-margin-bottom:104px/, file);
+    assert.match(ds.rule(css, '.autocomplete-item'), /min-height:var\(--tap\)/, file);
+    assert.match(ds.read('tokens'), /--tap:44px/);
+    assert.match(ds.rule(css, '[hidden]'), /display:none !important/, file); // statut masqué via l'attribut hidden
     assert.match(html, new RegExp(`<div class="autocomplete-list is-inline" id="${field}-list"></div>`), file);
     assert.match(html, new RegExp(`<div class="autocomplete-status" id="${field}-status" hidden></div>`), file);
   }

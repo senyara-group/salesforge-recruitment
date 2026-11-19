@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const ds = require('./helpers/designSystemCss');
 
 const recruiter = fs.readFileSync(
   path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'),
@@ -29,11 +30,18 @@ function assertMessagesWorkspace(html, role) {
   assert.match(html, /onsubmit="sendThreadMessage\(event\)"/, `${role}: send handler`);
   assert.match(html, /async function sendThreadMessage/, `${role}: send fn`);
   assert.match(html, /POST', '\/messages\/send'/, `${role}: send API`);
-  assert.match(html, /grid-template-columns:320px minmax\(0,1fr\)/, `${role}: desktop columns`);
-  assert.match(html, /#p-messages\.thread-open \.conversations-panel\{display:none\}/, `${role}: mobile hide list`);
-  assert.match(html, /#p-messages\.thread-open \.conversation-panel\{display:flex/, `${role}: mobile show chat`);
-  assert.match(html, /#p-messages\.thread-open \.chat-placeholder/, `${role}: hide empty when open`);
-  assert.match(html, /overflow-x:\s*hidden|overflow:hidden/, `${role}: overflow control present`);
+  // Style : bloc « Messagerie » du design system, partagé par les deux espaces.
+  assert.match(html, /href="\.\.\/design-system\/features\.css"/, `${role}: design system`);
+  const css = ds.read('features');
+  const mobile = ds.media(css, '(max-width:719px)');
+  const desktop = ds.media(css, '(min-width:720px)');
+  assert.match(ds.rule(css, '.conversations-panel'), /flex:1 1 280px/, `${role}: list column`);
+  assert.match(ds.rule(css, '.conversation-panel'), /flex:999 1 420px;min-width:0/, `${role}: desktop columns`);
+  assert.match(ds.rule(mobile, '#p-messages.thread-open .conversations-panel'), /display:none/, `${role}: mobile hide list`);
+  assert.match(ds.rule(mobile, '#p-messages.thread-open .conversation-panel'), /display:flex/, `${role}: mobile show chat`);
+  assert.match(ds.rule(desktop, '#p-messages:not(.thread-open) .chat-placeholder'), /display:flex/, `${role}: empty only when no thread`);
+  assert.match(ds.rule(css, '.chat-placeholder.hidden'), /display:none !important/, `${role}: hide empty when open`);
+  assert.match(ds.rule(css, '.messages-workspace'), /overflow:hidden/, `${role}: overflow control present`);
   // Mutual exclusivity: opening adds on + hidden; closing removes on
   assert.match(html, /panel\?\.classList\.add\('on'\)/, `${role}: panel on when open`);
   assert.match(html, /placeholder\?\.classList\.add\('hidden'\)/, `${role}: placeholder hidden when open`);
