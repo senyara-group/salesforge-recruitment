@@ -250,7 +250,8 @@ test('frontend pagination progressive : première page puis prefetch, pas de bou
   assert.match(html, /DECK_PREFETCH_REMAINING = 4/);
   assert.match(html, /buildDeckQueryParams/);
   assert.match(html, /DECK_LOAD_GEN/);
-  assert.match(html, /await fetchDeckPage\(null/);
+  // Première page demandée une fois, en parallèle des compétences du profil.
+  assert.match(html, /Promise\.all\(\[getMySkillsFlat\(\), fetchDeckPage\(null, \{ signal/);
   assert.doesNotMatch(html, /pages < 100/);
   assert.doesNotMatch(html, /do \{[\s\S]*fetchDeckPage[\s\S]*\} while/);
   assert.match(html, /if \(DECK_FETCHING_MORE \|\| !DECK_HAS_MORE \|\| !DECK_CURSOR\) return;/);

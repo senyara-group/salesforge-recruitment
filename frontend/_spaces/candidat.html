@@ -1900,8 +1900,16 @@ async function maybePrefetchDeck() {
   }
 }
 
+// Retour sur Opportunités : le paquet chargé il y a peu est réaffiché tel quel,
+// sans nouvel aller-retour serveur, tant qu'il reste des cartes à swiper.
+const DECK_FRESH_MS = 2 * 60 * 1000;
+let DECK_LOADED_AT = 0;
 async function loadOffres(options = {}) {
   const preserveFilters = Boolean(options.preserveFilters);
+  if (!preserveFilters && DECK_LOADED_AT && Date.now() - DECK_LOADED_AT < DECK_FRESH_MS && DECK_IDX < OFFRES_F.length) {
+    renderDeck();
+    return;
+  }
   if (!preserveFilters) DECK_FILTERS = emptyDeckFilters();
   const gen = ++DECK_LOAD_GEN;
   if (DECK_ABORT) {
@@ -1921,13 +1929,14 @@ async function loadOffres(options = {}) {
   if (area) { area.classList.remove('is-empty'); area.classList.add('is-loading'); }
   document.getElementById('deck-cards').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
-    DECK_SKILLS = await getMySkillsFlat();
+    // Compétences du profil et page d'offres demandées en même temps (au lieu de l'une après l'autre).
+    const [skills, page] = await Promise.all([getMySkillsFlat(), fetchDeckPage(null, { signal: DECK_ABORT?.signal })]);
     if (gen !== DECK_LOAD_GEN) return;
-    const page = await fetchDeckPage(null, { signal: DECK_ABORT?.signal });
-    if (gen !== DECK_LOAD_GEN) return;
+    DECK_SKILLS = skills;
     OFFRES = page.batch.map(o => normOffre(o, DECK_SKILLS)).filter(o => !isOfferLocallySeen(o));
     DECK_CURSOR = page.next_cursor;
     DECK_HAS_MORE = page.has_more;
+    DECK_LOADED_AT = Date.now();
     rebuildOffresFiltered(true);
   } catch (e) {
     if (e && e.name === 'AbortError') return;
@@ -3589,6 +3598,7 @@ function renderProfileCV(p) {
 async function loadAIHighlights() {
   try {
     const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
+    AI_CONFIG_CACHE = config;
     AI_AVAILABLE = Boolean(config.configured);
     CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
     CV_ALLOWED = Boolean(config.access?.cv ?? planAllowed(config.cv_access_policy, CURRENT_PLAN));
@@ -3747,6 +3757,22 @@ function planAllowed(policy, plan) {
 function planPolicyLabel(policy) {
   const labels = { carriere:'Carrière', carriere_coaching:'Carrière Coaching' };
   return (policy || []).filter(plan => plan !== 'all').map(plan => labels[plan] || plan).join(' ou ');
+}
+// Dernière réponse de /assistant/config (droits et quotas) : en revenant sur l'optimiseur
+// ou le coach, on affiche tout de suite le bon écran au lieu de montrer l'outil puis de
+// basculer sur « formule requise » une fois la réponse reçue.
+let AI_CONFIG_CACHE = null;
+function primeAiGate(kind) {
+  if (AI_CONFIG_CACHE) { renderAiQuota(kind, AI_CONFIG_CACHE); return; }
+  const tool = document.getElementById(kind + '-tool-content');
+  const gate = document.getElementById(kind + '-access-gate');
+  if (tool) tool.hidden = true;
+  if (gate) gate.hidden = true;
+}
+function revealAiToolOnError(kind) {
+  const tool = document.getElementById(kind + '-tool-content');
+  const gate = document.getElementById(kind + '-access-gate');
+  if (tool && gate && tool.hidden && gate.hidden) tool.hidden = false;
 }
 function renderAiAccessGate(kind, allowed, policy) {
   const gate = document.getElementById(kind + '-access-gate');
@@ -3982,8 +4008,10 @@ function showCvExtraction(text, filename) {
   cvFeedback('Texte extrait : vérifiez-le avant l’analyse.');
 }
 async function loadCVTool() {
+  primeAiGate('cv');
   try {
     const [profile, config, subscription] = await Promise.all([api('GET', '/candidats/profil'), api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
+    AI_CONFIG_CACHE = config;
     AI_AVAILABLE = Boolean(config.configured);
     CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
     CV_ALLOWED = Boolean(config.access?.cv ?? planAllowed(config.cv_access_policy, CURRENT_PLAN));
@@ -4007,6 +4035,7 @@ async function loadCVTool() {
     catch (error) { cvFeedback(cvErrorMessage(error), true); }
     syncCvJourney();
   } catch (error) {
+    revealAiToolOnError('cv');
     cvFeedback(cvErrorMessage(error), true);
   }
 }
@@ -4320,8 +4349,10 @@ async function copyCvList(id) {
 // COACH COMMERCIAL
 // ------------------------------------------------------------
 async function loadCoach() {
+  primeAiGate('coach');
   try {
     const [config, subscription] = await Promise.all([api('GET', '/assistant/config'), api('GET', '/abonnements/current')]);
+    AI_CONFIG_CACHE = config;
     CURRENT_PLAN = config.plan || activeSubscriptionPlan(subscription);
     COACH_ALLOWED = Boolean(config.access?.coach ?? planAllowed(config.coach_access_policy, CURRENT_PLAN));
     renderAiQuota('coach', config);
@@ -4332,6 +4363,7 @@ async function loadCoach() {
     try { renderCoachHistory(await api('GET', '/assistant/conversations')); }
     catch (error) { document.getElementById('coach-history-list').innerHTML = '<div class="empty-state">' + esc(error.message || 'Historique indisponible') + '</div>'; }
   } catch (error) {
+    revealAiToolOnError('coach');
     setFeedback('coach-setup-feedback', error.message || 'Cette fonctionnalité est temporairement indisponible. Réessayez dans quelques instants.', true);
     document.getElementById('coach-history-list').innerHTML = '<div class="empty-state">Historique indisponible</div>';
   }
