@@ -12,6 +12,10 @@ function mockModule(request, exports) {
 }
 
 const USER_ROW = { id: 'user-a', email: 'a@example.com', role: 'candidat' };
+// Lignes renvoyees par une lecture de la table users, et resultats successifs des upsert.
+let userRows = [USER_ROW];
+let upsertResults = [];
+const dbCalls = [];
 
 let refreshSession = async () => ({ data: null, error: new Error('non configure') });
 let signInWithPassword = async () => ({ data: null, error: new Error('non configure') });
@@ -37,19 +41,23 @@ mockModule('@supabase/supabase-js', {
 });
 
 mockModule('../supabase', {
-  from() {
+  from(table) {
+    let result = () => ({ data: userRows, error: null });
     const query = {
       select: () => query,
       eq: () => query,
+      neq: () => query,
       limit: () => query,
-      then: (resolve, reject) => Promise.resolve({ data: [USER_ROW], error: null }).then(resolve, reject),
+      upsert: (row) => { dbCalls.push({ table, op: 'upsert', row }); const next = upsertResults.shift(); result = () => next || { data: [row], error: null }; return query; },
+      delete: () => { dbCalls.push({ table, op: 'delete' }); result = () => ({ data: null, error: null }); return query; },
+      then: (resolve, reject) => Promise.resolve(result()).then(resolve, reject),
     };
     return query;
   },
   auth: { admin: { updateUserById: async () => ({ error: null }) } },
 });
 
-mockModule('../middleware/auth', (_req, _res, next) => next());
+mockModule('../middleware/auth', (req, _res, next) => { req.user = { id: 'user-a', email: 'a@example.com' }; next(); });
 mockModule('../utils/profiles', { ensureRoleProfile: async () => ({ id: 'candidat-a', user_id: 'user-a' }) });
 mockModule('../utils/brevoEvents', { upsertBrevoContact: async () => {}, trackBrevoEvent: async () => {} });
 mockModule('../utils/engagementTracking', { touchLastLogin: async () => {} });
@@ -173,4 +181,46 @@ test('le client de refresh ne conserve aucune session entre les requetes', async
     stateless.length >= 1,
     'un client partage par toutes les requetes ne doit pas stocker la session de l’appelant',
   );
+});
+
+const ORPHAN_LOGIN = async () => ({
+  data: {
+    user: { id: 'user-a', email: 'a@example.com' },
+    session: { access_token: 'access-3', refresh_token: 'refresh-3', expires_at: 1790007200 },
+  },
+  error: null,
+});
+
+// Compte sans ligne users (ex: ligne orpheline d'un ancien compte supprime) : la
+// connexion ne doit pas bloquer sur un code brut, elle rend la session pour que
+// l'utilisateur choisisse son espace.
+test('connexion d’un compte sans role : 409 ROLE_REQUIRED avec la session', async () => {
+  signInWithPassword = ORPHAN_LOGIN;
+  userRows = [];
+  try {
+    const response = await post('/api/auth/login', { email: 'a@example.com', password: 'motdepasse' });
+    assert.equal(response.status, 409);
+    assert.equal(response.body.error, 'ROLE_REQUIRED');
+    assert.equal(response.body.token, 'access-3');
+    assert.equal(response.body.refresh_token, 'refresh-3');
+  } finally {
+    userRows = [USER_ROW];
+  }
+});
+
+test('choix du role malgre une ligne users orpheline sur le meme email : nettoyage puis succes', async () => {
+  dbCalls.length = 0;
+  upsertResults = [{ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "users_email_key"' } }];
+  const response = await post('/api/auth/role', { role: 'candidat' });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.role, 'candidat');
+  assert.deepEqual(dbCalls.map((c) => c.op), ['upsert', 'delete', 'upsert']);
+});
+
+test('le formulaire de connexion propose le choix d’espace sur ROLE_REQUIRED, sans afficher le code', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../frontend/swipsales_app.html'), 'utf8');
+  assert.ok(html.includes("res.status === 409 && data.error === 'ROLE_REQUIRED' && data.token"));
+  const branch = html.slice(html.indexOf("data.error === 'ROLE_REQUIRED'"), html.indexOf('if (!res.ok)', html.indexOf("data.error === 'ROLE_REQUIRED'")));
+  assert.ok(branch.includes('storeSession(data)') && branch.includes('showRoleChoice()'));
+  assert.ok(html.includes("if (msg.includes('role_required')) return 'Choisis ton espace"));
 });
