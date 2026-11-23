@@ -13,10 +13,7 @@ const html = fs.readFileSync(
   path.join(__dirname, '..', '..', 'frontend', '_spaces', 'candidat.html'),
   'utf8',
 );
-const css = fs.readFileSync(
-  path.join(__dirname, '..', '..', 'frontend', 'app-professional.css'),
-  'utf8',
-);
+const ds = require('./helpers/designSystemCss');
 
 // Isole le contenu d'une page ("<div id="p-X" class="page">...") jusqu'au début
 // de la page suivante, pour ne jamais vérifier le mauvais bloc par débordement.
@@ -220,9 +217,9 @@ test('pages principales (bottom nav) : pas de flèche retour ajoutée mécanique
 });
 
 test('CSS : bouton retour dimensionné pour un usage tactile (>= 44px)', () => {
-  const start = css.indexOf('.page-back-btn {');
-  assert.notEqual(start, -1, 'règle .page-back-btn introuvable dans app-professional.css');
-  const rule = css.slice(start, start + 400);
-  assert.match(rule, /width:\s*44px/);
-  assert.match(rule, /height:\s*44px/);
+  const rule = ds.rule(ds.read('components'), '.page-back-btn');
+  assert.ok(rule, 'règle .page-back-btn introuvable dans design-system/components.css');
+  assert.match(rule, /width:var\(--tap\)/);
+  assert.match(rule, /height:var\(--tap\)/);
+  assert.match(ds.read('tokens'), /--tap:44px/);
 });

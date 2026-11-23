@@ -8,73 +8,74 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
+const ds = require('./helpers/designSystemCss');
 const candidateHtml = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/candidat.html'), 'utf8');
-const sharedCss = fs.readFileSync(path.join(ROOT, 'frontend/app-professional.css'), 'utf8').replace(/\r\n/g, '\n');
-const candidateCss = candidateHtml.slice(candidateHtml.indexOf('<style>'), candidateHtml.indexOf('</style>'));
 const recruiterHtml = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/recruteur.html'), 'utf8');
-const recruiterCss = recruiterHtml.slice(recruiterHtml.indexOf('<style>'), recruiterHtml.indexOf('</style>'));
 const shellHtml = fs.readFileSync(path.join(ROOT, 'frontend/swipsales_app.html'), 'utf8').replace(/\r\n/g, '\n');
-const shellCss = shellHtml.slice(shellHtml.indexOf('<style>'), shellHtml.indexOf('</style>'));
+// Les deux espaces chargent le même design system (tokens, composants, blocs métier).
+const spaceCss = ds.spaceCss();
+const accessCss = ds.read('access');
 
-// Déclarations d'une règle dont le sélecteur est exactement `selector`, dans un bloc donné.
+// Déclarations effectives d'une règle dont le sélecteur est exactement `selector`.
 function rule(css, selector) {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = css.match(new RegExp(`(?:^|[}\\n])\\s*${escaped}\\s*\\{([^}]*)\\}`));
-  assert.ok(match, `règle absente : ${selector}`);
-  return match[1];
+  const decls = ds.rule(css, selector);
+  assert.ok(decls, `règle absente : ${selector}`);
+  return decls;
 }
-function mediaBlock(css, query) {
-  const start = css.indexOf(`@media ${query}`);
-  assert.ok(start >= 0, query);
-  let depth = 0;
-  for (let i = css.indexOf('{', start); i < css.length; i += 1) {
-    if (css[i] === '{') depth += 1;
-    if (css[i] === '}' && --depth === 0) return css.slice(start, i + 1);
-  }
-  throw new Error(query);
-}
-const mobile = mediaBlock(sharedCss, '(max-width: 719px)');
+const mobile = ds.media(spaceCss, '(max-width:719px)');
 
-test('navigation basse : centrée sans transform sur la barre fixe, desktop ancré à gauche', () => {
-  const nav = rule(candidateCss, '.bnav');
+test('les deux espaces et le shell chargent le design system, sans style local', () => {
+  for (const html of [candidateHtml, recruiterHtml]) {
+    assert.match(html, /href="\.\.\/design-system\/tokens\.css">\s*<link rel="stylesheet" href="\.\.\/design-system\/components\.css">\s*<link rel="stylesheet" href="\.\.\/design-system\/features\.css">/);
+    assert.doesNotMatch(html, /<style[\s>]/);
+  }
+  assert.match(shellHtml, /href="design-system\/access\.css"/);
+  assert.doesNotMatch(shellHtml, /<style[\s>]/);
+});
+
+test('navigation basse : fixée en bas sans transform, desktop ancré à gauche', () => {
+  const nav = rule(ds.media(spaceCss), '.bnav');
   assert.match(nav, /position:fixed/);
   assert.match(nav, /bottom:0/);
-  assert.doesNotMatch(nav, /transform/, 'la barre fixe ne doit pas porter son propre transform');
-  assert.match(nav, /left:0;right:0;margin:0 auto/);
-  assert.match(nav, /max-width:430px/);
-  // Sidebar desktop : sans right:auto + margin:0, left/right:0 + margin:auto la centreraient.
-  const desktop = mediaBlock(sharedCss, '(min-width: 1024px)');
-  const desktopNav = rule(desktop, '.bnav');
-  assert.match(desktopNav, /left: 0 !important;/);
-  assert.match(desktopNav, /right: auto;/);
-  assert.match(desktopNav, /margin: 0;/);
+  assert.match(nav, /left:0/);
+  assert.match(nav, /right:0/);
+  assert.doesNotMatch(nav, /transform|margin/, 'la barre fixe ne doit porter ni transform ni centrage par marge');
+  // Barre latérale : ancrée à gauche (right:auto), jamais centrée.
+  const desktopNav = rule(ds.media(spaceCss, '(min-width:1024px)'), '.bnav');
+  assert.match(desktopNav, /top:0/);
+  assert.match(desktopNav, /right:auto/);
+  assert.doesNotMatch(desktopNav, /margin|transform/);
 });
 
 test('navigation basse : aucune transition de propriété de mise en page, zone tactile et safe-area', () => {
-  for (const css of [candidateCss, recruiterCss]) {
-    const item = rule(css, '.bn');
-    const transition = item.match(/transition:([^;]*)/)[1];
+  const item = rule(ds.media(spaceCss), '.bn');
+  const transition = (item.match(/transition:([^;]*)/) || [])[1];
+  if (transition) {
     assert.doesNotMatch(transition, /^\s*(all\s*)?\.?\d/, 'transition « all » implicite interdite');
-    assert.deepEqual(transition.split(',').map((part) => part.trim().split(/\s+/)[0]).sort(), ['background-color', 'color']);
-    assert.match(rule(css, '.bnav'), /padding:6px 0 max\(8px,env\(safe-area-inset-bottom\)\)/);
+    for (const part of transition.split(',')) assert.match(part.trim().split(/\s+/)[0], /^(background-color|color)$/);
   }
-  assert.match(rule(sharedCss, '.bn'), /min-height: 46px/);
+  assert.match(item, /min-height:46px/);
+  assert.match(rule(ds.media(spaceCss), '.bnav'), /padding:[^;]*env\(safe-area-inset-bottom\)/);
 });
 
 // Tremblement de la barre basse : la cause racine est l'iframe du shell. La barre est
 // position:fixed DANS l'iframe, donc fixée au bas de l'iframe et non de l'écran.
 test('navigation basse : l’iframe du shell ne suit ni la barre d’adresse ni le rebond du document', () => {
-  const frame = rule(shellCss, 'iframe');
-  assert.match(frame, /position:fixed;top:0;left:0;width:100%;height:100%/);
+  assert.match(shellHtml, /<iframe id="app-frame"/);
+  const frame = rule(accessCss, '#app-frame');
+  assert.match(frame, /position:fixed/);
+  assert.match(frame, /inset:0/);
+  assert.match(frame, /width:100%/);
+  assert.match(frame, /height:100%/);
   assert.doesNotMatch(frame, /[dsl]?vh/, 'une hauteur en unités de viewport redimensionne l’iframe avec la barre d’adresse');
-  assert.match(rule(shellCss, 'html:has(> body:not(.auth))'), /overscroll-behavior:none/);
+  assert.match(rule(accessCss, 'html:has(> body:not(.auth))'), /overscroll-behavior:none/);
 });
 
-test('navigation basse recruteur : même positionnement que le candidat, sans transform', () => {
-  const nav = rule(recruiterCss, '.bnav');
-  assert.match(nav, /position:fixed/);
-  assert.doesNotMatch(nav, /transform/);
-  assert.match(nav, /left:0;right:0;margin:0 auto/);
+test('navigation basse recruteur : même barre que le candidat (composant partagé)', () => {
+  // La barre est un composant unique : aucune règle .bnav propre au recruteur.
+  assert.match(recruiterHtml, /<nav class="bnav" id="bnav"/);
+  assert.match(candidateHtml, /<nav class="bnav" id="bnav"/);
+  assert.equal(ds.blocks(ds.read('features')).filter((b) => /(^|[\s,])\.bnav([\s,{]|$)/.test(b.prelude)).length, 0);
 });
 
 test('swipe : aucun écouteur touchmove non passif global (bloquerait chaque défilement)', () => {
@@ -85,31 +86,31 @@ test('swipe : aucun écouteur touchmove non passif global (bloquerait chaque dé
 });
 
 test('Coach L/M/P : colonne contrainte, enfants rétrécissables, actions et zone de saisie dans la largeur', () => {
-  const conversation = rule(sharedCss, '.coach-conversation');
-  assert.match(conversation, /display: grid/);
-  assert.match(conversation, /grid-template-columns: minmax\(0, 1fr\)/, 'une piste implicite auto s’élargit au contenu insécable');
-  assert.match(rule(sharedCss, '.coach-conversation > *, .coach-conversation-head > div'), /min-width: 0/);
-  assert.match(rule(sharedCss, '.coach-conversation-head h2'), /overflow-wrap: anywhere/);
-  assert.match(rule(sharedCss, '.coach-composer textarea'), /min-width: 0/);
-  assert.match(rule(mobile, '.coach-conversation-head'), /flex-wrap: wrap/);
-  assert.match(rule(mobile, '.coach-head-actions .btn'), /min-height: 44px/);
+  const conversation = rule(ds.media(spaceCss), '.coach-conversation');
+  assert.match(conversation, /display:grid/);
+  assert.match(conversation, /grid-template-columns:minmax\(0,1fr\)/, 'une piste implicite auto s’élargit au contenu insécable');
+  assert.match(rule(ds.media(spaceCss), '.coach-conversation>*,.coach-conversation-head>div'), /min-width:0/);
+  assert.match(rule(ds.media(spaceCss), '.coach-conversation-head h2'), /overflow-wrap:anywhere/);
+  assert.match(rule(ds.media(spaceCss), '.coach-composer textarea'), /min-width:0/);
+  assert.match(rule(mobile, '.coach-conversation-head'), /flex-wrap:wrap/);
+  assert.match(rule(mobile, '.coach-head-actions .btn'), /min-height:44px/);
 });
 
 test('Coach N/O/R : messages utilisateur et Coach reviennent à la ligne, y compris URL/mot très long', () => {
-  const bubble = rule(sharedCss, '.coach-message p, .coach-bubble');
-  assert.match(bubble, /white-space: pre-wrap/);
-  assert.match(bubble, /overflow-wrap: anywhere/);
+  const bubble = rule(ds.media(spaceCss), '.coach-message p,.coach-bubble');
+  assert.match(bubble, /white-space:pre-wrap/);
+  assert.match(bubble, /overflow-wrap:anywhere/);
   // Aucune règle ultérieure ne rétablit un retour à la ligne impossible sur les bulles.
-  for (const match of sharedCss.matchAll(/\.coach-(?:bubble|message)[^{]*\{([^}]*)\}/g)) {
+  for (const match of spaceCss.matchAll(/\.coach-(?:bubble|message)[^{]*\{([^}]*)\}/g)) {
     assert.doesNotMatch(match[1], /white-space:\s*nowrap|overflow-wrap:\s*normal|word-break:\s*keep-all/);
   }
 });
 
 test('Coach : hauteur mobile indépendante de la barre d’adresse (svh), sans masquage global du débordement', () => {
-  assert.match(rule(mobile, '.coach-conversation'), /height: calc\(100svh - 156px\)/);
+  assert.match(rule(mobile, '.coach-conversation'), /height:calc\(100svh - 156px\)/);
   assert.doesNotMatch(rule(mobile, '.coach-conversation'), /dvh/);
   // Le correctif ne repose pas sur un overflow-x:hidden du document.
-  assert.doesNotMatch(sharedCss + candidateCss, /(?:^|[\s,}])(?:html|body)[^{]*\{[^}]*overflow-x:\s*hidden/);
+  assert.doesNotMatch(spaceCss, /(?:^|[\s,}])(?:html|body)[^{]*\{[^}]*overflow-x:\s*hidden/);
 });
 
 test('Coach Q/V : tous les modes partagent la même structure de conversation', () => {
@@ -124,13 +125,13 @@ test('Coach Q/V : tous les modes partagent la même structure de conversation', 
 // page est `npm run test:layout` (Chrome réel, émulation mobile, historique Coach rempli) ;
 // ce test verrouille les déclarations structurelles qu'elle a validées.
 test('Coach 7.2 : colonne racine contrainte (historique rempli) et barre d’outils non compressible', () => {
-  const layout = rule(sharedCss, '.coach-layout');
-  assert.match(layout, /display: grid/);
-  assert.match(layout, /grid-template-columns: minmax\(0, 1fr\)/, 'piste implicite auto : la liste d’historique élargissait tout le Coach');
-  assert.match(rule(sharedCss, '.coach-layout > *'), /min-width: 0/);
-  const toolbar = rule(sharedCss, '.cv-toolbar');
-  assert.match(toolbar, /flex: 0 0 auto/);
-  assert.match(toolbar, /max-width: 100%/);
+  const layout = rule(ds.media(spaceCss), '.coach-layout');
+  assert.match(layout, /display:grid/);
+  assert.match(layout, /grid-template-columns:minmax\(0,1fr\)/, 'piste implicite auto : la liste d’historique élargissait tout le Coach');
+  assert.match(rule(ds.media(spaceCss), '.coach-layout>*'), /min-width:0/);
+  const toolbar = rule(ds.media(spaceCss), '.cv-toolbar');
+  assert.match(toolbar, /flex:0 0 auto/);
+  assert.match(toolbar, /max-width:100%/);
   // La liste d’historique reste un défilement horizontal interne sur mobile.
-  assert.match(rule(mobile, '.coach-history-list'), /display: flex; overflow-x: auto/);
+  assert.match(rule(mobile, '.coach-history-list'), /display:flex;overflow-x:auto/);
 });

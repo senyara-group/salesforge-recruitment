@@ -555,9 +555,13 @@ test('L. affichage : lieu complet échappé, absence explicite, pas de troncatur
   assert.match(recruiterHtml, /typeof c\.location === 'string' && c\.location\.trim\(\) \? `<span class="cand-fact cand-fact-location" title="\$\{esc\(c\.location\)\}">/);
 });
 
-// Règles CSS des <style> inline : { selectors, body, media } (media = null au niveau racine).
+// Règles CSS appliquées à la page — <style> inline et feuilles du design system qu'elle
+// charge — : { selectors, body, media } (media = null au niveau racine).
 function cssRules(html) {
-  const css = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+  const linked = [...html.matchAll(/href="\.\.\/(design-system\/[\w-]+\.css)"/g)]
+    .map((m) => fs.readFileSync(path.join(__dirname, '../../frontend', m[1]), 'utf8'));
+  const inline = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]);
+  const css = [...linked, ...inline].join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
   const rules = [];
   const stack = [];
   let prelude = '';
@@ -617,14 +621,19 @@ test('L. mobile : .filters-sheet .form-field réellement pleine largeur (candida
   }
   // Garde-fou : la règle profil ne peut plus satisfaire le test par accident.
   assert.equal(filterSheetFieldRules('<style>.prefs-block .form-field{width:100%;box-sizing:border-box}</style>').length, 0);
-  const withoutRule = candidateHtml.replace(/\.filters-sheet \.form-field\{[^}]*\}/, '');
+  // La règle vit dans features.css : sans cette feuille, elle disparaît.
+  const withoutRule = candidateHtml.replace(/href="\.\.\/design-system\/features\.css"/, '');
   assert.equal(filterSheetFieldRules(withoutRule).length, 0);
 
-  // Petit écran (CSS existant, inchangé) : feuille à 100 % avec gouttières de 20 px,
-  // 16 px sous 380 px ⇒ champ ≈ 350 px à 390 px et ≈ 390 px à 430 px, sans débordement.
+  // Petit écran : feuille à 100 % avec gouttières d'au plus 20 px, 16 px sous 380 px
+  // ⇒ champ ≈ 350 px à 390 px et ≈ 390 px à 430 px, sans débordement.
   const candidateRules = cssRules(candidateHtml);
-  assert.ok(candidateRules.some((r) => r.media === null && r.selectors.includes('.bottom-sheet')
-    && declarations(r.body).width === '100%' && declarations(r.body).padding === '17px 20px 22px'));
+  assert.ok(candidateRules.some((r) => {
+    if (r.media !== null || !r.selectors.includes('.bottom-sheet')) return false;
+    const d = declarations(r.body);
+    const sides = (d.padding || '').split(/\s+/).map((v) => parseFloat(v));
+    return d.width === '100%' && sides.length >= 2 && sides[1] <= 20;
+  }));
   assert.ok(candidateRules.some((r) => /max-width:\s*380px/.test(r.media || '') && r.selectors.includes('.bottom-sheet')
     && declarations(r.body)['padding-left'] === '16px' && declarations(r.body)['padding-right'] === '16px'));
 
@@ -635,8 +644,10 @@ test('L. mobile : .filters-sheet .form-field réellement pleine largeur (candida
     // Aide + statut de l'autocomplétion (Lot 6) annoncés par les lecteurs d'écran.
     assert.match(html, new RegExp(`aria-describedby="${id}-help ${id}-status"`));
   }
-  assert.match(candidateHtml, /\.mstat-v\.is-text\{[^}]*text-overflow:ellipsis/);
-  assert.match(recruiterHtml, /\.cand-fact-location span\{[^}]*text-overflow:ellipsis/);
+  // Lieux longs tronqués (statistique du match, puce de lieu de la carte sourcing).
+  const truncates = (html, selector) => cssRules(html).some((r) => r.selectors.includes(selector) && /text-overflow:\s*ellipsis/.test(r.body));
+  assert.ok(truncates(candidateHtml, '.mstat-v'));
+  assert.ok(truncates(recruiterHtml, '.cand-fact-location span'));
 });
 
 test('privacy : aucune localisation ajoutée aux logs, pas de coordonnées exposées par la carte sourcing', () => {

@@ -22,6 +22,7 @@ const { compatibilityScore } = require('../utils/recruiterMatching');
 
 const ROOT = path.resolve(__dirname, '../..');
 const candidateHtml = fs.readFileSync(path.join(ROOT, 'frontend/_spaces/candidat.html'), 'utf8');
+const ds = require('./helpers/designSystemCss');
 const JOB_IDS = JOB_TYPE_DESCRIPTORS.map((job) => job.id);
 
 // ------------------------------------------------------------------
@@ -685,10 +686,13 @@ test('accessibilité et mobile (statique) : boutons natifs, aria-pressed, indica
   assert.match(candidateHtml, /role="group" aria-labelledby="ts-primary-title" aria-describedby="ts-primary-help" id="primary-job-opts"/);
   assert.match(candidateHtml, /id="job-sel-count" role="status" aria-live="polite"/);
   // Sélection signalée par une coche (pas seulement la couleur), focus visible, texte qui revient à la ligne.
-  assert.match(candidateHtml, /\.job-pick \.opt\[aria-pressed="true"\] \.ot::before\{content:'✓'/);
-  assert.match(candidateHtml, /\.job-pick \.opt:focus-visible\{outline:2px solid/);
-  assert.match(candidateHtml, /\.job-pick \.opt \.ot\{[^}]*overflow-wrap:anywhere/);
-  assert.match(candidateHtml, /^\.opt\{[^}]*width:100%/m);
+  // Style : design system chargé par la page (composant .opt + bloc « Test ADN »).
+  assert.match(candidateHtml, /href="\.\.\/design-system\/features\.css"/);
+  const css = ds.spaceCss();
+  assert.match(ds.rule(css, '.job-pick .opt[aria-pressed="true"] .ot::before'), /content:'✓'/);
+  assert.match(ds.rule(css, '.job-pick .opt:focus-visible'), /outline:2px solid/);
+  assert.match(ds.rule(css, '.job-pick .opt .ot'), /overflow-wrap:anywhere/);
+  assert.match(ds.rule(css, '.opt'), /width:100%/);
   // L'étape postes visés précède la première question du test ; bandeau par défaut cohérent.
   assert.ok(candidateHtml.indexOf('id="ts-jobs"') < candidateHtml.indexOf('id="ts1"'));
   assert.match(candidateHtml, /id="test-sl">Étape 1 sur 13<\/div>\s*<div class="test-st sf" id="test-st">Postes visés<\/div>/);

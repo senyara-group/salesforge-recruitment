@@ -7,6 +7,10 @@ const html = fs.readFileSync(
   path.join(__dirname, '..', '..', 'frontend', '_spaces', 'recruteur.html'),
   'utf8'
 );
+// Style : design system chargé par l'espace recruteur.
+const ds = require('./helpers/designSystemCss');
+const components = ds.read('components');
+const features = ds.read('features');
 
 test('recruiter UI redesign : shell + IDs critiques conservés', () => {
   for (const id of [
@@ -43,8 +47,10 @@ test('recruiter UI redesign : dashboard structure mockup-compatible', () => {
   assert.match(html, /dash-mid/);
   assert.match(html, /dash-bottom/);
   assert.match(html, /dash-action-item is-primary/);
-  assert.match(html, /\.dash-mid\{grid-template-columns:minmax\(240px,\.9fr\) minmax\(0,1\.3fr\)/);
-  assert.match(html, /\.dash-bottom\{grid-template-columns:1fr 1fr/);
+  // Grilles du tableau de bord (design system) : actions et pipeline empilés, offres et
+  // candidatures récentes côte à côte dès 720 px.
+  assert.match(ds.rule(features, '.dash-mid,.dash-bottom'), /grid-template-columns:1fr/);
+  assert.match(ds.rule(ds.media(features, '(min-width:720px)'), '.dash-bottom'), /grid-template-columns:1fr 1fr/);
   assert.doesNotMatch(html, /Score \+85/);
 });
 
@@ -61,10 +67,12 @@ test('recruiter UI polish #2 : sourcing = squelette candidat (deck-wrap)', () =>
   assert.match(html, /actions\.hidden = isEmpty/);
   assert.match(html, /empty\.hidden = !isEmpty/);
   assert.match(html, /area\.classList\.toggle\('is-empty', isEmpty\)/);
-  assert.match(html, /\.deck-actions\[hidden\]\{display:none !important\}/);
-  assert.match(html, /#p-swipe\.page\.on\{display:flex !important;flex-direction:column/);
-  assert.match(html, /max-width:1200px/);
-  assert.match(html, /max-width:1180px/);
+  // Le JS masque les actions via l'attribut hidden : la règle globale l'emporte toujours.
+  assert.match(ds.rule(components, '[hidden]'), /display:none !important/);
+  assert.match(ds.rule(components, '.page.on'), /display:flex;flex-direction:column/);
+  // Largeurs bornées : pile de cartes et contenu de page.
+  assert.match(ds.rule(features, '.deck-area'), /max-width:820px/);
+  assert.match(ds.rule(ds.media(components, '(min-width:1024px)'), ':where(.page.on)>*'), /max-width:var\(--content-max\)/);
 });
 
 test('recruiter UI polish #2 : filtres IDs + bottom sheet conservés', () => {
@@ -123,13 +131,15 @@ test('recruiter UI polish #2 : settings / abonnement parité candidat', () => {
 });
 
 test('recruiter UI polish #2 : offres cartes (pas bande fine desktop)', () => {
-  assert.match(html, /#p-offres \.offers-list\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,480px\),1fr\)\)/);
+  assert.match(ds.rule(features, '.offers-list'), /display:grid/);
+  assert.match(ds.rule(ds.media(features, '(min-width:860px)'), '.offers-list'), /grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/);
   assert.match(html, /Voir candidatures/);
   assert.match(html, /function renderOffers/);
 });
 
 test('recruiter predemo : topbar sans Bonjour doublon', () => {
-  assert.match(html, /\.topbar-greet\{display:none !important\}/);
+  // Le salut de la barre du haut est masqué par l'attribut hidden (règle globale prioritaire).
+  assert.match(ds.rule(components, '[hidden]'), /display:none !important/);
   assert.match(html, /greetEl\.hidden = true/);
   assert.doesNotMatch(html, /greetEl\.innerHTML = name \? `Bonjour/);
   assert.match(html, /Bonjour \$\{name\} 👋/);
@@ -145,8 +155,7 @@ test('recruiter predemo : logo sans placeholder ??', () => {
 });
 
 test('recruiter predemo : pipeline empty pleine largeur', () => {
-  assert.match(html, /\.pipe-cols:has\(> \.pipe-state\)/);
-  assert.match(html, /display:block/);
+  assert.match(ds.rule(features, '.pipe-cols:has(> .pipe-state)'), /display:block/);
   assert.match(html, /surface: true/);
   assert.match(html, /Aucune candidature reçue/);
 });
@@ -173,23 +182,17 @@ test('recruiter sourcing card polish : structure identité + handlers swipe', ()
   assert.doesNotMatch(html, /Score calculé depuis les réponses du test ADN/);
   assert.doesNotMatch(html, /enregistré dans Supabase/);
   assert.match(html, /supabase\|score calcul/);
-  assert.match(html, /#p-swipe \.swipe-card\{[\s\S]*?flex-direction:row/);
-  assert.match(html, /#p-swipe \.cand-top\.cand-identity\{[\s\S]*?width:28%/);
-  assert.match(html, /@media \(max-width:719px\)\{[\s\S]*?#p-swipe \.cand-mid\{grid-template-columns:1fr\}/);
+  // Desktop : identité à gauche, contenu à droite ; mobile : blocs empilés.
+  const desktop = ds.media(features, '(min-width:1024px)');
+  assert.match(ds.rule(desktop, '.swipe-card'), /flex-direction:row/);
+  assert.match(ds.rule(desktop, '.cand-top.cand-identity'), /flex:0 0 280px/);
+  assert.match(ds.rule(features, '.cand-mid'), /grid-template-columns:1fr/);
 });
 
 test('sourcing mobile : une seule carte visible (CSS + renderDeck)', () => {
-  // Mobile relative layout must hide stacked siblings (bug: vertical list of candidats).
-  assert.match(
-    html,
-    /@media \(max-width:719px\)\{[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(2\),[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(3\)\{display:none/,
-  );
-  assert.match(html, /#p-swipe \.swipe-card:last-child\{display:flex;position:relative/);
-  // Desktop already hid peek cards.
-  assert.match(
-    html,
-    /@media \(min-width:720px\)\{[\s\S]*?#p-swipe \.swipe-card:nth-last-child\(2\),#p-swipe \.swipe-card:nth-last-child\(3\)\{display:none\}/,
-  );
+  // Cartes superposées dans la zone (jamais une liste verticale) ; au-delà de la 3e, masquées.
+  assert.match(ds.rule(features, '.swipe-card'), /position:absolute;inset:0/);
+  assert.match(ds.rule(features, '#deck-cards .swipe-card:nth-last-child(n+4)'), /display:none/);
   // Render only the current candidate — no slice(+3) stack in DOM.
   assert.match(html, /el\.appendChild\(buildCandCard\(CANDS\[DECK_IDX\]\)\)/);
   assert.doesNotMatch(html, /CANDS\.slice\(DECK_IDX,\s*DECK_IDX\s*\+\s*3\)/);

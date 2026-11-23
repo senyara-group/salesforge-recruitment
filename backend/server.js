@@ -6,6 +6,18 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
  
 const app = express();
 app.disable('etag'); // désactive l'ETag auto d'Express (source des 304 sur /api/* avec données dynamiques)
+// Compression gzip des réponses texte (HTML, CSS, JS, JSON) : pages et design system ~5x plus légers.
+app.use(require('compression')());
+// En-têtes de sécurité : pas d'interprétation de type, pages encadrables uniquement par le
+// site lui-même (la coque charge les espaces en iframe), référent réduit, HTTPS forcé en production.
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'SAMEORIGIN');
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (req.headers['x-forwarded-proto'] === 'https') res.set('Strict-Transport-Security', 'max-age=15552000');
+  next();
+});
 app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(require('./middleware/jsonBodyParser'));
